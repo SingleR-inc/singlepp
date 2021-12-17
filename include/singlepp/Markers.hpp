@@ -134,10 +134,13 @@ public:
                         break;
                     }
                     if (subset[counter] == current[k]) {
+                        // 'i' is always at or after 'k', so this should be harmless.
                         current[i] = counter;
                         ++i;
                     }
                 }
+
+                current.resize(i);
             }
         }
 
