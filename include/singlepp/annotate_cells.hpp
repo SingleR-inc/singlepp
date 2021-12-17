@@ -5,7 +5,7 @@
 #include "knncolle/knncolle.hpp"
 
 #include "scaled_ranks.hpp"
-#include "Markers.hpp"
+#include "process_features.hpp"
 
 #include <vector>
 #include <algorithm>
@@ -42,7 +42,7 @@ void annotate_cells_simple(
     #pragma omp parallel
     {
         std::vector<double> buffer(NR);
-        ranked_vector vec;
+        RankedVector vec;
         vec.reserve(NR);
         auto wrk = mat->new_workspace(false);
 

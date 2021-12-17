@@ -9,19 +9,16 @@
 
 namespace singlepp {
 
-typedef std::vector<std::pair<double, size_t> > ranked_vector;
+typedef std::vector<std::pair<double, size_t> > RankedVector;
 
-inline void scaled_ranks(size_t slen, ranked_vector& collected, std::vector<double>& outgoing, bool na_aware = false) {
+inline void scaled_ranks(size_t slen, RankedVector& collected, double* outgoing, bool na_aware = false) {
     std::sort(collected.begin(), collected.end());
 
     // Computing tied ranks. 
     size_t cur_rank=0;
     auto cIt=collected.begin();
     if (na_aware) {
-        outgoing.clear();
-        outgoing.resize(slen, std::numeric_limits<double>::quiet_NaN());
-    } else {
-        outgoing.resize(slen);
+        std::fill(outgoing, outgoing + slen, std::numeric_limits<double>::quiet_NaN());
     }
 
     while (cIt!=collected.end()) {
@@ -46,8 +43,9 @@ inline void scaled_ranks(size_t slen, ranked_vector& collected, std::vector<doub
     // Mean-adjusting and converting to cosine values.
     double sum_squares=0;
     const double center_rank=static_cast<double>(collected.size() - 1)/2; // use collected.size(), not slen, to account for NA's.
-    for (auto& o : outgoing) {
-        if (na_aware && std;:isnan(o)) {
+    for (size_t i = 0 ; i < slen; ++i) {
+        auto& o = outgoing[i];
+        if (na_aware && std::isnan(o)) {
             continue;
         }
         o-=center_rank;
@@ -67,12 +65,11 @@ inline void scaled_ranks(size_t slen, ranked_vector& collected, std::vector<doub
     return;
 }
 
-template <class Start> 
-void scaled_ranks(size_t slen, Start start, ranked_vector& collected, std::vector<double>& outgoing, bool na_aware = false) {
+template<class Start>
+void scaled_ranks(size_t slen, Start start, RankedVector& collected, double* outgoing, bool na_aware = false) {
     collected.clear();
     collected.reserve(slen);
 
-    // Sorting all subsetted values (zeroes are handled separately for greater efficiency).
     for (size_t s = 0; s < slen; ++s) {
         const double curval=*(start + s);
         if (std::isnan(curval)) { 
@@ -85,16 +82,15 @@ void scaled_ranks(size_t slen, Start start, ranked_vector& collected, std::vecto
     }
 
     scaled_ranks(slen, collected, outgoing, na_aware);
+    return;
 }
 
-
-template <class Start> 
-void scaled_ranks(Start start, const std::vector<int>& chosen, ranked_vector& collected, std::vector<double>& outgoing, bool na_aware = false) {
+template<class Start>
+void fill_ranks(Start start, const std::vector<int>& chosen, RankedVector& collected, double* outgoing, bool na_aware = false) {
     size_t slen=chosen.size();
     collected.clear();
     collected.reserve(slen);
 
-    // Sorting all subsetted values (zeroes are handled separately for greater efficiency).
     size_t s=0;
     for (auto i : chosen) {
         const double curval=*(start + i);
@@ -109,9 +105,9 @@ void scaled_ranks(Start start, const std::vector<int>& chosen, ranked_vector& co
     }
 
     scaled_ranks(slen, collected, outgoing, na_aware);
+    return;
 }
 
-
-
+}
 
 #endif

@@ -1,43 +1,51 @@
-#ifndef SINGLEPP_MATRICES_TO_INDICES_HPP
-#define SINGLEPP_MATRICES_TO_INDICES_HPP
+#ifndef SINGLEPP_BUILD_INDICES_HPP
+#define SINGLEPP_BUILD_INDICES_HPP
 
 #include <vector>
 #include <memory>
 #include "knncolle/knncolle.hpp"
 
-#include "Markers.hpp"
+#include "process_features.hpp"
+#include "scaled_ranks.hpp"
 
 namespace singlepp {
 
-template<class Mat, class Builder>
-std::vector<std::shared_ptr<knncolle::Base<int, double> > > matrices_to_indices(const std::vector<Mat*>& ref, const Builder& build) {
-    std::vector<std::shared_ptr<knncolle::Base<int, double> > > nnrefs(ref.size());
-    std::vector<double> indexable; 
+struct Reference {
+    std::vector<double> data;
+    std::shared_ptr<knncolle::Base<int, double> > index;
+};
 
+template<class Mat, class Builder>
+std::vector<Reference> build_indices(const std::vector<int>& subset, const std::vector<Mat*>& ref, const Builder& build) {
+    std::vector<Reference> nnrefs(ref.size());
+    size_t NR = subset.size();
+
+    #pragma omp parallel for
     for (size_t g = 0; g < ref.size(); ++g) {
         auto curref = ref[g];
-        size_t NR = curref->nrow(); // should be the same.
+        auto& nref = nnrefs[g];
+        auto& indexable = nref.data;
+
+        RankedVector ranked(NR);
         size_t NC = curref->ncol();
         indexable.resize(NR * NC);
+        std::vector<double> buffer(curref->nrow());
+        auto wrk = curref->new_workspace(false);
 
         for (size_t c = 0; c < NC; ++c) {
-            curref->column_copy(c, indexable.data() + c * NR);
+            auto ptr = curref->column(c, buffer.data(), wrk.get());
+            for (size_t r = 0; r < NR; ++r) {
+                ranked[r].first = ptr[subset[r].second];
+                ranked[r].second = r;
+            }
+            scaled_ranks(NR, ranked, indexable.data() + c * NR);
         }
-        nnrefs[g] = build(NR, NC, indexable.data());
+
+        nref.index = build(NR, NC, indexable.data());
     }
 
     return nnrefs;
 }
-
-template<class Index>
-std::vector<const Index*> retrieve_index_pointers(const std::vector<std::shared_ptr<Index> >& nnrefs) {
-    std::vector<const Index*> nnref_ptrs(nnrefs.size());
-    for (size_t g = 0; g < nnrefs.size(); ++g) {
-        nnref_ptrs[g] = nnrefs[g].get();
-    }
-    return nnref_ptrs;
-}
-
 
 }
 

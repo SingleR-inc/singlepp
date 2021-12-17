@@ -104,6 +104,15 @@ inline void subset_markers(Intersection& intersection, Markers& markers, int top
     return;
 }
 
+inline std::pair<std::vector<int>, std::vector<int> > unzip(const Intersection& intersection) {
+    std::vector<int> left(intersection.size()), right(intersection.size());
+    for (size_t i = 0; i < intersection.size(); ++i) {
+        left[i] = intersection[i].first;
+        right[i] = intersection[i].second;
+    }
+    return std::make_pair(std::move(left), std::move(right));
+}
+
 }
 
 #endif
