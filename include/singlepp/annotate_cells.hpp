@@ -3,7 +3,9 @@
 
 #include "tatami/tatami.h"
 #include "knncolle/knncolle.hpp"
+
 #include "scaled_ranks.hpp"
+#include "Markers.hpp"
 
 #include <vector>
 #include <algorithm>
@@ -15,8 +17,7 @@ template<class Ref>
 void annotate_cells_simple(
     const tatami::Matrix<double, int>* mat, 
     const std::vector<Ref*>& ref,
-    const int* labels,
-    const Markers& markers,
+    const Markers* markers,
     double quantile,
     bool fine_tune,
     double threshold,
@@ -87,6 +88,31 @@ void annotate_cells_simple(
     }
 
     return;
+}
+
+template<class Mat, typename Id, class Builder>
+void annotate_cells_simple(
+    const tatami::Matrix<double, int>* mat, 
+    const Id* mat_id,
+    const std::vector<Mat*>& ref,
+    const Id* ref_id,
+    const Builder& build,
+    const Markers* markers,
+    double quantile,
+    bool fine_tune,
+    double threshold,
+    int* best, 
+    std::vector<double*>& scores,
+    double* delta) 
+{
+    // Created delayed subsetters.
+    if (mat_id != NULL && ref_id != NULL) {
+
+    } else {
+        auto nnrefs = matrices_to_indices(ref, build);
+        auto nnref_ptrs = retrieve_index_pointers(nnrefs);
+        annotate_cells_simple(mat, nnref_ptrs, markers, quantile, fine_tune, threshold, best, scores, delta);
+    }
 }
 
 }
