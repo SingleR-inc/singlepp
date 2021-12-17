@@ -7,6 +7,14 @@
 
 namespace singlepp {
 
+typedef std::vector<std::vector<std::vector<int> > > Markers;
+
+template<typename Id>
+void define_subsets(size_t mat_n, const Id* mat_id, size_t ref_n, const Id* ref_id, Markers& markers, int top) {
+    // Define an intersection of identifiers.
+    std::unordered_set<Id> ;
+}
+
 class Markers {
     virtual ~Markers() {}
     virtual size_t size() const = 0;
@@ -54,7 +62,7 @@ class Markers {
         return;
     }
 
-    FullMarkers subset(size_t n, const int* subset) const {
+    FullMarkers subset(size_t n, const int* subset, bool pr) const {
         std::vector<std::vector<std::vector<int> > > subsetted(this->size());
 
         for (size_t i = 0; i < this->size(); ++i) {
