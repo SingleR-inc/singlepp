@@ -47,37 +47,6 @@ std::vector<Reference> build_indices(const std::vector<int>& subset, const std::
     return nnrefs;
 }
 
-template<class Mat, class Builder>
-std::vector<Reference> build_indices(const std::vector<Mat*>& ref, const Builder& build) {
-    std::vector<Reference> nnrefs(ref.size());
-
-    #pragma omp parallel for
-    for (size_t g = 0; g < ref.size(); ++g) {
-        auto curref = ref[g];
-        auto& nref = nnrefs[g];
-        auto& indexable = nref.data;
-
-        size_t NR = curref->nrow();
-        size_t NC = curref->ncol();
-        RankedVector ranked(NR);
-        indexable.resize(NR * NC);
-        auto wrk = curref->new_workspace(false);
-
-        for (size_t c = 0; c < NC; ++c) {
-            auto ptr = curref->column(c, indexable.data() + c * NR, wrk.get());
-            for (size_t r = 0; r < NR; ++r) {
-                ranked[r].first = ptr[r];
-                ranked[r].second = r;
-            }
-            scaled_ranks(NR, ranked, indexable.data() + c * NR);
-        }
-
-        nref.index = build(NR, NC, indexable.data());
-    }
-
-    return nnrefs;
-}
-
 }
 
 #endif
