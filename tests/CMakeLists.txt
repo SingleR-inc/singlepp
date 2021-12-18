@@ -13,6 +13,7 @@ enable_testing()
 add_executable(
     libtest 
     src/SinglePP.cpp
+    src/scaled_ranks.cpp
 )
 
 target_link_libraries(

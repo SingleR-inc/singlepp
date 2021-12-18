@@ -11,13 +11,14 @@ namespace singlepp {
 
 typedef std::vector<std::pair<double, size_t> > RankedVector;
 
-inline void scaled_ranks(size_t slen, RankedVector& collected, double* outgoing, bool na_aware = false) {
+template<bool na_aware = false>
+inline void scaled_ranks(size_t slen, RankedVector& collected, double* outgoing) {
     std::sort(collected.begin(), collected.end());
 
     // Computing tied ranks. 
     size_t cur_rank=0;
     auto cIt=collected.begin();
-    if (na_aware) {
+    if constexpr(na_aware) {
         std::fill(outgoing, outgoing + slen, std::numeric_limits<double>::quiet_NaN());
     }
 
@@ -45,8 +46,10 @@ inline void scaled_ranks(size_t slen, RankedVector& collected, double* outgoing,
     const double center_rank=static_cast<double>(collected.size() - 1)/2; // use collected.size(), not slen, to account for NA's.
     for (size_t i = 0 ; i < slen; ++i) {
         auto& o = outgoing[i];
-        if (na_aware && std::isnan(o)) {
-            continue;
+        if constexpr(na_aware) {
+            if (std::isnan(o)) {
+                continue;
+            }
         }
         o-=center_rank;
         sum_squares+=o*o;
@@ -57,8 +60,10 @@ inline void scaled_ranks(size_t slen, RankedVector& collected, double* outgoing,
     sum_squares = std::sqrt(sum_squares)*2;
     for (size_t i = 0; i < slen; ++i) {
         auto& o = outgoing[i];
-        if (na_aware && std::isnan(o)) {
-            continue;
+        if constexpr(na_aware) {
+            if (std::isnan(o)) {
+                continue;
+            }
         }
         o /= sum_squares;
     }
@@ -66,15 +71,15 @@ inline void scaled_ranks(size_t slen, RankedVector& collected, double* outgoing,
     return;
 }
 
-template<class Start>
-void scaled_ranks(size_t slen, Start start, RankedVector& collected, double* outgoing, bool na_aware = false) {
+template<bool na_aware = false, class Start>
+void scaled_ranks(size_t slen, Start start, RankedVector& collected, double* outgoing) {
     collected.clear();
     collected.reserve(slen);
 
     for (size_t s = 0; s < slen; ++s) {
         const double curval=*(start + s);
         if (std::isnan(curval)) { 
-            if (!na_aware) {
+            if constexpr(!na_aware) {
                 throw std::runtime_error("missing values not supported in SingleR");
             }
         } else {
@@ -82,12 +87,12 @@ void scaled_ranks(size_t slen, Start start, RankedVector& collected, double* out
         }
     }
 
-    scaled_ranks(slen, collected, outgoing, na_aware);
+    scaled_ranks<na_aware>(slen, collected, outgoing);
     return;
 }
 
-template<class Start, class Chosen>
-void scaled_ranks(Start start, const Chosen& chosen, RankedVector& collected, double* outgoing, bool na_aware = false) {
+template<bool na_aware = false, class Start, class Chosen>
+void scaled_ranks(Start start, const Chosen& chosen, RankedVector& collected, double* outgoing) {
     size_t slen=chosen.size();
     collected.clear();
     collected.reserve(slen);
@@ -96,7 +101,7 @@ void scaled_ranks(Start start, const Chosen& chosen, RankedVector& collected, do
     for (auto i : chosen) {
         const double curval=*(start + i);
         if (std::isnan(curval)) { 
-            if (!na_aware) {
+            if constexpr(!na_aware) {
                 throw std::runtime_error("missing values not supported in SingleR");
             }
         } else {
@@ -105,7 +110,7 @@ void scaled_ranks(Start start, const Chosen& chosen, RankedVector& collected, do
         ++s;
     }
 
-    scaled_ranks(slen, collected, outgoing, na_aware);
+    scaled_ranks<na_aware>(slen, collected, outgoing);
     return;
 }
 
