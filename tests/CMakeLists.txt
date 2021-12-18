@@ -14,6 +14,7 @@ add_executable(
     libtest 
     src/SinglePP.cpp
     src/scaled_ranks.cpp
+    src/compute_scores.cpp
 )
 
 target_link_libraries(

@@ -4,6 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include <limits>
+#include <cmath>
 
 namespace singlepp {
 
