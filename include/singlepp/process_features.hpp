@@ -39,6 +39,27 @@ Intersection intersect_features(size_t mat_n, const Id* mat_id, size_t ref_n, co
 
 typedef std::vector<std::vector<std::vector<int> > > Markers;
 
+void reindex_markers(const std::unordered_map<int, int>& mapping, Markers& markers) {
+    for (size_t i = 0; i < markers.size(); ++i) {
+        for (size_t j = 0; j < markers[i].size(); ++j) {
+            if (i == j) {
+                continue;
+            }
+
+            auto& current = markers[i][j];
+            size_t counter = 0;
+            for (size_t k = 0; k < current.size(); ++k) {
+                auto it = mapping.find(current[k]);
+                if (it != mapping.end()) {
+                    current[counter] = it->second;
+                    ++counter;
+                }
+            }
+            current.resize(counter);
+        }
+    }
+}
+
 inline void subset_markers(Intersection& intersection, Markers& markers, int top) {
     std::unordered_set<int> available;
     available.reserve(intersection.size());
@@ -81,27 +102,35 @@ inline void subset_markers(Intersection& intersection, Markers& markers, int top
         intersection.resize(counter);
     }
 
-    // Finally, reindexing the markers.
+    reindex_markers(mapping, markers);
+    return;
+}
+
+// Use this method when the feature spaces are already identical.
+inline std::vector<int> subset_markers(Markers& markers, int top) {
+    std::unordered_set<int> available;
     for (size_t i = 0; i < markers.size(); ++i) {
         for (size_t j = 0; j < markers[i].size(); ++j) {
             if (i == j) {
                 continue;
             }
-
             auto& current = markers[i][j];
-            size_t counter = 0;
-            for (size_t k = 0; k < current.size(); ++k) {
-                auto it = mapping.find(current[k]);
-                if (it != mapping.end()) {
-                    current[counter] = it->second;
-                    ++counter;
-                }
-            }
-            current.resize(counter);
+            current.resize(std::min(current.size(), top));
+            available.insert(current.begin(), current.end());
         }
     }
 
-    return;
+    std::vector<int> subset(available.begin(), available.end());
+    std::sort(subset.begin(), subset.end());
+
+    std::unordered_map<int, int> mapping;
+    mapping.reserve(subset.size());
+    for (size_t i = 0; i < subset.size(); ++i) {
+        mapping[subset[i]] = i;
+    }
+
+    reindex_markers(mapping, markers);
+    return subset;
 }
 
 inline std::pair<std::vector<int>, std::vector<int> > unzip(const Intersection& intersection) {
