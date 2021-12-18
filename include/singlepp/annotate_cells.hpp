@@ -1,8 +1,7 @@
 #ifndef SINGLEPP_ANNOTATE_CELLS_HPP
 #define SINGLEPP_ANNOTATE_CELLS_HPP
 
-#include "tatami/tatami.h"
-#include "knncolle/knncolle.hpp"
+#include "tatami/tatami.hpp"
 
 #include "scaled_ranks.hpp"
 #include "process_features.hpp"
@@ -35,7 +34,8 @@ inline void annotate_cells_simple(
     std::vector<std::pair<double, double> > coeffs(NL);
     for (size_t r = 0; r < NL; ++r) {
         double denom = ref[r].index->nobs() - 1;
-        search_k[r] = std::ceil(denom * quantile) + 1;
+        auto k = std::ceil(denom * quantile) + 1;
+        search_k[r] = k;
         coeffs[r].first = quantile - static_cast<double>(k - 2) / denom;
         coeffs[r].second = static_cast<double>(k - 1) / denom - quantile;
     }
@@ -46,16 +46,17 @@ inline void annotate_cells_simple(
         RankedVector vec;
         vec.reserve(NR);
         auto wrk = mat->new_workspace(false);
+        std::vector<double> scaled(NR);
 
         #pragma omp for
         for (size_t c = 0; c < NC; ++c) {
             auto ptr = mat->column(c, buffer.data(), wrk.get());
-            scaled_ranks(NR, ptr, vec, output);
+            scaled_ranks(NR, ptr, vec, scaled.data());
 
             std::vector<double> curscores(NL);
             for (size_t r = 0; r < NL; ++r) {
                 size_t k = search_k[r];
-                auto current = ref[r]->query_nearest_neighbors(output.data(), k);
+                auto current = ref[r].index->find_nearest_neighbors(scaled.data(), k);
 
                 double last = current[k - 1].second;
                 last = 1 - 2 * last * last;
@@ -83,7 +84,7 @@ inline void annotate_cells_simple(
                     delta[c] = std::numeric_limits<double>::quiet_NaN();
                 }
             } else {
-                auto tuned = fine_tune(NR, current, ref, markers, curscores, quantile, threshold);
+                auto tuned = fine_tune_loop(scaled.data(), ref, markers, curscores, quantile, threshold);
                 best[c] = tuned.first;
                 best[c] = tuned.second;
             }
@@ -101,6 +102,7 @@ void annotate_cells_simple(
     const Id* ref_id,
     const Builder& build,
     Markers markers,
+    int top,
     double quantile,
     bool fine_tune,
     double threshold,
@@ -111,18 +113,19 @@ void annotate_cells_simple(
     auto intersection = intersect_features(mat->nrow(), mat_id, ref->nrow(), ref_id);
     auto subset = subset_markers(intersection, markers, top);
     auto unzip = unzip(intersection);
-    auto submat = tatami::make_DelayedSubset(tatami::wrap_subset_ptr(mat), std::move(unzip.first));
+    auto submat = tatami::make_DelayedSubset<0>(tatami::wrap_shared_ptr(mat), std::move(unzip.first));
     auto subref = build_indices(unzip.second, ref, build);
     annotate_cells_simple(submat.get(), subref, markers, quantile, fine_tune, threshold, best, scores, delta);
     return;
 }
 
-template<class Mat, typename Id, class Builder>
+template<class Mat, class Builder>
 void annotate_cells_simple(
     const tatami::Matrix<double, int>* mat, 
     const std::vector<Mat*>& ref,
     const Builder& build,
     Markers markers,
+    int top,
     double quantile,
     bool fine_tune,
     double threshold,
@@ -132,7 +135,7 @@ void annotate_cells_simple(
 {
     auto subset = subset_markers(markers, top);
     auto subref = build_indices(subset, ref, build);
-    auto submat = tatami::make_DelayedSubset(tatami::wrap_subset_ptr(mat), std::move(subset));
+    auto submat = tatami::make_DelayedSubset<0>(tatami::wrap_shared_ptr(mat), std::move(subset));
     annotate_cells_simple(submat.get(), subref, markers, quantile, fine_tune, threshold, best, scores, delta);
     return;
 }

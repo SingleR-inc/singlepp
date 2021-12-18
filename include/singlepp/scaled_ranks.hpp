@@ -55,11 +55,12 @@ inline void scaled_ranks(size_t slen, RankedVector& collected, double* outgoing,
     // Special behaviour for no-variance genes; these are left as all-zero scaled ranks.
     sum_squares = std::max(sum_squares, 0.00000001);
     sum_squares = std::sqrt(sum_squares)*2;
-    for (auto& o : outgoing) {
+    for (size_t i = 0; i < slen; ++i) {
+        auto& o = outgoing[i];
         if (na_aware && std::isnan(o)) {
             continue;
         }
-        o/=sum_squares;
+        o /= sum_squares;
     }
 
     return;
@@ -86,7 +87,7 @@ void scaled_ranks(size_t slen, Start start, RankedVector& collected, double* out
 }
 
 template<class Start, class Chosen>
-void fill_ranks(Start start, const Chosen& chosen, RankedVector& collected, double* outgoing, bool na_aware = false) {
+void scaled_ranks(Start start, const Chosen& chosen, RankedVector& collected, double* outgoing, bool na_aware = false) {
     size_t slen=chosen.size();
     collected.clear();
     collected.reserve(slen);

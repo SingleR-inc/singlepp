@@ -7,10 +7,11 @@
 
 #include "scaled_ranks.hpp"
 #include "process_features.hpp"
+#include "compute_scores.hpp"
 
 namespace singlepp {
 
-inline std::pair<int, double> fill_labels_in_use(const std::vector<double>& scores, std::vector<int>& in_use) {
+inline std::pair<int, double> fill_labels_in_use(const std::vector<double>& scores, double threshold, std::vector<int>& in_use) {
     in_use.clear();
     auto it = std::max_element(scores.begin(), scores.end());
     int best_label = it - scores.begin();
@@ -19,11 +20,11 @@ inline std::pair<int, double> fill_labels_in_use(const std::vector<double>& scor
     constexpr double DUMMY = -1000;
     double next_score = DUMMY;
 
-    double threshold = max_score - tune_thresh;
+    double bound = max_score - threshold;
     for (size_t i = 0; i < scores.size(); ++i) {
         const auto& val = scores[i];
-        if (val >= threshold) {
-            labels_in_use.push_back(i);
+        if (val >= bound) {
+            in_use.push_back(i);
         }
         if (i != best_label && next_score < val) {
             next_score = val;
@@ -33,7 +34,7 @@ inline std::pair<int, double> fill_labels_in_use(const std::vector<double>& scor
     return std::make_pair(best_label, max_score - next_score); 
 }
 
-std::pair<int, double> fine_tune(
+std::pair<int, double> fine_tune_loop(
     const double* ptr, 
     const std::vector<Reference>& ref,
     const Markers& markers,
@@ -46,7 +47,7 @@ std::pair<int, double> fine_tune(
     } 
 
     std::vector<int> labels_in_use;
-    auto candidate = fill_labels_in_use(scores, labels_in_use);
+    auto candidate = fill_labels_in_use(scores, threshold, labels_in_use);
     if (labels_in_use.size() == 1) {
         return candidate;
     }
@@ -77,10 +78,11 @@ std::pair<int, double> fine_tune(
         for (size_t i = 0; i < labels_in_use.size(); ++i) {
             all_correlations.clear();
             const auto& curref = ref[labels_in_use[i]];
-            size_t NR = curref.index->nobs();
+            size_t NR = curref.index->ndim();
+            size_t NC = curref.index->nobs();
 
-            for (size_t c = 0; c < ncells; ++c) {
-                auto rightptr = ref.data.data() + c * NR;
+            for (size_t c = 0; c < NC; ++c) {
+                auto rightptr = curref.data.data() + c * NR;
                 scaled_ranks(rightptr, genes_in_use, ranked, scaled_right.data());
                 double cor = distance_to_correlation(scaled_left.size(), scaled_left, scaled_right);
                 all_correlations.push_back(cor);
@@ -90,7 +92,7 @@ std::pair<int, double> fine_tune(
             scores.push_back(score);
         }
 
-        candidate = fill_labels_in_use(scores, labels_in_use); 
+        candidate = fill_labels_in_use(scores, threshold, labels_in_use); 
         if (labels_in_use.size() == scores.size()) { // i.e., unchanged.
             break;
         }

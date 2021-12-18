@@ -115,7 +115,7 @@ inline std::vector<int> subset_markers(Markers& markers, int top) {
                 continue;
             }
             auto& current = markers[i][j];
-            current.resize(std::min(current.size(), top));
+            current.resize(std::min(current.size(), static_cast<size_t>(top)));
             available.insert(current.begin(), current.end());
         }
     }

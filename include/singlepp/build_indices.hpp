@@ -35,7 +35,7 @@ std::vector<Reference> build_indices(const std::vector<int>& subset, const std::
         for (size_t c = 0; c < NC; ++c) {
             auto ptr = curref->column(c, buffer.data(), wrk.get());
             for (size_t r = 0; r < NR; ++r) {
-                ranked[r].first = ptr[subset[r].second];
+                ranked[r].first = ptr[subset[r]];
                 ranked[r].second = r;
             }
             scaled_ranks(NR, ranked, indexable.data() + c * NR);
