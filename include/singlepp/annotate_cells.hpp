@@ -7,6 +7,7 @@
 #include "scaled_ranks.hpp"
 #include "process_features.hpp"
 #include "build_indices.hpp"
+#include "fine_tune.hpp"
 
 #include <vector>
 #include <algorithm>
@@ -82,7 +83,9 @@ inline void annotate_cells_simple(
                     delta[c] = std::numeric_limits<double>::quiet_NaN();
                 }
             } else {
-                // enter fine-tuning logic here.
+                auto tuned = fine_tune(NR, current, ref, markers, curscores, threshold);
+                best[c] = tuned.first;
+                best[c] = tuned.second;
             }
         }
     }
