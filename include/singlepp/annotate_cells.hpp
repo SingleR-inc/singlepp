@@ -83,7 +83,7 @@ inline void annotate_cells_simple(
                     delta[c] = std::numeric_limits<double>::quiet_NaN();
                 }
             } else {
-                auto tuned = fine_tune(NR, current, ref, markers, curscores, threshold);
+                auto tuned = fine_tune(NR, current, ref, markers, curscores, quantile, threshold);
                 best[c] = tuned.first;
                 best[c] = tuned.second;
             }
@@ -122,7 +122,7 @@ void annotate_cells_simple(
     const tatami::Matrix<double, int>* mat, 
     const std::vector<Mat*>& ref,
     const Builder& build,
-    const Markers& markers,
+    Markers markers,
     double quantile,
     bool fine_tune,
     double threshold,

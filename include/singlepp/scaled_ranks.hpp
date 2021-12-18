@@ -85,8 +85,8 @@ void scaled_ranks(size_t slen, Start start, RankedVector& collected, double* out
     return;
 }
 
-template<class Start>
-void fill_ranks(Start start, const std::vector<int>& chosen, RankedVector& collected, double* outgoing, bool na_aware = false) {
+template<class Start, class Chosen>
+void fill_ranks(Start start, const Chosen& chosen, RankedVector& collected, double* outgoing, bool na_aware = false) {
     size_t slen=chosen.size();
     collected.clear();
     collected.reserve(slen);

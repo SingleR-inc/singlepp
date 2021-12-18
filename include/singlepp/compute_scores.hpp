@@ -34,6 +34,16 @@ inline double correlations_to_scores (std::vector<double>& correlations, double 
     }
 }
 
+template<class Vector>
+double distance_to_correlation(size_t n, const Vector& p1, const Vector& p2) {
+    double d2 = 0;
+    for (size_t i = 0; i < n; ++i) {
+        double tmp = p1[i] - p2[i];
+        d2 += tmp * tmp;
+    }
+    return 1 - 2 * d2;
+}
+
 }
 
 #endif
