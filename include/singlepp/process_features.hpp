@@ -28,8 +28,8 @@ Intersection intersect_features(size_t mat_n, const Id* mat_id, size_t ref_n, co
     Intersection pairings;
     pairings.reserve(intersection.size());
     for (const auto& x : intersection) {
-        if ((x->second).second >= 0) {
-            pairings.push_back(x->second);
+        if (x.second.second >= 0) {
+            pairings.push_back(x.second);
         }
     }
 
@@ -38,27 +38,6 @@ Intersection intersect_features(size_t mat_n, const Id* mat_id, size_t ref_n, co
 }
 
 typedef std::vector<std::vector<std::vector<int> > > Markers;
-
-void reindex_markers(const std::unordered_map<int, int>& mapping, Markers& markers) {
-    for (size_t i = 0; i < markers.size(); ++i) {
-        for (size_t j = 0; j < markers[i].size(); ++j) {
-            if (i == j) {
-                continue;
-            }
-
-            auto& current = markers[i][j];
-            size_t counter = 0;
-            for (size_t k = 0; k < current.size(); ++k) {
-                auto it = mapping.find(current[k]);
-                if (it != mapping.end()) {
-                    current[counter] = it->second;
-                    ++counter;
-                }
-            }
-            current.resize(counter);
-        }
-    }
-}
 
 inline void subset_markers(Intersection& intersection, Markers& markers, int top) {
     std::unordered_set<int> available;
@@ -76,14 +55,18 @@ inline void subset_markers(Intersection& intersection, Markers& markers, int top
                 continue;
             }
 
-            const auto& current = markers[i][j];
-            int sofar = 0;
-            for (size_t k = 0; k < current.size() && sofar < top; ++k) {
+            auto& current = markers[i][j];
+            std::vector<int> replacement;
+            replacement.reserve(top);
+
+            for (size_t k = 0; k < current.size() && replacement.size() < static_cast<size_t>(top); ++k) {
                 if (available.find(current[k]) != available.end()) {
                     all_markers.insert(current[k]);
-                    ++sofar;
+                    replacement.push_back(current[k]);
                 }
             }
+
+            current.swap(replacement);
         }
     }
 
@@ -102,7 +85,21 @@ inline void subset_markers(Intersection& intersection, Markers& markers, int top
         intersection.resize(counter);
     }
 
-    reindex_markers(mapping, markers);
+    // Reindexing the markers.
+    for (size_t i = 0; i < markers.size(); ++i) {
+        for (size_t j = 0; j < markers[i].size(); ++j) {
+            if (i == j) {
+                continue;
+            }
+
+            auto& current = markers[i][j];
+            for (size_t k = 0; k < current.size(); ++k) {
+                auto it = mapping.find(current[k]);
+                current[k] = it->second;
+            }
+        }
+    }
+
     return;
 }
 
@@ -129,7 +126,21 @@ inline std::vector<int> subset_markers(Markers& markers, int top) {
         mapping[subset[i]] = i;
     }
 
-    reindex_markers(mapping, markers);
+    // Reindexing the markers.
+    for (size_t i = 0; i < markers.size(); ++i) {
+        for (size_t j = 0; j < markers[i].size(); ++j) {
+            if (i == j) {
+                continue;
+            }
+
+            auto& current = markers[i][j];
+            for (size_t k = 0; k < current.size(); ++k) {
+                auto it = mapping.find(current[k]);
+                current[k] = it->second;
+            }
+        }
+    }
+
     return subset;
 }
 

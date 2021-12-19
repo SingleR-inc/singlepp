@@ -15,6 +15,7 @@ add_executable(
     src/SinglePP.cpp
     src/scaled_ranks.cpp
     src/compute_scores.cpp
+    src/process_features.cpp
 )
 
 target_link_libraries(
