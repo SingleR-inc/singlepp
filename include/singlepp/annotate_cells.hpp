@@ -15,7 +15,8 @@
 namespace singlepp {
 
 inline void annotate_cells_simple(
-    const tatami::Matrix<double, int>* mat, 
+    const tatami::Matrix<double, int>* mat,
+    const std::vector<int>& subset,
     const std::vector<Reference>& ref,
     const Markers& markers,
     double quantile,
@@ -27,6 +28,13 @@ inline void annotate_cells_simple(
 {
     const size_t NR = mat->nrow();
     const size_t NC = mat->ncol();
+
+    int first = 0, last = 0;
+    if (subset.size()) {
+        // Assumes that 'subset' is sorted.
+        first = subset.front();
+        last = subset.back();
+    }
 
     // Figuring out how many neighbors to keep and how to compute the quantiles.
     const size_t NL = ref.size();
@@ -91,52 +99,6 @@ inline void annotate_cells_simple(
         }
     }
 
-    return;
-}
-
-template<class Mat, typename Id, class Builder>
-void annotate_cells_simple(
-    const tatami::Matrix<double, int>* mat, 
-    const Id* mat_id,
-    const std::vector<Mat*>& ref,
-    const Id* ref_id,
-    const Builder& build,
-    Markers markers,
-    int top,
-    double quantile,
-    bool fine_tune,
-    double threshold,
-    int* best, 
-    std::vector<double*>& scores,
-    double* delta) 
-{
-    auto intersection = intersect_features(mat->nrow(), mat_id, ref->nrow(), ref_id);
-    auto subset = subset_markers(intersection, markers, top);
-    auto unzip = unzip(intersection);
-    auto submat = tatami::make_DelayedSubset<0>(tatami::wrap_shared_ptr(mat), std::move(unzip.first));
-    auto subref = build_indices(unzip.second, ref, build);
-    annotate_cells_simple(submat.get(), subref, markers, quantile, fine_tune, threshold, best, scores, delta);
-    return;
-}
-
-template<class Mat, class Builder>
-void annotate_cells_simple(
-    const tatami::Matrix<double, int>* mat, 
-    const std::vector<Mat*>& ref,
-    const Builder& build,
-    Markers markers,
-    int top,
-    double quantile,
-    bool fine_tune,
-    double threshold,
-    int* best, 
-    std::vector<double*>& scores,
-    double* delta) 
-{
-    auto subset = subset_markers(markers, top);
-    auto subref = build_indices(subset, ref, build);
-    auto submat = tatami::make_DelayedSubset<0>(tatami::wrap_shared_ptr(mat), std::move(subset));
-    annotate_cells_simple(submat.get(), subref, markers, quantile, fine_tune, threshold, best, scores, delta);
     return;
 }
 
