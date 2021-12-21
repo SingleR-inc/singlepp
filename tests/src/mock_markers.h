@@ -3,6 +3,7 @@
 
 #include "singlepp/process_features.hpp"
 #include <random>
+#include <algorithm>
 
 inline singlepp::Markers mock_markers(size_t nlabels, size_t len, size_t universe, int seed = 42) {
     singlepp::Markers output(nlabels);    
@@ -12,8 +13,12 @@ inline singlepp::Markers mock_markers(size_t nlabels, size_t len, size_t univers
         output[i].resize(nlabels);
         for (size_t j = 0; j < nlabels; ++j) {
             if (i != j) {
-                for (size_t k = 0; k < len; ++k) {
-                    output[i][j].push_back(rng() % universe);
+                auto& source = output[i][j];
+                source.resize(universe);
+                std::iota(source.begin(), source.end(), 0);
+                std::shuffle(source.begin(), source.end(), rng);
+                if (len < universe) {
+                    source.resize(len);
                 }
             }
         }
