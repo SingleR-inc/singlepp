@@ -105,7 +105,6 @@ public:
     Prebuilt build(const std::vector<Mat*>& ref, Markers markers) {
         check_references(ref);
         auto subset = subset_markers(markers, top);
-        std::cout << "Subsetted: " << subset.size() << "\t" << subset.front() << " -> " << subset.back() << std::endl;
         auto subref = build_internal(subset, ref);
         return Prebuilt(std::move(markers), std::move(subset), std::move(subref));
     }
@@ -150,17 +149,6 @@ public:
     template<class Mat>
     Results run(const tatami::Matrix<double, int>* mat, const std::vector<Mat*>& ref, Markers markers) {
         auto prebuilt = build(ref, std::move(markers));
-
-        std::cout << "Simple references:" << std::endl;
-        for (size_t s = 0; s < prebuilt.references.size(); ++s) {
-            const auto& current = prebuilt.references[s];
-            std::cout << s << "\t" << current.data.size() << "\t";
-            for (int i = 0; i < 10; ++i) {
-                std::cout << current.data[i] << ", ";
-            }
-            std::cout << std::endl;
-        }
-
         return run(mat, prebuilt);
     }
 
@@ -172,23 +160,6 @@ public:
         subset_markers(intersection, markers, top);
         auto pairs = unzip(intersection);
         auto subref = build_internal(pairs.second, ref);
-
-        std::cout << "Subsetted: " << pairs.second.size() << "\t";
-        for (int i = 0; i < 10; ++i) {
-            std::cout << pairs.second[i] << ", ";
-        }
-        std::cout << std::endl;
-
-        std::cout << "Intersect references:" << std::endl;
-        for (size_t s = 0; s < subref.size(); ++s) {
-            const auto& current = subref[s];
-            std::cout << s << "\t" << current.data.size() << "\t";
-            for (int i = 0; i < 10; ++i) {
-                std::cout << current.data[i] << ", ";
-            }
-            std::cout << std::endl;
-        }
-
         annotate_cells_simple(mat, pairs.first, subref, markers, quantile, fine_tune, fine_tune_threshold, best, scores, delta);
         return;
     }

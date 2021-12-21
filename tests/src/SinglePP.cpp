@@ -90,24 +90,8 @@ TEST_P(SinglePPIntersectTest, Intersect) {
     double quantile = std::get<1>(param);
     double prop = std::get<2>(param);
 
-    // Mocking up the test and references.
-    size_t ngenes = 200;
-    auto mat = spawn_matrix(ngenes, 5, 42);
- 
-    size_t nlabels = 3;
-    std::vector<std::shared_ptr<tatami::Matrix<double, int> > > refs;
-    for (size_t r = 0; r < nlabels; ++r) {
-        refs.push_back(spawn_matrix(ngenes, (r + 1) * 5, r * 100));
-    }
-
-    std::vector<const tatami::Matrix<double, int>*> ref_ptrs; // TODO: replace this part.
-    for (size_t r = 0; r < nlabels; ++r) {
-        ref_ptrs.push_back(refs[r].get());
-    }
-
-    auto markers = mock_markers(nlabels, ngenes, ngenes); 
-
     // Creating overlapping ID vectors.
+    size_t ngenes = 200;
     std::mt19937_64 rng(top * quantile * prop);
     std::vector<int> left, right;
     for (size_t x = 0; x < ngenes; ++x) {
@@ -121,24 +105,33 @@ TEST_P(SinglePPIntersectTest, Intersect) {
     std::shuffle(left.begin(), left.end(), rng);
     std::shuffle(right.begin(), right.end(), rng);
 
+    // Mocking up the test and references.
+    auto mat = spawn_matrix(left.size(), 5, 42);
+ 
+    size_t nlabels = 3;
+    std::vector<std::shared_ptr<tatami::Matrix<double, int> > > refs;
+    for (size_t r = 0; r < nlabels; ++r) {
+        refs.push_back(spawn_matrix(right.size(), (r + 1) * 5, r * 100));
+    }
+
+    std::vector<const tatami::Matrix<double, int>*> ref_ptrs; // TODO: replace this part.
+    for (size_t r = 0; r < nlabels; ++r) {
+        ref_ptrs.push_back(refs[r].get());
+    }
+
+    auto markers = mock_markers(nlabels, 50, right.size()); 
+
     // Computing the observed result.
     singlepp::SinglePP runner;
     runner.set_fine_tune(false).set_top(top).set_quantile(quantile);
     auto result = runner.run(mat.get(), left.data(), ref_ptrs, right.data(), markers);
 
-    // Computing the reference result. We try not to use subset_markers
+    // Computing the reference result using the other run() method,
+    // after effectively subsetting the input matrices and reindexing the markers.
     auto intersection = singlepp::intersect_features(left.size(), left.data(), right.size(), right.data());
-    auto markers2 = markers;
-    singlepp::subset_markers(intersection, markers2, top);
     auto pairs = singlepp::unzip(intersection);
     auto submat = tatami::make_DelayedSubset<0>(mat, pairs.first);
     
-    std::cout << "Subsetted: " << pairs.second.size() << "\t";
-    for (int i = 0; i < 10; ++i) {
-        std::cout << pairs.second[i] << ", ";
-    }
-    std::cout << std::endl;
-
     std::vector<std::shared_ptr<tatami::Matrix<double, int> > > subrefs(nlabels);
     std::vector<const tatami::Matrix<double, int>*> subref_ptrs(nlabels);
     for (size_t s = 0; s < nlabels; ++s) {
@@ -146,27 +139,28 @@ TEST_P(SinglePPIntersectTest, Intersect) {
         subref_ptrs[s] = subrefs[s].get();
     }
 
-//    std::unordered_map<int, int> locations;
-//    for (size_t i = 0; i < pairs.second.size(); ++i) {
-//        locations[pairs.second[i]] = i;
-//    }
-//
-//    for (size_t i = 0; i < nlabels; ++i) {
-//        for (size_t j = 0; j < nlabels; ++j) {
-//            if (i == j) {
-//                continue;
-//            }
-//
-//            std::vector<int> current;
-//            for (auto s : markers[i][j]) {
-//                auto it = locations.find(s);
-//                if (it != locations.end()) {
-//                    current.push_back(it->second);
-//                }
-//            }
-//            markers2[i][j] = current;
-//        }
-//    }
+    std::unordered_map<int, int> locations;
+    for (size_t i = 0; i < pairs.second.size(); ++i) {
+        locations[pairs.second[i]] = i;
+    }
+
+    auto markers2 = markers;
+    for (size_t i = 0; i < nlabels; ++i) {
+        for (size_t j = 0; j < nlabels; ++j) {
+            if (i == j) {
+                continue;
+            }
+
+            std::vector<int> current;
+            for (auto s : markers[i][j]) {
+                auto it = locations.find(s);
+                if (it != locations.end()) {
+                    current.push_back(it->second);
+                }
+            }
+            markers2[i][j] = current;
+        }
+    }
 
     auto result2 = runner.run(submat.get(), subref_ptrs, markers2);
     EXPECT_EQ(result2.scores[0], result.scores[0]);
@@ -178,12 +172,9 @@ INSTANTIATE_TEST_CASE_P(
     SinglePP,
     SinglePPIntersectTest,
     ::testing::Combine(
-        ::testing::Values(1000), // nuber of top genes.
-        ::testing::Values(0), // quantile
-        ::testing::Values(1) // proportion subset
-//        ::testing::Values(5, 10, 20), // nuber of top genes.
-//        ::testing::Values(0, 0.2, 0.33), // quantile
-//        ::testing::Values(0.5, 0.9) // proportion subset
+        ::testing::Values(5, 10, 20), // nuber of top genes.
+        ::testing::Values(0, 0.2, 0.33), // quantile
+        ::testing::Values(0.5, 0.9) // proportion subset
     )
 );
 
