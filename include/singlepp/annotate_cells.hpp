@@ -30,7 +30,7 @@ inline void annotate_cells_simple(
     if (subset.size()) {
         // Assumes that 'subset' is sorted.
         first = subset.front();
-        last = subset.back();
+        last = subset.back() + 1;
         for (auto& s : subset) {
             s -= first;
         }

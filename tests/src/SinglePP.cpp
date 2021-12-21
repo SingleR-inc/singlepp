@@ -105,7 +105,7 @@ TEST_P(SinglePPIntersectTest, Intersect) {
         ref_ptrs.push_back(refs[r].get());
     }
 
-    auto markers = mock_markers(nlabels, 50, ngenes); 
+    auto markers = mock_markers(nlabels, ngenes, ngenes); 
 
     // Creating overlapping ID vectors.
     std::mt19937_64 rng(top * quantile * prop);
@@ -131,10 +131,13 @@ TEST_P(SinglePPIntersectTest, Intersect) {
     auto markers2 = markers;
     singlepp::subset_markers(intersection, markers2, top);
     auto pairs = singlepp::unzip(intersection);
-    std::cout << "BAR " << intersection.size() << std::endl;
-    std::cout << pairs.first[0] << "\t" << pairs.second[0] << std::endl;
-    std::cout << pairs.first.back() << "\t" << pairs.second.back() << std::endl;
     auto submat = tatami::make_DelayedSubset<0>(mat, pairs.first);
+    
+    std::cout << "Subsetted: " << pairs.second.size() << "\t";
+    for (int i = 0; i < 10; ++i) {
+        std::cout << pairs.second[i] << ", ";
+    }
+    std::cout << std::endl;
 
     std::vector<std::shared_ptr<tatami::Matrix<double, int> > > subrefs(nlabels);
     std::vector<const tatami::Matrix<double, int>*> subref_ptrs(nlabels);
@@ -175,7 +178,7 @@ INSTANTIATE_TEST_CASE_P(
     SinglePP,
     SinglePPIntersectTest,
     ::testing::Combine(
-        ::testing::Values(100), // nuber of top genes.
+        ::testing::Values(1000), // nuber of top genes.
         ::testing::Values(0), // quantile
         ::testing::Values(1) // proportion subset
 //        ::testing::Values(5, 10, 20), // nuber of top genes.

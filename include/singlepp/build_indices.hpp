@@ -23,7 +23,7 @@ std::vector<Reference> build_indices(const std::vector<int>& subset, const std::
     size_t first = 0, last = 0;
     if (NR) {
         first = *std::min_element(subset.begin(), subset.end());
-        last = *std::max_element(subset.begin(), subset.end());
+        last = *std::max_element(subset.begin(), subset.end()) + 1;
     }
 
     #pragma omp parallel for
