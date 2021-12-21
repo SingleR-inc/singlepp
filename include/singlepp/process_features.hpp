@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
+#include "Markers.hpp"
 
 namespace singlepp {
 
@@ -36,8 +37,6 @@ Intersection intersect_features(size_t mat_n, const Id* mat_id, size_t ref_n, co
     std::sort(pairings.begin(), pairings.end());
     return pairings;
 }
-
-typedef std::vector<std::vector<std::vector<int> > > Markers;
 
 inline void subset_markers(Intersection& intersection, Markers& markers, int top) {
     std::unordered_set<int> available;
