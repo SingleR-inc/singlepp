@@ -9,19 +9,74 @@
 #include <vector> 
 #include <stdexcept>
 
+/**
+ * @file SinglePP.hpp
+ *
+ * @brief Defines the `SinglePP` class.
+ */
+
 namespace singlepp {
 
+/**
+ * @brief Automatically assign cell type labels based on an expression matrix.
+ *
+ * This implements the [**SingleR**](https://bioconductor.org/packages/SingleR) algorithm for automated annotation of single-cell RNA-seq data.
+ * For each cell, we compute the Spearman rank correlation between that cell and the reference expression profiles.
+ * This is done using only the subset of genes that are label-specific markers,
+ * most typically the top genes from pairwise comparisons between each label's expression profiles.
+ * For each label, we take the correlations involving that label's reference profiles and convert it into a score.
+ * The label with the highest score is used as an initial label for that cell.
+ *
+ * For each cell, we apply fine-tuning iterations to improve the label accuracy by refining the feature space.
+ * At each iteration, we find the subset of labels with scores that are close to the maximum score according to some threshold.
+ * We recompute the scores based on the markers for this label subset, and we repeat the process until only one label is left in the subset or the subset is unchanged.
+ * At the end of the iterations, the label with the highest score (or the only label, if just one is left) is used as the label for the cell.
+ * This process aims to remove noise by eliminating irrelevant genes when attempting to distinguish closely related labels.
+ * 
+ * Each label's score is defined as a user-specified quantile of the distribution of correlations across all reference profiles assigned to that label.
+ * (We typically consider a large quantile, e.g., the 80% percentile of the correlations.)
+ * The use of a quantile avoids problems with differences in the number of reference profiles per label;
+ * in contrast, just using the "top X correlations" would implicitly favor labels with more reference profiles.
+ *
+ * The choice of Spearman's correlation provides some robustness against batch effects when comparing reference and test datasets.
+ * Only the relative expression _within_ each cell needs to be comparable, not their relative expression across cells.
+ * As a result, it does not matter whether raw counts are supplied or log-transformed expression values, as the latter is a monotonic transformation of the latter (within each cell).
+ * The algorithm is also robust to differences in technologies between reference and test profiles, though it is preferable to have like-for-like comparisons. 
+ *
+ * @see
+ * Aran D et al. (2019). 
+ * Reference-based analysis of lung single-cell sequencing reveals a transitional profibrotic macrophage.
+ * _Nat. Immunol._ 20, 163-172
+ */
 class SinglePP {
 public:
+    /**
+     * @brief Default parameters for annotation.
+     */
     struct Defaults {
+        /**
+         * See `set_quantile()` for details.
+         */
         static constexpr double quantile = 0.2;
 
-        static constexpr double fine_tune_threshold =0.05;
+        /**
+         * See `set_fine_tune_threshold()` for details.
+         */
+        static constexpr double fine_tune_threshold = 0.05;
 
+        /**
+         * See `set_fine_tune()` for details.
+         */
         static constexpr bool fine_tune = true;
 
+        /**
+         * See `set_top()` for details.
+         */
         static constexpr int top = 20;
 
+        /**
+         * See `set_approximate()` for details.
+         */
         static constexpr bool approximate = false;
     };
 
@@ -33,26 +88,52 @@ private:
     bool approximate;
 
 public:
+    /**
+     * @param q Quantile to use to compute a per-label score from the correlations.
+     *
+     * @return A reference to this `SinglePP` object.
+     */
     SinglePP& set_quantile(double q = Defaults::quantile) {
         quantile = q;
         return *this;
     }
 
+    /**
+     * @param t Threshold to use to select the top-scoring subset of labels during fine-tuning.
+     *
+     * @return A reference to this `SinglePP` object.
+     */
     SinglePP& set_fine_tune_threshold(double t = Defaults::fine_tune_threshold) {
         fine_tune_threshold = t;
         return *this;
     }
 
+    /**
+     * @param f Whether to perform fine-tuning.
+     * This can be disabled for speed at the cost of accuracy.
+     *
+     * @return A reference to this `SinglePP` object.
+     */
     SinglePP& set_fine_tune(bool f = Defaults::fine_tune) {
         fine_tune = f;
         return *this;
     }
 
+    /**
+     * @param t Number of top markers to use from each pairwise comparison between labels.
+     *
+     * @return A reference to this `SinglePP` object.
+     */
     SinglePP& set_top(int t = Defaults::top) {
         top = t;
         return *this;
     }
 
+    /**
+     * @param a Whether to use an approximate method to quickly find the quantile.
+     *
+     * @return A reference to this `SinglePP` object.
+     */
     SinglePP& set_approximate(bool a = Defaults::approximate) {
         approximate = a;
         return *this;
