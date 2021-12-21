@@ -183,15 +183,33 @@ private:
     }
 
 public:
+    /**
+     * @brief Prebuilt references that can be directly used for annotation.
+     */
     struct Prebuilt {
+        /**
+         * @cond
+         */
         Prebuilt(Markers m, std::vector<int> s, std::vector<Reference> r) : 
             markers(std::move(m)), subset(std::move(s)), references(std::move(r)) {}
 
         Markers markers;
         std::vector<int> subset;
         std::vector<Reference> references;
+        /**
+         * @endcond
+         */
     };
 
+    /**
+     * @tparam Mat Pointer to a `tatami::Matrix` instance.
+     *
+     * @param ref One or more matrices for the reference expression profiles.
+     * Each matrix corresponds to one label and should have non-zero columns and the same number of rows (i.e., genes).
+     * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
+     *
+     * @return A `Prebuilt` instance that can be used in `run()` for annotation of a test dataset.
+     */
     template<class Mat>
     Prebuilt build(const std::vector<Mat*>& ref, Markers markers) {
         check_references(ref);
@@ -201,11 +219,42 @@ public:
     }
 
 public:
+    /**
+     * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
+     * This should have the same identity of genes as the reference matrices used in `build()`.
+     * @param refs An object produced by `build()`.
+     * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
+     * This is filled with the index of the assigned label for each cell.
+     * @param[out] scores Vector of pointers to arrays of length equal to the number of columns in `mat`.
+     * This is filled with the (non-fine-tuned) score for each label for each cell.
+     * Any pointer may be `NULL` in which case the scores for that label will not be saved.
+     * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
+     * This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
+     *
+     * @return `best`, `scores` and `delta` are filled with their output values.
+     */
     void run(const tatami::Matrix<double, int>* mat, const Prebuilt& refs, int* best, std::vector<double*>& scores, double* delta) {
         annotate_cells_simple(mat, refs.subset, refs.references, refs.markers, quantile, fine_tune, fine_tune_threshold, best, scores, delta);
         return;
     }
 
+    /**
+     * @tparam Mat Pointer to a `tatami::Matrix` instance.
+     *
+     * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
+     * @param ref One or more matrices for the reference expression profiles.
+     * Each matrix corresponds to one label and should have non-zero columns and the same number of rows (i.e., genes) at `mat`.
+     * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
+     * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
+     * This is filled with the index of the assigned label for each cell.
+     * @param[out] scores Vector of pointers to arrays of length equal to the number of columns in `mat`.
+     * This is filled with the (non-fine-tuned) score for each label for each cell.
+     * Any pointer may be `NULL` in which case the scores for that label will not be saved.
+     * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
+     * This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
+     *
+     * @return `best`, `scores` and `delta` are filled with their output values.
+     */
     template<class Mat>
     void run(const tatami::Matrix<double, int>* mat, const std::vector<Mat*>& ref, Markers markers, int* best, std::vector<double*>& scores, double* delta) {
         auto prebuilt = build(ref, std::move(markers));
@@ -214,11 +263,14 @@ public:
     }
 
 public:
+    /**
+     * @brief Results of the automated annotation.
+     */
     struct Results {
+        /**
+         * @cond
+         */
         Results(size_t ncells, size_t nlabels) : best(ncells), scores(nlabels, std::vector<double>(ncells)), delta(ncells) {}
-        std::vector<int> best;
-        std::vector<std::vector<double> > scores;
-        std::vector<double> delta;
 
         std::vector<double*> scores_to_pointers() {
             std::vector<double*> output(scores.size());
@@ -227,8 +279,38 @@ public:
             }
             return output;
         };
+        /**
+         * @endcond
+         */
+
+        /** 
+         * Vector of length equal to the number of cells in the test dataset,
+         * containing the index of the assigned label for each cell.
+         */
+        std::vector<int> best;
+
+        /**
+         * Vector of length equal to the number of labels,
+         * containing vectors of length equal to the number of cells in the test dataset.
+         * Each vector corresponds to a label and contains the (non-fine-tuned) score for each cell.
+         */
+        std::vector<std::vector<double> > scores;
+
+
+        /** 
+         * Vector of length equal to the number of cells in the test dataset.
+         * This contains the difference between the highest and second-highest scores for each cell, possibly after fine-tuning.
+         */
+        std::vector<double> delta;
     };
 
+    /**
+     * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
+     * This should have the same identity of genes as the reference matrices used in `build()`.
+     * @param refs An object produced by `build()`.
+     *
+     * @return A `Results` object containing the assigned labels and scores.
+     */
     Results run(const tatami::Matrix<double, int>* mat, const Prebuilt& refs) {
         size_t nlabels = refs.references.size();
         Results output(mat->ncol(), nlabels);
@@ -237,6 +319,16 @@ public:
         return output;
     }
 
+    /**
+     * @tparam Mat Pointer to a `tatami::Matrix` instance.
+     *
+     * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
+     * @param ref One or more matrices for the reference expression profiles.
+     * Each matrix corresponds to one label and should have non-zero columns and the same number of rows (i.e., genes) as `mat`.
+     * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
+     *
+     * @return A `Results` object containing the assigned labels and scores.
+     */
     template<class Mat>
     Results run(const tatami::Matrix<double, int>* mat, const std::vector<Mat*>& ref, Markers markers) {
         auto prebuilt = build(ref, std::move(markers));
@@ -244,6 +336,33 @@ public:
     }
 
 public:
+    /**
+     * @tparam Id Gene identifier for each row.
+     * @tparam Mat Pointer to a `tatami::Matrix` instance.
+     *
+     * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
+     * @param[in] mat_id Pointer to an array of identifiers of length equal to the number of rows of `mat`.
+     * This should contain a unique identifier for each row of `mat` (typically a gene name or index).
+     * @param ref One or more matrices for the reference expression profiles.
+     * Each matrix corresponds to one label and should have non-zero columns.
+     * All matrices in `ref` should have the same number of rows (i.e., genes), though not necessarily the same as `mat`.
+     * @param[in] ref_id Pointer to an array of identifiers of length equal to the number of rows of any `ref`.
+     * This should contain a unique identifier for each row of any matrix in `ref`, and should be comparable to `mat_id`.
+     * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
+     * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
+     * This is filled with the index of the assigned label for each cell.
+     * @param[out] scores Vector of pointers to arrays of length equal to the number of columns in `mat`.
+     * This is filled with the (non-fine-tuned) score for each label for each cell.
+     * Any pointer may be `NULL` in which case the scores for that label will not be saved.
+     * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
+     * This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
+     * 
+     * @return `best`, `scores` and `delta` are filled with their output values.
+     * 
+     * This version of `run()` applies an intersection to find the common genes between `mat` and `ref`, based on their shared values in `mat_id` and `ref_id`.
+     * The annotation is then performed using only the subset of common genes.
+     * The aim is to easily accommodate differences in feature annotation between the test and reference profiles.
+     */
     template<class Id, class Mat>
     void run(const tatami::Matrix<double, int>* mat, const Id* mat_id, const std::vector<Mat*>& ref, const Id* ref_id, Markers markers, int* best, std::vector<double*>& scores, double* delta) {
         check_references(ref);
@@ -255,6 +374,22 @@ public:
         return;
     }
 
+    /**
+     * @tparam Id Gene identifier for each row.
+     * @tparam Mat Pointer to a `tatami::Matrix` instance.
+     *
+     * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
+     * @param[in] mat_id Pointer to an array of identifiers of length equal to the number of rows of `mat`.
+     * This should contain a unique identifier for each row of `mat` (typically a gene name or index).
+     * @param ref One or more matrices for the reference expression profiles.
+     * Each matrix corresponds to one label and should have non-zero columns.
+     * All matrices in `ref` should have the same number of rows (i.e., genes), though not necessarily the same as `mat`.
+     * @param[in] ref_id Pointer to an array of identifiers of length equal to the number of rows of any `ref`.
+     * This should contain a unique identifier for each row of any matrix in `ref`, and should be comparable to `mat_id`.
+     * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
+     *
+     * @return A `Results` object containing the assigned labels and scores.
+     */ 
     template<class Id, class Mat>
     Results run(const tatami::Matrix<double, int>* mat, const Id* mat_id, const std::vector<Mat*>& ref, const Id* ref_id, Markers markers) {
         Results output(mat->ncol(), ref.size());
