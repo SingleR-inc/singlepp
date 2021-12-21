@@ -15,7 +15,8 @@
 namespace singlepp {
 
 inline void annotate_cells_simple(
-    const tatami::Matrix<double, int>* mat, 
+    const tatami::Matrix<double, int>* mat,
+    std::vector<int> subset,
     const std::vector<Reference>& ref,
     const Markers& markers,
     double quantile,
@@ -25,7 +26,15 @@ inline void annotate_cells_simple(
     std::vector<double*>& scores,
     double* delta) 
 {
-    const size_t NR = mat->nrow();
+    size_t first = 0, last = 0;
+    if (subset.size()) {
+        // Assumes that 'subset' is sorted.
+        first = subset.front();
+        last = subset.back() + 1;
+        for (auto& s : subset) {
+            s -= first;
+        }
+    }
     const size_t NC = mat->ncol();
 
     // Figuring out how many neighbors to keep and how to compute the quantiles.
@@ -36,22 +45,28 @@ inline void annotate_cells_simple(
         double denom = ref[r].index->nobs() - 1;
         auto k = std::ceil(denom * quantile) + 1;
         search_k[r] = k;
-        coeffs[r].first = quantile - static_cast<double>(k - 2) / denom;
-        coeffs[r].second = static_cast<double>(k - 1) / denom - quantile;
+
+        // `quantile - (k - 2) / denom` represents the gap to the smaller quantile,
+        // while `(k - 1) / denom - quantile` represents the gap from the larger quantile.
+        // The size of the gap is used as the weight for the _other_ quantile, i.e., 
+        // the closer you are to a quantile, the higher the weight.
+        // We convert these into proportions by dividing by their sum, i.e., `1/denom`.
+        coeffs[r].first = static_cast<double>(k - 1) - quantile * denom;
+        coeffs[r].second = quantile * denom - static_cast<double>(k - 2);
     }
 
     #pragma omp parallel
     {
-        std::vector<double> buffer(NR);
+        std::vector<double> buffer(last - first);
         RankedVector vec;
-        vec.reserve(NR);
+        vec.reserve(subset.size());
         auto wrk = mat->new_workspace(false);
-        std::vector<double> scaled(NR);
+        std::vector<double> scaled(subset.size());
 
         #pragma omp for
         for (size_t c = 0; c < NC; ++c) {
-            auto ptr = mat->column(c, buffer.data(), wrk.get());
-            scaled_ranks(NR, ptr, vec, scaled.data());
+            auto ptr = mat->column(c, buffer.data(), first, last, wrk.get());
+            scaled_ranks(ptr, subset, vec, scaled.data());
 
             std::vector<double> curscores(NL);
             for (size_t r = 0; r < NL; ++r) {
@@ -63,9 +78,9 @@ inline void annotate_cells_simple(
                 if (k == 1) {
                     curscores[r] = last;
                 } else {
-                    double second = current[k - 2].second;
-                    second = 1 - 2 * second * second;
-                    curscores[r] = coeffs[r].first * second + coeffs[r].second * last;
+                    double next = current[k - 2].second;
+                    next = 1 - 2 * next * next;
+                    curscores[r] = coeffs[r].first * next + coeffs[r].second * last;
                 }
 
                 if (scores[r]) {
@@ -91,52 +106,6 @@ inline void annotate_cells_simple(
         }
     }
 
-    return;
-}
-
-template<class Mat, typename Id, class Builder>
-void annotate_cells_simple(
-    const tatami::Matrix<double, int>* mat, 
-    const Id* mat_id,
-    const std::vector<Mat*>& ref,
-    const Id* ref_id,
-    const Builder& build,
-    Markers markers,
-    int top,
-    double quantile,
-    bool fine_tune,
-    double threshold,
-    int* best, 
-    std::vector<double*>& scores,
-    double* delta) 
-{
-    auto intersection = intersect_features(mat->nrow(), mat_id, ref->nrow(), ref_id);
-    auto subset = subset_markers(intersection, markers, top);
-    auto unzip = unzip(intersection);
-    auto submat = tatami::make_DelayedSubset<0>(tatami::wrap_shared_ptr(mat), std::move(unzip.first));
-    auto subref = build_indices(unzip.second, ref, build);
-    annotate_cells_simple(submat.get(), subref, markers, quantile, fine_tune, threshold, best, scores, delta);
-    return;
-}
-
-template<class Mat, class Builder>
-void annotate_cells_simple(
-    const tatami::Matrix<double, int>* mat, 
-    const std::vector<Mat*>& ref,
-    const Builder& build,
-    Markers markers,
-    int top,
-    double quantile,
-    bool fine_tune,
-    double threshold,
-    int* best, 
-    std::vector<double*>& scores,
-    double* delta) 
-{
-    auto subset = subset_markers(markers, top);
-    auto subref = build_indices(subset, ref, build);
-    auto submat = tatami::make_DelayedSubset<0>(tatami::wrap_shared_ptr(mat), std::move(subset));
-    annotate_cells_simple(submat.get(), subref, markers, quantile, fine_tune, threshold, best, scores, delta);
     return;
 }
 

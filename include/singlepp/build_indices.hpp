@@ -18,7 +18,13 @@ struct Reference {
 template<class Mat, class Builder>
 std::vector<Reference> build_indices(const std::vector<int>& subset, const std::vector<Mat*>& ref, const Builder& build) {
     std::vector<Reference> nnrefs(ref.size());
+
     size_t NR = subset.size();
+    size_t first = 0, last = 0;
+    if (NR) {
+        first = *std::min_element(subset.begin(), subset.end());
+        last = *std::max_element(subset.begin(), subset.end()) + 1;
+    }
 
     #pragma omp parallel for
     for (size_t g = 0; g < ref.size(); ++g) {
@@ -33,9 +39,9 @@ std::vector<Reference> build_indices(const std::vector<int>& subset, const std::
         auto wrk = curref->new_workspace(false);
 
         for (size_t c = 0; c < NC; ++c) {
-            auto ptr = curref->column(c, buffer.data(), wrk.get());
+            auto ptr = curref->column(c, buffer.data(), first, last, wrk.get());
             for (size_t r = 0; r < NR; ++r) {
-                ranked[r].first = ptr[subset[r]];
+                ranked[r].first = ptr[subset[r] - first];
                 ranked[r].second = r;
             }
             scaled_ranks(NR, ranked, indexable.data() + c * NR);

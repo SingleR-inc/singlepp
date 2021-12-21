@@ -15,23 +15,31 @@ inline double correlations_to_scores (std::vector<double>& correlations, double 
     } else if (quantile==0 || ncells==1) {
         return *std::max_element(correlations.begin(), correlations.end());
     } else {
-        auto rquantile = 1 - quantile; 
-        const double denom=ncells-1;
-        const size_t qn=std::floor(denom * rquantile) + 1;
+        const double denom = ncells - 1; 
+        const double prod = denom * quantile;
+        const size_t left = std::floor(prod);
+        const size_t right = std::ceil(prod);
 
-        // Technically, I should do (qn-1)+1, with the first -1 being to get zero-indexed values
-        // and the second +1 to obtain the ceiling. But they cancel out, so I won't.
-        std::nth_element(correlations.begin(), correlations.begin()+qn, correlations.end());
-        const double rightval=correlations[qn];
+        std::nth_element(correlations.begin(), correlations.begin() + right, correlations.end(), std::greater<double>());
+        const double rightval=correlations[right];
+        if (right == left) {
+            return rightval;
+        }
 
-        // Do NOT be tempted to do the second nth_element with the end at begin()+qn;
+        // Do NOT be tempted to do the second nth_element with the end at begin()+right;
         // this does not handle ties properly.
-        std::nth_element(correlations.begin(), correlations.begin()+qn-1, correlations.end());
-        const double leftval=correlations[qn-1];
+        std::nth_element(correlations.begin(), correlations.begin() + left, correlations.end(), std::greater<double>());
+        const double leftval=correlations[left];
 
-        const double rightweight=rquantile - ((qn-1)/denom);
-        const double leftweight=(qn/denom) - rquantile;
-        return (rightval * rightweight + leftval * leftweight)/(rightweight + leftweight);
+        // `quantile - left / denom` represents the gap to the smaller quantile,
+        // while `right / denom - quantile` represents the gap from the larger quantile.
+        // The size of the gap is used as the weight for the _other_ quantile, i.e., 
+        // the closer you are to a quantile, the higher the weight.
+        // We convert these into proportions by dividing by their sum, i.e., `1/denom`.
+        const double leftweight = right - prod;
+        const double rightweight = prod - left;
+
+        return rightval * rightweight + leftval * leftweight;
     }
 }
 
