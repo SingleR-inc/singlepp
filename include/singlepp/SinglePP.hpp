@@ -149,6 +149,13 @@ public:
     template<class Mat>
     Results run(const tatami::Matrix<double, int>* mat, const std::vector<Mat*>& ref, Markers markers) {
         auto prebuilt = build(ref, std::move(markers));
+
+        std::cout << "Simple references:" << std::endl;
+        for (size_t s = 0; s < prebuilt.references.size(); ++s) {
+            const auto& current = prebuilt.references[s];
+            std::cout << s << "\t" << current.data.size() << "\t" << current.data.front() << ":" << current.data.back() << std::endl;
+        }
+
         return run(mat, prebuilt);
     }
 
@@ -158,9 +165,20 @@ public:
         check_references(ref);
         auto intersection = intersect_features(mat->nrow(), mat_id, ref[0]->nrow(), ref_id);
         subset_markers(intersection, markers, top);
-        auto unzip = unzip(intersection);
-        auto subref = build_internal(unzip.second, ref);
-        annotate_cells_simple(mat, unzip.first, subref, markers, quantile, fine_tune, fine_tune_threshold, best, scores, delta);
+        auto pairs = unzip(intersection);
+        std::cout << "FOO " << intersection.size() << std::endl;
+        std::cout << pairs.first[0] << "\t" << pairs.second[0] << std::endl;
+        std::cout << pairs.first.back() << "\t" << pairs.second.back() << std::endl;
+
+        auto subref = build_internal(pairs.second, ref);
+
+        std::cout << "Intersect references:" << std::endl;
+        for (size_t s = 0; s < subref.size(); ++s) {
+            const auto& current = subref[s];
+            std::cout << s << "\t" << current.data.size() << "\t" << current.data.front() << ":" << current.data.back() << std::endl;
+        }
+
+        annotate_cells_simple(mat, pairs.first, subref, markers, quantile, fine_tune, fine_tune_threshold, best, scores, delta);
         return;
     }
 

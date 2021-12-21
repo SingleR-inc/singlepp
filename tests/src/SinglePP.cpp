@@ -8,20 +8,19 @@
 #include <vector>
 #include <random>
 
-class SinglePPTest : public ::testing::TestWithParam<std::tuple<int, double> > {
-protected:    
-    std::shared_ptr<tatami::Matrix<double, int> > spawn_matrix(size_t nr, size_t nc, int seed) {
-        std::vector<double> contents(nr*nc);
-        std::mt19937_64 rng(seed);
-        std::normal_distribution<> dist;
-        for (auto& c : contents) {
-            c = dist(rng);
-        }
-        return std::shared_ptr<tatami::Matrix<double, int> >(new tatami::DenseColumnMatrix<double, int>(nr, nc, std::move(contents)));
+std::shared_ptr<tatami::Matrix<double, int> > spawn_matrix(size_t nr, size_t nc, int seed) {
+    std::vector<double> contents(nr*nc);
+    std::mt19937_64 rng(seed);
+    std::normal_distribution<> dist;
+    for (auto& c : contents) {
+        c = dist(rng);
     }
-};
+    return std::shared_ptr<tatami::Matrix<double, int> >(new tatami::DenseColumnMatrix<double, int>(nr, nc, std::move(contents)));
+}
 
-TEST_P(SinglePPTest, Simple) {
+class SinglePPSimpleTest : public ::testing::TestWithParam<std::tuple<int, double> > {};
+
+TEST_P(SinglePPSimpleTest, Simple) {
     auto param = GetParam();
     int top = std::get<0>(param);
     double quantile = std::get<1>(param);
@@ -45,7 +44,7 @@ TEST_P(SinglePPTest, Simple) {
 
     // Running the implementation.
     singlepp::SinglePP runner;
-    runner.set_fine_tune(false). set_top(top).set_quantile(quantile);
+    runner.set_fine_tune(false).set_top(top).set_quantile(quantile);
     auto output = runner.run(mat.get(), ref_ptrs, markers);
 
     // Implementing the reference score calculation.
@@ -76,9 +75,113 @@ TEST_P(SinglePPTest, Simple) {
 
 INSTANTIATE_TEST_CASE_P(
     SinglePP,
-    SinglePPTest,
+    SinglePPSimpleTest,
     ::testing::Combine(
         ::testing::Values(5, 10, 20), // nuber of top genes.
         ::testing::Values(0, 0.07, 0.2, 0.33) // quantile
     )
 );
+
+class SinglePPIntersectTest : public ::testing::TestWithParam<std::tuple<int, double, double> > {};
+
+TEST_P(SinglePPIntersectTest, Intersect) {
+    auto param = GetParam();
+    int top = std::get<0>(param);
+    double quantile = std::get<1>(param);
+    double prop = std::get<2>(param);
+
+    // Mocking up the test and references.
+    size_t ngenes = 200;
+    auto mat = spawn_matrix(ngenes, 5, 42);
+ 
+    size_t nlabels = 3;
+    std::vector<std::shared_ptr<tatami::Matrix<double, int> > > refs;
+    for (size_t r = 0; r < nlabels; ++r) {
+        refs.push_back(spawn_matrix(ngenes, (r + 1) * 5, r * 100));
+    }
+
+    std::vector<const tatami::Matrix<double, int>*> ref_ptrs; // TODO: replace this part.
+    for (size_t r = 0; r < nlabels; ++r) {
+        ref_ptrs.push_back(refs[r].get());
+    }
+
+    auto markers = mock_markers(nlabels, 50, ngenes); 
+
+    // Creating overlapping ID vectors.
+    std::mt19937_64 rng(top * quantile * prop);
+    std::vector<int> left, right;
+    for (size_t x = 0; x < ngenes; ++x) {
+        if (rng() % 100 < 100 * prop) { 
+            left.push_back(x);
+        }
+        if (rng() % 100 < 100 * prop) { 
+            right.push_back(x);
+        }
+    }
+    std::shuffle(left.begin(), left.end(), rng);
+    std::shuffle(right.begin(), right.end(), rng);
+
+    // Computing the observed result.
+    singlepp::SinglePP runner;
+    runner.set_fine_tune(false).set_top(top).set_quantile(quantile);
+    auto result = runner.run(mat.get(), left.data(), ref_ptrs, right.data(), markers);
+
+    // Computing the reference result. We try not to use subset_markers
+    auto intersection = singlepp::intersect_features(left.size(), left.data(), right.size(), right.data());
+    auto markers2 = markers;
+    singlepp::subset_markers(intersection, markers2, top);
+    auto pairs = singlepp::unzip(intersection);
+    std::cout << "BAR " << intersection.size() << std::endl;
+    std::cout << pairs.first[0] << "\t" << pairs.second[0] << std::endl;
+    std::cout << pairs.first.back() << "\t" << pairs.second.back() << std::endl;
+    auto submat = tatami::make_DelayedSubset<0>(mat, pairs.first);
+
+    std::vector<std::shared_ptr<tatami::Matrix<double, int> > > subrefs(nlabels);
+    std::vector<const tatami::Matrix<double, int>*> subref_ptrs(nlabels);
+    for (size_t s = 0; s < nlabels; ++s) {
+        subrefs[s] = tatami::make_DelayedSubset<0>(refs[s], pairs.second);
+        subref_ptrs[s] = subrefs[s].get();
+    }
+
+//    std::unordered_map<int, int> locations;
+//    for (size_t i = 0; i < pairs.second.size(); ++i) {
+//        locations[pairs.second[i]] = i;
+//    }
+//
+//    for (size_t i = 0; i < nlabels; ++i) {
+//        for (size_t j = 0; j < nlabels; ++j) {
+//            if (i == j) {
+//                continue;
+//            }
+//
+//            std::vector<int> current;
+//            for (auto s : markers[i][j]) {
+//                auto it = locations.find(s);
+//                if (it != locations.end()) {
+//                    current.push_back(it->second);
+//                }
+//            }
+//            markers2[i][j] = current;
+//        }
+//    }
+
+    auto result2 = runner.run(submat.get(), subref_ptrs, markers2);
+    EXPECT_EQ(result2.scores[0], result.scores[0]);
+    EXPECT_EQ(result2.best, result.best);
+    EXPECT_EQ(result2.delta, result.delta);
+}
+
+INSTANTIATE_TEST_CASE_P(
+    SinglePP,
+    SinglePPIntersectTest,
+    ::testing::Combine(
+        ::testing::Values(100), // nuber of top genes.
+        ::testing::Values(0), // quantile
+        ::testing::Values(1) // proportion subset
+//        ::testing::Values(5, 10, 20), // nuber of top genes.
+//        ::testing::Values(0, 0.2, 0.33), // quantile
+//        ::testing::Values(0.5, 0.9) // proportion subset
+    )
+);
+
+
