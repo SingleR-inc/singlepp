@@ -64,10 +64,15 @@ inline std::pair<int, double> replace_labels_in_use(const std::vector<double>& s
 
 class FineTuner {
     std::vector<int> labels_in_use;
-    std::unordered_set<int> genes_in_use;
+
+    std::unordered_set<int> gene_subset;
+    std::vector<int> genes_in_use;
+
     RankedVector ranked;
     std::vector<double> scaled_left, scaled_right;
+
     std::vector<double> all_correlations;
+
 public:
     std::pair<int, double> run(
         const double* ptr, 
@@ -87,15 +92,18 @@ public:
         }
 
         while (labels_in_use.size() > 1) {
-            genes_in_use.clear();
+            gene_subset.clear();
             for (auto l : labels_in_use) {
                 for (auto l2 : labels_in_use){ 
                     if (l != l2) {
                         const auto& current = markers[l][l2];
-                        genes_in_use.insert(current.begin(), current.end());
+                        gene_subset.insert(current.begin(), current.end());
                     }
                 }
             }
+
+            genes_in_use.clear();
+            genes_in_use.insert(genes_in_use.end(), gene_subset.begin(), gene_subset.end());
 
             scaled_left.resize(genes_in_use.size());
             scaled_ranks(ptr, genes_in_use, ranked, scaled_left.data());
