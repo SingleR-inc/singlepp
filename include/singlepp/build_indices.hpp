@@ -16,7 +16,7 @@ struct Reference {
 };
 
 template<class Mat, class Builder>
-std::vector<Reference> build_indices(const std::vector<int>& subset, const std::vector<Mat*>& ref, const Builder& build) {
+std::vector<Reference> build_indices(const std::vector<int>& subset, const std::vector<Mat>& ref, const Builder& build) {
     std::vector<Reference> nnrefs(ref.size());
 
     size_t NR = subset.size();

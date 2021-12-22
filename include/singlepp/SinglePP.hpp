@@ -151,7 +151,7 @@ public:
 
 private:
     template<class Mat>
-    std::vector<Reference> build_internal(const std::vector<int>& subset, const std::vector<Mat*>& ref) { 
+    std::vector<Reference> build_internal(const std::vector<int>& subset, const std::vector<Mat>& ref) { 
         std::vector<Reference> subref;
         if (approximate) {
             subref = build_indices(subset, ref, 
@@ -170,7 +170,7 @@ private:
     }
 
     template<class Mat>
-    void check_references(const std::vector<Mat*>& ref) {
+    void check_references(const std::vector<Mat>& ref) {
         if (ref.size()==0) {
             throw std::runtime_error("reference must contain at least one label");
         }
@@ -211,7 +211,7 @@ public:
      * @return A `Prebuilt` instance that can be used in `run()` for annotation of a test dataset.
      */
     template<class Mat>
-    Prebuilt build(const std::vector<Mat*>& ref, Markers markers) {
+    Prebuilt build(const std::vector<Mat>& ref, Markers markers) {
         check_references(ref);
         auto subset = subset_markers(markers, top);
         auto subref = build_internal(subset, ref);
@@ -256,7 +256,7 @@ public:
      * @return `best`, `scores` and `delta` are filled with their output values.
      */
     template<class Mat>
-    void run(const tatami::Matrix<double, int>* mat, const std::vector<Mat*>& ref, Markers markers, int* best, std::vector<double*>& scores, double* delta) {
+    void run(const tatami::Matrix<double, int>* mat, const std::vector<Mat>& ref, Markers markers, int* best, std::vector<double*>& scores, double* delta) {
         auto prebuilt = build(ref, std::move(markers));
         run(mat, prebuilt, best, scores, delta);
         return;
@@ -330,7 +330,7 @@ public:
      * @return A `Results` object containing the assigned labels and scores.
      */
     template<class Mat>
-    Results run(const tatami::Matrix<double, int>* mat, const std::vector<Mat*>& ref, Markers markers) {
+    Results run(const tatami::Matrix<double, int>* mat, const std::vector<Mat>& ref, Markers markers) {
         auto prebuilt = build(ref, std::move(markers));
         return run(mat, prebuilt);
     }
@@ -364,7 +364,7 @@ public:
      * The aim is to easily accommodate differences in feature annotation between the test and reference profiles.
      */
     template<class Id, class Mat>
-    void run(const tatami::Matrix<double, int>* mat, const Id* mat_id, const std::vector<Mat*>& ref, const Id* ref_id, Markers markers, int* best, std::vector<double*>& scores, double* delta) {
+    void run(const tatami::Matrix<double, int>* mat, const Id* mat_id, const std::vector<Mat>& ref, const Id* ref_id, Markers markers, int* best, std::vector<double*>& scores, double* delta) {
         check_references(ref);
         auto intersection = intersect_features(mat->nrow(), mat_id, ref[0]->nrow(), ref_id);
         subset_markers(intersection, markers, top);
@@ -391,7 +391,7 @@ public:
      * @return A `Results` object containing the assigned labels and scores.
      */ 
     template<class Id, class Mat>
-    Results run(const tatami::Matrix<double, int>* mat, const Id* mat_id, const std::vector<Mat*>& ref, const Id* ref_id, Markers markers) {
+    Results run(const tatami::Matrix<double, int>* mat, const Id* mat_id, const std::vector<Mat>& ref, const Id* ref_id, Markers markers) {
         Results output(mat->ncol(), ref.size());
         auto scores = output.scores_to_pointers();
         run(mat, mat_id, ref, ref_id, std::move(markers), output.best.data(), scores, output.delta.data());

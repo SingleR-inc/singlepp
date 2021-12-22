@@ -35,17 +35,12 @@ TEST_P(SinglePPSimpleTest, Simple) {
         refs.push_back(spawn_matrix(ngenes, (r + 1) * 5, r * 100));
     }
 
-    std::vector<const tatami::Matrix<double, int>*> ref_ptrs; // TODO: replace this part.
-    for (size_t r = 0; r < nlabels; ++r) {
-        ref_ptrs.push_back(refs[r].get());
-    }
-
     auto markers = mock_markers(nlabels, 50, ngenes); 
 
     // Running the implementation.
     singlepp::SinglePP runner;
     runner.set_fine_tune(false).set_top(top).set_quantile(quantile);
-    auto output = runner.run(mat.get(), ref_ptrs, markers);
+    auto output = runner.run(mat.get(), refs, markers);
 
     // Implementing the reference score calculation.
     auto subset = singlepp::subset_markers(markers, top);
@@ -114,17 +109,12 @@ TEST_P(SinglePPIntersectTest, Intersect) {
         refs.push_back(spawn_matrix(right.size(), (r + 1) * 5, r * 100));
     }
 
-    std::vector<const tatami::Matrix<double, int>*> ref_ptrs; // TODO: replace this part.
-    for (size_t r = 0; r < nlabels; ++r) {
-        ref_ptrs.push_back(refs[r].get());
-    }
-
     auto markers = mock_markers(nlabels, 50, right.size()); 
 
     // Computing the observed result.
     singlepp::SinglePP runner;
     runner.set_fine_tune(false).set_top(top).set_quantile(quantile);
-    auto result = runner.run(mat.get(), left.data(), ref_ptrs, right.data(), markers);
+    auto result = runner.run(mat.get(), left.data(), refs, right.data(), markers);
 
     // Computing the reference result using the other run() method,
     // after effectively subsetting the input matrices and reindexing the markers.
@@ -133,10 +123,8 @@ TEST_P(SinglePPIntersectTest, Intersect) {
     auto submat = tatami::make_DelayedSubset<0>(mat, pairs.first);
     
     std::vector<std::shared_ptr<tatami::Matrix<double, int> > > subrefs(nlabels);
-    std::vector<const tatami::Matrix<double, int>*> subref_ptrs(nlabels);
     for (size_t s = 0; s < nlabels; ++s) {
         subrefs[s] = tatami::make_DelayedSubset<0>(refs[s], pairs.second);
-        subref_ptrs[s] = subrefs[s].get();
     }
 
     std::unordered_map<int, int> locations;
@@ -162,7 +150,7 @@ TEST_P(SinglePPIntersectTest, Intersect) {
         }
     }
 
-    auto result2 = runner.run(submat.get(), subref_ptrs, markers2);
+    auto result2 = runner.run(submat.get(), subrefs, markers2);
     EXPECT_EQ(result2.scores[0], result.scores[0]);
     EXPECT_EQ(result2.best, result.best);
     EXPECT_EQ(result2.delta, result.delta);
