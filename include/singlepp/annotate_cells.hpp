@@ -59,17 +59,21 @@ inline void annotate_cells_simple(
     #pragma omp parallel
     {
         std::vector<double> buffer(last - first);
+        auto wrk = mat->new_workspace(false);
+
         RankedVector vec;
         vec.reserve(subset.size());
-        auto wrk = mat->new_workspace(false);
         std::vector<double> scaled(subset.size());
+
+        FineTuner ft;
+        std::vector<double> curscores(NL);
 
         #pragma omp for
         for (size_t c = 0; c < NC; ++c) {
             auto ptr = mat->column(c, buffer.data(), first, last, wrk.get());
             scaled_ranks(ptr, subset, vec, scaled.data());
 
-            std::vector<double> curscores(NL);
+            curscores.resize(NL);
             for (size_t r = 0; r < NL; ++r) {
                 size_t k = search_k[r];
                 auto current = ref[r].index->find_nearest_neighbors(scaled.data(), k);
@@ -100,9 +104,9 @@ inline void annotate_cells_simple(
                     delta[c] = std::numeric_limits<double>::quiet_NaN();
                 }
             } else {
-                auto tuned = fine_tune_loop(scaled.data(), ref, markers, curscores, quantile, threshold);
+                auto tuned = ft.run(scaled.data(), ref, markers, curscores, quantile, threshold);
                 best[c] = tuned.first;
-                best[c] = tuned.second;
+                delta[c] = tuned.second;
             }
         }
     }

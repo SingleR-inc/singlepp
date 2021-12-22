@@ -16,6 +16,7 @@ add_executable(
     src/scaled_ranks.cpp
     src/compute_scores.cpp
     src/process_features.cpp
+    src/fine_tune.cpp
 )
 
 target_link_libraries(

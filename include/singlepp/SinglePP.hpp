@@ -179,6 +179,9 @@ private:
             if (r->nrow() != nr) {
                 throw std::runtime_error("reference matrices must have the same number of rows");
             }
+            if (r->ncol() == 0) {
+                throw std::runtime_error("reference matrices must have non-zero number of columns");
+            }
         }
     }
 

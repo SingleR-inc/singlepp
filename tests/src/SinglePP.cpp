@@ -2,21 +2,13 @@
 
 #include "singlepp/SinglePP.hpp"
 #include "tatami/tatami.hpp"
+
 #include "mock_markers.h"
+#include "spawn_matrix.h"
 
 #include <memory>
 #include <vector>
 #include <random>
-
-std::shared_ptr<tatami::Matrix<double, int> > spawn_matrix(size_t nr, size_t nc, int seed) {
-    std::vector<double> contents(nr*nc);
-    std::mt19937_64 rng(seed);
-    std::normal_distribution<> dist;
-    for (auto& c : contents) {
-        c = dist(rng);
-    }
-    return std::shared_ptr<tatami::Matrix<double, int> >(new tatami::DenseColumnMatrix<double, int>(nr, nc, std::move(contents)));
-}
 
 class SinglePPSimpleTest : public ::testing::TestWithParam<std::tuple<int, double> > {};
 
@@ -166,4 +158,27 @@ INSTANTIATE_TEST_CASE_P(
     )
 );
 
+TEST(SinglePPTest, Simple) {
+    // Mocking up the references.
+    size_t ngenes = 200;
+ 
+    size_t nlabels = 3;
+    std::vector<std::shared_ptr<tatami::Matrix<double, int> > > refs;
+    for (size_t r = 0; r < nlabels; ++r) {
+        refs.push_back(spawn_matrix(ngenes, (r + 1) * 5, r * 100));
+    }
 
+    auto markers = mock_markers(nlabels, 50, ngenes); 
+
+    // Checking that we get an exact match when we use the references
+    // directly for annotation. We set quantile = 1 so that a perfect
+    // correlation to any reference profile guarantees a match.
+    singlepp::SinglePP runner;
+    runner.set_quantile(1);
+
+    for (size_t r = 0; r < nlabels; ++r) {
+        auto output = runner.run(refs[r].get(), refs, markers);
+        std::vector<int> expected(refs[r]->ncol(), r);
+        EXPECT_EQ(expected, output.best);
+    }
+}
