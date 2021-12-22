@@ -12,7 +12,7 @@ inline double correlations_to_scores (std::vector<double>& correlations, double 
     const size_t ncells=correlations.size();
     if (ncells==0) {
         return std::numeric_limits<double>::quiet_NaN();
-    } else if (quantile==0 || ncells==1) {
+    } else if (quantile==1 || ncells==1) {
         return *std::max_element(correlations.begin(), correlations.end());
     } else {
         const double denom = ncells - 1; 
@@ -20,7 +20,7 @@ inline double correlations_to_scores (std::vector<double>& correlations, double 
         const size_t left = std::floor(prod);
         const size_t right = std::ceil(prod);
 
-        std::nth_element(correlations.begin(), correlations.begin() + right, correlations.end(), std::greater<double>());
+        std::nth_element(correlations.begin(), correlations.begin() + right, correlations.end());
         const double rightval=correlations[right];
         if (right == left) {
             return rightval;
@@ -28,7 +28,7 @@ inline double correlations_to_scores (std::vector<double>& correlations, double 
 
         // Do NOT be tempted to do the second nth_element with the end at begin()+right;
         // this does not handle ties properly.
-        std::nth_element(correlations.begin(), correlations.begin() + left, correlations.end(), std::greater<double>());
+        std::nth_element(correlations.begin(), correlations.begin() + left, correlations.end());
         const double leftval=correlations[left];
 
         // `quantile - left / denom` represents the gap to the smaller quantile,

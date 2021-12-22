@@ -43,16 +43,17 @@ inline void annotate_cells_simple(
     std::vector<std::pair<double, double> > coeffs(NL);
     for (size_t r = 0; r < NL; ++r) {
         double denom = ref[r].index->nobs() - 1;
-        auto k = std::ceil(denom * quantile) + 1;
+        double prod = denom * (1 - quantile);
+        auto k = std::ceil(prod) + 1;
         search_k[r] = k;
 
-        // `quantile - (k - 2) / denom` represents the gap to the smaller quantile,
-        // while `(k - 1) / denom - quantile` represents the gap from the larger quantile.
+        // `(1 - quantile) - (k - 2) / denom` represents the gap to the smaller quantile,
+        // while `(k - 1) / denom - (1 - quantile)` represents the gap from the larger quantile.
         // The size of the gap is used as the weight for the _other_ quantile, i.e., 
         // the closer you are to a quantile, the higher the weight.
         // We convert these into proportions by dividing by their sum, i.e., `1/denom`.
-        coeffs[r].first = static_cast<double>(k - 1) - quantile * denom;
-        coeffs[r].second = quantile * denom - static_cast<double>(k - 2);
+        coeffs[r].first = static_cast<double>(k - 1) - prod;
+        coeffs[r].second = prod - static_cast<double>(k - 2);
     }
 
     #pragma omp parallel

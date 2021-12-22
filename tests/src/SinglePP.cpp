@@ -173,7 +173,7 @@ INSTANTIATE_TEST_CASE_P(
     SinglePPIntersectTest,
     ::testing::Combine(
         ::testing::Values(5, 10, 20), // nuber of top genes.
-        ::testing::Values(0, 0.2, 0.33), // quantile
+        ::testing::Values(1, 0.8, 0.66), // quantile
         ::testing::Values(0.5, 0.9) // proportion subset
     )
 );

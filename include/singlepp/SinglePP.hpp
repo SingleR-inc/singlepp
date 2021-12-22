@@ -57,7 +57,7 @@ public:
         /**
          * See `set_quantile()` for details.
          */
-        static constexpr double quantile = 0.2;
+        static constexpr double quantile = 0.8;
 
         /**
          * See `set_fine_tune_threshold()` for details.
