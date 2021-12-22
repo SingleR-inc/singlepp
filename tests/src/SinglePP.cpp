@@ -22,20 +22,24 @@ TEST_P(SinglePPSimpleTest, Simple) {
     auto mat = spawn_matrix(ngenes, 5, 42);
  
     size_t nlabels = 3;
-    std::vector<std::shared_ptr<tatami::Matrix<double, int> > > refs;
-    for (size_t r = 0; r < nlabels; ++r) {
-        refs.push_back(spawn_matrix(ngenes, (r + 1) * 5, r * 100));
-    }
+    size_t nrefs = 50;
+    auto refs = spawn_matrix(ngenes, nrefs, 100);
+    auto labels = spawn_labels(nrefs, nlabels, 1000);
 
     auto markers = mock_markers(nlabels, 50, ngenes); 
 
     // Running the implementation.
     singlepp::SinglePP runner;
     runner.set_fine_tune(false).set_top(top).set_quantile(quantile);
-    auto output = runner.run(mat.get(), refs, markers);
+    auto output = runner.run(mat.get(), refs.get(), labels.data(), markers);
 
     // Implementing the reference score calculation.
     auto subset = singlepp::subset_markers(markers, top);
+
+    std::vector<std::vector<int> > by_labels(nlabels);
+    for (size_t r = 0; r < nrefs; ++r) {
+        by_labels[labels[r]].push_back(r);
+    }
 
     for (size_t c = 0; c < mat->ncol(); ++c) {
         auto col = mat->column(c);
@@ -44,11 +48,9 @@ TEST_P(SinglePPSimpleTest, Simple) {
         singlepp::scaled_ranks(col.data(), subset, vec, scaled.data());
 
         for (size_t r = 0; r < nlabels; ++r) {
-            const auto& curref = refs[r];
             std::vector<double> correlations;
-
-            for (size_t l = 0; l < curref->ncol(); ++l) {
-                auto col2 = curref->column(l);
+            for (auto l : by_labels[r]) {
+                auto col2 = refs->column(l);
                 std::vector<double> scaled2(subset.size());
                 singlepp::scaled_ranks(col2.data(), subset, vec, scaled2.data());
                 correlations.push_back(singlepp::distance_to_correlation(scaled.size(), scaled.data(), scaled2.data()));
@@ -65,7 +67,7 @@ INSTANTIATE_TEST_CASE_P(
     SinglePPSimpleTest,
     ::testing::Combine(
         ::testing::Values(5, 10, 20), // nuber of top genes.
-        ::testing::Values(0, 0.07, 0.2, 0.33) // quantile
+        ::testing::Values(1, 0.93, 0.8, 0.66) // quantile
     )
 );
 
@@ -94,30 +96,25 @@ TEST_P(SinglePPIntersectTest, Intersect) {
 
     // Mocking up the test and references.
     auto mat = spawn_matrix(left.size(), 5, 42);
- 
+
     size_t nlabels = 3;
-    std::vector<std::shared_ptr<tatami::Matrix<double, int> > > refs;
-    for (size_t r = 0; r < nlabels; ++r) {
-        refs.push_back(spawn_matrix(right.size(), (r + 1) * 5, r * 100));
-    }
+    size_t nrefs = 50;
+    auto refs = spawn_matrix(ngenes, nrefs, 100);
+    auto labels = spawn_labels(nrefs, nlabels, 1000);
 
     auto markers = mock_markers(nlabels, 50, right.size()); 
 
     // Computing the observed result.
     singlepp::SinglePP runner;
     runner.set_fine_tune(false).set_top(top).set_quantile(quantile);
-    auto result = runner.run(mat.get(), left.data(), refs, right.data(), markers);
+    auto result = runner.run(mat.get(), left.data(), refs.get(), right.data(), labels.data(), markers);
 
     // Computing the reference result using the other run() method,
     // after effectively subsetting the input matrices and reindexing the markers.
     auto intersection = singlepp::intersect_features(left.size(), left.data(), right.size(), right.data());
     auto pairs = singlepp::unzip(intersection);
     auto submat = tatami::make_DelayedSubset<0>(mat, pairs.first);
-    
-    std::vector<std::shared_ptr<tatami::Matrix<double, int> > > subrefs(nlabels);
-    for (size_t s = 0; s < nlabels; ++s) {
-        subrefs[s] = tatami::make_DelayedSubset<0>(refs[s], pairs.second);
-    }
+    auto subrefs = tatami::make_DelayedSubset<0>(refs, pairs.second);
 
     std::unordered_map<int, int> locations;
     for (size_t i = 0; i < pairs.second.size(); ++i) {
@@ -142,7 +139,7 @@ TEST_P(SinglePPIntersectTest, Intersect) {
         }
     }
 
-    auto result2 = runner.run(submat.get(), subrefs, markers2);
+    auto result2 = runner.run(submat.get(), subrefs.get(), labels.data(), markers2);
     EXPECT_EQ(result2.scores[0], result.scores[0]);
     EXPECT_EQ(result2.best, result.best);
     EXPECT_EQ(result2.delta, result.delta);
@@ -163,10 +160,9 @@ TEST(SinglePPTest, Simple) {
     size_t ngenes = 200;
  
     size_t nlabels = 3;
-    std::vector<std::shared_ptr<tatami::Matrix<double, int> > > refs;
-    for (size_t r = 0; r < nlabels; ++r) {
-        refs.push_back(spawn_matrix(ngenes, (r + 1) * 5, r * 100));
-    }
+    size_t nrefs = 50;
+    auto refs = spawn_matrix(ngenes, nrefs, 100);
+    auto labels = spawn_labels(nrefs, nlabels, 1000);
 
     auto markers = mock_markers(nlabels, 50, ngenes); 
 
@@ -176,9 +172,8 @@ TEST(SinglePPTest, Simple) {
     singlepp::SinglePP runner;
     runner.set_quantile(1);
 
-    for (size_t r = 0; r < nlabels; ++r) {
-        auto output = runner.run(refs[r].get(), refs, markers);
-        std::vector<int> expected(refs[r]->ncol(), r);
-        EXPECT_EQ(expected, output.best);
+    auto output = runner.run(refs.get(), refs.get(), labels.data(), markers);
+    for (size_t r = 0; r < nrefs; ++r) {
+        EXPECT_EQ(labels[r], output.best[r]);
     }
 }
