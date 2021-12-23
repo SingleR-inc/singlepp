@@ -3,6 +3,7 @@ library(Rcpp)
 sourceCpp("test.cpp")
 
 library(SingleR)
+library(testthat)
 
 test_that("results match up with SingleR (basic)", {
     # Setting up the data.

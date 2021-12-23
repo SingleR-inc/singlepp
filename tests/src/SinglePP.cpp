@@ -99,9 +99,8 @@ TEST_P(SinglePPIntersectTest, Intersect) {
 
     size_t nlabels = 3;
     size_t nrefs = 50;
-    auto refs = spawn_matrix(ngenes, nrefs, 100);
+    auto refs = spawn_matrix(right.size(), nrefs, 100);
     auto labels = spawn_labels(nrefs, nlabels, 1000);
-
     auto markers = mock_markers(nlabels, 50, right.size()); 
 
     // Computing the observed result.
