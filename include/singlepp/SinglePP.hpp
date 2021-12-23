@@ -81,11 +81,11 @@ public:
     };
 
 private:
-    double quantile;
-    double fine_tune_threshold;
-    bool fine_tune;
-    int top;
-    bool approximate;
+    double quantile = Defaults::quantile;
+    double fine_tune_threshold = Defaults::fine_tune_threshold;
+    bool fine_tune = Defaults::fine_tune;
+    int top = Defaults::top;
+    bool approximate = Defaults::approximate;
 
 public:
     /**
