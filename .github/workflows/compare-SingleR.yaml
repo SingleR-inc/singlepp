@@ -1,0 +1,43 @@
+on: [push, pull_request]
+
+name: SingleR comparison
+
+jobs:
+  build:
+    name: Compare to SingleR reference
+    runs-on: ubuntu-latest
+    container: bioconductor/bioconductor_docker:devel
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Get latest CMake
+      uses: lukka/get-cmake@latest
+
+    - name: Configure the build 
+      run: cmake -S . -B build -DBUILD_TESTING=OFF
+
+    - name: Set directories
+      run: |
+        echo "R_PKG_DIR=${R_HOME}/site-library" >> $GITHUB_ENV
+
+    - name: Restore the package directory
+      uses: actions/cache@v2
+      with:
+        path: ${{ env.R_PKG_DIR }}
+        key: preinstalled-packages
+
+    - name: Install packages
+      shell: Rscript {0}
+      run: |
+        BiocManager::install(c("SingleR", "Rcpp", "testthat"))
+
+    - name: Build the test dependencies
+      run: |
+        cd tests/R
+        bash build.sh
+
+    - name: Run the comparisons
+      shell: Rscript {0}
+      run: |
+        setwd("tests/R")
+        testthat::test_file("run.R", stop_on_failure=TRUE)
