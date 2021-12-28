@@ -12,6 +12,12 @@
 #include "buffin/parse_zlib_buffer.hpp"
 #endif
 
+/**
+ * @file load_references.hpp
+ *
+ * @brief Load reference datasets from a few expected formats.
+ */
+
 namespace singlepp {
 
 /** 
@@ -51,6 +57,55 @@ struct LabelLoader {
 /** 
  * @endcond
  */
+
+/**
+ * @param path Path to a text file containing the labels.
+ * @param buffer_size Size of the buffer to use when reading the file.
+ *
+ * @return Vector of strings containing the labels for each reference profile.
+ *
+ * The file should contain one line per profile, containing a (non-quoted) string with the label for that profile.
+ * The total number of lines should be equal to the number of profiles in the dataset.
+ * The file should not contain any header.
+ */
+inline std::vector<std::string> load_labels_from_text_file(const char* path, size_t buffer_size = 65536) {
+    LabelLoader loader;
+    buffin::parse_text_file(path, loader, buffer_size);
+    return loader.labels;
+}
+
+#ifdef SINGLEPP_USE_ZLIB
+
+/**
+ * @param path Path to a Gzip-compressed file containing the labels.
+ * @param buffer_size Size of the buffer to use when reading the file.
+ *
+ * @return Vector of strings containing the labels for each reference profile.
+ *
+ * See `load_labels_from_text_file()` for details about the format.
+ */
+inline std::vector<std::string> load_labels_from_gzip_file(const char* path, size_t buffer_size = 65536) {
+    LabelLoader loader;
+    buffin::parse_gzip_file(path, loader, buffer_size);
+    return loader.labels;
+}
+
+/**
+ * @param[in] buffer Pointer to an array containing a Zlib/Gzip-compressed string of labels.
+ * @param len Length of the array for `buffer`.
+ * @param buffer_size Size of the buffer to use when decompressing the buffer.
+ *
+ * @return Vector of strings containing the labels for each reference profile.
+ *
+ * See `load_labels_from_text_file()` for details about the format.
+ */
+inline std::vector<std::string> load_labels_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t buffer_size = 65536) {
+    LabelLoader loader;
+    buffin::parse_zlib_buffer(const_cast<unsigned char*>(buffer), len, loader, 3, buffer_size);
+    return loader.labels;
+}
+
+#endif
 
 /** 
  * @cond
@@ -114,11 +169,66 @@ struct FeatureLoader {
  * @endcond
  */
 
+/**
+ * @param path Path to a text file containing the feature annotation.
+ * @param buffer_size Size of the buffer to use when reading the file.
+ *
+ * @return Pair of vectors, each of length equal to the number of features.
+ * The first contains Ensembl IDs while the second contains gene symbols.
+ *
+ * The file should contain one line per feature, with total number of lines equal to the number of features in the dataset.
+ * Each line should contain two strings separated by a comma.
+ * The first string should be the Ensembl ID while the second string should be the gene symbol; either string may be empty.
+ * The file should not contain any header.
+ */
+inline std::pair<std::vector<std::string>, std::vector<std::string> > load_features_from_text_file(const char* path, size_t buffer_size = 65536) {
+    FeatureLoader loader;
+    buffin::parse_text_file(path, loader, buffer_size);
+    loader.finish();
+    return std::make_pair(std::move(loader.ensembl), std::move(loader.symbols));
+}
+
+#ifdef SINGLEPP_USE_ZLIB
+
+/**
+ * @param path Path to a Gzip-compressed file containing the feature annotation.
+ * @param buffer_size Size of the buffer to use when reading the file.
+ *
+ * @return Pair of vectors, each of length equal to the number of features.
+ * The first contains Ensembl IDs while the second contains gene symbols.
+ *
+ * See `load_features_from_text_file()` for details about the format.
+ */
+inline std::pair<std::vector<std::string>, std::vector<std::string> > load_features_from_gzip_file(const char* path, size_t buffer_size = 65536) {
+    FeatureLoader loader;
+    buffin::parse_gzip_file(path, loader, buffer_size);
+    loader.finish();
+    return std::make_pair(std::move(loader.ensembl), std::move(loader.symbols));
+}
+
+/**
+ * @param[in] buffer Pointer to an array containing a Zlib/Gzip-compressed string containing the feature annotation.
+ * @param len Length of the array for `buffer`.
+ * @param buffer_size Size of the buffer to use when decompressing the buffer.
+ *
+ * @return Pair of vectors, each of length equal to the number of features.
+ * The first contains Ensembl IDs while the second contains gene symbols.
+ *
+ * See `load_features_from_text_file()` for details about the format.
+ */
+inline std::pair<std::vector<std::string>, std::vector<std::string> > load_features_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t buffer_size = 65536) {
+    FeatureLoader loader;
+    buffin::parse_text_file(buffer, len, loader, 3, buffer_size);
+    loader.finish();
+    return std::make_pair(std::move(loader.ensembl), std::move(loader.symbols));
+}
+#endif
+
 /** 
  * @cond
  */
 struct RankingLoader {
-    RankingLoader(size_t nf, size_t ns) : nfeatures(nf), nsamples(ns) {}
+    RankingLoader(size_t nf, size_t np) : nfeatures(nf), nprofiles(np) {}
 
     template<typename B>
     void add (const B* buffer, size_t n) {
@@ -170,12 +280,12 @@ struct RankingLoader {
             values.push_back(current);
             ++line;
         }
-        if (line != nsamples) {
+        if (line != nprofiles) {
             throw std::runtime_error("number of lines is not consistent with the expected number of samples");
         }
     }
 
-    const size_t nfeatures, nsamples;
+    const size_t nfeatures, nprofiles;
     size_t line = 0;
 
     int field = 0;
@@ -188,66 +298,61 @@ struct RankingLoader {
  * @endcond
  */
 
-inline std::vector<std::string> load_labels_from_text_file(const char* path, size_t buffer_size = 65536) {
-    LabelLoader loader;
-    buffin::parse_text_file(path, loader, buffer_size);
-    return loader.labels;
-}
-
-#ifdef SINGLEPP_USE_ZLIB
-inline std::vector<std::string> load_labels_from_gzip_file(const char* path, size_t buffer_size = 65536) {
-    LabelLoader loader;
-    buffin::parse_gzip_file(path, loader, buffer_size);
-    return loader.labels;
-}
-
-inline std::vector<std::string> load_labels_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t buffer_size = 65536) {
-    LabelLoader loader;
-    buffin::parse_zlib_buffer(buffer, len, loader, buffer_size);
-    return loader.labels;
-}
-#endif
-
-inline std::pair<std::vector<std::string>, std::vector<std::string> > load_features_from_text_file(const char* path, size_t buffer_size = 65536) {
-    FeatureLoader loader;
-    buffin::parse_text_file(path, loader, buffer_size);
-    loader.finish();
-    return std::make_pair(std::move(loader.ensembl), std::move(loader.symbols));
-}
-
-#ifdef SINGLEPP_USE_ZLIB
-inline std::pair<std::vector<std::string>, std::vector<std::string> > load_features_from_gzip_file(const char* path, size_t buffer_size = 65536) {
-    FeatureLoader loader;
-    buffin::parse_gzip_file(path, loader, buffer_size);
-    loader.finish();
-    return std::make_pair(std::move(loader.ensembl), std::move(loader.symbols));
-}
-
-inline std::pair<std::vector<std::string>, std::vector<std::string> > load_features_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t buffer_size = 65536) {
-    FeatureLoader loader;
-    buffin::parse_text_file(buffer, len, loader, buffer_size);
-    loader.finish();
-    return std::make_pair(std::move(loader.ensembl), std::move(loader.symbols));
-}
-#endif
-
-inline std::vector<int> load_rankings_from_text_file(const char* path, size_t nfeatures, size_t nsamples, size_t buffer_size = 65536) {
-    RankingLoader loader(nfeatures, nsamples);
+/**
+ * @param path Path to a text file containing the ranking matrix.
+ * @param nfeatures Number of features in the ranking matrix.
+ * @param nprofiles Number of profiles in the ranking matrix. 
+ * @param buffer_size Size of the buffer to use when reading the file.
+ *
+ * @return Vector corresponding to a column-major matrix of rankings.
+ * Each column corresponds to a reference profile while each row corresponds to a feature.
+ *
+ * The file should contain one line per reference profile, with the total number of lines equal to the number of profiles in the dataset.
+ * Each line should contain the rank of each feature's expression within that profile, separated by commas.
+ * The number of comma-separated fields on each line should be equal to the number of features.
+ * Ranks should be strictly integer - tied ranks should default to the minimum rank among the index set of ties.
+ */
+inline std::vector<int> load_rankings_from_text_file(const char* path, size_t nfeatures, size_t nprofiles, size_t buffer_size = 65536) {
+    RankingLoader loader(nfeatures, nprofiles);
     buffin::parse_text_file(path, loader, buffer_size);
     loader.finish();
     return loader.values;
 }
 
 #ifdef SINGLEPP_USE_ZLIB
-inline std::vector<int> load_rankings_from_gzip_file(const char* path, size_t nfeatures, size_t nsamples, size_t buffer_size = 65536) {
-    RankingLoader loader(nfeatures, nsamples);
+
+/**
+ * @param path Path to a Gzip-compressed file containing the ranking matrix.
+ * @param nfeatures Number of features in the ranking matrix.
+ * @param nprofiles Number of profiles in the ranking matrix. 
+ * @param buffer_size Size of the buffer to use when reading the file.
+ *
+ * @return Vector corresponding to a column-major matrix of rankings.
+ * Each column corresponds to a reference profile while each row corresponds to a feature.
+ *
+ * See `load_rankings_from_text_file()` for details about the format.
+ */
+inline std::vector<int> load_rankings_from_gzip_file(const char* path, size_t nfeatures, size_t nprofiles, size_t buffer_size = 65536) {
+    RankingLoader loader(nfeatures, nprofiles);
     buffin::parse_gzip_file(path, loader, buffer_size);
     loader.finish();
     return loader.values;
 }
 
-inline std::vector<int> load_rankings_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t nfeatures, size_t nsamples, size_t buffer_size = 65536) {
-    RankingLoader loader(nfeatures, nsamples);
+/**
+ * @param[in] buffer Pointer to an array containing a Zlib/Gzip-compressed string containing the ranking matrix.
+ * @param len Length of the array for `buffer`.
+ * @param nfeatures Number of features in the ranking matrix.
+ * @param nprofiles Number of profiles in the ranking matrix. 
+ * @param buffer_size Size of the buffer to use when reading the file.
+ *
+ * @return Vector corresponding to a column-major matrix of rankings.
+ * Each column corresponds to a reference profile while each row corresponds to a feature.
+ *
+ * See `load_rankings_from_text_file()` for details about the format.
+ */
+inline std::vector<int> load_rankings_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t nfeatures, size_t nprofiles, size_t buffer_size = 65536) {
+    RankingLoader loader(nfeatures, nprofiles);
     buffin::parse_zlib_buffer(buffer, len, loader, buffer_size);
     loader.finish();
     return loader.values;
