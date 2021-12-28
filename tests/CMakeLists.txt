@@ -25,13 +25,34 @@ target_link_libraries(
     singlepp
 )
 
+add_executable(
+    loadtest
+    src/load_references.cpp
+)
+
+target_link_libraries(
+    loadtest
+    gtest_main
+    singlepp
+)
+
+include(CheckIncludeFiles)
+check_include_files(filesystem HAVE_CXX_FS)
+if (NOT HAVE_CXX_FS)
+    target_link_libraries(loadtest stdc++fs)
+endif()
+
+find_package(ZLIB)
+target_link_libraries(loadtest ZLIB::ZLIB)
+
 set(CODE_COVERAGE "Enable coverage testing" OFF)
 if(CODE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(libtest PRIVATE -O0 -g --coverage)
     target_link_options(libtest PRIVATE --coverage)
+    target_compile_options(loadtest PRIVATE -O0 -g --coverage)
+    target_link_options(loadtest PRIVATE --coverage)
 endif()
 
 include(GoogleTest)
 gtest_discover_tests(libtest)
-
-add_test(NAME singlepp_tests COMMAND libtest)
+gtest_discover_tests(loadtest)

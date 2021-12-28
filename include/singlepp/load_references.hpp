@@ -29,7 +29,7 @@ struct LabelLoader {
         size_t last = 0;
         size_t i = 0;
         while (i < n) {
-            if (buffer[i] != '\n') {
+            if (buffer[i] == '\n') {
                 if (continuing) {
                     labels.back() += std::string(buffer + last, buffer + i);
                     continuing = false;
@@ -116,7 +116,7 @@ struct FeatureLoader {
         size_t last = 0;
         size_t i = 0;
         while (i < n) {
-            if (buffer[i] != '\n') {
+            if (buffer[i] == '\n') {
                 if (field != 1) {
                     throw std::runtime_error("two fields (Ensembl ID and symbol) expected on each line");
                 }
@@ -156,8 +156,8 @@ struct FeatureLoader {
     }
 
     void finish() {
-        if (field != 1) {
-            throw std::runtime_error("two fields (Ensembl ID and symbol) expected on each line");
+        if (ensembl.size() != symbols.size()) {
+            throw std::runtime_error("two fields (Ensembl ID and symbol) expected on the last line");
         }
     }
 
@@ -218,7 +218,7 @@ inline std::pair<std::vector<std::string>, std::vector<std::string> > load_featu
  */
 inline std::pair<std::vector<std::string>, std::vector<std::string> > load_features_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t buffer_size = 65536) {
     FeatureLoader loader;
-    buffin::parse_text_file(buffer, len, loader, 3, buffer_size);
+    buffin::parse_zlib_buffer(const_cast<unsigned char*>(buffer), len, loader, 3, buffer_size);
     loader.finish();
     return std::make_pair(std::move(loader.ensembl), std::move(loader.symbols));
 }
@@ -234,7 +234,7 @@ struct RankingLoader {
     void add (const B* buffer, size_t n) {
         size_t i = 0;
         while (i < n) {
-            if (buffer[i] != '\n') {
+            if (buffer[i] == '\n') {
                 if (field + 1 != nfeatures) {
                     throw std::runtime_error("number of fields on each line should be equal to the number of features");
                 }
@@ -353,7 +353,7 @@ inline std::vector<int> load_rankings_from_gzip_file(const char* path, size_t nf
  */
 inline std::vector<int> load_rankings_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t nfeatures, size_t nprofiles, size_t buffer_size = 65536) {
     RankingLoader loader(nfeatures, nprofiles);
-    buffin::parse_zlib_buffer(buffer, len, loader, buffer_size);
+    buffin::parse_zlib_buffer(const_cast<unsigned char*>(buffer), len, loader, 3, buffer_size);
     loader.finish();
     return loader.values;
 }
