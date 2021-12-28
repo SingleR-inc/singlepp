@@ -1,11 +1,5 @@
 var searchData=
 [
-  ['scores_0',['scores',['../structsinglepp_1_1SinglePP_1_1Results.html#ac95fe23be4d1096b26c70fc49961ffb2',1,'singlepp::SinglePP::Results']]],
-  ['set_5fapproximate_1',['set_approximate',['../classsinglepp_1_1SinglePP.html#a22542067061ba46c44e538b2b28d99f7',1,'singlepp::SinglePP']]],
-  ['set_5ffine_5ftune_2',['set_fine_tune',['../classsinglepp_1_1SinglePP.html#afeb59c3c01a641ab9242a8893301b2ea',1,'singlepp::SinglePP']]],
-  ['set_5ffine_5ftune_5fthreshold_3',['set_fine_tune_threshold',['../classsinglepp_1_1SinglePP.html#a490f3ecbf7a3e65b3d63a688fa2fb94b',1,'singlepp::SinglePP']]],
-  ['set_5fquantile_4',['set_quantile',['../classsinglepp_1_1SinglePP.html#aa6a2dba77b4de47ae12872acb7679f1a',1,'singlepp::SinglePP']]],
-  ['set_5ftop_5',['set_top',['../classsinglepp_1_1SinglePP.html#ad2e03d3cba0efd425ddf79c98170feb7',1,'singlepp::SinglePP']]],
-  ['singlepp_6',['SinglePP',['../classsinglepp_1_1SinglePP.html',1,'singlepp']]],
-  ['singlepp_2ehpp_7',['SinglePP.hpp',['../SinglePP_8hpp.html',1,'']]]
+  ['results_0',['Results',['../structsinglepp_1_1SinglePP_1_1Results.html',1,'singlepp::SinglePP']]],
+  ['run_1',['run',['../classsinglepp_1_1SinglePP.html#aa789bd02f1295e27441161c335be7cc4',1,'singlepp::SinglePP::run(const tatami::Matrix&lt; double, int &gt; *mat, const Prebuilt &amp;refs, int *best, std::vector&lt; double * &gt; &amp;scores, double *delta)'],['../classsinglepp_1_1SinglePP.html#a70efa61551f0eb0b8dca07a797e82443',1,'singlepp::SinglePP::run(const tatami::Matrix&lt; double, int &gt; *mat, const tatami::Matrix&lt; double, int &gt; *ref, const int *labels, Markers markers, int *best, std::vector&lt; double * &gt; &amp;scores, double *delta)'],['../classsinglepp_1_1SinglePP.html#a7284fa88ec3ba459ab71c81060c2786e',1,'singlepp::SinglePP::run(const tatami::Matrix&lt; double, int &gt; *mat, const Prebuilt &amp;refs)'],['../classsinglepp_1_1SinglePP.html#aaf716b4b6d002f4fba5fcd358faf5ced',1,'singlepp::SinglePP::run(const tatami::Matrix&lt; double, int &gt; *mat, const tatami::Matrix&lt; double, int &gt; *ref, const int *labels, Markers markers)'],['../classsinglepp_1_1SinglePP.html#a259988c39505d1ed15633e5febabbc62',1,'singlepp::SinglePP::run(const tatami::Matrix&lt; double, int &gt; *mat, const Id *mat_id, const tatami::Matrix&lt; double, int &gt; *ref, const Id *ref_id, const int *labels, Markers markers, int *best, std::vector&lt; double * &gt; &amp;scores, double *delta)'],['../classsinglepp_1_1SinglePP.html#ab057c833584d4a8c576e2a5255964187',1,'singlepp::SinglePP::run(const tatami::Matrix&lt; double, int &gt; *mat, const Id *mat_id, const tatami::Matrix&lt; double, int &gt; *ref, const Id *ref_id, const int *labels, Markers markers)']]]
 ];
