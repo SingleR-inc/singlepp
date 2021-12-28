@@ -13,7 +13,7 @@ target_include_directories(singlepp INTERFACE include/)
 
 add_subdirectory(extern)
 
-target_link_libraries(singlepp INTERFACE tatami knncolle)
+target_link_libraries(singlepp INTERFACE tatami knncolle buffin)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     include(CTest)
