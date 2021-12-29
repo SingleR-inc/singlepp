@@ -509,4 +509,65 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(10, 25, 100, 1000)
 );
 
+/*************************************************/
 
+class LoadLabelNamesTest : public ::testing::TestWithParam<int> {};
+
+TEST_P(LoadLabelNamesTest, TextFile) {
+    auto path = buffin::temp_file_path("lab_text");
+    std::vector<std::string> labels;
+    {
+        std::ofstream out(path, std::ofstream::out);
+        for (size_t i = 0; i < 150; ++i) {
+            auto lab = "LABEL_" + std::to_string(i);
+            labels.push_back(lab);
+            out << lab << "\n";
+        }
+    }
+
+    auto reloaded = singlepp::load_label_names_from_text_file(path.c_str(), GetParam());
+    EXPECT_EQ(reloaded, labels);
+}
+
+TEST_P(LoadLabelNamesTest, GzipFile) {
+    auto path = buffin::temp_file_path("lab_gzip");
+    std::vector<std::string> labels;
+    {
+        std::string output;
+        for (size_t i = 0; i < 150; ++i) {
+            auto lab = "LABEL_" + std::to_string(i);
+            labels.push_back(lab);
+            output += lab + "\n";
+        }
+
+        gzFile ohandle = gzopen(path.c_str(), "w");
+        gzwrite(ohandle, output.c_str(), output.size());
+        gzclose(ohandle);
+    }
+
+    auto reloaded = singlepp::load_label_names_from_gzip_file(path.c_str(), GetParam());
+    EXPECT_EQ(reloaded, labels);
+
+    std::ifstream in(path, std::ios::binary);
+    std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(in), {});
+    auto reloaded2 = singlepp::load_label_names_from_zlib_buffer(buffer.data(), buffer.size(), GetParam());
+    EXPECT_EQ(reloaded2, labels);
+}
+
+TEST(LoadLabelNames, EdgeCases) {
+    // Non-newline termination is ok, as are empty fields.
+    {
+        auto path = buffin::temp_file_path("feat_ok");
+        quick_dump(path, "asdasdasd\n\nasdasd");
+        auto output = singlepp::load_label_names_from_text_file(path.c_str());
+        EXPECT_EQ(output[0], "asdasdasd");
+        EXPECT_EQ(output[1], "");
+        EXPECT_EQ(output[2], "asdasd");
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    LoadLabelNames,
+    LoadLabelNamesTest,
+    ::testing::Values(10, 25, 100, 1000)
+);

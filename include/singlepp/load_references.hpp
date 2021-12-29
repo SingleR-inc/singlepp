@@ -114,6 +114,93 @@ inline std::vector<int> load_labels_from_zlib_buffer(const unsigned char* buffer
 
 #endif
 
+/**
+ * @cond
+ */
+struct NameLoader {
+    template<typename B>
+    void add (const B* buffer, size_t n) {
+        size_t last = 0;
+        size_t i = 0;
+        while (i < n) {
+            if (buffer[i] == '\n') {
+                if (continuing) {
+                    names.back() += std::string(buffer + last, buffer + i);
+                    continuing = false;
+                } else {
+                    names.emplace_back(buffer + last, buffer + i);
+                }
+                last = i + 1;
+            }
+            ++i;
+        }
+
+        if (last != n) {
+            if (continuing) {
+                names.back() += std::string(buffer + last, buffer + n);
+            } else {
+                continuing = true;
+                names.emplace_back(buffer + last, buffer + n);
+            }
+        }
+    }
+
+    bool continuing = false;
+    std::vector<std::string> names;
+};
+/** 
+ * @endcond
+ */
+
+/**
+ * @param path Path to a text file containing the label names.
+ * @param buffer_size Size of the buffer to use when reading the file.
+ *
+ * @return Vector of strings containing the name for each reference profile.
+ *
+ * The file should contain one line per label, containing a (non-quoted) string with the full name for that label.
+ * The total number of lines should be equal to the number of unique labels in the dataset.
+ * The file should not contain any header.
+ */
+inline std::vector<std::string> load_label_names_from_text_file(const char* path, size_t buffer_size = 65536) {
+    NameLoader loader;
+    buffin::parse_text_file(path, loader, buffer_size);
+    return loader.names;
+}
+
+#ifdef SINGLEPP_USE_ZLIB
+
+/**
+ * @param path Path to a Gzip-compressed file containing the label names.
+ * @param buffer_size Size of the buffer to use when reading the file.
+ *
+ * @return Vector of strings containing the name for each label.
+ *
+ * See `load_label_names_from_text_file()` for details about the format.
+ */
+inline std::vector<std::string> load_label_names_from_gzip_file(const char* path, size_t buffer_size = 65536) {
+    NameLoader loader;
+    buffin::parse_gzip_file(path, loader, buffer_size);
+    return loader.names;
+}
+
+/**
+ * @param[in] buffer Pointer to an array containing a Zlib/Gzip-compressed string of label names.
+ * @param len Length of the array for `buffer`.
+ * @param buffer_size Size of the buffer to use when decompressing the buffer.
+ *
+ * @return Vector of strings containing the name for each label.
+ *
+ * See `load_label_names_from_text_file()` for details about the format.
+ */
+inline std::vector<std::string> load_label_names_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t buffer_size = 65536) {
+    NameLoader loader;
+    buffin::parse_zlib_buffer(const_cast<unsigned char*>(buffer), len, loader, 3, buffer_size);
+    return loader.names;
+}
+
+#endif
+
 /** 
  * @cond
  */
