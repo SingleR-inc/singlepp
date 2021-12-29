@@ -99,6 +99,12 @@ Functions</h2></td></tr>
 <tr class="separator:a91d95d85de688f0312c1f1855e8c961c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acfecce4212da726fecd9ae6162c189d2"><td class="memItemLeft" align="right" valign="top">std::vector&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="load__references_8hpp.html#acfecce4212da726fecd9ae6162c189d2">singlepp::load_rankings_from_zlib_buffer</a> (const unsigned char *buffer, size_t len, size_t nfeatures, size_t nprofiles, size_t buffer_size=65536)</td></tr>
 <tr class="separator:acfecce4212da726fecd9ae6162c189d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4809d6047d73b5b1752b2c6400a3b92b"><td class="memItemLeft" align="right" valign="top">Markers&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="load__references_8hpp.html#a4809d6047d73b5b1752b2c6400a3b92b">singlepp::load_markers_from_text_file</a> (const char *path, size_t nfeatures, size_t nlabels, size_t buffer_size=65536)</td></tr>
+<tr class="separator:a4809d6047d73b5b1752b2c6400a3b92b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afaea991c7e0d45c6a91c277c67bd6ed3"><td class="memItemLeft" align="right" valign="top">Markers&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="load__references_8hpp.html#afaea991c7e0d45c6a91c277c67bd6ed3">singlepp::load_markers_from_gzip_file</a> (const char *path, size_t nfeatures, size_t nlabels, size_t buffer_size=65536)</td></tr>
+<tr class="separator:afaea991c7e0d45c6a91c277c67bd6ed3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19cb0d64d929ba8eb5954ebcda4a0de4"><td class="memItemLeft" align="right" valign="top">Markers&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="load__references_8hpp.html#a19cb0d64d929ba8eb5954ebcda4a0de4">singlepp::load_markers_from_zlib_buffer</a> (const unsigned char *buffer, size_t len, size_t nfeatures, size_t nlabels, size_t buffer_size=65536)</td></tr>
+<tr class="separator:a19cb0d64d929ba8eb5954ebcda4a0de4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Load reference datasets from a few expected formats. </p>
@@ -384,6 +390,190 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Vector containing the label index for each reference profile.</dd></dl>
 <p>See <code><a class="el" href="load__references_8hpp.html#ad69f0a4f64834c498f7c401b12c46123">load_labels_from_text_file()</a></code> for details about the format. </p>
+
+</div>
+</div>
+<a id="afaea991c7e0d45c6a91c277c67bd6ed3" name="afaea991c7e0d45c6a91c277c67bd6ed3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afaea991c7e0d45c6a91c277c67bd6ed3">&#9670;&nbsp;</a></span>load_markers_from_gzip_file()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">Markers singlepp::load_markers_from_gzip_file </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>nfeatures</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>nlabels</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>buffer_size</em> = <code>65536</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>Path to a Gzip-compressed file containing the marker lists. </td></tr>
+    <tr><td class="paramname">nfeatures</td><td>Total number of features in the dataset. </td></tr>
+    <tr><td class="paramname">nlabels</td><td>Number of labels in the dataset. </td></tr>
+    <tr><td class="paramname">buffer_size</td><td>Size of the buffer to use when reading the file.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <code>Markers</code> object containing the markers from each pairwise comparison between labels.</dd></dl>
+<p>See <code><a class="el" href="load__references_8hpp.html#a4809d6047d73b5b1752b2c6400a3b92b">load_markers_from_text_file()</a></code> for details about the format. </p>
+
+</div>
+</div>
+<a id="a4809d6047d73b5b1752b2c6400a3b92b" name="a4809d6047d73b5b1752b2c6400a3b92b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4809d6047d73b5b1752b2c6400a3b92b">&#9670;&nbsp;</a></span>load_markers_from_text_file()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">Markers singlepp::load_markers_from_text_file </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>nfeatures</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>nlabels</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>buffer_size</em> = <code>65536</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>Path to a text file containing the marker lists. </td></tr>
+    <tr><td class="paramname">nfeatures</td><td>Total number of features in the dataset. </td></tr>
+    <tr><td class="paramname">nlabels</td><td>Number of labels in the dataset. </td></tr>
+    <tr><td class="paramname">buffer_size</td><td>Size of the buffer to use when reading the file.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <code>Markers</code> object containing the markers from each pairwise comparison between labels.</dd></dl>
+<p>The file should contain one line per pairwise comparison between labels. Each line should at least 3 tab-delimited fields - the index of the first label, the index of the second label, and then the indices of the features selected as marker genes for the first label relative to the second. Any (non-zero) number of marker indices may be reported provided they are ordered by marker strength. The total number of lines in this file should be equal to the total number of pairwise comparisons between different labels, including permutations. </p>
+
+</div>
+</div>
+<a id="a19cb0d64d929ba8eb5954ebcda4a0de4" name="a19cb0d64d929ba8eb5954ebcda4a0de4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a19cb0d64d929ba8eb5954ebcda4a0de4">&#9670;&nbsp;</a></span>load_markers_from_zlib_buffer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">Markers singlepp::load_markers_from_zlib_buffer </td>
+          <td>(</td>
+          <td class="paramtype">const unsigned char *&#160;</td>
+          <td class="paramname"><em>buffer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>len</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>nfeatures</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>nlabels</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>buffer_size</em> = <code>65536</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">buffer</td><td>Pointer to an array containing a Zlib/Gzip-compressed string containing the marker lists. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">len</td><td>Length of the array for <code>buffer</code>. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">nfeatures</td><td>Total number of features in the dataset. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">nlabels</td><td>Number of labels in the dataset. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">buffer_size</td><td>Size of the buffer to use when reading the file.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <code>Markers</code> object containing the markers from each pairwise comparison between labels.</dd></dl>
+<p>See <code><a class="el" href="load__references_8hpp.html#a4809d6047d73b5b1752b2c6400a3b92b">load_markers_from_text_file()</a></code> for details about the format. </p>
 
 </div>
 </div>
