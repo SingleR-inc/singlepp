@@ -5,6 +5,7 @@
 #include <vector>
 #include <cctype>
 
+#include "Markers.hpp"
 #include "buffin/parse_text_file.hpp"
 
 #ifdef SINGLEPP_USE_ZLIB
@@ -362,6 +363,167 @@ inline std::vector<int> load_rankings_from_zlib_buffer(const unsigned char* buff
     buffin::parse_zlib_buffer(const_cast<unsigned char*>(buffer), len, loader, 3, buffer_size);
     loader.finish();
     return loader.values;
+}
+#endif
+
+/** 
+ * @cond
+ */
+struct MarkerLoader {
+    MarkerLoader(size_t nf, size_t nl) : nfeatures(nf), markers(nl) {
+        for (auto& m : markers) {
+            m.resize(nl);
+        }
+    }
+
+    void newline() {
+        if (field < 2) {
+            throw std::runtime_error("each line should contain at least three fields");
+        }
+        if (!non_empty) {
+            throw std::runtime_error("gene index fields should not be empty");
+        }
+        values.push_back(current);
+
+        for (auto v : values) {
+            if (static_cast<size_t>(v) >= nfeatures) {
+                throw std::runtime_error("gene index out of range");
+            }
+        }
+
+        if (first >= markers.size()) {
+            throw std::runtime_error("first label index out of range");
+        }
+        if (second >= markers.size()) {
+            throw std::runtime_error("second label index out of range");
+        }
+
+        auto& store = markers[first][second];
+        if (!store.empty()) {
+            throw std::runtime_error("multiple marker sets listed for a single pairwise comparison");
+        }
+        store.swap(values);
+        values.clear();
+        return;
+    }
+
+    template<typename B>
+    void add (const B* buffer, size_t n) {
+        size_t i = 0;
+        while (i < n) {
+            if (buffer[i] == '\n') {
+                newline();
+                current = 0;
+                field = 0;
+                non_empty = false;
+
+            } else if (buffer[i] == '\t') {
+                if (!non_empty) {
+                    throw std::runtime_error("fields should not be empty");
+                }
+
+                if (field == 0) {
+                    first = current;
+                } else if (field == 1) {
+                    second = current;
+                } else {
+                    values.push_back(current);
+                }
+
+                current = 0;
+                ++field;
+                non_empty = false;
+
+            } else if (std::isdigit(buffer[i])) {
+                non_empty = true;
+                current *= 10;
+                current += (buffer[i] - '0');
+
+            } else {
+                throw std::runtime_error("fields should only contain integer ranks");
+            }
+
+            ++i;
+        }
+    }
+
+    void finish() {
+        if (field || non_empty) { // aka no terminating newline.
+            newline();
+        }
+    }
+
+    int field = 0;
+    bool continuing = false;
+    bool non_empty = false;
+
+    int current = 0;
+    std::vector<int> values;
+    size_t first, second;
+
+    size_t nfeatures;
+    singlepp::Markers markers;
+};
+/** 
+ * @endcond
+ */
+
+/**
+ * @param path Path to a text file containing the marker lists.
+ * @param nfeatures Total number of features in the dataset.
+ * @param nlabels Number of labels in the dataset.
+ * @param buffer_size Size of the buffer to use when reading the file.
+ *
+ * @return A `Markers` object containing the markers from each pairwise comparison between labels.
+ *
+ * The file should contain one line per pairwise comparison between labels.
+ * Each line should at least 3 tab-delimited fields - the index of the first label, the index of the second label, 
+ * and then the indices of the features selected as marker genes for the first label relative to the second.
+ * Any (non-zero) number of marker indices may be reported provided they are ordered by marker strength.
+ * The total number of lines in this file should be equal to the total number of pairwise comparisons between different labels, including permutations.
+ */
+inline Markers load_markers_from_text_file(const char* path, size_t nfeatures, size_t nlabels, size_t buffer_size = 65536) {
+    MarkerLoader loader(nfeatures, nlabels);
+    buffin::parse_text_file(path, loader, buffer_size);
+    loader.finish();
+    return loader.markers;
+}
+
+#ifdef SINGLEPP_USE_ZLIB
+
+/**
+ * @param path Path to a Gzip-compressed file containing the marker lists.
+ * @param nfeatures Total number of features in the dataset.
+ * @param nlabels Number of labels in the dataset.
+ * @param buffer_size Size of the buffer to use when reading the file.
+ *
+ * @return A `Markers` object containing the markers from each pairwise comparison between labels.
+ *
+ * See `load_markers_from_text_file()` for details about the format.
+ */
+inline Markers load_markers_from_gzip_file(const char* path, size_t nfeatures, size_t nlabels, size_t buffer_size = 65536) {
+    MarkerLoader loader(nfeatures, nlabels);
+    buffin::parse_gzip_file(path, loader, buffer_size);
+    loader.finish();
+    return loader.markers;
+}
+
+/**
+ * @param[in] buffer Pointer to an array containing a Zlib/Gzip-compressed string containing the marker lists.
+ * @param len Length of the array for `buffer`.
+ * @param nfeatures Total number of features in the dataset.
+ * @param nlabels Number of labels in the dataset.
+ * @param buffer_size Size of the buffer to use when reading the file.
+ *
+ * @return A `Markers` object containing the markers from each pairwise comparison between labels.
+ *
+ * See `load_markers_from_text_file()` for details about the format.
+ */
+inline Markers load_markers_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t nfeatures, size_t nlabels, size_t buffer_size = 65536) {
+    MarkerLoader loader(nfeatures, nlabels);
+    buffin::parse_zlib_buffer(const_cast<unsigned char*>(buffer), len, loader, 3, buffer_size);
+    loader.finish();
+    return loader.markers;
 }
 #endif
 

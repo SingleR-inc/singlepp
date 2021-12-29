@@ -338,4 +338,175 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(10, 25, 100, 1000)
 );
 
+/*************************************************/
+
+class LoadMarkersTest : public ::testing::TestWithParam<int> {
+protected:
+    void compare_markers(const singlepp::Markers& ref, const singlepp::Markers& obs) { 
+        ASSERT_EQ(ref.size(), obs.size());
+
+        for (size_t m = 0; m < obs.size(); ++m) {
+            const auto& observed = obs[m];
+            const auto& expected = ref[m];
+
+            ASSERT_EQ(observed.size(), expected.size());
+            for (size_t m2 = 0; m2 < observed.size(); ++m2) {
+                EXPECT_EQ(observed[m2], expected[m2]);
+            }
+        }
+    }        
+};
+
+TEST_P(LoadMarkersTest, TextFile) {
+    auto path = buffin::temp_file_path("mark_text");
+
+    std::mt19937_64 rng(GetParam());
+    size_t nfeatures = 1000, nlabels = 3;
+    singlepp::Markers markers(nlabels);
+    {
+        std::ofstream out(path, std::ofstream::out);
+
+        for (size_t l = 0; l < nlabels; ++l) {
+            markers[l].resize(nlabels);
+            for (size_t l2 = 0; l2 < nlabels; ++l2) {
+                if (l == l2) {
+                    continue;
+                }
+                out << l << "\t" << l2;
+
+                size_t ngenes = rng() % 20 + 1;
+                for (size_t i = 0; i < ngenes; ++i) {
+                    auto current = rng() % nfeatures;
+                    markers[l][l2].push_back(current);
+                    out << "\t" << current;
+                }
+
+                out << "\n";
+            }
+        }
+    }
+
+    auto reloaded = singlepp::load_markers_from_text_file(path.c_str(), nfeatures, nlabels, GetParam());
+    compare_markers(markers, reloaded);
+}
+
+TEST_P(LoadMarkersTest, GzipFile) {
+    auto path = buffin::temp_file_path("mark_text");
+
+    std::mt19937_64 rng(GetParam());
+    size_t nfeatures = 1000, nlabels = 3;
+    singlepp::Markers markers(nlabels);
+    {
+        std::ofstream out(path, std::ofstream::out);
+        std::string output;
+
+        for (size_t l = 0; l < nlabels; ++l) {
+            markers[l].resize(nlabels);
+            for (size_t l2 = 0; l2 < nlabels; ++l2) {
+                if (l == l2) {
+                    continue;
+                }
+                output += std::to_string(l) + "\t" + std::to_string(l2);
+
+                size_t ngenes = rng() % 20 + 1;
+                for (size_t i = 0; i < ngenes; ++i) {
+                    auto current = rng() % nfeatures;
+                    markers[l][l2].push_back(current);
+                    output += "\t" + std::to_string(current); 
+                }
+                output += "\n";
+            }
+        }
+
+        gzFile ohandle = gzopen(path.c_str(), "w");
+        gzwrite(ohandle, output.c_str(), output.size());
+        gzclose(ohandle);
+    }
+
+    auto reloaded = singlepp::load_markers_from_gzip_file(path.c_str(), nfeatures, nlabels, GetParam());
+    compare_markers(markers, reloaded);
+
+    std::ifstream in(path, std::ios::binary);
+    std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(in), {});
+    auto reloaded2 = singlepp::load_markers_from_zlib_buffer(buffer.data(), buffer.size(), nfeatures, nlabels, GetParam());
+    compare_markers(markers, reloaded2);
+}
+
+void quick_marker_err(std::string path, size_t nf, size_t nl, std::string msg) {
+    EXPECT_ANY_THROW({
+        try {
+            singlepp::load_markers_from_text_file(path.c_str(), nf, nl);
+        } catch (std::exception& e) {
+            EXPECT_TRUE(std::string(e.what()).find(msg) != std::string::npos);
+            throw;
+        }
+    });
+    return;
+}
+
+TEST(LoadMarkers, EdgeCases) {
+    {
+        auto path = buffin::temp_file_path("mark_err");
+        quick_dump(path, "1\t2\t1000\n");
+        quick_marker_err(path, 1, 3, "gene index out of range");
+    }
+
+    {
+        auto path = buffin::temp_file_path("mark_err");
+        quick_dump(path, "5\t1\t2\n");
+        quick_marker_err(path, 5, 3, "first label index out of range");
+    }
+
+    {
+        auto path = buffin::temp_file_path("mark_err");
+        quick_dump(path, "1\t5\t2\n");
+        quick_marker_err(path, 5, 3, "second label index out of range");
+    }
+
+    {
+        auto path = buffin::temp_file_path("mark_err");
+        quick_dump(path, "1\t1\t\n");
+        quick_marker_err(path, 5, 3, "not be empty");
+    }
+
+    {
+        auto path = buffin::temp_file_path("mark_err");
+        quick_dump(path, "1\t1\t\t1\n");
+        quick_marker_err(path, 5, 3, "not be empty");
+    }
+
+    {
+        auto path = buffin::temp_file_path("mark_err");
+        quick_dump(path, "1\t1\n");
+        quick_marker_err(path, 5, 3, "at least three fields");
+    }
+
+    {
+        auto path = buffin::temp_file_path("mark_err");
+        quick_dump(path, "1\t1\t1\n1\t1\t1\n");
+        quick_marker_err(path, 5, 3, "multiple marker");
+    }
+
+    {
+        auto path = buffin::temp_file_path("mark_err");
+        quick_dump(path, "2\t1\t1\n1\t2\t1a\n");
+        quick_marker_err(path, 5, 3, "integer");
+    }
+
+    {
+        auto path = buffin::temp_file_path("mark_ok");
+        quick_dump(path, "2\t1\t1\n1\t2\t0");
+        auto output = singlepp::load_markers_from_text_file(path.c_str(), 5, 3);
+        EXPECT_EQ(output.size(), 3);
+        EXPECT_EQ(output[1][2].size(), 1);
+        EXPECT_EQ(output[1][2].front(), 0);
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    LoadMarkers,
+    LoadMarkersTest,
+    ::testing::Values(10, 25, 100, 1000)
+);
+
 
