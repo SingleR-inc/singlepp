@@ -354,7 +354,7 @@ template&lt;class Id &gt; </div>
     <tr><td class="paramdir"></td><td class="paramname">markers</td><td>A vector of vectors of ranked marker genes for each pairwise comparison between labels, see <code>Markers</code> for more details. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">best</td><td>Pointer to an array of length equal to the number of columns in <code>mat</code>. This is filled with the index of the assigned label for each cell. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">scores</td><td>Vector of pointers to arrays of length equal to the number of columns in <code>mat</code>. This is filled with the (non-fine-tuned) score for each label for each cell. Any pointer may be <code>NULL</code> in which case the scores for that label will not be saved. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">delta</td><td>Pointer to an array of length equal to the number of columns in <code>mat</code>. This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.</td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">delta</td><td>Pointer to an array of length equal to the number of columns in <code>mat</code>. This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning. This may also be <code>NULL</code> in which case the deltas are not reported.</td></tr>
   </table>
   </dd>
 </dl>
@@ -464,7 +464,7 @@ template&lt;class Id &gt; </div>
     <tr><td class="paramdir"></td><td class="paramname">refs</td><td>An object produced by <code><a class="el" href="classsinglepp_1_1SinglePP.html#ac4d206142c5eedd2cf12a500bfc10655">build()</a></code>. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">best</td><td>Pointer to an array of length equal to the number of columns in <code>mat</code>. This is filled with the index of the assigned label for each cell. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">scores</td><td>Vector of pointers to arrays of length equal to the number of columns in <code>mat</code>. This is filled with the (non-fine-tuned) score for each label for each cell. Any pointer may be <code>NULL</code> in which case the scores for that label will not be saved. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">delta</td><td>Pointer to an array of length equal to the number of columns in <code>mat</code>. This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.</td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">delta</td><td>Pointer to an array of length equal to the number of columns in <code>mat</code>. This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning. This may also be <code>NULL</code> in which case the deltas are not reported.</td></tr>
   </table>
   </dd>
 </dl>
@@ -601,7 +601,7 @@ template&lt;class Id &gt; </div>
     <tr><td class="paramdir"></td><td class="paramname">markers</td><td>A vector of vectors of ranked marker genes for each pairwise comparison between labels, see <code>Markers</code> for more details. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">best</td><td>Pointer to an array of length equal to the number of columns in <code>mat</code>. This is filled with the index of the assigned label for each cell. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">scores</td><td>Vector of pointers to arrays of length equal to the number of columns in <code>mat</code>. This is filled with the (non-fine-tuned) score for each label for each cell. Any pointer may be <code>NULL</code> in which case the scores for that label will not be saved. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">delta</td><td>Pointer to an array of length equal to the number of columns in <code>mat</code>. This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.</td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">delta</td><td>Pointer to an array of length equal to the number of columns in <code>mat</code>. This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning. This may also be <code>NULL</code> in which case the deltas are not reported.</td></tr>
   </table>
   </dd>
 </dl>
