@@ -96,17 +96,21 @@ inline void annotate_cells_simple(
             if (!fine_tune) {
                 auto top = std::max_element(curscores.begin(), curscores.end());
                 best[c] = top - curscores.begin();
-                if (curscores.size() > 1) {
-                    double topscore = *top;
-                    *top = -100;
-                    delta[c] = topscore - *std::max_element(curscores.begin(), curscores.end());
-                } else {
-                    delta[c] = std::numeric_limits<double>::quiet_NaN();
+                if (delta) {
+                    if (curscores.size() > 1) {
+                        double topscore = *top;
+                        *top = -100;
+                        delta[c] = topscore - *std::max_element(curscores.begin(), curscores.end());
+                    } else {
+                        delta[c] = std::numeric_limits<double>::quiet_NaN();
+                    }
                 }
             } else {
                 auto tuned = ft.run(scaled.data(), ref, markers, curscores, quantile, threshold);
                 best[c] = tuned.first;
-                delta[c] = tuned.second;
+                if (delta) {
+                    delta[c] = tuned.second;
+                }
             }
         }
     }

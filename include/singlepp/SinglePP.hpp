@@ -214,6 +214,7 @@ public:
      * Any pointer may be `NULL` in which case the scores for that label will not be saved.
      * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
      * This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
+     * This may also be `NULL` in which case the deltas are not reported.
      *
      * @return `best`, `scores` and `delta` are filled with their output values.
      */
@@ -236,6 +237,7 @@ public:
      * Any pointer may be `NULL` in which case the scores for that label will not be saved.
      * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
      * This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
+     * This may also be `NULL` in which case the deltas are not reported.
      *
      * @return `best`, `scores` and `delta` are filled with their output values.
      */
@@ -338,6 +340,7 @@ public:
      * Any pointer may be `NULL` in which case the scores for that label will not be saved.
      * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
      * This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
+     * This may also be `NULL` in which case the deltas are not reported.
      * 
      * @return `best`, `scores` and `delta` are filled with their output values.
      * 

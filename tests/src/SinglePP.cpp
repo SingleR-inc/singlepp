@@ -176,3 +176,26 @@ TEST(SinglePPTest, Simple) {
         EXPECT_EQ(labels[r], output.best[r]);
     }
 }
+
+TEST(SinglePPTest, Nulls) {
+    // Mocking up the test and references.
+    size_t ngenes = 200;
+    auto mat = spawn_matrix(ngenes, 5, 42);
+ 
+    size_t nlabels = 3;
+    size_t nrefs = 50;
+    auto refs = spawn_matrix(ngenes, nrefs, 100);
+    auto labels = spawn_labels(nrefs, nlabels, 1000);
+
+    auto markers = mock_markers(nlabels, 50, ngenes); 
+
+    // Checking that nulls are respected.
+    singlepp::SinglePP runner;
+
+    std::vector<int> best(nrefs);
+    std::vector<double*> nulls(nlabels, NULL);
+    runner.run(refs.get(), refs.get(), labels.data(), markers, best.data(), nulls, NULL);
+    
+    auto manual = runner.run(refs.get(), refs.get(), labels.data(), markers);
+    EXPECT_EQ(best, manual.best);
+}
