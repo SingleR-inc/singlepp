@@ -115,13 +115,12 @@ class LoadLabelsTest : public ::testing::TestWithParam<int> {};
 
 TEST_P(LoadLabelsTest, TextFile) {
     auto path = buffin::temp_file_path("lab_text");
-    std::vector<std::string> labels;
+    std::vector<int> labels;
     {
         std::ofstream out(path, std::ofstream::out);
         for (size_t i = 0; i < 1000; ++i) {
-            auto lab = "LABEL_" + std::to_string(i);
-            labels.push_back(lab);
-            out << lab << "\n";
+            labels.push_back(i);
+            out << i << "\n";
         }
     }
 
@@ -131,13 +130,12 @@ TEST_P(LoadLabelsTest, TextFile) {
 
 TEST_P(LoadLabelsTest, GzipFile) {
     auto path = buffin::temp_file_path("lab_gzip");
-    std::vector<std::string> labels;
+    std::vector<int> labels;
     {
         std::string output;
         for (size_t i = 0; i < 1000; ++i) {
-            auto lab = "LABEL_" + std::to_string(i);
-            labels.push_back(lab);
-            output += lab + "\n";
+            labels.push_back(i);
+            output += std::to_string(i) + "\n";
         }
 
         gzFile ohandle = gzopen(path.c_str(), "w");
@@ -167,14 +165,26 @@ void quick_label_err(std::string path, std::string msg) {
 }
 
 TEST(LoadLabels, EdgeCases) {
+    {
+        auto path = buffin::temp_file_path("label_err");
+        quick_dump(path, "1\n2\n3a\n4\n");
+        quick_label_err(path, "must be an integer");
+    }
+
+    {
+        auto path = buffin::temp_file_path("label_err");
+        quick_dump(path, "1\n2\n\n4\n");
+        quick_label_err(path, "must be an integer");
+    }
+
     // Non-newline termination is ok, as are empty fields.
     {
         auto path = buffin::temp_file_path("feat_ok");
-        quick_dump(path, "asdasdasd\n\nasdasd");
+        quick_dump(path, "1\n2");
         auto output = singlepp::load_labels_from_text_file(path.c_str());
-        EXPECT_EQ(output[0], "asdasdasd");
-       EXPECT_EQ(output[1], "");
-        EXPECT_EQ(output[2], "asdasd");
+        EXPECT_EQ(output.size(), 2);
+        EXPECT_EQ(output[0], 1);
+        EXPECT_EQ(output[1], 2);
     }
 }
 

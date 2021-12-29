@@ -26,33 +26,35 @@ namespace singlepp {
 struct LabelLoader {
     template<typename B>
     void add (const B* buffer, size_t n) {
-        size_t last = 0;
         size_t i = 0;
         while (i < n) {
             if (buffer[i] == '\n') {
-                if (continuing) {
-                    labels.back() += std::string(buffer + last, buffer + i);
-                    continuing = false;
-                } else {
-                    labels.emplace_back(buffer + last, buffer + i);
+                if (!non_empty) {
+                    throw std::runtime_error("label index must be an integer");
                 }
-                last = i + 1;
+                labels.push_back(current);
+                current = 0;
+                non_empty = false;
+            } else if (std::isdigit(buffer[i])) {
+                non_empty = true;
+                current *= 10;
+                current += (buffer[i] - '0');
+            } else {
+                throw std::runtime_error("label index must be an integer");
             }
             ++i;
         }
+    }
 
-        if (last != n) {
-            if (continuing) {
-                labels.back() += std::string(buffer + last, buffer + n);
-            } else {
-                continuing = true;
-                labels.emplace_back(buffer + last, buffer + n);
-            }
+    void finish() {
+        if (non_empty) {
+            labels.push_back(current);
         }
     }
 
-    bool continuing = false;
-    std::vector<std::string> labels;
+    bool non_empty = false;
+    int current = 0;
+    std::vector<int> labels;
 };
 /** 
  * @endcond
@@ -62,15 +64,17 @@ struct LabelLoader {
  * @param path Path to a text file containing the labels.
  * @param buffer_size Size of the buffer to use when reading the file.
  *
- * @return Vector of strings containing the labels for each reference profile.
+ * @return Vector containing the label index for each reference profile.
  *
- * The file should contain one line per profile, containing a (non-quoted) string with the label for that profile.
+ * The file should contain one line per profile, containing an integer label index for that profile.
+ * Label indices refer to another array containing the actual names of the labels.
  * The total number of lines should be equal to the number of profiles in the dataset.
  * The file should not contain any header.
  */
-inline std::vector<std::string> load_labels_from_text_file(const char* path, size_t buffer_size = 65536) {
+inline std::vector<int> load_labels_from_text_file(const char* path, size_t buffer_size = 65536) {
     LabelLoader loader;
     buffin::parse_text_file(path, loader, buffer_size);
+    loader.finish();
     return loader.labels;
 }
 
@@ -80,13 +84,14 @@ inline std::vector<std::string> load_labels_from_text_file(const char* path, siz
  * @param path Path to a Gzip-compressed file containing the labels.
  * @param buffer_size Size of the buffer to use when reading the file.
  *
- * @return Vector of strings containing the labels for each reference profile.
+ * @return Vector containing the label index for each reference profile.
  *
  * See `load_labels_from_text_file()` for details about the format.
  */
-inline std::vector<std::string> load_labels_from_gzip_file(const char* path, size_t buffer_size = 65536) {
+inline std::vector<int> load_labels_from_gzip_file(const char* path, size_t buffer_size = 65536) {
     LabelLoader loader;
     buffin::parse_gzip_file(path, loader, buffer_size);
+    loader.finish();
     return loader.labels;
 }
 
@@ -95,13 +100,14 @@ inline std::vector<std::string> load_labels_from_gzip_file(const char* path, siz
  * @param len Length of the array for `buffer`.
  * @param buffer_size Size of the buffer to use when decompressing the buffer.
  *
- * @return Vector of strings containing the labels for each reference profile.
+ * @return Vector containing the label index for each reference profile.
  *
  * See `load_labels_from_text_file()` for details about the format.
  */
-inline std::vector<std::string> load_labels_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t buffer_size = 65536) {
+inline std::vector<int> load_labels_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t buffer_size = 65536) {
     LabelLoader loader;
     buffin::parse_zlib_buffer(const_cast<unsigned char*>(buffer), len, loader, 3, buffer_size);
+    loader.finish();
     return loader.labels;
 }
 
