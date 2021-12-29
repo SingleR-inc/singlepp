@@ -47,6 +47,7 @@ TEST_P(SinglePPSimpleTest, Simple) {
         std::vector<double> scaled(subset.size());
         singlepp::scaled_ranks(col.data(), subset, vec, scaled.data());
 
+        std::vector<std::pair<double, size_t> > my_scores;
         for (size_t r = 0; r < nlabels; ++r) {
             std::vector<double> correlations;
             for (auto l : by_labels[r]) {
@@ -58,7 +59,16 @@ TEST_P(SinglePPSimpleTest, Simple) {
 
             double score = singlepp::correlations_to_scores(correlations, quantile);
             EXPECT_TRUE(std::abs(score - output.scores[r][c]) < 1e-6);
+            my_scores.emplace_back(score, r);
         }
+
+        // Double-check that the best and delta values are computed correctly.
+        std::sort(my_scores.begin(), my_scores.end());
+        EXPECT_EQ(my_scores.back().second, output.best[c]);
+
+        double observed_delta = my_scores[nlabels-1].first - my_scores[nlabels-2].first;
+        EXPECT_TRUE(std::abs(observed_delta - output.delta[c]) < 1e-6);
+        EXPECT_TRUE(output.delta[c] > 0);
     }
 }
 
@@ -174,6 +184,7 @@ TEST(SinglePPTest, Simple) {
     auto output = runner.run(refs.get(), refs.get(), labels.data(), markers);
     for (size_t r = 0; r < nrefs; ++r) {
         EXPECT_EQ(labels[r], output.best[r]);
+        EXPECT_TRUE(output.delta[r] > 0);
     }
 }
 
