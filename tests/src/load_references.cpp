@@ -198,6 +198,14 @@ INSTANTIATE_TEST_SUITE_P(
 
 class LoadRankingsTest : public ::testing::TestWithParam<int> {};
 
+std::vector<int> extract_ranks(const singlepp::RankMatrix<int, int>& mat) {
+    std::vector<int> copy(mat.nrow() * mat.ncol());
+    for (size_t i = 0; i < mat.ncol(); ++i) {
+        mat.column_copy(i, copy.data() + i * mat.nrow());
+    }
+    return copy;
+}
+
 TEST_P(LoadRankingsTest, TextFile) {
     auto path = buffin::temp_file_path("rank_text");
     size_t nfeat = 49, nprof = 13;
@@ -224,8 +232,12 @@ TEST_P(LoadRankingsTest, TextFile) {
         }
     }
 
-    auto reloaded = singlepp::load_rankings_from_text_file(path.c_str(), nfeat, nprof, GetParam());
-    EXPECT_EQ(reloaded, ranks);
+    auto reloaded = singlepp::load_rankings_from_text_file<int, int>(path.c_str(), GetParam());
+    EXPECT_EQ(reloaded.nrow(), nfeat);
+    EXPECT_EQ(reloaded.ncol(), nprof);
+
+    auto copy = extract_ranks(reloaded);
+    EXPECT_EQ(copy, ranks);
 }
 
 TEST_P(LoadRankingsTest, GzipFile) {
@@ -258,19 +270,21 @@ TEST_P(LoadRankingsTest, GzipFile) {
         gzclose(ohandle);
     }
 
-    auto reloaded = singlepp::load_rankings_from_gzip_file(path.c_str(), nfeat, nprof, GetParam());
-    EXPECT_EQ(reloaded, ranks);
+    auto reloaded = singlepp::load_rankings_from_gzip_file<int, int>(path.c_str(), GetParam());
+    auto copy = extract_ranks(reloaded);
+    EXPECT_EQ(copy, ranks);
 
     std::ifstream in(path, std::ios::binary);
     std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(in), {});
-    auto reloaded2 = singlepp::load_rankings_from_zlib_buffer(buffer.data(), buffer.size(), nfeat, nprof, GetParam());
-    EXPECT_EQ(reloaded2, ranks);
+    auto reloaded2 = singlepp::load_rankings_from_zlib_buffer<int, int>(buffer.data(), buffer.size(), GetParam());
+    auto copy2 = extract_ranks(reloaded2);
+    EXPECT_EQ(copy2, ranks);
 }
 
-void quick_ranking_err(std::string path, size_t nf, size_t np, std::string msg) {
+void quick_ranking_err(std::string path, std::string msg) {
     EXPECT_ANY_THROW({
         try {
-            singlepp::load_rankings_from_text_file(path.c_str(), nf, np);
+            singlepp::load_rankings_from_text_file(path.c_str());
         } catch (std::exception& e) {
             EXPECT_TRUE(std::string(e.what()).find(msg) != std::string::npos);
             throw;
@@ -283,52 +297,46 @@ TEST(LoadRankings, EdgeCases) {
     {
         auto path = buffin::temp_file_path("rank_err");
         quick_dump(path, "a,v,b,d\n");
-        quick_ranking_err(path, 4, 1, "integer ranks");
+        quick_ranking_err(path, "integer ranks");
     }
 
     {
         auto path = buffin::temp_file_path("rank_err");
         quick_dump(path, "1,2,3,4\n1,2,3\n1,2,3,4\n");
-        quick_ranking_err(path, 4, 3, "number of fields");
+        quick_ranking_err(path, "number of fields");
     }
 
     {
         auto path = buffin::temp_file_path("rank_err");
         quick_dump(path, "1,2,3,4\n1,2,3,\n1,2,3,4\n");
-        quick_ranking_err(path, 4, 3, "not be empty");
+        quick_ranking_err(path, "not be empty");
     }
 
     {
         auto path = buffin::temp_file_path("rank_err");
         quick_dump(path, "1,2,3,4\n1,2,,4\n1,2,3,4\n");
-        quick_ranking_err(path, 4, 3, "not be empty");
+        quick_ranking_err(path, "not be empty");
     }
 
     {
         auto path = buffin::temp_file_path("rank_err");
         quick_dump(path, "1,2,3,4\n1,2,3,4\n1,2,3\n");
-        quick_ranking_err(path, 4, 3, "number of fields");
+        quick_ranking_err(path, "number of fields");
     }
 
     {
         auto path = buffin::temp_file_path("rank_err");
         quick_dump(path, "1,2,3,4\n1,2,3,4\n1,2,3,\n");
-        quick_ranking_err(path, 4, 3, "not be empty");
-    }
-
-    {
-        auto path = buffin::temp_file_path("rank_err");
-        quick_dump(path, "1,2,3,4\n1,2,3,4\n1,2,3,4\n");
-        quick_ranking_err(path, 4, 4, "not consistent");
+        quick_ranking_err(path, "not be empty");
     }
 
     // Non-newline termination is ok.
     {
         auto path = buffin::temp_file_path("feat_ok");
         quick_dump(path, "1,2,3,4\n5,6,7,8");
-        auto output = singlepp::load_rankings_from_text_file(path.c_str(), 4, 2);
+        auto output = singlepp::load_rankings_from_text_file<int, int>(path.c_str());
         std::vector<int> expected { 1,2,3,4,5,6,7,8 };
-        EXPECT_EQ(output, expected);
+        EXPECT_EQ(extract_ranks(output), expected);
     }
 }
 

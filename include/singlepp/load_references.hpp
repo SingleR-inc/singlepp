@@ -7,6 +7,7 @@
 
 #include "Markers.hpp"
 #include "buffin/parse_text_file.hpp"
+#include "tatami/base/DenseMatrix.hpp"
 
 #ifdef SINGLEPP_USE_ZLIB
 #include "buffin/parse_gzip_file.hpp"
@@ -322,16 +323,12 @@ inline std::pair<std::vector<std::string>, std::vector<std::string> > load_featu
  * @cond
  */
 struct RankingLoader {
-    RankingLoader(size_t nf, size_t np) : nfeatures(nf), nprofiles(np) {}
-
     template<typename B>
     void add (const B* buffer, size_t n) {
         size_t i = 0;
         while (i < n) {
             if (buffer[i] == '\n') {
-                if (field + 1 != nfeatures) {
-                    throw std::runtime_error("number of fields on each line should be equal to the number of features");
-                }
+                check_nfeatures();
                 if (!non_empty) {
                     throw std::runtime_error("fields should not be empty");
                 }
@@ -365,40 +362,61 @@ struct RankingLoader {
 
     void finish() {
         if (field || non_empty) { // aka no terminating newline.
-            if (field + 1 != nfeatures) {
-                throw std::runtime_error("number of fields on each line should be equal to the number of features");
-            }
+            check_nfeatures();
             if (!non_empty) {
                 throw std::runtime_error("fields should not be empty");
             }
             values.push_back(current);
             ++line;
         }
-        if (line != nprofiles) {
-            throw std::runtime_error("number of lines is not consistent with the expected number of samples");
+    }
+
+public:
+    size_t nfeatures = 0;
+    size_t line = 0;
+    std::vector<int> values;
+
+private:
+    bool has_nfeatures = false;
+
+    void check_nfeatures () {
+        if (!has_nfeatures) {
+            has_nfeatures = true;
+            nfeatures = field + 1;
+        } else if (field + 1 != nfeatures) {
+            throw std::runtime_error("number of fields on each line should be equal to the number of features");
         }
     }
 
-    const size_t nfeatures, nprofiles;
-    size_t line = 0;
-
+private:
     int field = 0;
     bool continuing = false;
     bool non_empty = false;
     int current = 0;
-    std::vector<int> values;
 };
 /** 
  * @endcond
  */
 
 /**
+ * Matrix of ranks as a dense column-major matrix.
+ * Each column corresponds to a sample while each row corresponds to a feature.
+ * Each column contains the ranked expression values for all features.
+ *
+ * @tparam Data Numeric type for data in the matrix interface.
+ * @tparam Index Integer type for indices in the matrix interface.
+ */
+template<typename Data = double, typename Index = int>
+using RankMatrix = tatami::DenseColumnMatrix<Data, Index, std::vector<int> >;
+
+/**
+ * @tparam Data Numeric type for data in the matrix interface.
+ * @tparam Index Integer type for indices in the matrix interface.
+ * 
  * @param path Path to a text file containing the ranking matrix.
- * @param nfeatures Number of features in the ranking matrix.
- * @param nprofiles Number of profiles in the ranking matrix. 
  * @param buffer_size Size of the buffer to use when reading the file.
  *
- * @return Vector corresponding to a column-major matrix of rankings.
+ * @return A `RankMatrix` containing the feature rankings for each reference profile.
  * Each column corresponds to a reference profile while each row corresponds to a feature.
  *
  * The file should contain one line per reference profile, with the total number of lines equal to the number of profiles in the dataset.
@@ -406,50 +424,57 @@ struct RankingLoader {
  * The number of comma-separated fields on each line should be equal to the number of features.
  * Ranks should be strictly integer - tied ranks should default to the minimum rank among the index set of ties.
  */
-inline std::vector<int> load_rankings_from_text_file(const char* path, size_t nfeatures, size_t nprofiles, size_t buffer_size = 65536) {
-    RankingLoader loader(nfeatures, nprofiles);
+template<typename Data = double, typename Index = int>
+RankMatrix<Data, Index> load_rankings_from_text_file(const char* path, size_t buffer_size = 65536) {
+    RankingLoader loader;
     buffin::parse_text_file(path, loader, buffer_size);
     loader.finish();
-    return loader.values;
+    return RankMatrix<Data, Index>(loader.nfeatures, loader.line, std::move(loader.values));
 }
 
 #ifdef SINGLEPP_USE_ZLIB
 
 /**
+ * @tparam Data Numeric type for data in the matrix interface.
+ * @tparam Index Integer type for indices in the matrix interface.
+ *
  * @param path Path to a Gzip-compressed file containing the ranking matrix.
  * @param nfeatures Number of features in the ranking matrix.
  * @param nprofiles Number of profiles in the ranking matrix. 
  * @param buffer_size Size of the buffer to use when reading the file.
  *
- * @return Vector corresponding to a column-major matrix of rankings.
+ * @return A `RankMatrix` containing the feature rankings for each reference profile.
  * Each column corresponds to a reference profile while each row corresponds to a feature.
  *
  * See `load_rankings_from_text_file()` for details about the format.
  */
-inline std::vector<int> load_rankings_from_gzip_file(const char* path, size_t nfeatures, size_t nprofiles, size_t buffer_size = 65536) {
-    RankingLoader loader(nfeatures, nprofiles);
+template<typename Data = double, typename Index = int>
+RankMatrix<Data, Index> load_rankings_from_gzip_file(const char* path, size_t buffer_size = 65536) {
+    RankingLoader loader;
     buffin::parse_gzip_file(path, loader, buffer_size);
     loader.finish();
-    return loader.values;
+    return RankMatrix<Data, Index>(loader.nfeatures, loader.line, std::move(loader.values));
 }
 
 /**
+ * @tparam Data Numeric type for data in the matrix interface.
+ * @tparam Index Integer type for indices in the matrix interface.
+ *
  * @param[in] buffer Pointer to an array containing a Zlib/Gzip-compressed string containing the ranking matrix.
  * @param len Length of the array for `buffer`.
- * @param nfeatures Number of features in the ranking matrix.
- * @param nprofiles Number of profiles in the ranking matrix. 
  * @param buffer_size Size of the buffer to use when reading the file.
  *
- * @return Vector corresponding to a column-major matrix of rankings.
+ * @return A `RankMatrix` containing the feature rankings for each reference profile.
  * Each column corresponds to a reference profile while each row corresponds to a feature.
  *
  * See `load_rankings_from_text_file()` for details about the format.
  */
-inline std::vector<int> load_rankings_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t nfeatures, size_t nprofiles, size_t buffer_size = 65536) {
-    RankingLoader loader(nfeatures, nprofiles);
+template<typename Data = double, typename Index = int>
+RankMatrix<Data, Index> load_rankings_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t buffer_size = 65536) {
+    RankingLoader loader;
     buffin::parse_zlib_buffer(const_cast<unsigned char*>(buffer), len, loader, 3, buffer_size);
     loader.finish();
-    return loader.values;
+    return RankMatrix<Data, Index>(loader.nfeatures, loader.line, std::move(loader.values));
 }
 #endif
 
