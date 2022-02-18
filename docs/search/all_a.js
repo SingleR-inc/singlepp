@@ -7,5 +7,6 @@ var searchData=
   ['set_5fquantile_4',['set_quantile',['../classsinglepp_1_1SinglePP.html#aa6a2dba77b4de47ae12872acb7679f1a',1,'singlepp::SinglePP']]],
   ['set_5ftop_5',['set_top',['../classsinglepp_1_1SinglePP.html#ad2e03d3cba0efd425ddf79c98170feb7',1,'singlepp::SinglePP']]],
   ['singlepp_6',['SinglePP',['../classsinglepp_1_1SinglePP.html',1,'singlepp']]],
-  ['singlepp_2ehpp_7',['SinglePP.hpp',['../SinglePP_8hpp.html',1,'']]]
+  ['singlepp_2ehpp_7',['SinglePP.hpp',['../SinglePP_8hpp.html',1,'']]],
+  ['subset_8',['subset',['../structsinglepp_1_1SinglePP_1_1Prebuilt.html#a43455ed90d887169658eec98e21c91e2',1,'singlepp::SinglePP::Prebuilt']]]
 ];
