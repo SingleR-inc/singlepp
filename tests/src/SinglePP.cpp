@@ -118,6 +118,12 @@ TEST_P(SinglePPIntersectTest, Intersect) {
     runner.set_fine_tune(false).set_top(top).set_quantile(quantile);
     auto result = runner.run(mat.get(), left.data(), refs.get(), right.data(), labels.data(), markers);
 
+    // Computing the result via the build method.
+    auto build0 = runner.build(mat->nrow(), left.data(), refs.get(), right.data(), labels.data(), markers);
+    auto result0 = runner.run(mat.get(), build0);
+    EXPECT_EQ(result0.best, result.best);
+    EXPECT_EQ(result0.delta, result.delta);
+
     // Computing the reference result using the other run() method,
     // after effectively subsetting the input matrices and reindexing the markers.
     auto intersection = singlepp::intersect_features(left.size(), left.data(), right.size(), right.data());
