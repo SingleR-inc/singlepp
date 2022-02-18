@@ -55,7 +55,7 @@ inline void scaled_ranks(size_t slen, RankedVector& collected, double* outgoing)
         sum_squares+=o*o;
     }
 
-    // Special behaviour for no-variance genes; these are left as all-zero scaled ranks.
+    // Special behaviour for no-variance cells; these are left as all-zero scaled ranks.
     sum_squares = std::max(sum_squares, 0.00000001);
     sum_squares = std::sqrt(sum_squares)*2;
     for (size_t i = 0; i < slen; ++i) {

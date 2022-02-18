@@ -194,6 +194,35 @@ TEST(SinglePPTest, Simple) {
     }
 }
 
+TEST(SinglePPTest, NoShared) {
+    size_t ngenes = 100;
+    size_t nlabels = 3;
+    size_t nrefs = 50;
+
+    auto mat = spawn_matrix(ngenes, 10, 100);
+    auto refs = spawn_matrix(ngenes, nrefs, 100);
+    auto labels = spawn_labels(nrefs, nlabels, 1000);
+    auto markers = mock_markers(nlabels, 50, ngenes); 
+
+    std::vector<int> left(ngenes), right(ngenes);
+    std::iota(left.begin(), left.end(), 0);
+    std::iota(right.begin(), right.end(), ngenes);
+
+    singlepp::SinglePP runner;
+    auto built = runner.build(ngenes, left.data(), refs.get(), right.data(), labels.data(), markers);
+    EXPECT_EQ(built.mat_subset.size(), 0);
+    EXPECT_EQ(built.ref_subset.size(), 0);
+
+    auto output = runner.run(mat.get(), built);
+    for (const auto& curscore : output.scores) {
+        for (auto s : curscore) {
+            EXPECT_EQ(s, 1); // distance of zero when there are no genes ==> correlation of 1.
+        }
+    }
+
+    EXPECT_EQ(output.delta, std::vector<double>(mat->ncol())); // all-zeros, no differences between first and second.
+}
+
 TEST(SinglePPTest, Nulls) {
     // Mocking up the test and references.
     size_t ngenes = 200;
