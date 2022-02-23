@@ -13,42 +13,28 @@ template<typename Stat, typename Index>
 using RankedVector = std::vector<std::pair<Stat, Index> >;
 
 template<typename Stat, typename Index>
-void fill_ranks(const std::vector<int>& subset, const Stat* ptr, RankedVector<Stat, Index>& vec) {
+void fill_ranks_no_missing(const std::vector<int>& subset, const Stat* ptr, RankedVector<Stat, Index>& vec, int offset = 0) {
+    vec.clear();
     for (size_t s = 0; s < subset.size(); ++s) {
-        vec[s].first = ptr[subset[s]];
-        vec[s].second = s;
+        auto val = ptr[subset[s] - offset];
+        if (std::isnan(val)) {
+            continue;
+        }
+        vec.emplace_back(val, s);
     }
     std::sort(vec.begin(), vec.end());
     return;
 }
 
-// Mostly for testing.
-template<typename Stat, typename Index = int>
-RankedVector<Stat, Index> fill_ranks(const std::vector<int>& subset, const Stat* ptr) {
-    RankedVector<Stat, Index> vec(subset.size());
-    fill_ranks(subset, ptr, vec);
-    return vec;
-}
-
-// Mostly for testing.
 template<typename Stat, typename Index>
-void fill_ranks(size_t n, const Stat* ptr, RankedVector<Stat, Index>& vec) {
-    for (size_t s = 0; s < n; ++s) {
-        vec[s].first = ptr[s];
+void fill_ranks(const std::vector<int>& subset, const Stat* ptr, RankedVector<Stat, Index>& vec, int offset = 0) {
+    for (size_t s = 0; s < subset.size(); ++s) {
+        vec[s].first = ptr[subset[s] - offset];
         vec[s].second = s;
     }
     std::sort(vec.begin(), vec.end());
     return;
 }
-
-// Mostly for testing.
-template<typename Stat, typename Index = int>
-RankedVector<Stat, Index> fill_ranks(size_t n, const Stat* ptr) {
-    RankedVector<Stat, Index> vec(n);
-    fill_ranks(n, ptr, vec);
-    return vec;
-}
-
 
 template<bool na_aware = false, typename Stat, typename Index>
 void scaled_ranks(size_t slen, const RankedVector<Stat, Index>& collected, double* outgoing) { 
@@ -108,9 +94,9 @@ void scaled_ranks(size_t slen, const RankedVector<Stat, Index>& collected, doubl
     return;
 }
 
-template<bool na_aware = false, typename Stat, typename Index>
+template<typename Stat, typename Index>
 void scaled_ranks(RankedVector<Stat, Index>& collected, double* outgoing) {
-    scaled_ranks(collected.size(), collected, outgoing);
+    scaled_ranks<false>(collected.size(), collected, outgoing);
     return;
 }
 

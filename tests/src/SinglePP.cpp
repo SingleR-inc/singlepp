@@ -79,7 +79,7 @@ INSTANTIATE_TEST_CASE_P(
     SinglePP,
     SinglePPSimpleTest,
     ::testing::Combine(
-        ::testing::Values(5, 10, 20), // nuber of top genes.
+        ::testing::Values(5, 10, 20), // number of top genes.
         ::testing::Values(1, 0.93, 0.8, 0.66) // quantile
     )
 );

@@ -101,11 +101,18 @@ public:
         auto candidate = fill_labels_in_use(scores, threshold, labels_in_use);
 
         // If there's only one top label, we don't need to do anything else.
-        // We also give up if every label is in range, because any subsequent
-        // calculations would use all markers and just give the same result.
-        if (labels_in_use.size() == 1 || labels_in_use.size() == ref.size()) {
+        if (labels_in_use.size() == 1) {
             return candidate;
-        }
+        } 
+
+//        // We also give up if every label is in range, because any subsequent
+//        // calculations would use all markers and just give the same result.
+//        // The 'test' parameter allows us to skip this bypass for testing.
+//        if constexpr(!test) {
+//            if (labels_in_use.size() == ref.size()) {
+//                return candidate;
+//            }
+//        }
 
         while (labels_in_use.size() > 1) {
             gene_subset.clear();

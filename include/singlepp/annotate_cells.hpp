@@ -16,7 +16,7 @@ namespace singlepp {
 
 inline void annotate_cells_simple(
     const tatami::Matrix<double, int>* mat,
-    std::vector<int> subset,
+    const std::vector<int>& subset,
     const std::vector<Reference>& ref,
     const Markers& markers,
     double quantile,
@@ -31,9 +31,6 @@ inline void annotate_cells_simple(
         // Assumes that 'subset' is sorted.
         first = subset.front();
         last = subset.back() + 1;
-        for (auto& s : subset) {
-            s -= first;
-        }
     }
     const size_t NC = mat->ncol();
 
@@ -70,7 +67,7 @@ inline void annotate_cells_simple(
         #pragma omp for
         for (size_t c = 0; c < NC; ++c) {
             auto ptr = mat->column(c, buffer.data(), first, last, wrk.get());
-            fill_ranks(subset, ptr, vec);
+            fill_ranks(subset, ptr, vec, first);
             scaled_ranks(vec, scaled.data());
 
             curscores.resize(NL);

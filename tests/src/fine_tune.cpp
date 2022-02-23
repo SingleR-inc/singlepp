@@ -2,6 +2,7 @@
 #include "singlepp/fine_tune.hpp"
 #include "mock_markers.h"
 #include "spawn_matrix.h"
+#include "fill_ranks.h"
 
 TEST(FillLabelsInUseTest, Basic) {
     std::vector<double> scores { 0.5, 0.2, 0.46 };
@@ -84,7 +85,7 @@ TEST(FineTuneTest, Basic) {
     // Check early exit conditions.
     {
         auto vec = refs->column(0); // doesn't really matter what we pick here.
-        auto ranked = singlepp::fill_ranks(vec.size(), vec.data());
+        auto ranked = fill_ranks(vec.size(), vec.data());
 
         std::vector<double> scores { 0.2, 0.5, 0.1 };
         auto output = ft.run(ranked, references, markers, scores, 0.8, 0.05);
@@ -95,14 +96,14 @@ TEST(FineTuneTest, Basic) {
         scores[0] = 0.51;
         output = ft.run(ranked, references, markers, scores, 1, 0.05);
         EXPECT_EQ(output.first, 0); // first entry of scores is maxed.
-        EXPECT_EQ(output.second, 0.01);
+        EXPECT_FLOAT_EQ(output.second, 0.01);
     }
 
     // Check edge case when there is only a single label, 
     // based on the length of 'scores'.
     {
         auto vec = refs->column(1); // doesn't really matter
-        auto ranked = singlepp::fill_ranks(vec.size(), vec.data());
+        auto ranked = fill_ranks(vec.size(), vec.data());
 
         std::vector<double> scores { 0.5 };
         auto output = ft.run(ranked, references, markers, scores, 0.8, 0.05);
@@ -115,7 +116,7 @@ TEST(FineTuneTest, Basic) {
     // guarantee a score of 1 from a correlation of 1.
     for (size_t r = 0; r < nrefs; ++r) {
         auto vec = refs->column(r);
-        auto ranked = singlepp::fill_ranks(vec.size(), vec.data());
+        auto ranked = fill_ranks(vec.size(), vec.data());
 
         // Setting the template parameter test = true to force it to do 
         // calculations, despite the fact that it would otherwise exit early.

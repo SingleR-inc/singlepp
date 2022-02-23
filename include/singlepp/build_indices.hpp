@@ -70,19 +70,16 @@ std::vector<Reference> build_indices(const tatami::Matrix<double, int>* ref, con
         #pragma omp for
         for (size_t c = 0; c < NC; ++c) {
             auto ptr = ref->column(c, buffer.data(), first, last, wrk.get());
-            for (size_t r = 0; r < NR; ++r) {
-                ranked[r].first = ptr[subset[r] - first];
-                ranked[r].second = r;
-            }
-            std::sort(ranked.begin(), ranked.end());
+            fill_ranks(subset, ptr, ranked, first);
 
             auto curlab = labels[c];
-            auto scaled = nndata[curlab].data() + offsets[c] * NR;
+            auto curoff = offsets[c];
+            auto scaled = nndata[curlab].data() + curoff * NR;
             scaled_ranks(ranked, scaled); 
 
             // Storing as a pair of ints to save space; as long
             // as we respect ties, everything should be fine.
-            auto& stored_ranks = nnrefs[curlab].ranked[c];
+            auto& stored_ranks = nnrefs[curlab].ranked[curoff];
             stored_ranks.reserve(ranked.size());
 
             int counter = 0;

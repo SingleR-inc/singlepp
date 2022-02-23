@@ -6,7 +6,8 @@
 
 #include <algorithm>
 #include <vector>
-#include <numeric>
+
+#include "fill_ranks.h"
 
 double expected_variance(double n) {
     return 1 / (4.0 * (n - 1));
@@ -14,23 +15,12 @@ double expected_variance(double n) {
 
 TEST(FillRanks, Basic) {
     std::vector<double> stuff { 0.34817868, 0.24918308, 0.75879770, 0.71893282, 0.78199329, 0.09039928 };
-
-    std::vector<int> everything(stuff.size());
-    std::iota(everything.begin(), everything.end(), 0);
-
-    auto ranks = singlepp::fill_ranks(everything, stuff.data());
+    auto ranks = fill_ranks(stuff.size(), stuff.data());
     double prev = 0;
     for (size_t i = 0; i < ranks.size(); ++i) {
         EXPECT_TRUE(ranks[i].first > prev);
         EXPECT_EQ(ranks[i].first, stuff[ranks[i].second]);
         prev = ranks[i].first;
-    }
-
-    // Comparing to the reference.
-    auto ranks2 = singlepp::fill_ranks(stuff.size(), stuff.data());
-    ASSERT_EQ(ranks.size(), ranks2.size());
-    for (size_t i = 0; i < ranks.size(); ++i) {
-        EXPECT_EQ(ranks[i], ranks2[i]);
     }
 }
 
@@ -39,18 +29,26 @@ TEST(FillRanks, Subsetted) {
 
     {
         std::vector<int> odds { 1, 3, 5 };
-        auto ranks = singlepp::fill_ranks(odds, stuff.data());
+        auto ranks = fill_ranks(odds, stuff.data());
         double prev = -1000;
         for (size_t i = 0; i < ranks.size(); ++i) {
             EXPECT_TRUE(ranks[i].first > prev);
             EXPECT_EQ(ranks[i].first, stuff[odds[ranks[i].second]]);
             prev = ranks[i].first;
         }
+
+        prev = -1000;
+        ranks = fill_ranks(odds, stuff.data(), 1);
+        for (size_t i = 0; i < ranks.size(); ++i) {
+            EXPECT_TRUE(ranks[i].first > prev);
+            EXPECT_EQ(ranks[i].first, stuff[odds[ranks[i].second] - 1]);
+            prev = ranks[i].first;
+        }
     }
 
     {
         std::vector<int> evens { 6, 4, 2, 0 };
-        auto ranks = singlepp::fill_ranks(evens, stuff.data());
+        auto ranks = fill_ranks(evens, stuff.data());
         double prev = -1000;
         for (size_t i = 0; i < ranks.size(); ++i) {
             EXPECT_TRUE(ranks[i].first > prev);
@@ -62,7 +60,7 @@ TEST(FillRanks, Subsetted) {
 
 TEST(ScaledRanks, Basic) {
     std::vector<double> stuff { 0.4234, -0.12, 2.784, 0.232, 5.32, 1.1129 };
-    auto ranks = singlepp::fill_ranks(stuff.size(), stuff.data());
+    auto ranks = fill_ranks(stuff.size(), stuff.data());
     std::vector<double> out(stuff.size());
     singlepp::scaled_ranks(ranks, out.data());
 
@@ -84,7 +82,7 @@ TEST(ScaledRanks, Basic) {
 
 TEST(ScaledRanks, AllZero) {
     std::vector<double> all_zeroes(12);
-    auto ranks = singlepp::fill_ranks(all_zeroes.size(), all_zeroes.data());
+    auto ranks = fill_ranks(all_zeroes.size(), all_zeroes.data());
     std::vector<double> out (all_zeroes.size());
     singlepp::scaled_ranks(ranks, out.data());
     EXPECT_EQ(out, all_zeroes);
@@ -94,7 +92,7 @@ TEST(ScaledRanks, Ties) {
     std::vector<double> stuff { -0.038, -0.410, 0.501, -0.174, 0.899, 0.422 };
     size_t original_size = stuff.size();
 
-    auto ranks = singlepp::fill_ranks(original_size, stuff.data());
+    auto ranks = fill_ranks(original_size, stuff.data());
     std::vector<double> ref(original_size);
     singlepp::scaled_ranks(ranks, ref.data());
 
@@ -105,7 +103,7 @@ TEST(ScaledRanks, Ties) {
 
     // Slapping a duplicate onto the end.
     stuff.push_back(stuff[0]);
-    ranks = singlepp::fill_ranks(stuff.size(), stuff.data());
+    ranks = fill_ranks(stuff.size(), stuff.data());
     std::vector<double> tied(stuff.size());
     singlepp::scaled_ranks(ranks, tied.data());
   
@@ -121,7 +119,7 @@ TEST(ScaledRanks, Ties) {
         stuff.push_back(stuff[s]);
     }
     ASSERT_EQ(stuff.size(), original_size * 2);
-    ranks = singlepp::fill_ranks(stuff.size(), stuff.data());
+    ranks = fill_ranks(stuff.size(), stuff.data());
     std::vector<double> dupped(stuff.size());
     singlepp::scaled_ranks(ranks, dupped.data());
 
@@ -141,7 +139,7 @@ TEST(ScaledRanks, Ties) {
 TEST(ScaledRanks, MissingValues) {
     std::vector<double> stuff { 0.6434, -0.211, 9.251, -3.352, 8.372, 1.644 };
 
-    auto ranks = singlepp::fill_ranks(stuff.size(), stuff.data());
+    auto ranks = fill_ranks(stuff.size(), stuff.data());
     std::vector<double> ref(stuff.size());
     singlepp::scaled_ranks(ranks, ref.data());
 
@@ -150,9 +148,9 @@ TEST(ScaledRanks, MissingValues) {
     missing.insert(missing.begin() + 3, std::numeric_limits<double>::quiet_NaN());
     missing.push_back(std::numeric_limits<double>::quiet_NaN());
 
-    ranks = singlepp::fill_ranks(missing.size(), missing.data());
+    ranks = fill_ranks<true>(missing.size(), missing.data());
     std::vector<double> out(missing.size());
-    singlepp::scaled_ranks<true>(ranks, out.data());
+    singlepp::scaled_ranks<true>(missing.size(), ranks, out.data());
 
     // NaN's propagate through.
     EXPECT_TRUE(std::isnan(out[0]));
@@ -172,7 +170,7 @@ TEST(ScaledRanks, Subset) {
     std::vector<double> stuff { 0.358, 0.496, 0.125, 0.408, 0.618, 0.264, 0.905, 0.895, 0.264, 0.865, 0.069, 0.581 };
     std::vector<int> sub { 2, 7, 0, 3, 5, 10 };
 
-    auto ranks = singlepp::fill_ranks(sub, stuff.data());
+    auto ranks = fill_ranks(sub, stuff.data());
     std::vector<double> out(sub.size());
     singlepp::scaled_ranks(ranks, out.data());
 
@@ -182,19 +180,21 @@ TEST(ScaledRanks, Subset) {
         stuff2.push_back(stuff[s]);
     }
 
-    ranks = singlepp::fill_ranks(stuff2.size(), stuff2.data());
+    ranks = fill_ranks(stuff2.size(), stuff2.data());
     std::vector<double> out2(sub.size());
     singlepp::scaled_ranks(ranks, out2.data());
     EXPECT_EQ(out, out2);
 
     // Works with missing values in there.
     stuff[sub[0]] = std::numeric_limits<double>::quiet_NaN();
-    ranks = singlepp::fill_ranks(sub, stuff.data());
-    singlepp::scaled_ranks<true>(ranks, out.data());
+    ranks = fill_ranks<true>(sub, stuff.data());
+    EXPECT_EQ(ranks.size(), sub.size() - 1);
+    singlepp::scaled_ranks<true>(sub.size(), ranks, out.data());
 
     stuff2[0] = std::numeric_limits<double>::quiet_NaN();
-    ranks = singlepp::fill_ranks(stuff2.size(), stuff2.data());
-    singlepp::scaled_ranks<true>(ranks, out2.data());
+    ranks = fill_ranks<true>(stuff2.size(), stuff2.data());
+    EXPECT_EQ(ranks.size(), stuff2.size() - 1);
+    singlepp::scaled_ranks<true>(stuff2.size(), ranks, out2.data());
 
     EXPECT_TRUE(std::isnan(out[0]));
     EXPECT_TRUE(std::isnan(out2[0]));
@@ -208,11 +208,11 @@ TEST(ScaledRanks, CorrelationCheck) {
     std::vector<double> right { -0.4698, -1.0779, -0.2542,  0.1184, -2.0408,  1.4954,  1.1195, -1.0523,  0.4349,  1.6694 };
     ASSERT_EQ(left.size(), right.size());
 
-    auto ranks = singlepp::fill_ranks(left.size(), left.data());
+    auto ranks = fill_ranks(left.size(), left.data());
     std::vector<double> out1(left.size());
     singlepp::scaled_ranks(ranks, out1.data());
 
-    ranks = singlepp::fill_ranks(right.size(), right.data());
+    ranks = fill_ranks(right.size(), right.data());
     std::vector<double> out2(right.size());
     singlepp::scaled_ranks(ranks, out2.data());
 
