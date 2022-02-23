@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <algorithm>
-#include <unordered_set>
+#include <unordered_map>
 
 #include "scaled_ranks.hpp"
 #include "process_features.hpp"
@@ -62,35 +62,31 @@ inline std::pair<int, double> replace_labels_in_use(const std::vector<double>& s
     return std::make_pair(best_label, max_score - next_score); 
 }
 
-template<typename Stat, typename Index, class Associative>
-void subset_ranks(RankedVector<Stat, Index>& x, const Associative& subset) {
-    size_t counter = 0;
+template<typename Stat, typename Index>
+void subset_ranks(RankedVector<Stat, Index>& x, RankedVector<Stat, Index>& output, const std::unordered_map<int, int>& subset) {
     for (size_t i = 0; i < x.size(); ++i) {
-        if (subset.find(x[i].first) != subset.end()) {
-            if (counter != i) {
-                x[counter] = x[i];
-            }
-            ++counter;
+        auto it = subset.find(x[i].second);
+        if (it != subset.end()) {
+            output.emplace_back(x[i].first, it->second);
         }
     }
-    x.resize(counter);
     return;
 }
 
 class FineTuner {
     std::vector<int> labels_in_use;
 
-    std::unordered_set<int> gene_subset;
+    std::unordered_map<int, int> gene_subset;
 
     std::vector<double> scaled_left, scaled_right;
 
     std::vector<double> all_correlations;
 
-    std::vector<std::vector<RankedVector<int, int> > > label_ranked;
+    RankedVector<int, int> input_sub, ref_sub;
 
 public:
     std::pair<int, double> run(
-        RankedVector<double, int> input, // this is mutated inside, so we make a copy.
+        const RankedVector<double, int>& input, 
         const std::vector<Reference>& ref,
         const Markers& markers,
         std::vector<double>& scores,
@@ -110,26 +106,27 @@ public:
             return candidate;
         }
 
-        label_ranked.resize(ref.size());
-        for (size_t i = 0; i < labels_in_use.size(); ++i) {
-            auto curlab = labels_in_use[i];
-            label_ranked[curlab] = ref[curlab].ranked;
-        }
-
         while (labels_in_use.size() > 1) {
             gene_subset.clear();
+            gene_subset.reserve(input.size()); // known maximum.
             for (auto l : labels_in_use) {
                 for (auto l2 : labels_in_use){ 
                     if (l != l2) {
                         const auto& current = markers[l][l2];
-                        gene_subset.insert(current.begin(), current.end());
+                        for (auto c : current) {
+                            if (gene_subset.find(c) == gene_subset.end()) {
+                                const int counter = gene_subset.size();
+                                gene_subset[c] = counter;
+                            }
+                        }
                     }
                 }
             }
 
+            input_sub.clear();
+            subset_ranks(input, input_sub, gene_subset);
             scaled_left.resize(gene_subset.size());
-            subset_ranks(input, gene_subset);
-            scaled_ranks(input, scaled_left.data());
+            scaled_ranks(input_sub, scaled_left.data());
 
             scaled_right.resize(gene_subset.size());
             scores.clear();
@@ -143,9 +140,14 @@ public:
                 size_t NC = curref.index->nobs();
 
                 for (size_t c = 0; c < NC; ++c) {
-                    auto& curranked = label_ranked[curlab][c];
-                    subset_ranks(curranked, gene_subset);
-                    scaled_ranks(curranked, scaled_right.data());
+                    // Technically we could be faster if we remembered the
+                    // subset from the previous fine-tuning iteration, but this
+                    // requires us to (possibly) make a copy of the entire
+                    // reference set; we can't afford to do this in each thread.
+                    ref_sub.clear();
+                    subset_ranks(curref.ranked[c], ref_sub, gene_subset);
+                    scaled_ranks(ref_sub, scaled_right.data());
+
                     double cor = distance_to_correlation(scaled_left.size(), scaled_left, scaled_right);
                     all_correlations.push_back(cor);
                 }
