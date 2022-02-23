@@ -10,10 +10,48 @@
 namespace singlepp {
 
 template<typename Stat, typename Index>
-using RankVector = std::vector<std::pair<Stat, Index> >;
+using RankedVector = std::vector<std::pair<Stat, Index> >;
+
+template<typename Stat, typename Index>
+void fill_ranks(const std::vector<int>& subset, const Stat* ptr, RankedVector<Stat, Index>& vec) {
+    for (size_t s = 0; s < subset.size(); ++s) {
+        vec[s].first = ptr[subset[s]];
+        vec[s].second = s;
+    }
+    std::sort(vec.begin(), vec.end());
+    return;
+}
+
+// Mostly for testing.
+template<typename Stat, typename Index = int>
+RankedVector<Stat, Index> fill_ranks(const std::vector<int>& subset, const Stat* ptr) {
+    RankedVector<Stat, Index> vec(subset.size());
+    fill_ranks(subset, ptr, vec);
+    return vec;
+}
+
+// Mostly for testing.
+template<typename Stat, typename Index>
+void fill_ranks(size_t n, const Stat* ptr, RankedVector<Stat, Index>& vec) {
+    for (size_t s = 0; s < n; ++s) {
+        vec[s].first = ptr[s];
+        vec[s].second = s;
+    }
+    std::sort(vec.begin(), vec.end());
+    return;
+}
+
+// Mostly for testing.
+template<typename Stat, typename Index = int>
+RankedVector<Stat, Index> fill_ranks(size_t n, const Stat* ptr) {
+    RankedVector<Stat, Index> vec(n);
+    fill_ranks(n, ptr, vec);
+    return vec;
+}
+
 
 template<bool na_aware = false, typename Stat, typename Index>
-void scaled_ranks(size_t slen, const RankVector<Stat, Index>& collected, double* outgoing) { 
+void scaled_ranks(size_t slen, const RankedVector<Stat, Index>& collected, double* outgoing) { 
     // Computing tied ranks. 
     size_t cur_rank=0;
     auto cIt=collected.begin();
@@ -71,7 +109,7 @@ void scaled_ranks(size_t slen, const RankVector<Stat, Index>& collected, double*
 }
 
 template<bool na_aware = false, typename Stat, typename Index>
-void scaled_ranks(RankVector<Stat, Index>& collected, double* outgoing) {
+void scaled_ranks(RankedVector<Stat, Index>& collected, double* outgoing) {
     scaled_ranks(collected.size(), collected, outgoing);
     return;
 }

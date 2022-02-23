@@ -70,11 +70,7 @@ inline void annotate_cells_simple(
         #pragma omp for
         for (size_t c = 0; c < NC; ++c) {
             auto ptr = mat->column(c, buffer.data(), first, last, wrk.get());
-            for (size_t s = 0; s < subset.size(); ++s) {
-                vec[s].first = ptr[subset[s]];
-                vec[s].second = s;
-            }
-            std::sort(vec.begin(), vec.end());
+            fill_ranks(subset, ptr, vec);
             scaled_ranks(vec, scaled.data());
 
             curscores.resize(NL);

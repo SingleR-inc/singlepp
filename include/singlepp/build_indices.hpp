@@ -77,7 +77,7 @@ std::vector<Reference> build_indices(const tatami::Matrix<double, int>* ref, con
             std::sort(ranked.begin(), ranked.end());
 
             auto curlab = labels[c];
-            auto scaled = nndata[curlab].data() + offset[c] * NR;
+            auto scaled = nndata[curlab].data() + offsets[c] * NR;
             scaled_ranks(ranked, scaled); 
 
             // Storing as a pair of ints to save space; as long

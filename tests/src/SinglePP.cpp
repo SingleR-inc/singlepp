@@ -43,17 +43,20 @@ TEST_P(SinglePPSimpleTest, Simple) {
 
     for (size_t c = 0; c < mat->ncol(); ++c) {
         auto col = mat->column(c);
-        singlepp::RankedVector vec;
+        singlepp::RankedVector<double, int> vec(subset.size());
+        singlepp::fill_ranks(subset, col.data(), vec);
         std::vector<double> scaled(subset.size());
-        singlepp::scaled_ranks(col.data(), subset, vec, scaled.data());
+        singlepp::scaled_ranks(vec, scaled.data());
 
         std::vector<std::pair<double, size_t> > my_scores;
         for (size_t r = 0; r < nlabels; ++r) {
             std::vector<double> correlations;
             for (auto l : by_labels[r]) {
                 auto col2 = refs->column(l);
+                singlepp::RankedVector<double, int> vec2(subset.size());
+                singlepp::fill_ranks(subset, col2.data(), vec2);
                 std::vector<double> scaled2(subset.size());
-                singlepp::scaled_ranks(col2.data(), subset, vec, scaled2.data());
+                singlepp::scaled_ranks(vec2, scaled2.data());
                 correlations.push_back(singlepp::distance_to_correlation(scaled.size(), scaled.data(), scaled2.data()));
             }
 

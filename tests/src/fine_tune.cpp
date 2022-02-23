@@ -81,18 +81,31 @@ TEST(FineTuneTest, Basic) {
     // Running the fine-tuning edge cases.
     singlepp::FineTuner ft;
 
+    // Check early exit conditions.
     {
+        auto vec = refs->column(0); // doesn't really matter what we pick here.
+        auto ranked = singlepp::fill_ranks(vec.size(), vec.data());
+
         std::vector<double> scores { 0.2, 0.5, 0.1 };
-        auto vec = refs->column(0); // doesn't really matter
-        auto output = ft.run(vec.data(), references, markers, scores, 0.8, 0.05);
+        auto output = ft.run(ranked, references, markers, scores, 0.8, 0.05);
         EXPECT_EQ(output.first, 1);
         EXPECT_EQ(output.second, 0.3);
+
+        std::fill(scores.begin(), scores.end(), 0.5);
+        scores[0] = 0.51;
+        output = ft.run(ranked, references, markers, scores, 1, 0.05);
+        EXPECT_EQ(output.first, 0); // first entry of scores is maxed.
+        EXPECT_EQ(output.second, 0.01);
     }
 
+    // Check edge case when there is only a single label, 
+    // based on the length of 'scores'.
     {
-        std::vector<double> scores { 0.5 };
         auto vec = refs->column(1); // doesn't really matter
-        auto output = ft.run(vec.data(), references, markers, scores, 0.8, 0.05);
+        auto ranked = singlepp::fill_ranks(vec.size(), vec.data());
+
+        std::vector<double> scores { 0.5 };
+        auto output = ft.run(ranked, references, markers, scores, 0.8, 0.05);
         EXPECT_EQ(output.first, 0);
         EXPECT_TRUE(std::isnan(output.second));
     }
@@ -101,15 +114,19 @@ TEST(FineTuneTest, Basic) {
     // is identical to one of the references. We set the quantile to 1 to
     // guarantee a score of 1 from a correlation of 1.
     for (size_t r = 0; r < nrefs; ++r) {
-        std::vector<double> scores { 0.5, 0.49, 0.48 };
         auto vec = refs->column(r);
-        auto output = ft.run(vec.data(), references, markers, scores, 1, 0.05);
+        auto ranked = singlepp::fill_ranks(vec.size(), vec.data());
+
+        // Setting the template parameter test = true to force it to do 
+        // calculations, despite the fact that it would otherwise exit early.
+        std::vector<double> scores { 0.5, 0.49, 0.48 };
+        auto output = ft.run<true>(ranked, references, markers, scores, 1, 0.05);
         EXPECT_EQ(output.first, labels[r]);
 
         // Forcing it to match to some other label. 
         scores = std::vector<double>{ 0.5, 0.5, 0.5 };
         scores[labels[r]] = 0;
-        auto output2 = ft.run(vec.data(), references, markers, scores, 1, 0.05);
+        auto output2 = ft.run<true>(ranked, references, markers, scores, 1, 0.05);
         EXPECT_NE(output2.first, labels[r]);
     }
 }

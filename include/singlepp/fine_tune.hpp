@@ -62,8 +62,8 @@ inline std::pair<int, double> replace_labels_in_use(const std::vector<double>& s
     return std::make_pair(best_label, max_score - next_score); 
 }
 
-template<typename Stat, typename Index>
-void subset_ranks(RankedVector<Stat, Index>& x, RankedVector<Stat, Index>& output, const std::unordered_map<int, int>& subset) {
+template<typename Stat, typename Index, typename Stat2, typename Index2>
+void subset_ranks(const RankedVector<Stat, Index>& x, RankedVector<Stat2, Index2>& output, const std::unordered_map<int, int>& subset) {
     for (size_t i = 0; i < x.size(); ++i) {
         auto it = subset.find(x[i].second);
         if (it != subset.end()) {
@@ -85,6 +85,7 @@ class FineTuner {
     RankedVector<int, int> input_sub, ref_sub;
 
 public:
+    template<bool test = false>
     std::pair<int, double> run(
         const RankedVector<double, int>& input, 
         const std::vector<Reference>& ref,
