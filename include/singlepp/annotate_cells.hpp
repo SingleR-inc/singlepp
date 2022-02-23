@@ -61,8 +61,7 @@ inline void annotate_cells_simple(
         std::vector<double> buffer(last - first);
         auto wrk = mat->new_workspace(false);
 
-        RankedVector vec;
-        vec.reserve(subset.size());
+        RankedVector<double, int> vec(subset.size());
         std::vector<double> scaled(subset.size());
 
         FineTuner ft;
@@ -71,7 +70,12 @@ inline void annotate_cells_simple(
         #pragma omp for
         for (size_t c = 0; c < NC; ++c) {
             auto ptr = mat->column(c, buffer.data(), first, last, wrk.get());
-            scaled_ranks(ptr, subset, vec, scaled.data());
+            for (size_t s = 0; s < subset.size(); ++s) {
+                vec[s].first = ptr[subset[s]];
+                vec[s].second = s;
+            }
+            std::sort(vec.begin(), vec.end());
+            scaled_ranks(vec, scaled.data());
 
             curscores.resize(NL);
             for (size_t r = 0; r < NL; ++r) {
@@ -106,7 +110,7 @@ inline void annotate_cells_simple(
                     }
                 }
             } else {
-                auto tuned = ft.run(scaled.data(), ref, markers, curscores, quantile, threshold);
+                auto tuned = ft.run(vec, ref, markers, curscores, quantile, threshold);
                 best[c] = tuned.first;
                 if (delta) {
                     delta[c] = tuned.second;

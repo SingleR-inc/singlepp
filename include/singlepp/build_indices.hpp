@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <memory>
+#include <algorithm>
+
 #include "knncolle/knncolle.hpp"
 #include "tatami/tatami.hpp"
 
@@ -19,7 +21,7 @@ inline size_t get_nlabels(size_t n, const int* labels) {
 }
 
 struct Reference {
-    std::vector<double> data;
+    std::vector<RankedVector<int, int> > ranked;
     std::shared_ptr<knncolle::Base<int, double> > index;
 };
 
@@ -40,25 +42,28 @@ std::vector<Reference> build_indices(const tatami::Matrix<double, int>* ref, con
     }
 
     std::vector<Reference> nnrefs(nlabels);
-    std::vector<double*> starts(nlabels);
+    std::vector<std::vector<double> > nndata(nlabels);
     for (size_t l = 0; l < nlabels; ++l) {
         if (label_count[l] == 0) {
             throw std::runtime_error(std::string("no entries for label ") + std::to_string(l));
         }
-        nnrefs[l].data.resize(label_count[l] * NR);
-        starts[l] = nnrefs[l].data.data();
+        nnrefs[l].ranked.resize(label_count[l]);
+        nndata[l].resize(label_count[l] * NR);
     }
 
-    std::vector<double*> scaled(NC);
-    for (size_t c = 0; c < NC; ++c) {
-        auto& ptr = starts[labels[c]];
-        scaled[c] = ptr;
-        ptr += NR;
+    std::vector<size_t> offsets(NC);
+    {
+        std::vector<size_t> counter(nlabels);
+        for (size_t c = 0; c < NC; ++c) {
+            auto& o = counter[labels[c]];
+            offsets[c] = o;
+            ++o;
+        }
     }
 
     #pragma omp parallel
     {
-        RankedVector ranked(NR);
+        RankedVector<double, int> ranked(NR);
         std::vector<double> buffer(ref->nrow());
         auto wrk = ref->new_workspace(false);
 
@@ -69,13 +74,37 @@ std::vector<Reference> build_indices(const tatami::Matrix<double, int>* ref, con
                 ranked[r].first = ptr[subset[r] - first];
                 ranked[r].second = r;
             }
-            scaled_ranks(NR, ranked, scaled[c]);
+            std::sort(ranked.begin(), ranked.end());
+
+            auto curlab = labels[c];
+            auto scaled = nndata[curlab].data() + offset[c] * NR;
+            scaled_ranks(ranked, scaled); 
+
+            // Storing as a pair of ints to save space; as long
+            // as we respect ties, everything should be fine.
+            auto& stored_ranks = nnrefs[curlab].ranked[c];
+            stored_ranks.reserve(ranked.size());
+
+            int counter = 0;
+            auto last = (NR ? ranked[0].first : 0);
+            for (const auto& r : ranked) {
+                stored_ranks.emplace_back(counter, r.second);
+                if (r.first != last) {
+                    ++counter;
+                    last = r.first;
+                }
+            }
         }
     }
 
     #pragma omp parallel for
     for (size_t l = 0; l < nlabels; ++l) {
-        nnrefs[l].index = build(NR, label_count[l], nnrefs[l].data.data());
+        nnrefs[l].index = build(NR, label_count[l], nndata[l].data());
+
+        // Trying to free the memory as we go along, to offset the copying
+        // of nndata into the memory store owned by the knncolle index.
+        nndata[l].clear();
+        nndata[l].shrink_to_fit();
     }
 
     return nnrefs;

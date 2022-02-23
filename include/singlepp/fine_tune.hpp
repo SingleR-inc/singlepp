@@ -62,20 +62,35 @@ inline std::pair<int, double> replace_labels_in_use(const std::vector<double>& s
     return std::make_pair(best_label, max_score - next_score); 
 }
 
+template<typename Stat, typename Index, class Associative>
+void subset_ranks(RankedVector<Stat, Index>& x, const Associative& subset) {
+    size_t counter = 0;
+    for (size_t i = 0; i < x.size(); ++i) {
+        if (subset.find(x[i].first) != subset.end()) {
+            if (counter != i) {
+                x[counter] = x[i];
+            }
+            ++counter;
+        }
+    }
+    x.resize(counter);
+    return;
+}
+
 class FineTuner {
     std::vector<int> labels_in_use;
 
     std::unordered_set<int> gene_subset;
-    std::vector<int> genes_in_use;
 
-    RankedVector ranked;
     std::vector<double> scaled_left, scaled_right;
 
     std::vector<double> all_correlations;
 
+    std::vector<std::vector<RankedVector<int, int> > > label_ranked;
+
 public:
     std::pair<int, double> run(
-        const double* ptr, 
+        RankedVector<double, int> input, // this is mutated inside, so we make a copy.
         const std::vector<Reference>& ref,
         const Markers& markers,
         std::vector<double>& scores,
@@ -87,8 +102,18 @@ public:
         } 
 
         auto candidate = fill_labels_in_use(scores, threshold, labels_in_use);
-        if (labels_in_use.size() == 1) {
+
+        // If there's only one top label, we don't need to do anything else.
+        // We also give up if every label is in range, because any subsequent
+        // calculations would use all markers and just give the same result.
+        if (labels_in_use.size() == 1 || labels_in_use.size() == ref.size()) {
             return candidate;
+        }
+
+        label_ranked.resize(ref.size());
+        for (size_t i = 0; i < labels_in_use.size(); ++i) {
+            auto curlab = labels_in_use[i];
+            label_ranked[curlab] = ref[curlab].ranked;
         }
 
         while (labels_in_use.size() > 1) {
@@ -102,24 +127,25 @@ public:
                 }
             }
 
-            genes_in_use.clear();
-            genes_in_use.insert(genes_in_use.end(), gene_subset.begin(), gene_subset.end());
+            scaled_left.resize(gene_subset.size());
+            subset_ranks(input, gene_subset);
+            scaled_ranks(input, scaled_left.data());
 
-            scaled_left.resize(genes_in_use.size());
-            scaled_ranks(ptr, genes_in_use, ranked, scaled_left.data());
-
-            scaled_right.resize(genes_in_use.size());
+            scaled_right.resize(gene_subset.size());
             scores.clear();
 
             for (size_t i = 0; i < labels_in_use.size(); ++i) {
+                auto curlab = labels_in_use[i];
+
                 all_correlations.clear();
-                const auto& curref = ref[labels_in_use[i]];
+                const auto& curref = ref[curlab];
                 size_t NR = curref.index->ndim();
                 size_t NC = curref.index->nobs();
 
                 for (size_t c = 0; c < NC; ++c) {
-                    auto rightptr = curref.data.data() + c * NR;
-                    scaled_ranks(rightptr, genes_in_use, ranked, scaled_right.data());
+                    auto& curranked = label_ranked[curlab][c];
+                    subset_ranks(curranked, gene_subset);
+                    scaled_ranks(curranked, scaled_right.data());
                     double cor = distance_to_correlation(scaled_left.size(), scaled_left, scaled_right);
                     all_correlations.push_back(cor);
                 }
