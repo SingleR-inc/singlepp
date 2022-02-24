@@ -150,7 +150,7 @@ TEST(FineTuneTest, Comparison) {
     // Naive calculation.
     size_t top = 5;
     auto subset = singlepp::subset_markers(markers, top);
-    double quantile = 1;
+    double quantile = 0.75;
     auto naive = naive_method(nlabels, labels, refs, mat, subset, quantile);
 
     // Recalculation inside the fine-tuner should give the same conclusion.
