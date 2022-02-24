@@ -5,6 +5,7 @@
 
 #include "mock_markers.h"
 #include "spawn_matrix.h"
+#include "naive_method.h"
 
 #include <memory>
 #include <vector>
@@ -35,43 +36,16 @@ TEST_P(SinglePPSimpleTest, Simple) {
 
     // Implementing the reference score calculation.
     auto subset = singlepp::subset_markers(markers, top);
-
-    std::vector<std::vector<int> > by_labels(nlabels);
-    for (size_t r = 0; r < nrefs; ++r) {
-        by_labels[labels[r]].push_back(r);
-    }
+    auto naive = naive_method(nlabels, labels, refs, mat, subset, quantile);
 
     for (size_t c = 0; c < mat->ncol(); ++c) {
-        auto col = mat->column(c);
-        singlepp::RankedVector<double, int> vec(subset.size());
-        singlepp::fill_ranks(subset, col.data(), vec);
-        std::vector<double> scaled(subset.size());
-        singlepp::scaled_ranks(vec, scaled.data());
-
-        std::vector<std::pair<double, size_t> > my_scores;
-        for (size_t r = 0; r < nlabels; ++r) {
-            std::vector<double> correlations;
-            for (auto l : by_labels[r]) {
-                auto col2 = refs->column(l);
-                singlepp::RankedVector<double, int> vec2(subset.size());
-                singlepp::fill_ranks(subset, col2.data(), vec2);
-                std::vector<double> scaled2(subset.size());
-                singlepp::scaled_ranks(vec2, scaled2.data());
-                correlations.push_back(singlepp::distance_to_correlation(scaled.size(), scaled.data(), scaled2.data()));
-            }
-
-            double score = singlepp::correlations_to_scores(correlations, quantile);
-            EXPECT_TRUE(std::abs(score - output.scores[r][c]) < 1e-6);
-            my_scores.emplace_back(score, r);
-        }
-
-        // Double-check that the best and delta values are computed correctly.
-        std::sort(my_scores.begin(), my_scores.end());
-        EXPECT_EQ(my_scores.back().second, output.best[c]);
-
-        double observed_delta = my_scores[nlabels-1].first - my_scores[nlabels-2].first;
-        EXPECT_TRUE(std::abs(observed_delta - output.delta[c]) < 1e-6);
+        EXPECT_EQ(naive.best[c], output.best[c]);
+        EXPECT_TRUE(std::abs(naive.delta[c] - output.delta[c]) < 1e-6);
         EXPECT_TRUE(output.delta[c] > 0);
+
+        for (size_t r = 0; r < nlabels; ++r) {
+            EXPECT_TRUE(std::abs(naive.scores[r][c] - output.scores[r][c]) < 1e-6);
+        }
     }
 }
 

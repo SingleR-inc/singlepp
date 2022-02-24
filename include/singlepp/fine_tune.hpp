@@ -62,8 +62,8 @@ inline std::pair<int, double> replace_labels_in_use(const std::vector<double>& s
     return std::make_pair(best_label, max_score - next_score); 
 }
 
-template<typename Stat, typename Index, typename Stat2, typename Index2>
-void subset_ranks(const RankedVector<Stat, Index>& x, RankedVector<Stat2, Index2>& output, const std::unordered_map<int, int>& subset) {
+template<typename Stat, typename Index>
+void subset_ranks(const RankedVector<Stat, Index>& x, RankedVector<Stat, Index>& output, const std::unordered_map<int, int>& subset) {
     for (size_t i = 0; i < x.size(); ++i) {
         auto it = subset.find(x[i].second);
         if (it != subset.end()) {
@@ -82,7 +82,9 @@ class FineTuner {
 
     std::vector<double> all_correlations;
 
-    RankedVector<int, int> input_sub, ref_sub;
+    RankedVector<double, int> input_sub;
+
+    RankedVector<int, int> ref_sub;
 
 public:
     template<bool test = false>
@@ -105,14 +107,14 @@ public:
             return candidate;
         } 
 
-//        // We also give up if every label is in range, because any subsequent
-//        // calculations would use all markers and just give the same result.
-//        // The 'test' parameter allows us to skip this bypass for testing.
-//        if constexpr(!test) {
-//            if (labels_in_use.size() == ref.size()) {
-//                return candidate;
-//            }
-//        }
+        // We also give up if every label is in range, because any subsequent
+        // calculations would use all markers and just give the same result.
+        // The 'test' parameter allows us to skip this bypass for testing.
+        if constexpr(!test) {
+            if (labels_in_use.size() == ref.size()) {
+                return candidate;
+            }
+        }
 
         while (labels_in_use.size() > 1) {
             gene_subset.clear();
