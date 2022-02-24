@@ -143,7 +143,7 @@ $(function() {
 <div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>        } <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>            subref = build_indices(ref, labels, subset,</div>
 <div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>                [](<span class="keywordtype">size_t</span> nr, <span class="keywordtype">size_t</span> nc, <span class="keyword">const</span> <span class="keywordtype">double</span>* ptr) { </div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>                    <span class="keywordflow">return</span> std::shared_ptr&lt;knncolle::Base&lt;int, double&gt; &gt;(<span class="keyword">new</span> knncolle::VpTreeEuclidean&lt;int, double&gt;(nr, nc, ptr)); </div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>                    <span class="keywordflow">return</span> std::shared_ptr&lt;knncolle::Base&lt;int, double&gt; &gt;(<span class="keyword">new</span> knncolle::KmknnEuclidean&lt;int, double&gt;(nr, nc, ptr)); </div>
 <div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>                }</div>
 <div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>            );</div>
 <div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>        }</div>
