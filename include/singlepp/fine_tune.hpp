@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <algorithm>
-#include <unordered_set>
+#include <unordered_map>
 
 #include "scaled_ranks.hpp"
 #include "process_features.hpp"
@@ -62,20 +62,34 @@ inline std::pair<int, double> replace_labels_in_use(const std::vector<double>& s
     return std::make_pair(best_label, max_score - next_score); 
 }
 
+template<typename Stat, typename Index>
+void subset_ranks(const RankedVector<Stat, Index>& x, RankedVector<Stat, Index>& output, const std::unordered_map<int, int>& subset) {
+    for (size_t i = 0; i < x.size(); ++i) {
+        auto it = subset.find(x[i].second);
+        if (it != subset.end()) {
+            output.emplace_back(x[i].first, it->second);
+        }
+    }
+    return;
+}
+
 class FineTuner {
     std::vector<int> labels_in_use;
 
-    std::unordered_set<int> gene_subset;
-    std::vector<int> genes_in_use;
+    std::unordered_map<int, int> gene_subset;
 
-    RankedVector ranked;
     std::vector<double> scaled_left, scaled_right;
 
     std::vector<double> all_correlations;
 
+    RankedVector<double, int> input_sub;
+
+    RankedVector<int, int> ref_sub;
+
 public:
+    template<bool test = false>
     std::pair<int, double> run(
-        const double* ptr, 
+        const RankedVector<double, int>& input, 
         const std::vector<Reference>& ref,
         const Markers& markers,
         std::vector<double>& scores,
@@ -87,39 +101,63 @@ public:
         } 
 
         auto candidate = fill_labels_in_use(scores, threshold, labels_in_use);
+
+        // If there's only one top label, we don't need to do anything else.
         if (labels_in_use.size() == 1) {
             return candidate;
+        } 
+
+        // We also give up if every label is in range, because any subsequent
+        // calculations would use all markers and just give the same result.
+        // The 'test' parameter allows us to skip this bypass for testing.
+        if constexpr(!test) {
+            if (labels_in_use.size() == ref.size()) {
+                return candidate;
+            }
         }
 
         while (labels_in_use.size() > 1) {
             gene_subset.clear();
+            gene_subset.reserve(input.size()); // known maximum.
             for (auto l : labels_in_use) {
                 for (auto l2 : labels_in_use){ 
                     if (l != l2) {
                         const auto& current = markers[l][l2];
-                        gene_subset.insert(current.begin(), current.end());
+                        for (auto c : current) {
+                            if (gene_subset.find(c) == gene_subset.end()) {
+                                const int counter = gene_subset.size();
+                                gene_subset[c] = counter;
+                            }
+                        }
                     }
                 }
             }
 
-            genes_in_use.clear();
-            genes_in_use.insert(genes_in_use.end(), gene_subset.begin(), gene_subset.end());
+            input_sub.clear();
+            subset_ranks(input, input_sub, gene_subset);
+            scaled_left.resize(gene_subset.size());
+            scaled_ranks(input_sub, scaled_left.data());
 
-            scaled_left.resize(genes_in_use.size());
-            scaled_ranks(ptr, genes_in_use, ranked, scaled_left.data());
-
-            scaled_right.resize(genes_in_use.size());
+            scaled_right.resize(gene_subset.size());
             scores.clear();
 
             for (size_t i = 0; i < labels_in_use.size(); ++i) {
+                auto curlab = labels_in_use[i];
+
                 all_correlations.clear();
-                const auto& curref = ref[labels_in_use[i]];
+                const auto& curref = ref[curlab];
                 size_t NR = curref.index->ndim();
                 size_t NC = curref.index->nobs();
 
                 for (size_t c = 0; c < NC; ++c) {
-                    auto rightptr = curref.data.data() + c * NR;
-                    scaled_ranks(rightptr, genes_in_use, ranked, scaled_right.data());
+                    // Technically we could be faster if we remembered the
+                    // subset from the previous fine-tuning iteration, but this
+                    // requires us to (possibly) make a copy of the entire
+                    // reference set; we can't afford to do this in each thread.
+                    ref_sub.clear();
+                    subset_ranks(curref.ranked[c], ref_sub, gene_subset);
+                    scaled_ranks(ref_sub, scaled_right.data());
+
                     double cor = distance_to_correlation(scaled_left.size(), scaled_left, scaled_right);
                     all_correlations.push_back(cor);
                 }

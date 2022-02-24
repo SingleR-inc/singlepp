@@ -161,7 +161,7 @@ private:
         } else {
             subref = build_indices(ref, labels, subset,
                 [](size_t nr, size_t nc, const double* ptr) { 
-                    return std::shared_ptr<knncolle::Base<int, double> >(new knncolle::VpTreeEuclidean<int, double>(nr, nc, ptr)); 
+                    return std::shared_ptr<knncolle::Base<int, double> >(new knncolle::KmknnEuclidean<int, double>(nr, nc, ptr)); 
                 }
             );
         }
