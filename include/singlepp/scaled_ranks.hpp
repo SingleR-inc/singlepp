@@ -1,11 +1,10 @@
 #ifndef SINGLEPP_SCALED_RANKS_HPP
 #define SINGLEPP_SCALED_RANKS_HPP
 
-#include <stdexcept>
 #include <algorithm>
 #include <vector>
 #include <cmath>
-#include <limits>
+#include <unordered_map>
 
 namespace singlepp {
 
