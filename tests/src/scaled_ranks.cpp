@@ -136,36 +136,6 @@ TEST(ScaledRanks, Ties) {
     }
 }
 
-TEST(ScaledRanks, MissingValues) {
-    std::vector<double> stuff { 0.6434, -0.211, 9.251, -3.352, 8.372, 1.644 };
-
-    auto ranks = fill_ranks(stuff.size(), stuff.data());
-    std::vector<double> ref(stuff.size());
-    singlepp::scaled_ranks(ranks, ref.data());
-
-    auto missing = stuff;
-    missing.insert(missing.begin(), std::numeric_limits<double>::quiet_NaN());
-    missing.insert(missing.begin() + 3, std::numeric_limits<double>::quiet_NaN());
-    missing.push_back(std::numeric_limits<double>::quiet_NaN());
-
-    ranks = fill_ranks<true>(missing.size(), missing.data());
-    std::vector<double> out(missing.size());
-    singlepp::scaled_ranks<true>(missing.size(), ranks, out.data());
-
-    // NaN's propagate through.
-    EXPECT_TRUE(std::isnan(out[0]));
-    EXPECT_TRUE(std::isnan(out[3]));
-    EXPECT_TRUE(std::isnan(out.back()));
-
-    // Everything else is not NaN.
-    auto cleansed = out;
-    cleansed.erase(cleansed.begin() + cleansed.size() - 1);
-    cleansed.erase(cleansed.begin() + 3);
-    cleansed.erase(cleansed.begin());
-
-    EXPECT_EQ(cleansed, ref);
-}
-
 TEST(ScaledRanks, Subset) {
     std::vector<double> stuff { 0.358, 0.496, 0.125, 0.408, 0.618, 0.264, 0.905, 0.895, 0.264, 0.865, 0.069, 0.581 };
     std::vector<int> sub { 2, 7, 0, 3, 5, 10 };
@@ -183,23 +153,6 @@ TEST(ScaledRanks, Subset) {
     ranks = fill_ranks(stuff2.size(), stuff2.data());
     std::vector<double> out2(sub.size());
     singlepp::scaled_ranks(ranks, out2.data());
-    EXPECT_EQ(out, out2);
-
-    // Works with missing values in there.
-    stuff[sub[0]] = std::numeric_limits<double>::quiet_NaN();
-    ranks = fill_ranks<true>(sub, stuff.data());
-    EXPECT_EQ(ranks.size(), sub.size() - 1);
-    singlepp::scaled_ranks<true>(sub.size(), ranks, out.data());
-
-    stuff2[0] = std::numeric_limits<double>::quiet_NaN();
-    ranks = fill_ranks<true>(stuff2.size(), stuff2.data());
-    EXPECT_EQ(ranks.size(), stuff2.size() - 1);
-    singlepp::scaled_ranks<true>(stuff2.size(), ranks, out2.data());
-
-    EXPECT_TRUE(std::isnan(out[0]));
-    EXPECT_TRUE(std::isnan(out2[0]));
-    out.erase(out.begin());
-    out2.erase(out2.begin());
     EXPECT_EQ(out, out2);
 }
 
