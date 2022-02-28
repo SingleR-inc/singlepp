@@ -77,6 +77,22 @@ void subset_ranks(const RankedVector<Stat, Index>& x, RankedVector<Stat, Index>&
     return;
 }
 
+template<typename Stat, typename Index, typename Simple>
+void simplify_ranks(const RankedVector<Stat, Index>& x, RankedVector<Simple, Index>& output) {
+    if (x.size()) {
+        Index counter = 0;
+        auto last = x[0].first;
+        for (const auto& r : x) {
+            if (r.first != last) {
+                ++counter;
+                last = r.first;
+            }
+            output.emplace_back(counter, r.second);
+        }
+    }
+    return;
+}
+
 }
 
 #endif

@@ -81,18 +81,7 @@ std::vector<Reference> build_indices(const tatami::Matrix<double, int>* ref, con
             // as we respect ties, everything should be fine.
             auto& stored_ranks = nnrefs[curlab].ranked[curoff];
             stored_ranks.reserve(ranked.size());
-
-            if (NR) {
-                int counter = 0;
-                auto last = ranked[0].first;
-                for (const auto& r : ranked) {
-                    if (r.first != last) {
-                        ++counter;
-                        last = r.first;
-                    }
-                    stored_ranks.emplace_back(counter, r.second);
-                }
-            }
+            simplify_ranks(ranked, stored_ranks);
         }
     }
 
