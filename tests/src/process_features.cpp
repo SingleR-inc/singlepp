@@ -73,23 +73,11 @@ TEST(SubsetMarkers, Simple) {
     }
 }
 
-singlepp::Intersection mock_intersection(size_t ngenes) {
-    std::mt19937_64 rng(999);
-    singlepp::Intersection inter;
-    for (size_t x = 0; x < 100; ++x) {
-        if (rng() % 100 < 40) { // subset to 40% of the genes.
-            inter.emplace_back(0, x);
-        }
-    }
-    std::shuffle(inter.begin(), inter.end(), rng);
-    return inter;
-}
-
 TEST(SubsetMarkers, Intersect) {
     size_t nlabels = 4;
     size_t ngenes = 100;
     auto markers = mock_markers(nlabels, 20, ngenes);
-    auto inter = mock_intersection(ngenes);
+    auto inter = mock_intersection(ngenes, ngenes, 40);
 
     int top = 5;
     auto mcopy = markers;
@@ -157,7 +145,7 @@ TEST(SubsetMarkers, TooLargeTop2) {
     size_t nlabels = 4;
     size_t ngenes = 100;
     auto markers = mock_markers(nlabels, 20, ngenes);
-    auto inter = mock_intersection(ngenes);
+    auto inter = mock_intersection(ngenes, ngenes, 40);
 
     int top = 50;
     auto mcopy = markers;
