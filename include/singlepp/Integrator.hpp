@@ -100,16 +100,16 @@ public:
             size_t nlabels = curref.markers.size();
 
             std::vector<int> positions(NC);
-            std::vector<int> cells_per_label(nlabels);
+            std::vector<int> samples_per_label(nlabels);
             for (size_t c = 0; c < NC; ++c) {
-                auto pos = cells_per_label[curlab[c]];
+                auto& pos = samples_per_label[curlab[c]];
                 positions[c] = pos;
                 ++pos;
             }
 
             curref.ranked.resize(nlabels);
             for (size_t l = 0; l < nlabels; ++l) {
-                curref.ranked[l].resize(cells_per_label[l]);
+                curref.ranked[l].resize(samples_per_label[l]);
             }
 
             if (!curref.check_availability) {
