@@ -17,6 +17,7 @@ add_executable(
     src/compute_scores.cpp
     src/process_features.cpp
     src/fine_tune.cpp
+    src/Integrator.cpp
     src/recompute_scores.cpp
 )
 
