@@ -4,6 +4,11 @@
 #include "SinglePP.hpp"
 #include "scaled_ranks.hpp"
 
+#include <vector>
+#include <unordered_set>
+#include <unordered_map>
+#include <algorithm>
+
 namespace singlepp {
 
 struct IntegratedReference {
@@ -62,6 +67,8 @@ public:
         const SinglePP::PrebuiltIntersection& built) 
     {
         add(ref, labels, built.markers, built.mat_subset);
+        references.back().check_availability = true;
+
         auto intersection = intersect_features(mat_nrow, mat_id, ref->nrow(), ref_id);
         auto& mapping = gene_mapping.back();
         for (const auto& i : intersection) {
@@ -76,9 +83,7 @@ public:
         std::unordered_set<int> in_use_tmp;
         for (const auto& ref : references) {
             for (const auto& mrk : ref.markers) {
-                for (const auto& y : mrk) {
-                    in_use_tmp.insert(y.begin(), y.end());
-                }
+                in_use_tmp.insert(mrk.begin(), mrk.end());
             }
         }
 
@@ -95,22 +100,22 @@ public:
             size_t nlabels = curref.markers.size();
 
             std::vector<int> positions(NC);
-            {
-                std::vector<int> current_position(nlabels);
-                for (size_t c = 0; c < NC; ++c) {
-                    auto* pos = current_position[labels[c]];
-                    positions[c] = pos;
-                    ++pos;
-                }
-
-                curref.ranked.resize(nlabels);
-                for (size_t l = 0; l < nlabels; ++l) {
-                    curref.ranked[l].resize(current_position[l]);
-                }
+            std::vector<int> cells_per_label(nlabels);
+            for (size_t c = 0; c < NC; ++c) {
+                auto pos = cells_per_label[curlab[c]];
+                positions[c] = pos;
+                ++pos;
             }
 
-            // Figuring out whether we need to compute a mapping.
+            curref.ranked.resize(nlabels);
+            for (size_t l = 0; l < nlabels; ++l) {
+                curref.ranked[l].resize(cells_per_label[l]);
+            }
+
             if (!curref.check_availability) {
+                // If we don't need to check availability, this implies that 
+                // the reference has 1:1 feature mapping to the test dataset.
+                // In that case, we can proceed quite simply.
                 size_t first = 0, last = 0;
                 if (in_use.size()) {
                     first = in_use.front();
@@ -134,21 +139,33 @@ public:
                         }
                         std::sort(tmp_ranked.begin(), tmp_ranked.end());
 
-                        auto& final_ranked = curref.ranked[positions[c]];
-                        simplify_ranks(temp_ranked, final_ranked);
+                        auto& final_ranked = curref.ranked[curlab[c]][positions[c]];
+                        simplify_ranks(tmp_ranked, final_ranked);
                     }
                 }
 
             } else {
-                size_t first = NR, last = 0;
+                // If we do need to check availability, then we need to check
+                // the mapping of test genes to their reference row indices.
                 const auto& cur_mapping = gene_mapping[r];
                 auto& cur_available = curref.available;
-                for (const auto& p : cur_mapping) {
-                    if (p.second < first) {
-                        first = p.second;
+                std::unordered_map<int, int> remapping;
+                remapping.reserve(in_use.size());
+                size_t first = NR, last = 0;
+
+                for (auto u : in_use) {
+                    auto it = cur_mapping.find(u);
+                    if (it == cur_mapping.end()) {
+                        continue;
                     }
-                    if (p.second > last) {
-                        last = p.second;
+
+                    remapping[u] = it->second;
+                    cur_available.insert(u);
+                    if (it->second < first) {
+                        first = it->second;
+                    }
+                    if (it->second > last) {
+                        last = it->second;
                     }
                 }
                 last = std::max(last + 1, first);
@@ -165,16 +182,13 @@ public:
                         auto ptr = curmat->column(c, buffer.data(), first, last, wrk.get());
 
                         tmp_ranked.clear();
-                        for (auto u : in_use) {
-                            auto it = cur_mapping.find(u);
-                            if (it != cur_mapping.end()) {
-                                tmp_ranked.emplace_back(ptr[it->second - first], u);
-                            }
+                        for (auto p : remapping) {
+                            tmp_ranked.emplace_back(ptr[p.second - first], p.first);
                         }
                         std::sort(tmp_ranked.begin(), tmp_ranked.end());
 
-                        auto& final_ranked = curref.ranked[positions[c]];
-                        simplify_ranks(temp_ranked, final_ranked);
+                        auto& final_ranked = curref.ranked[curlab[c]][positions[c]];
+                        simplify_ranks(tmp_ranked, final_ranked);
                     }
                 }
             }
