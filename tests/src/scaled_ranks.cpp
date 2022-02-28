@@ -203,3 +203,41 @@ TEST(ScaledRanks, CorrelationCheck) {
     }
 }
 
+TEST(SimplifyRanks, NoTies) {
+    std::vector<double> no_ties { 0.72, 0.56, 0.12, 0.55, 0.50, 0.10, 0.43, 0.54, 0.18 };
+    auto ranks = fill_ranks(no_ties.size(), no_ties.data());
+
+    singlepp::RankedVector<int, int> compacted;
+    singlepp::simplify_ranks(ranks, compacted);
+
+    for (size_t i = 0; i < compacted.size(); ++i) {
+        EXPECT_EQ(ranks[i].second, compacted[i].second);
+        EXPECT_EQ(i, compacted[i].first);
+    }
+}
+
+TEST(SimplifyRanks, WithTies) {
+    std::vector<double> with_ties { 0.72, 0.56, 0.72, 0.55, 0.55, 0.10, 0.43, 0.10, 0.72 };
+    auto ranks2 = fill_ranks(with_ties.size(), with_ties.data());
+
+    singlepp::RankedVector<int, int> compacted2;
+    singlepp::simplify_ranks(ranks2, compacted2);
+    for (size_t i = 1; i < compacted2.size(); ++i) {
+        EXPECT_TRUE(compacted2[i].first >= compacted2[i-1].first);
+    }
+
+    // All tie groups should have the same value.
+    std::unordered_map<double, int> by_value;
+    for (size_t i = 0; i < ranks2.size(); ++i) {
+        EXPECT_EQ(ranks2[i].second, compacted2[i].second);
+        auto it = by_value.find(ranks2[i].first);
+        if (it != by_value.end()) { 
+            EXPECT_EQ(it->second, compacted2[i].first);
+        } else {
+            by_value[ranks2[i].first] = compacted2[i].first;
+        }
+    }
+
+    EXPECT_EQ(compacted2.front().first, 0);
+    EXPECT_EQ(compacted2.back().first, by_value.size() - 1); 
+}
