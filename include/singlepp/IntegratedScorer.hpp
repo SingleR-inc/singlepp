@@ -3,7 +3,7 @@
 
 #include "compute_scores.hpp"
 #include "scaled_ranks.hpp"
-#include "Integrator.hpp"
+#include "IntegratedBuilder.hpp"
 
 #include <vector>
 #include <unordered_map>

@@ -18,7 +18,7 @@ struct IntegratedReference {
     std::vector<std::vector<RankedVector<int, int> > > ranked;
 };
 
-class Integrator {
+class IntegratedBuilder {
     std::vector<const tatami::Matrix<double, int>*> stored_matrices;
     std::vector<const int*> stored_labels;
     std::vector<IntegratedReference> references;

@@ -1,13 +1,13 @@
 #include <gtest/gtest.h>
 
-#include "singlepp/recompute_scores.hpp"
+#include "singlepp/IntegratedScorer.hpp"
 #include "spawn_matrix.h"
 #include "mock_markers.h"
 #include "naive_method.h"
 
-class IntegrateScorerTest : public ::testing::TestWithParam<int> {};
+class IntegratedScorerTest : public ::testing::TestWithParam<std::tuple<int, double> > {};
 
-TEST_P(IntegrateScorerTest, Basic) {
+TEST_P(IntegratedScorerTest, Basic) {
     // Mocking up the test and references.
     size_t ntest = 20;
     size_t ngenes = 2000;
@@ -15,11 +15,13 @@ TEST_P(IntegrateScorerTest, Basic) {
 
     size_t nsamples = 50;
     size_t nrefs = 3;
-    int ntop = GetParam();
+    auto param = GetParam();
+    int ntop = std::get<0>(param);
+    double quantile = std::get<1>(param);
 
     singlepp::SinglePP runner;
     runner.set_top(ntop);
-    singlepp::Integrator builder;
+    singlepp::IntegratedBuilder builder;
 
     std::vector<std::shared_ptr<tatami::Matrix<double, int> > > matrices;
     std::vector<std::vector<int> > labels;
@@ -55,7 +57,6 @@ TEST_P(IntegrateScorerTest, Basic) {
     }
 
     // Comparing the IntegratedScorer to a reference calculation.
-    double quantile = 0.8;
     singlepp::IntegratedScorer scorer;
     scorer.set_quantile(quantile);
     auto output = scorer.run(test.get(), chosen_ptrs, integrated);
@@ -100,7 +101,10 @@ TEST_P(IntegrateScorerTest, Basic) {
 }
 
 INSTANTIATE_TEST_CASE_P(
-    IntegrateScorer,
-    IntegrateScorerTest,
-    ::testing::Values(5, 10, 20) // number of top genes.
+    IntegratedScorer,
+    IntegratedScorerTest,
+    ::testing::Combine(
+        ::testing::Values(5, 10, 20), // number of top genes.
+        ::testing::Values(0.5, 0.8, 0.9) // number of quantiles.
+    )
 );

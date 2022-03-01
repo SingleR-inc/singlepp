@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
 
-#include "singlepp/Integrator.hpp"
+#include "singlepp/IntegratedBuilder.hpp"
 #include "spawn_matrix.h"
 #include "mock_markers.h"
 
-class IntegratorTest : public ::testing::TestWithParam<int> {};
+class IntegratedBuilderTest : public ::testing::TestWithParam<int> {};
 
-TEST_P(IntegratorTest, SimpleCombine) {
+TEST_P(IntegratedBuilderTest, SimpleCombine) {
     // Mocking up the test and references.
     size_t ngenes = 2000;
     size_t nsamples = 50;
@@ -18,7 +18,7 @@ TEST_P(IntegratorTest, SimpleCombine) {
     std::vector<singlepp::Markers> markers;
     singlepp::SinglePP runner;
     runner.set_top(ntop);
-    singlepp::Integrator inter;
+    singlepp::IntegratedBuilder inter;
 
     for (size_t r = 0; r < nrefs; ++r) {
         size_t seed = r * 1000;
@@ -94,7 +94,7 @@ TEST_P(IntegratorTest, SimpleCombine) {
     }
 }
 
-TEST_P(IntegratorTest, IntersectedCombine) {
+TEST_P(IntegratedBuilderTest, IntersectedCombine) {
     // Mocking up the test and references.
     size_t ngenes = 2000;
     size_t nsamples = 50;
@@ -113,7 +113,7 @@ TEST_P(IntegratorTest, IntersectedCombine) {
 
     singlepp::SinglePP runner;
     runner.set_top(ntop);
-    singlepp::Integrator inter;
+    singlepp::IntegratedBuilder inter;
 
     for (size_t r = 0; r < nrefs; ++r) {
         size_t seed = r * 100;
@@ -198,7 +198,7 @@ TEST_P(IntegratorTest, IntersectedCombine) {
 }
 
 INSTANTIATE_TEST_CASE_P(
-    Integrator,
-    IntegratorTest,
+    IntegratedBuilder,
+    IntegratedBuilderTest,
     ::testing::Values(5, 10, 20) // number of top genes.
 );
