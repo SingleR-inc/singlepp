@@ -7,9 +7,9 @@
 #include "fill_ranks.h"
 
 template<class Labels>
-auto split_by_label(size_t nlabels, size_t nsamples, const Labels& labels) {
+auto split_by_label(size_t nlabels, const Labels& labels) {
     std::vector<std::vector<int> > by_labels(nlabels);
-    for (size_t c = 0; c < nsamples; ++c) {
+    for (size_t c = 0; c < labels.size(); ++c) {
         by_labels[labels[c]].push_back(c);
     }
     return by_labels;
@@ -30,7 +30,7 @@ template<class Labels, class Matrix, class RefMatrix>
 auto naive_method(size_t nlabels, const Labels& labels, const RefMatrix& refs, const Matrix& mat, const std::vector<int>& subset, double quantile) {
     singlepp::SinglePP::Results output(mat->ncol(), nlabels);
 
-    auto by_labels = split_by_label(nlabels, refs->ncol(), labels);
+    auto by_labels = split_by_label(nlabels, labels);
 
     for (size_t c = 0; c < mat->ncol(); ++c) {
         auto col = mat->column(c);
