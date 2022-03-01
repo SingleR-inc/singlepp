@@ -4,36 +4,41 @@
 #include <vector>
 #include <algorithm>
 #include "singlepp/SinglePP.hpp"
+#include "fill_ranks.h"
+
+template<class Labels>
+auto split_by_label(size_t nlabels, size_t nsamples, const Labels& labels) {
+    std::vector<std::vector<int> > by_labels(nlabels);
+    for (size_t c = 0; c < nsamples; ++c) {
+        by_labels[labels[c]].push_back(c);
+    }
+    return by_labels;
+}
+
+template<class RefMatrix>
+double naive_score(const std::vector<double>& scaled_test, const std::vector<int>& in_label, const RefMatrix& refs, const std::vector<int>& subset, double quantile) {
+    std::vector<double> correlations;
+    for (auto l : in_label) {
+        auto col = refs->column(l);
+        const auto scaled_ref = quick_scaled_ranks(col, subset);
+        correlations.push_back(singlepp::distance_to_correlation(scaled_test.size(), scaled_test.data(), scaled_ref.data()));
+    }
+    return singlepp::correlations_to_scores(correlations, quantile);
+}
 
 template<class Labels, class Matrix, class RefMatrix>
 auto naive_method(size_t nlabels, const Labels& labels, const RefMatrix& refs, const Matrix& mat, const std::vector<int>& subset, double quantile) {
     singlepp::SinglePP::Results output(mat->ncol(), nlabels);
 
-    std::vector<std::vector<int> > by_labels(nlabels);
-    for (size_t r = 0; r < refs->ncol(); ++r) {
-        by_labels[labels[r]].push_back(r);
-    }
+    auto by_labels = split_by_label(nlabels, refs->ncol(), labels);
 
     for (size_t c = 0; c < mat->ncol(); ++c) {
         auto col = mat->column(c);
-        singlepp::RankedVector<double, int> vec(subset.size());
-        singlepp::fill_ranks(subset, col.data(), vec);
-        std::vector<double> scaled(subset.size());
-        singlepp::scaled_ranks(vec, scaled.data());
+        auto scaled = quick_scaled_ranks(col, subset);
 
         std::vector<std::pair<double, size_t> > my_scores;
         for (size_t r = 0; r < nlabels; ++r) {
-            std::vector<double> correlations;
-            for (auto l : by_labels[r]) {
-                auto col2 = refs->column(l);
-                singlepp::RankedVector<double, int> vec2(subset.size());
-                singlepp::fill_ranks(subset, col2.data(), vec2);
-                std::vector<double> scaled2(subset.size());
-                singlepp::scaled_ranks(vec2, scaled2.data());
-                correlations.push_back(singlepp::distance_to_correlation(scaled.size(), scaled.data(), scaled2.data()));
-            }
-
-            double score = singlepp::correlations_to_scores(correlations, quantile);
+            double score = naive_score(scaled, by_labels[r], refs, subset, quantile);
             output.scores[r][c] = score;
             my_scores.emplace_back(score, r);
         }

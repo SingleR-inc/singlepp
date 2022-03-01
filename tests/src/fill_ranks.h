@@ -20,4 +20,12 @@ singlepp::RankedVector<Stat, Index> fill_ranks(size_t n, const Stat* ptr) {
     return fill_ranks(everything, ptr);
 }
 
+inline std::vector<double> quick_scaled_ranks(const std::vector<double>& values, const std::vector<int>& subset) {
+    singlepp::RankedVector<double, int> vec(subset.size());
+    singlepp::fill_ranks(subset, values.data(), vec);
+    std::vector<double> scaled(subset.size());
+    singlepp::scaled_ranks(vec, scaled.data());
+    return scaled;
+}
+
 #endif
