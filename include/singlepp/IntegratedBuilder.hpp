@@ -9,15 +9,42 @@
 #include <unordered_map>
 #include <algorithm>
 
+/**
+ * @file IntegratedBuilder.hpp
+ *
+ * @brief Prepare for integrated classification across references.
+ */
+
 namespace singlepp {
 
+/**
+ * @brief Reference dataset prepared for integrated classification.
+ */
 struct IntegratedReference {
+    /**
+     * @cond
+     */
     bool check_availability = false;
     std::unordered_set<int> available;
     std::vector<std::vector<int> > markers;
     std::vector<std::vector<RankedVector<int, int> > > ranked;
+    /**
+     * @endcond
+     */
 };
 
+/**
+ * @brief Factory to prepare multiple references for integrated classification.
+ *
+ * For each reference dataset, we expect a `SinglePP::Prebuilt` or `SinglePP::PrebuiltIntersection` object,
+ * as well as the original data structures (matrix, labels, etc.) used to construct that object.
+ * These values are passed into `add()` to register that dataset, which can be repeated multiple times for different references.
+ * Finally, calling `finish()` will return a vector of `IntegratedReference` objects that can be used in `IntegratedScorer`.
+ * 
+ * The preparation process mostly involves checking that the gene indices are consistent across references.
+ * This is especially true when each reference contains a different set of features that must be intersected with the features in the test dataset.
+ * See the documentation for `IntegratedScorer` for more details about what the integration process entails.
+ */
 class IntegratedBuilder {
     std::vector<const tatami::Matrix<double, int>*> stored_matrices;
     std::vector<const int*> stored_labels;
@@ -52,12 +79,42 @@ private:
     }
 
 public:
+    /**
+     * @param ref Matrix containing the reference expression values.
+     * Rows are features and columns are reference samples.
+     * The number and identity of features should be identical to the test dataset to be classified in `IntegratedScorer`.
+     * @param[in] labels Pointer to an array of label assignments.
+     * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
+     * @param built The built reference created by running `SinglePP::build()` on `ref` and `labels`.
+     *
+     * @return The reference dataset is registered for later use in `finish()`.
+     *
+     * `ref` and `labels` are expected to remain valid until `finish()` is called.
+     */
     void add(const tatami::Matrix<double, int>* ref, const int* labels, const SinglePP::Prebuilt& built) {
         add(ref, labels, built.markers, built.subset);
         return;
     }
 
 public:
+    /**
+     * @tparam Id Type of the gene identifier for each row.
+     *
+     * @param mat_nrow Number of rows (genes) in the test dataset.
+     * @param[in] mat_id Pointer to an array of identifiers of length equal to `mat_nrow`.
+     * This should contain a unique identifier for each row of `mat` (typically a gene name or index).
+     * @param ref An expression matrix for the reference expression profiles, where rows are genes and columns are cells.
+     * This should have non-zero columns.
+     * @param[in] ref_id Pointer to an array of identifiers of length equal to the number of rows of any `ref`.
+     * This should contain a unique identifier for each row in `ref`, and should be comparable to `mat_id`.
+     * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
+     * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
+     * @param built The built reference created by running `SinglePP::build()` on all preceding arguments.
+     *
+     * @return The reference dataset is registered for later use in `finish()`.
+     *
+     * `ref` and `labels` are expected to remain valid until `finish()` is called.
+     */
     template<typename Id>
     void add(size_t mat_nrow,
         const Id* mat_id,
@@ -78,6 +135,12 @@ public:
     }
 
 public:
+    /**
+     * @return A vector of integrated references, for use in `IntegratedScorer::run()`.
+     *
+     * This function should only be called once, after all reference datasets have been registered with `add()`.
+     * Any further invocations of this function will not be valid.
+     */
     std::vector<IntegratedReference> finish() {
         // Identify the global set of all genes that will be in use here.
         std::unordered_set<int> in_use_tmp;

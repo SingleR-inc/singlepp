@@ -9,13 +9,52 @@
 #include <unordered_map>
 #include <unordered_set>
 
+/**
+ * @file IntegratedScorer.hpp
+ *
+ * @brief Integrate classifications from multiple references.
+ */
+
 namespace singlepp {
 
+/**
+ * @brief Integrate classifications from multiple references.
+ *
+ * In situations where multiple reference datasets are available,
+ * we would like to obtain a single prediction for each cell from all of those references.
+ * This is somewhat tricky as the different references are likely to contain strong batch effects,
+ * complicating the calculation of marker genes between labels from different references (and thus precluding direct use of the usual `SinglePP::run()`).
+ * The labels themselves also tend to be inconsistent, e.g., different vocabularies and resolutions, making it difficult to define sensible groups in a combined "super-reference".
+ *
+ * To avoid these issues, we first perform classification within each reference individually.
+ * For each test cell, we identify its predicted label from a given reference, and we collect all the marker genes for that label (across all pairwise comparisons in that reference).
+ * After doing this for each reference, we pool all of the collected markers to obtain a common set of interesting genes.
+ * We then compute the correlation-based score between the test cell's expression profile and its predicted label from each reference, using that common set of genes.
+ * The label with the highest score is considered the best representative across all references.
+ *
+ * This strategy is similar to `SinglePP` without fine-tuning, except that we are choosing between the best labels from each reference rather than all labels from one reference.
+ * The main idea is to create a common feature set so that the correlations can be reasonably compared across references.
+ * Note that differences in the feature sets across references are tolerated by simply ignoring missing genes when computing the correlations.
+ * This reduces the comparability of the scores as the effective feature set will vary a little (or a lot, depending) across references;
+ * nonetheless, it is preferred to taking the intersection, which is liable to leave us with very few genes.
+ *
+ * Our approach avoids any direct comparison between the expression profiles of different references,
+ * allowing us to side-step the question of how to deal with the batch effects.
+ * Similarly, we defer responsibility on solving the issue of label heterogeneity,
+ * by just passing along the existing labels and leaving it to the user's interpretation.
+ */
 class IntegratedScorer {
 private:
     double quantile = SinglePP::Defaults::quantile;
 
 public:
+    /**
+     * @param q Quantile to use to compute a per-label score from the correlations.
+     *
+     * @return A reference to this `SinglePP` object.
+     *
+     * See `SinglePP::set_quantile()` for more details.
+     */
     IntegratedScorer& set_quantile(double q = SinglePP::Defaults::quantile) {
         quantile = q;
         return *this;
@@ -100,6 +139,25 @@ private:
     }
 
 public:
+    /**
+     * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
+     * The identity of the rows should be consistent with the arguments used in `IntegratedBuilder::add()`.
+     * @param[in] assigned Vector of pointers of length equal to the number of references.
+     * Each pointer should point to an array of length equal to the number of columns in `mat`,
+     * containing the assigned label for each column in each reference.
+     * @param references Vector of integrated references produced by `IntegratedBuilder::finish()`.
+     * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
+     * This is filled with the index of the reference with the best label for each cell.
+     * @param[out] scores Vector of pointers of length equal to the number of references.
+     * Each pointer should point to an array of length equal to the number of columns in `mat`.
+     * This is filled with the (non-fine-tuned) score for the best label of that reference for each cell.
+     * Any pointer may be `NULL` in which case the scores for that label will not be saved.
+     * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
+     * This is filled with the difference between the highest and second-highest scores.
+     * This may also be `NULL` in which case the deltas are not reported.
+     *
+     * @return `best`, `scores` and `delta` are filled with their output values.
+     */
     void run(
         const tatami::Matrix<double, int>* mat,
         const std::vector<const int*>& assigned,
@@ -190,12 +248,62 @@ public:
     }
 
 public:
-    SinglePP::Results run( 
+    /**
+     * @brief Results of the integrated annotation.
+     */
+    struct Results {
+        /**
+         * @cond
+         */
+        Results(size_t ncells, size_t nrefs) : best(ncells), scores(nrefs, std::vector<double>(ncells)), delta(ncells) {}
+
+        std::vector<double*> scores_to_pointers() {
+            std::vector<double*> output(scores.size());
+            for (size_t s = 0; s < scores.size(); ++s) {
+                output[s] = scores[s].data();
+            }
+            return output;
+        };
+        /**
+         * @endcond
+         */
+
+        /** 
+         * Vector of length equal to the number of cells in the test dataset,
+         * containing the index of the reference with the top-scoring label for each cell.
+         */
+        std::vector<int> best;
+
+        /**
+         * Vector of length equal to the number of references,
+         * containing vectors of length equal to the number of cells in the test dataset.
+         * Each vector corresponds to a reference and contains the score for the best label in that reference for each cell.
+         */
+        std::vector<std::vector<double> > scores;
+
+        /** 
+         * Vector of length equal to the number of cells in the test dataset.
+         * This contains the difference between the highest and second-highest scores for each cell.
+         */
+        std::vector<double> delta;
+    };
+
+    /**
+     * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
+     * The identity of the rows should be consistent with the arguments used in `IntegratedBuilder::add()`.
+     * @param[in] assigned Vector of pointers of length equal to the number of references.
+     * Each pointer should point to an array of length equal to the number of columns in `mat`,
+     * containing the assigned label for each column in each reference.
+     * @param references Vector of integrated references produced by `IntegratedBuilder::finish()`.
+     *
+     * @return A `Results` object containing the assigned labels and scores.
+     */
+    Results run( 
         const tatami::Matrix<double, int>* mat,
         const std::vector<const int*>& assigned,
         const std::vector<IntegratedReference>& references)
     {
-        SinglePP::Results output(mat->ncol(), references.size());
+        Results output(mat->ncol(), references.size());
         auto scores = output.scores_to_pointers();
         run(mat, assigned, references, output.best.data(), scores, output.delta.data());
         return output;
