@@ -439,8 +439,6 @@ RankMatrix<Data, Index> load_rankings_from_text_file(const char* path, size_t bu
  * @tparam Index Integer type for indices in the matrix interface.
  *
  * @param path Path to a Gzip-compressed file containing the ranking matrix.
- * @param nfeatures Number of features in the ranking matrix.
- * @param nprofiles Number of profiles in the ranking matrix. 
  * @param buffer_size Size of the buffer to use when reading the file.
  *
  * @return A `RankMatrix` containing the feature rankings for each reference profile.

@@ -249,8 +249,9 @@ public:
      * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
      * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
      * This is filled with the index of the assigned label for each cell.
-     * @param[out] scores Vector of pointers to arrays of length equal to the number of columns in `mat`.
-     * This is filled with the (non-fine-tuned) score for each label for each cell.
+     * @param[out] scores Vector of pointers of length equal to the number of labels.
+     * Each pointer should point to an array of length equal to the number of columns in `mat`.
+     * This is filled with the (non-fine-tuned) score for that label for each cell.
      * Any pointer may be `NULL` in which case the scores for that label will not be saved.
      * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
      * This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
@@ -381,7 +382,7 @@ public:
     /**
      * @tparam Id Gene identifier for each row.
      *
-     * @param mat Number of rows (genes) in the test dataset.
+     * @param mat_nrow Number of rows (genes) in the test dataset.
      * @param[in] mat_id Pointer to an array of identifiers of length equal to `mat_nrow`.
      * This should contain a unique identifier for each row of `mat` (typically a gene name or index).
      * @param ref An expression matrix for the reference expression profiles, where rows are genes and columns are cells.
@@ -429,8 +430,9 @@ public:
      * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
      * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
      * This is filled with the index of the assigned label for each cell.
-     * @param[out] scores Vector of pointers to arrays of length equal to the number of columns in `mat`.
-     * This is filled with the (non-fine-tuned) score for each label for each cell.
+     * @param[out] scores Vector of pointers of length equal to the number of labels.
+     * Each pointer should point to an array of length equal to the number of columns in `mat`.
+     * This is filled with the (non-fine-tuned) score for that label for each cell.
      * Any pointer may be `NULL` in which case the scores for that label will not be saved.
      * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
      * This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
