@@ -136,36 +136,6 @@ TEST(ScaledRanks, Ties) {
     }
 }
 
-TEST(ScaledRanks, MissingValues) {
-    std::vector<double> stuff { 0.6434, -0.211, 9.251, -3.352, 8.372, 1.644 };
-
-    auto ranks = fill_ranks(stuff.size(), stuff.data());
-    std::vector<double> ref(stuff.size());
-    singlepp::scaled_ranks(ranks, ref.data());
-
-    auto missing = stuff;
-    missing.insert(missing.begin(), std::numeric_limits<double>::quiet_NaN());
-    missing.insert(missing.begin() + 3, std::numeric_limits<double>::quiet_NaN());
-    missing.push_back(std::numeric_limits<double>::quiet_NaN());
-
-    ranks = fill_ranks<true>(missing.size(), missing.data());
-    std::vector<double> out(missing.size());
-    singlepp::scaled_ranks<true>(missing.size(), ranks, out.data());
-
-    // NaN's propagate through.
-    EXPECT_TRUE(std::isnan(out[0]));
-    EXPECT_TRUE(std::isnan(out[3]));
-    EXPECT_TRUE(std::isnan(out.back()));
-
-    // Everything else is not NaN.
-    auto cleansed = out;
-    cleansed.erase(cleansed.begin() + cleansed.size() - 1);
-    cleansed.erase(cleansed.begin() + 3);
-    cleansed.erase(cleansed.begin());
-
-    EXPECT_EQ(cleansed, ref);
-}
-
 TEST(ScaledRanks, Subset) {
     std::vector<double> stuff { 0.358, 0.496, 0.125, 0.408, 0.618, 0.264, 0.905, 0.895, 0.264, 0.865, 0.069, 0.581 };
     std::vector<int> sub { 2, 7, 0, 3, 5, 10 };
@@ -183,23 +153,6 @@ TEST(ScaledRanks, Subset) {
     ranks = fill_ranks(stuff2.size(), stuff2.data());
     std::vector<double> out2(sub.size());
     singlepp::scaled_ranks(ranks, out2.data());
-    EXPECT_EQ(out, out2);
-
-    // Works with missing values in there.
-    stuff[sub[0]] = std::numeric_limits<double>::quiet_NaN();
-    ranks = fill_ranks<true>(sub, stuff.data());
-    EXPECT_EQ(ranks.size(), sub.size() - 1);
-    singlepp::scaled_ranks<true>(sub.size(), ranks, out.data());
-
-    stuff2[0] = std::numeric_limits<double>::quiet_NaN();
-    ranks = fill_ranks<true>(stuff2.size(), stuff2.data());
-    EXPECT_EQ(ranks.size(), stuff2.size() - 1);
-    singlepp::scaled_ranks<true>(stuff2.size(), ranks, out2.data());
-
-    EXPECT_TRUE(std::isnan(out[0]));
-    EXPECT_TRUE(std::isnan(out2[0]));
-    out.erase(out.begin());
-    out2.erase(out2.begin());
     EXPECT_EQ(out, out2);
 }
 
@@ -250,3 +203,41 @@ TEST(ScaledRanks, CorrelationCheck) {
     }
 }
 
+TEST(SimplifyRanks, NoTies) {
+    std::vector<double> no_ties { 0.72, 0.56, 0.12, 0.55, 0.50, 0.10, 0.43, 0.54, 0.18 };
+    auto ranks = fill_ranks(no_ties.size(), no_ties.data());
+
+    singlepp::RankedVector<int, int> compacted;
+    singlepp::simplify_ranks(ranks, compacted);
+
+    for (size_t i = 0; i < compacted.size(); ++i) {
+        EXPECT_EQ(ranks[i].second, compacted[i].second);
+        EXPECT_EQ(i, compacted[i].first);
+    }
+}
+
+TEST(SimplifyRanks, WithTies) {
+    std::vector<double> with_ties { 0.72, 0.56, 0.72, 0.55, 0.55, 0.10, 0.43, 0.10, 0.72 };
+    auto ranks2 = fill_ranks(with_ties.size(), with_ties.data());
+
+    singlepp::RankedVector<int, int> compacted2;
+    singlepp::simplify_ranks(ranks2, compacted2);
+    for (size_t i = 1; i < compacted2.size(); ++i) {
+        EXPECT_TRUE(compacted2[i].first >= compacted2[i-1].first);
+    }
+
+    // All tie groups should have the same value.
+    std::unordered_map<double, int> by_value;
+    for (size_t i = 0; i < ranks2.size(); ++i) {
+        EXPECT_EQ(ranks2[i].second, compacted2[i].second);
+        auto it = by_value.find(ranks2[i].first);
+        if (it != by_value.end()) { 
+            EXPECT_EQ(it->second, compacted2[i].first);
+        } else {
+            by_value[ranks2[i].first] = compacted2[i].first;
+        }
+    }
+
+    EXPECT_EQ(compacted2.front().first, 0);
+    EXPECT_EQ(compacted2.back().first, by_value.size() - 1); 
+}

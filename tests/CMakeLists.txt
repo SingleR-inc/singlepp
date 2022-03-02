@@ -17,6 +17,8 @@ add_executable(
     src/compute_scores.cpp
     src/process_features.cpp
     src/fine_tune.cpp
+    src/IntegratedBuilder.cpp
+    src/IntegratedScorer.cpp
 )
 
 target_link_libraries(
