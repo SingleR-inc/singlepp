@@ -158,7 +158,7 @@ public:
             auto curlab = stored_labels[r];
             auto curmat = stored_matrices[r];
 
-            size_t NR = curmat->ncol();
+            size_t NR = curmat->nrow();
             size_t NC = curmat->ncol();
             size_t nlabels = curref.markers.size();
 
