@@ -6,12 +6,12 @@
 #include <cctype>
 
 #include "Markers.hpp"
-#include "buffin/parse_text_file.hpp"
+#include "byteme/RawFileReader.hpp"
 #include "tatami/base/DenseMatrix.hpp"
 
 #ifdef SINGLEPP_USE_ZLIB
-#include "buffin/parse_gzip_file.hpp"
-#include "buffin/parse_zlib_buffer.hpp"
+#include "byteme/GzipFileReader.hpp"
+#include "byteme/ZlibBufferReader.hpp"
 #endif
 
 /**
@@ -25,9 +25,18 @@ namespace singlepp {
 /** 
  * @cond
  */
-struct LabelLoader {
-    template<typename B>
-    void add (const B* buffer, size_t n) {
+template<class Reader>
+std::vector<int> load_labels_internal(Reader& reader) {
+    bool non_empty = false;
+    int current = 0;
+    std::vector<int> labels;
+    bool remaining = true;
+
+    do {
+        remaining = reader();
+        auto buffer = reinterpret_cast<const char*>(reader.buffer());
+        auto n = reader.available();
+
         size_t i = 0;
         while (i < n) {
             if (buffer[i] == '\n') {
@@ -46,18 +55,14 @@ struct LabelLoader {
             }
             ++i;
         }
+    } while (remaining);
+
+    if (non_empty) {
+        labels.push_back(current);
     }
 
-    void finish() {
-        if (non_empty) {
-            labels.push_back(current);
-        }
-    }
-
-    bool non_empty = false;
-    int current = 0;
-    std::vector<int> labels;
-};
+    return labels;
+}
 /** 
  * @endcond
  */
@@ -74,10 +79,8 @@ struct LabelLoader {
  * The file should not contain any header.
  */
 inline std::vector<int> load_labels_from_text_file(const char* path, size_t buffer_size = 65536) {
-    LabelLoader loader;
-    buffin::parse_text_file(path, loader, buffer_size);
-    loader.finish();
-    return loader.labels;
+    byteme::RawFileReader reader(path, buffer_size);
+    return load_labels_internal(reader);
 }
 
 #ifdef SINGLEPP_USE_ZLIB
@@ -91,10 +94,8 @@ inline std::vector<int> load_labels_from_text_file(const char* path, size_t buff
  * See `load_labels_from_text_file()` for details about the format.
  */
 inline std::vector<int> load_labels_from_gzip_file(const char* path, size_t buffer_size = 65536) {
-    LabelLoader loader;
-    buffin::parse_gzip_file(path, loader, buffer_size);
-    loader.finish();
-    return loader.labels;
+    byteme::GzipFileReader reader(path, buffer_size);
+    return load_labels_internal(reader);
 }
 
 /**
@@ -107,10 +108,8 @@ inline std::vector<int> load_labels_from_gzip_file(const char* path, size_t buff
  * See `load_labels_from_text_file()` for details about the format.
  */
 inline std::vector<int> load_labels_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t buffer_size = 65536) {
-    LabelLoader loader;
-    buffin::parse_zlib_buffer(const_cast<unsigned char*>(buffer), len, loader, 3, buffer_size);
-    loader.finish();
-    return loader.labels;
+    byteme::ZlibBufferReader reader(buffer, len, 3, buffer_size);
+    return load_labels_internal(reader);
 }
 
 #endif
@@ -118,9 +117,17 @@ inline std::vector<int> load_labels_from_zlib_buffer(const unsigned char* buffer
 /**
  * @cond
  */
-struct NameLoader {
-    template<typename B>
-    void add (const B* buffer, size_t n) {
+template<class Reader>
+std::vector<std::string> load_names_internal(Reader& reader) {
+    std::vector<std::string> names;
+    bool continuing = false;
+    bool remaining = false;
+
+    do {
+        remaining = reader();
+        auto buffer = reinterpret_cast<const char*>(reader.buffer());
+        auto n = reader.available();
+
         size_t last = 0;
         size_t i = 0;
         while (i < n) {
@@ -144,10 +151,9 @@ struct NameLoader {
                 names.emplace_back(buffer + last, buffer + n);
             }
         }
-    }
+    } while (remaining);
 
-    bool continuing = false;
-    std::vector<std::string> names;
+    return names;
 };
 /** 
  * @endcond
@@ -164,9 +170,8 @@ struct NameLoader {
  * The file should not contain any header.
  */
 inline std::vector<std::string> load_label_names_from_text_file(const char* path, size_t buffer_size = 65536) {
-    NameLoader loader;
-    buffin::parse_text_file(path, loader, buffer_size);
-    return loader.names;
+    byteme::RawFileReader reader(path, buffer_size);
+    return load_names_internal(reader);
 }
 
 #ifdef SINGLEPP_USE_ZLIB
@@ -180,9 +185,8 @@ inline std::vector<std::string> load_label_names_from_text_file(const char* path
  * See `load_label_names_from_text_file()` for details about the format.
  */
 inline std::vector<std::string> load_label_names_from_gzip_file(const char* path, size_t buffer_size = 65536) {
-    NameLoader loader;
-    buffin::parse_gzip_file(path, loader, buffer_size);
-    return loader.names;
+    byteme::GzipFileReader reader(path, buffer_size);
+    return load_names_internal(reader);
 }
 
 /**
@@ -195,9 +199,8 @@ inline std::vector<std::string> load_label_names_from_gzip_file(const char* path
  * See `load_label_names_from_text_file()` for details about the format.
  */
 inline std::vector<std::string> load_label_names_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t buffer_size = 65536) {
-    NameLoader loader;
-    buffin::parse_zlib_buffer(const_cast<unsigned char*>(buffer), len, loader, 3, buffer_size);
-    return loader.names;
+    byteme::ZlibBufferReader reader(buffer, len, 3, buffer_size);
+    return load_names_internal(reader);
 }
 
 #endif
@@ -205,9 +208,18 @@ inline std::vector<std::string> load_label_names_from_zlib_buffer(const unsigned
 /** 
  * @cond
  */
-struct FeatureLoader {
-    template<typename B>
-    void add (const B* buffer, size_t n) {
+template<class Reader>
+std::pair<std::vector<std::string>, std::vector<std::string> > load_features_internal(Reader& reader) {
+    int field = 0;
+    bool continuing = false;
+    bool remaining = false;
+    std::vector<std::string> ensembl, symbols;
+
+    do {
+        remaining = reader();
+        auto buffer = reinterpret_cast<const char*>(reader.buffer());
+        auto n = reader.available();
+
         size_t last = 0;
         size_t i = 0;
         while (i < n) {
@@ -248,18 +260,14 @@ struct FeatureLoader {
                 target.emplace_back(buffer + last, buffer + n);
             }
         }
+    } while (remaining);
+
+    if (ensembl.size() != symbols.size()) {
+        throw std::runtime_error("two fields (Ensembl ID and symbol) expected on the last line");
     }
 
-    void finish() {
-        if (ensembl.size() != symbols.size()) {
-            throw std::runtime_error("two fields (Ensembl ID and symbol) expected on the last line");
-        }
-    }
-
-    int field = 0;
-    bool continuing = false;
-    std::vector<std::string> ensembl, symbols;
-};
+    return std::make_pair(std::move(ensembl), std::move(symbols));
+}
 /** 
  * @endcond
  */
@@ -277,10 +285,8 @@ struct FeatureLoader {
  * The file should not contain any header.
  */
 inline std::pair<std::vector<std::string>, std::vector<std::string> > load_features_from_text_file(const char* path, size_t buffer_size = 65536) {
-    FeatureLoader loader;
-    buffin::parse_text_file(path, loader, buffer_size);
-    loader.finish();
-    return std::make_pair(std::move(loader.ensembl), std::move(loader.symbols));
+    byteme::RawFileReader reader(path, buffer_size);
+    return load_features_internal(reader);
 }
 
 #ifdef SINGLEPP_USE_ZLIB
@@ -295,10 +301,8 @@ inline std::pair<std::vector<std::string>, std::vector<std::string> > load_featu
  * See `load_features_from_text_file()` for details about the format.
  */
 inline std::pair<std::vector<std::string>, std::vector<std::string> > load_features_from_gzip_file(const char* path, size_t buffer_size = 65536) {
-    FeatureLoader loader;
-    buffin::parse_gzip_file(path, loader, buffer_size);
-    loader.finish();
-    return std::make_pair(std::move(loader.ensembl), std::move(loader.symbols));
+    byteme::GzipFileReader reader(path, buffer_size);
+    return load_features_internal(reader);
 }
 
 /**
@@ -312,19 +316,54 @@ inline std::pair<std::vector<std::string>, std::vector<std::string> > load_featu
  * See `load_features_from_text_file()` for details about the format.
  */
 inline std::pair<std::vector<std::string>, std::vector<std::string> > load_features_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t buffer_size = 65536) {
-    FeatureLoader loader;
-    buffin::parse_zlib_buffer(const_cast<unsigned char*>(buffer), len, loader, 3, buffer_size);
-    loader.finish();
-    return std::make_pair(std::move(loader.ensembl), std::move(loader.symbols));
+    byteme::ZlibBufferReader reader(buffer, len, 3, buffer_size);
+    return load_features_internal(reader);
 }
+
 #endif
+
+/**
+ * Matrix of ranks as a dense column-major matrix.
+ * Each column corresponds to a sample while each row corresponds to a feature.
+ * Each column contains the ranked expression values for all features.
+ *
+ * @tparam Data Numeric type for data in the matrix interface.
+ * @tparam Index Integer type for indices in the matrix interface.
+ */
+template<typename Data = double, typename Index = int>
+using RankMatrix = tatami::DenseColumnMatrix<Data, Index, std::vector<int> >;
 
 /** 
  * @cond
  */
-struct RankingLoader {
-    template<typename B>
-    void add (const B* buffer, size_t n) {
+template<typename Data, typename Index, class Reader>
+RankMatrix<Data, Index> load_rankings_internal(Reader& reader) {
+    size_t nfeatures = 0;
+    size_t line = 0;
+    std::vector<int> values;
+
+    bool has_nfeatures = false;
+
+    int field = 0;
+    bool continuing = false;
+    bool non_empty = false;
+    bool remaining = true;
+    int current = 0;
+
+    auto check_nfeatures = [&]() -> void {
+        if (!has_nfeatures) {
+            has_nfeatures = true;
+            nfeatures = field + 1;
+        } else if (field + 1 != nfeatures) {
+            throw std::runtime_error("number of fields on each line should be equal to the number of features");
+        }
+    };
+
+    do {
+        remaining = reader();
+        auto buffer = reinterpret_cast<const char*>(reader.buffer());
+        auto n = reader.available();
+
         size_t i = 0;
         while (i < n) {
             if (buffer[i] == '\n') {
@@ -358,56 +397,22 @@ struct RankingLoader {
 
             ++i;
         }
-    }
+    } while (remaining);
 
-    void finish() {
-        if (field || non_empty) { // aka no terminating newline.
-            check_nfeatures();
-            if (!non_empty) {
-                throw std::runtime_error("fields should not be empty");
-            }
-            values.push_back(current);
-            ++line;
+    if (field || non_empty) { // aka no terminating newline.
+        check_nfeatures();
+        if (!non_empty) {
+            throw std::runtime_error("fields should not be empty");
         }
+        values.push_back(current);
+        ++line;
     }
 
-public:
-    size_t nfeatures = 0;
-    size_t line = 0;
-    std::vector<int> values;
-
-private:
-    bool has_nfeatures = false;
-
-    void check_nfeatures () {
-        if (!has_nfeatures) {
-            has_nfeatures = true;
-            nfeatures = field + 1;
-        } else if (field + 1 != nfeatures) {
-            throw std::runtime_error("number of fields on each line should be equal to the number of features");
-        }
-    }
-
-private:
-    int field = 0;
-    bool continuing = false;
-    bool non_empty = false;
-    int current = 0;
+    return RankMatrix<Data, Index>(nfeatures, line, std::move(values));
 };
 /** 
  * @endcond
  */
-
-/**
- * Matrix of ranks as a dense column-major matrix.
- * Each column corresponds to a sample while each row corresponds to a feature.
- * Each column contains the ranked expression values for all features.
- *
- * @tparam Data Numeric type for data in the matrix interface.
- * @tparam Index Integer type for indices in the matrix interface.
- */
-template<typename Data = double, typename Index = int>
-using RankMatrix = tatami::DenseColumnMatrix<Data, Index, std::vector<int> >;
 
 /**
  * @tparam Data Numeric type for data in the matrix interface.
@@ -426,10 +431,8 @@ using RankMatrix = tatami::DenseColumnMatrix<Data, Index, std::vector<int> >;
  */
 template<typename Data = double, typename Index = int>
 RankMatrix<Data, Index> load_rankings_from_text_file(const char* path, size_t buffer_size = 65536) {
-    RankingLoader loader;
-    buffin::parse_text_file(path, loader, buffer_size);
-    loader.finish();
-    return RankMatrix<Data, Index>(loader.nfeatures, loader.line, std::move(loader.values));
+    byteme::RawFileReader reader(path, buffer_size);
+    return load_rankings_internal<Data, Index>(reader);
 }
 
 #ifdef SINGLEPP_USE_ZLIB
@@ -448,10 +451,8 @@ RankMatrix<Data, Index> load_rankings_from_text_file(const char* path, size_t bu
  */
 template<typename Data = double, typename Index = int>
 RankMatrix<Data, Index> load_rankings_from_gzip_file(const char* path, size_t buffer_size = 65536) {
-    RankingLoader loader;
-    buffin::parse_gzip_file(path, loader, buffer_size);
-    loader.finish();
-    return RankMatrix<Data, Index>(loader.nfeatures, loader.line, std::move(loader.values));
+    byteme::GzipFileReader reader(path, buffer_size);
+    return load_rankings_internal<Data, Index>(reader);
 }
 
 /**
@@ -469,24 +470,32 @@ RankMatrix<Data, Index> load_rankings_from_gzip_file(const char* path, size_t bu
  */
 template<typename Data = double, typename Index = int>
 RankMatrix<Data, Index> load_rankings_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t buffer_size = 65536) {
-    RankingLoader loader;
-    buffin::parse_zlib_buffer(const_cast<unsigned char*>(buffer), len, loader, 3, buffer_size);
-    loader.finish();
-    return RankMatrix<Data, Index>(loader.nfeatures, loader.line, std::move(loader.values));
+    byteme::ZlibBufferReader reader(buffer, len, 3, buffer_size);
+    return load_rankings_internal<Data, Index>(reader);
 }
+
 #endif
 
 /** 
  * @cond
  */
-struct MarkerLoader {
-    MarkerLoader(size_t nf, size_t nl) : nfeatures(nf), markers(nl) {
-        for (auto& m : markers) {
-            m.resize(nl);
-        }
+template<class Reader>
+Markers load_markers_internal(size_t nfeatures, size_t nlabels, Reader& reader) {
+    Markers markers(nlabels);
+    for (auto& m : markers) {
+        m.resize(nlabels);
     }
 
-    void newline() {
+    int field = 0;
+    bool continuing = false;
+    bool non_empty = false;
+    bool remaining = true;
+
+    int current = 0;
+    std::vector<int> values;
+    size_t first, second;
+
+    auto newline = [&]() -> void {
         if (field < 2) {
             throw std::runtime_error("each line should contain at least three fields");
         }
@@ -515,10 +524,13 @@ struct MarkerLoader {
         store.swap(values);
         values.clear();
         return;
-    }
+    };
 
-    template<typename B>
-    void add (const B* buffer, size_t n) {
+    do {
+        remaining = reader();
+        auto buffer = reinterpret_cast<const char*>(reader.buffer());
+        auto n = reader.available();
+
         size_t i = 0;
         while (i < n) {
             if (buffer[i] == '\n') {
@@ -555,25 +567,14 @@ struct MarkerLoader {
 
             ++i;
         }
+    } while (remaining);
+
+    if (field || non_empty) { // aka no terminating newline.
+        newline();
     }
 
-    void finish() {
-        if (field || non_empty) { // aka no terminating newline.
-            newline();
-        }
-    }
-
-    int field = 0;
-    bool continuing = false;
-    bool non_empty = false;
-
-    int current = 0;
-    std::vector<int> values;
-    size_t first, second;
-
-    size_t nfeatures;
-    singlepp::Markers markers;
-};
+    return markers;
+}
 /** 
  * @endcond
  */
@@ -593,10 +594,8 @@ struct MarkerLoader {
  * The total number of lines in this file should be equal to the total number of pairwise comparisons between different labels, including permutations.
  */
 inline Markers load_markers_from_text_file(const char* path, size_t nfeatures, size_t nlabels, size_t buffer_size = 65536) {
-    MarkerLoader loader(nfeatures, nlabels);
-    buffin::parse_text_file(path, loader, buffer_size);
-    loader.finish();
-    return loader.markers;
+    byteme::RawFileReader reader(path, buffer_size);
+    return load_markers_internal(nfeatures, nlabels, reader);
 }
 
 #ifdef SINGLEPP_USE_ZLIB
@@ -612,10 +611,8 @@ inline Markers load_markers_from_text_file(const char* path, size_t nfeatures, s
  * See `load_markers_from_text_file()` for details about the format.
  */
 inline Markers load_markers_from_gzip_file(const char* path, size_t nfeatures, size_t nlabels, size_t buffer_size = 65536) {
-    MarkerLoader loader(nfeatures, nlabels);
-    buffin::parse_gzip_file(path, loader, buffer_size);
-    loader.finish();
-    return loader.markers;
+    byteme::GzipFileReader reader(path, buffer_size);
+    return load_markers_internal(nfeatures, nlabels, reader);
 }
 
 /**
@@ -630,11 +627,10 @@ inline Markers load_markers_from_gzip_file(const char* path, size_t nfeatures, s
  * See `load_markers_from_text_file()` for details about the format.
  */
 inline Markers load_markers_from_zlib_buffer(const unsigned char* buffer, size_t len, size_t nfeatures, size_t nlabels, size_t buffer_size = 65536) {
-    MarkerLoader loader(nfeatures, nlabels);
-    buffin::parse_zlib_buffer(const_cast<unsigned char*>(buffer), len, loader, 3, buffer_size);
-    loader.finish();
-    return loader.markers;
+    byteme::ZlibBufferReader reader(buffer, len, 3, buffer_size);
+    return load_markers_internal(nfeatures, nlabels, reader);
 }
+
 #endif
 
 }

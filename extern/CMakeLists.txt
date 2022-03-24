@@ -17,9 +17,9 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(tatami)
 
 FetchContent_Declare(
-  buffin
+  byteme
   GIT_REPOSITORY https://github.com/clusterfork/buffin
-  GIT_TAG 0a307ed54f9dfbc88eb226abeecaa4733792ffa6
+  GIT_TAG 55730cfa3b01eb4d741e99b4069ea99ef2cf359f
 )
 
-FetchContent_MakeAvailable(buffin)
+FetchContent_MakeAvailable(byteme)
