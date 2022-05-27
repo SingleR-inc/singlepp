@@ -225,7 +225,8 @@ public:
 public:
     /**
      * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
-     * This should have the same identity of genes as the reference matrices used in `build()`.
+     * If `already_subset = false`, this should have the same identity of genes as the reference matrices used in `build()`;
+     * otherwise, each row should correspond to an element of `built.subset`.
      * @param built An object produced by `build()`.
      * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
      * This is filled with the index of the assigned label for each cell.
@@ -235,11 +236,12 @@ public:
      * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
      * This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
      * This may also be `NULL` in which case the deltas are not reported.
+     * @param already_subset Whether the rows of `mat` have already been subsetted to match `built.subset`.
      *
      * @return `best`, `scores` and `delta` are filled with their output values.
      */
-    void run(const tatami::Matrix<double, int>* mat, const Prebuilt& built, int* best, std::vector<double*>& scores, double* delta) {
-        annotate_cells_simple(mat, built.subset, built.references, built.markers, quantile, fine_tune, fine_tune_threshold, best, scores, delta);
+    void run(const tatami::Matrix<double, int>* mat, const Prebuilt& built, int* best, std::vector<double*>& scores, double* delta, bool already_subset = false) {
+        annotate_cells_simple(mat, built.subset, already_subset, built.references, built.markers, quantile, fine_tune, fine_tune_threshold, best, scores, delta);
         return;
     }
 
@@ -312,16 +314,18 @@ public:
 
     /**
      * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
-     * This should have the same identity of genes as the reference matrices used in `build()`.
+     * If `already_subset = false`, this should have the same identity of genes as the reference matrices used in `build()`;
+     * otherwise, each row should correspond to an element of `built.subset`.
      * @param built An object produced by `build()`.
+     * @param already_subset Whether the rows of `mat` have already been subsetted to match `built.subset`.
      *
      * @return A `Results` object containing the assigned labels and scores.
      */
-    Results run(const tatami::Matrix<double, int>* mat, const Prebuilt& built) {
+    Results run(const tatami::Matrix<double, int>* mat, const Prebuilt& built, bool already_subset = false) {
         size_t nlabels = built.references.size();
         Results output(mat->ncol(), nlabels);
         auto scores = output.scores_to_pointers();
-        run(mat, built, output.best.data(), scores, output.delta.data());
+        run(mat, built, output.best.data(), scores, output.delta.data(), already_subset);
         return output;
     }
 
@@ -487,6 +491,7 @@ public:
     {
         annotate_cells_simple(mat, 
             built.mat_subset, 
+            false,
             built.references, 
             built.markers, 
             quantile, 

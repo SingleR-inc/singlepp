@@ -49,6 +49,40 @@ TEST_P(SinglePPSimpleTest, Simple) {
     }
 }
 
+TEST_P(SinglePPSimpleTest, AlreadySubset) {
+    auto param = GetParam();
+    int top = std::get<0>(param);
+    double quantile = std::get<1>(param);
+
+    // Mocking up the test and references.
+    size_t ngenes = 200;
+    auto mat = spawn_matrix(ngenes, 5, 12345);
+ 
+    size_t nlabels = 3;
+    size_t nrefs = 50;
+    auto refs = spawn_matrix(ngenes, nrefs, 67);
+    auto labels = spawn_labels(nrefs, nlabels, 89);
+
+    auto markers = mock_markers(nlabels, 50, ngenes); 
+
+    // Running the default.
+    singlepp::SinglePP runner;
+    runner.set_fine_tune(false).set_top(top).set_quantile(quantile);
+    auto output = runner.run(mat.get(), refs.get(), labels.data(), markers);
+
+    // Comparing to running on a prebuilt with already_subset = true.
+    auto built = runner.build(refs.get(), labels.data(), markers);
+    auto sub = tatami::make_DelayedSubset<0>(mat, built.subset);
+    auto output2 = runner.run(sub.get(), built, true);
+
+    // Should get the same result.
+    EXPECT_EQ(output.best, output2.best);
+    EXPECT_EQ(output.delta, output2.delta);
+    for (size_t r = 0; r < nlabels; ++r) {
+        EXPECT_EQ(output.scores[r], output2.scores[r]);
+    }
+}
+
 INSTANTIATE_TEST_CASE_P(
     SinglePP,
     SinglePPSimpleTest,

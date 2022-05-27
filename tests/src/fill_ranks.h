@@ -15,9 +15,9 @@ singlepp::RankedVector<Stat, Index> fill_ranks(const std::vector<int>& subset, c
 
 template<typename Stat, typename Index = int>
 singlepp::RankedVector<Stat, Index> fill_ranks(size_t n, const Stat* ptr) {
-    std::vector<int> everything(n);
-    std::iota(everything.begin(), everything.end(), 0);
-    return fill_ranks(everything, ptr);
+    singlepp::RankedVector<Stat, Index> vec(n);
+    singlepp::fill_ranks(n, ptr, vec);
+    return vec;
 }
 
 inline std::vector<double> quick_scaled_ranks(const std::vector<double>& values, const std::vector<int>& subset) {

@@ -22,6 +22,16 @@ void fill_ranks(const std::vector<int>& subset, const Stat* ptr, RankedVector<St
 }
 
 template<typename Stat, typename Index>
+void fill_ranks(size_t num_features, const Stat* ptr, RankedVector<Stat, Index>& vec) {
+    for (size_t s = 0; s < num_features; ++s) {
+        vec[s].first = ptr[s];
+        vec[s].second = s;
+    }
+    std::sort(vec.begin(), vec.end());
+    return;
+}
+
+template<typename Stat, typename Index>
 void scaled_ranks(const RankedVector<Stat, Index>& collected, double* outgoing) { 
     // Computing tied ranks. 
     size_t cur_rank = 0;
