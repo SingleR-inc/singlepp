@@ -197,6 +197,76 @@ TEST_P(IntegratedBuilderTest, IntersectedCombine) {
     }
 }
 
+TEST_P(IntegratedBuilderTest, IntersectedCombineAgain) {
+    // Mocking up the test and references.
+    size_t ngenes = 2000;
+    size_t nsamples = 50;
+    size_t nrefs = 3;
+    int ntop = GetParam();
+
+    std::vector<int> ids(ngenes);
+    for (size_t g = 0; g < ngenes; ++g) {
+        ids[g] = g;
+    }
+    std::vector<std::vector<int> > kept(nrefs);
+
+    size_t seed = ntop * 100;
+    size_t nlabels = 3;
+
+    std::mt19937_64 rng(seed);
+    std::vector<int> keep;
+    for (size_t s = 0; s < ngenes; ++s) {
+        if (rng() % 100 < 50) {
+            keep.push_back(s);
+        } else {
+            keep.push_back(-1); // i.e., unique to the reference.
+        }
+    }
+
+    auto mat = spawn_matrix(keep.size(), nsamples, seed);
+    auto lab = spawn_labels(nsamples, nlabels, seed * 2);
+    auto mrk = mock_markers(nlabels, 50, keep.size(), seed * 3);
+
+    // Generating the prebuilts. Note that we can't just use build() to generate the Prebuilt,
+    // as this will not choose markers among the intersection of features.
+    singlepp::SinglePP runner;
+    runner.set_top(ntop);
+
+    auto interpre = runner.build(ngenes, ids.data(), mat.get(), keep.data(), lab.data(), mrk);
+    singlepp::SinglePP::Prebuilt pre(interpre.markers, interpre.ref_subset, interpre.references);
+
+    // Applying the addition operation.
+    singlepp::IntegratedBuilder inter;
+    singlepp::IntegratedBuilder inter2;
+
+    inter.add(ngenes, ids.data(), mat.get(), keep.data(), lab.data(), pre);
+    inter2.add(ngenes, ids.data(), mat.get(), keep.data(), lab.data(), interpre);
+
+    auto fin = inter.finish()[0];
+    auto fin2 = inter2.finish()[0];
+
+    // Checking for identical bits and pieces.
+    EXPECT_EQ(fin.check_availability, fin2.check_availability);
+
+    std::vector<int> avail(fin.available.begin(), fin.available.end());
+    std::sort(avail.begin(), avail.end());
+    std::vector<int> avail2(fin2.available.begin(), fin2.available.end());
+    std::sort(avail2.begin(), avail2.end());
+    EXPECT_EQ(avail, avail2);
+
+    ASSERT_EQ(fin.markers.size(), fin2.markers.size());
+    for (size_t m = 0; m < fin.markers.size(); ++m) {
+        EXPECT_EQ(fin.markers[m], fin2.markers[m]);
+    }
+
+    ASSERT_EQ(fin.ranked.size(), fin2.ranked.size());
+    for (size_t i = 0; i < fin.ranked.size(); ++i) {
+        for (size_t j = 0; j < fin.ranked[i].size(); ++j) {
+            EXPECT_EQ(fin.ranked[i][j], fin2.ranked[i][j]);
+        }
+    }
+}
+
 INSTANTIATE_TEST_CASE_P(
     IntegratedBuilder,
     IntegratedBuilderTest,
