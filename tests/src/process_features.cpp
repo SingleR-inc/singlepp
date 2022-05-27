@@ -173,3 +173,46 @@ TEST(SubsetMarkers, TooLargeTop2) {
         }
     }
 }
+
+TEST(SubsetMarkers, NoOp) {
+    size_t nlabels = 4;
+    auto markers = mock_markers(nlabels, 20, 100);
+    auto copy = markers;
+
+    auto subs = singlepp::subset_markers(copy, -1);
+    EXPECT_TRUE(subs.size() > 0);
+
+    for (size_t i = 0; i < nlabels; ++i) {
+        for (size_t j = 0; j < nlabels; ++j) {
+            auto reset = copy[i][j];
+            for (auto& r : reset) {
+                r = subs[r];
+            }
+            EXPECT_EQ(reset, markers[i][j]);
+        }
+    }
+}
+
+TEST(SubsetMarkers, IntersectNoOp) {
+    size_t nlabels = 4;
+    size_t ngenes = 100;
+    auto markers = mock_markers(nlabels, 20, ngenes);
+    auto inter = mock_intersection(ngenes, ngenes, 40);
+
+    auto mcopy = markers;
+    auto icopy = inter;
+    singlepp::subset_markers(icopy, mcopy, -1);
+
+    // Same result as if we took a very large top set.
+    auto mcopy2 = markers;
+    auto icopy2 = inter;
+    singlepp::subset_markers(icopy2, mcopy2, 10000);
+
+    EXPECT_EQ(icopy, icopy2);
+
+    for (size_t i = 0; i < nlabels; ++i) {
+        for (size_t j = 0; j < nlabels; ++j) {
+            EXPECT_EQ(mcopy[i][j], mcopy2[i][j]);
+        }
+    }
+}

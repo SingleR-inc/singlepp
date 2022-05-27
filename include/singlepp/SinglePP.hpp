@@ -131,6 +131,9 @@ public:
      * @param t Number of top markers to use from each pairwise comparison between labels.
      * Larger values improve the stability of the correlations at the cost of increasing noise and computational work.
      *
+     * Setting it to a negative value will instruct `run()` to use all supplied markers.
+     * This is useful in situations where the supplied markers have already been curated.
+     *
      * @return A reference to this `SinglePP` object.
      */
     SinglePP& set_top(int t = Defaults::top) {
