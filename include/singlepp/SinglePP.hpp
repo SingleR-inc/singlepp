@@ -173,7 +173,7 @@ private:
 
 public:
     /**
-     * @brief Prebuilt references that can be directly used for annotation.
+     * @brief Prebuilt reference that can be directly used for annotation.
      */
     struct Prebuilt {
         /**
@@ -197,6 +197,14 @@ public:
          * Values are row indices into the relevant matrices.
          */
         std::vector<int> subset;
+
+
+        /**
+         * @return Number of labels in this reference.
+         */
+        size_t num_labels() const {
+            return references.size();
+        }
 
         /**
          * @cond
@@ -346,7 +354,7 @@ public:
 
 public:
     /**
-     * @brief Prebuilt references requiring an intersection of features. 
+     * @brief Prebuilt reference requiring an intersection of features. 
      */
     struct PrebuiltIntersection {
         /**
@@ -376,6 +384,13 @@ public:
          * This has the same length as `mat_indices`.
          */
         std::vector<int> ref_subset;
+
+        /**
+         * @return Number of labels in this reference.
+         */
+        size_t num_labels() const {
+            return references.size();
+        }
 
         /**
          * @cond

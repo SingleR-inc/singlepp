@@ -81,6 +81,9 @@ TEST_P(SinglePPSimpleTest, AlreadySubset) {
     for (size_t r = 0; r < nlabels; ++r) {
         EXPECT_EQ(output.scores[r], output2.scores[r]);
     }
+
+    // Checking that this works:
+    EXPECT_EQ(built.num_labels(), nlabels);
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -134,6 +137,7 @@ TEST_P(SinglePPIntersectTest, Intersect) {
     auto result0 = runner.run(mat.get(), build0);
     EXPECT_EQ(result0.best, result.best);
     EXPECT_EQ(result0.delta, result.delta);
+    EXPECT_EQ(build0.num_labels(), nlabels);
 
     // Computing the reference result using the other run() method,
     // after effectively subsetting the input matrices and reindexing the markers.
