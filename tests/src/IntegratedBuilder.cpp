@@ -42,6 +42,8 @@ TEST_P(IntegratedBuilderTest, SimpleCombine) {
 
         size_t nlabels = 3 + r;
         EXPECT_EQ(output[r].markers.size(), nlabels);
+        EXPECT_EQ(output[r].num_labels(), nlabels);
+        EXPECT_EQ(output[r].num_profiles(), nsamples);
 
         // Checking the contents of the markers. 
         const auto& cur_markers = markers[r];

@@ -22,6 +22,24 @@ namespace singlepp {
  */
 struct IntegratedReference {
     /**
+     * @return Number of labels in this reference.
+     */
+    size_t num_labels() const {
+        return markers.size();
+    }
+
+    /**
+     * @return Number of profiles in this reference.
+     */
+    size_t num_profiles() const {
+        size_t n = 0;
+        for (const auto& ref : ranked) {
+            n += ref.size();
+        }
+        return n;
+    }
+
+    /**
      * @cond
      */
     bool check_availability = false;

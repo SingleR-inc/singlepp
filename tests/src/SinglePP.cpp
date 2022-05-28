@@ -92,6 +92,7 @@ TEST_P(SinglePPSimpleTest, AlreadySubset) {
 
     // Checking that this works:
     EXPECT_EQ(built.num_labels(), nlabels);
+    EXPECT_EQ(built.num_profiles(), nrefs);
 }
 
 INSTANTIATE_TEST_CASE_P(
