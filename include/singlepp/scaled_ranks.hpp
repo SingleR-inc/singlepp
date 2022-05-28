@@ -12,9 +12,9 @@ template<typename Stat, typename Index>
 using RankedVector = std::vector<std::pair<Stat, Index> >;
 
 template<typename Stat, typename Index>
-void fill_ranks(const std::vector<int>& subset, const Stat* ptr, RankedVector<Stat, Index>& vec, int offset = 0) {
-    for (size_t s = 0; s < subset.size(); ++s) {
-        vec[s].first = ptr[subset[s] - offset];
+void fill_ranks(size_t num_subset, const int* subset, const Stat* ptr, RankedVector<Stat, Index>& vec, int offset = 0) {
+    for (size_t s = 0; s < num_subset; ++s, ++subset) {
+        vec[s].first = ptr[*subset - offset];
         vec[s].second = s;
     }
     std::sort(vec.begin(), vec.end());
@@ -22,12 +22,8 @@ void fill_ranks(const std::vector<int>& subset, const Stat* ptr, RankedVector<St
 }
 
 template<typename Stat, typename Index>
-void fill_ranks(size_t num_features, const Stat* ptr, RankedVector<Stat, Index>& vec) {
-    for (size_t s = 0; s < num_features; ++s) {
-        vec[s].first = ptr[s];
-        vec[s].second = s;
-    }
-    std::sort(vec.begin(), vec.end());
+void fill_ranks(const std::vector<int>& subset, const Stat* ptr, RankedVector<Stat, Index>& vec, int offset = 0) {
+    fill_ranks(subset.size(), subset.data(), ptr, vec, offset);
     return;
 }
 

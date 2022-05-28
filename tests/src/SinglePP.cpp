@@ -70,10 +70,18 @@ TEST_P(SinglePPSimpleTest, AlreadySubset) {
     runner.set_fine_tune(false).set_top(top).set_quantile(quantile);
     auto output = runner.run(mat.get(), refs.get(), labels.data(), markers);
 
-    // Comparing to running on a prebuilt with already_subset = true.
+    // Comparing to running on a prebuilt with a provided subset vector. We
+    // make it a little complicated (hence the delayed subset and reversal)
+    // just to check that all the indexing is correct.
     auto built = runner.build(refs.get(), labels.data(), markers);
-    auto sub = tatami::make_DelayedSubset<0>(mat, built.subset);
-    auto output2 = runner.run(sub.get(), built, true);
+
+    auto copy = built.subset;
+    std::reverse(copy.begin(), copy.end());
+    auto sub = tatami::make_DelayedSubset<0>(mat, copy);
+
+    std::vector<int> index(copy.size());
+    std::iota(index.rbegin(), index.rend(), 0);
+    auto output2 = runner.run(sub.get(), built, index.data());
 
     // Should get the same result.
     EXPECT_EQ(output.best, output2.best);

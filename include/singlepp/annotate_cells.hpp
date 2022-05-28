@@ -16,8 +16,8 @@ namespace singlepp {
 
 inline void annotate_cells_simple(
     const tatami::Matrix<double, int>* mat,
-    const std::vector<int>& subset,
-    bool already_subset,
+    size_t num_subset,
+    const int* subset,
     const std::vector<Reference>& ref,
     const Markers& markers,
     double quantile,
@@ -28,18 +28,11 @@ inline void annotate_cells_simple(
     double* delta) 
 {
     size_t first = 0, last = 0;
-
-    if (!already_subset) {
-        if (subset.size()) {
-            // Assumes that 'subset' is sorted.
-            first = subset.front();
-            last = subset.back() + 1;
-        }
-    } else {
-        if (mat->nrow() != subset.size()) {
-            throw std::runtime_error("test dataset should have number of rows equal to the marker subset when 'already_subset = true'");
-        }
-        last = mat->nrow();
+    if (num_subset) {
+        // Technically, subset is sorted in some cases, so we could
+        // just take the first and last elements; but better to be safe.
+        first = *std::min_element(subset, subset + num_subset);
+        last = *std::max_element(subset, subset + num_subset) + 1;
     }
 
     const size_t NC = mat->ncol();
@@ -68,8 +61,8 @@ inline void annotate_cells_simple(
         std::vector<double> buffer(last - first);
         auto wrk = mat->new_workspace(false);
 
-        RankedVector<double, int> vec(subset.size());
-        std::vector<double> scaled(subset.size());
+        RankedVector<double, int> vec(num_subset);
+        std::vector<double> scaled(num_subset);
 
         FineTuner ft;
         std::vector<double> curscores(NL);
@@ -77,12 +70,7 @@ inline void annotate_cells_simple(
         #pragma omp for
         for (size_t c = 0; c < NC; ++c) {
             auto ptr = mat->column(c, buffer.data(), first, last, wrk.get());
-
-            if (!already_subset) {
-                fill_ranks(subset, ptr, vec, first);
-            } else {
-                fill_ranks(subset.size(), ptr, vec);
-            }
+            fill_ranks(num_subset, subset, ptr, vec, first);
             scaled_ranks(vec, scaled.data());
 
             curscores.resize(NL);
