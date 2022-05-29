@@ -33,6 +33,7 @@ TEST(SubsetMarkers, Simple) {
     auto subs = singlepp::subset_markers(copy, top);
 
     EXPECT_TRUE(std::is_sorted(subs.begin(), subs.end()));
+    EXPECT_TRUE(subs.size() < 100); // not every gene is there, otherwise it would be a trivial test.
     EXPECT_TRUE(subs.size() >= top);
 
     std::unordered_map<int, bool> hits;
@@ -83,6 +84,7 @@ TEST(SubsetMarkers, Intersect) {
     auto mcopy = markers;
     auto icopy = inter;
     singlepp::subset_markers(icopy, mcopy, top);
+    EXPECT_TRUE(icopy.size() >= top);
 
     // Checking for uniqueness.
     std::unordered_map<int, bool> available;
@@ -213,6 +215,63 @@ TEST(SubsetMarkers, IntersectNoOp) {
     for (size_t i = 0; i < nlabels; ++i) {
         for (size_t j = 0; j < nlabels; ++j) {
             EXPECT_EQ(mcopy[i][j], mcopy2[i][j]);
+        }
+    }
+}
+
+TEST(SubsetMarkers, DiagonalOnly) {
+    size_t nlabels = 4;
+    auto markers = mock_markers_diagonal(nlabels, 20, 100);
+
+    auto copy = markers;
+    int top = 5;
+    auto subs = singlepp::subset_markers(copy, top);
+    EXPECT_TRUE(subs.size() < 100); // not every gene is there, otherwise it would be a trivial test.
+    EXPECT_TRUE(subs.size() >= top);
+
+    for (size_t i = 0; i < nlabels; ++i) {
+        for (size_t j = 0; j < nlabels; ++j) {
+            if (i == j) {
+                EXPECT_EQ(copy[i][j].size(), top);
+                for (size_t k = 0; k < copy[i][j].size(); ++k) {
+                    EXPECT_EQ(subs[copy[i][j][k]], markers[i][j][k]);
+                }
+            } else {
+                EXPECT_EQ(copy[i][j].size(), 0);
+            }
+        }
+    }
+}
+
+TEST(SubsetMarkers, DiagonalIntersection) {
+    size_t nlabels = 4;
+    size_t ngenes = 100;
+    auto markers = mock_markers_diagonal(nlabels, 20, ngenes);
+    auto inter = mock_intersection(ngenes, ngenes, 40);
+
+    auto mcopy = markers;
+    auto icopy = inter;
+    int top = 5;
+    singlepp::subset_markers(icopy, mcopy, top);
+    EXPECT_TRUE(icopy.size() >= top);
+
+    for (size_t i = 0; i < nlabels; ++i) {
+        for (size_t j = 0; j < nlabels; ++j) {
+            const auto& remapped = mcopy[i][j];
+
+            if (i == j) {
+                EXPECT_EQ(remapped.size(), top);
+                const auto& original = markers[i][j];
+                size_t l = 0;
+                for (size_t s = 0; s < remapped.size(); ++s) {
+                    auto current = icopy[remapped[s]].second;
+                    while (l < original.size() && original[l] != current) {
+                        ++l;
+                    }
+                }
+            } else {
+                EXPECT_EQ(remapped.size(), 0);
+            }
         }
     }
 }

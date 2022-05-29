@@ -119,8 +119,8 @@ TEST(FineTuneTest, Basic) {
         auto vec = refs->column(r);
         auto ranked = fill_ranks(vec.size(), vec.data());
 
-        // Setting the template parameter test = true to force it to do 
-        // calculations, despite the fact that it would otherwise exit early.
+        // Setting the template parameter test = true to force it to do
+        // calculations; otherwise it would exit early with the top score.
         std::vector<double> scores { 0.5, 0.49, 0.48 };
         auto output = ft.run<true>(ranked, references, markers, scores, 1, 0.05);
         EXPECT_EQ(output.first, labels[r]);
@@ -170,14 +170,16 @@ TEST(FineTuneTest, Comparison) {
             scores.push_back(naive.scores[l][c]);
         }
 
-        // Everyone is in range, and fine-tuning quits early.
-        // 'scores' is not mutated.
+        // We use a huge threhold to ensure that everyone is in range. 
+        // In this case, fine-tuning quits early and 'scores' is not mutated.
         auto output2 = ft.run(ranked, references, markers, scores, quantile, 100); 
         EXPECT_EQ(output2.first, naive.best[c]);
         EXPECT_EQ(output2.second, naive.delta[c]);
 
-        // We use a huge threhold to ensure that everyone is in range. We
-        // set test = true to check the fine-tuning score calculations.
+        // Everyone is still in range, but this time we set test = true to
+        // force the calculations to be performed.  As all markers are still
+        // used, we can cross-check the fine-tuning score calculations against
+        // the naive method.
         auto output = ft.run<true>(ranked, references, markers, scores, quantile, 100); 
         EXPECT_EQ(output.first, naive.best[c]);
         EXPECT_TRUE(std::abs(naive.delta[c] - output.second) < 1e-6);
@@ -185,4 +187,42 @@ TEST(FineTuneTest, Comparison) {
     }
 }
 
+TEST(FineTuneTest, Diagonal) {
+    // Mocking up the test and references. This time, we make
+    // sure that there are only markers on the diagonals.
+    size_t ngenes = 200;
+ 
+    size_t nlabels = 3;
+    size_t nrefs = 50;
+    auto refs = spawn_matrix(ngenes, nrefs, 200);
+    auto labels = spawn_labels(nrefs, nlabels, 2000);
 
+    auto markers = mock_markers_diagonal(nlabels, 10, ngenes); 
+
+    // Mocking up the reference indices.
+    std::vector<int> subset(ngenes);
+    std::iota(subset.begin(), subset.end(), 0);
+    auto references = singlepp::build_indices(refs.get(), labels.data(), subset,
+        [](size_t nr, size_t nc, const double* ptr) { 
+            return std::shared_ptr<knncolle::Base<int, double> >(new knncolle::KmknnEuclidean<int, double>(nr, nc, ptr)); 
+        }
+    );
+
+    // Running the fine-tuner, making sure we pick up the reference label.
+    // To do so, we set the quantile to 1 to guarantee a score of 1 from a
+    // correlation of 1. Again, this requires setting test = true to force
+    // it to do calculations, otherwise it just quits early.
+    singlepp::FineTuner ft;
+
+    for (size_t r = 0; r < nrefs; ++r) {
+        auto vec = refs->column(r); 
+        auto ranked = fill_ranks(vec.size(), vec.data());
+        std::vector<double> scores { 0.49, 0.5, 0.48 };
+        auto output = ft.run<true>(ranked, references, markers, scores, 1, 0.05);
+
+        // The key point here is that the diagonals are actually used,
+        // so we don't end up with an empty ranking vector and NaN scores.
+        EXPECT_EQ(output.first, labels[r]);
+        EXPECT_TRUE(output.second > 0);
+    }
+}

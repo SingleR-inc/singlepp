@@ -5,25 +5,37 @@
 #include <random>
 #include <algorithm>
 
+template<class Engine>
+void fill_markers(std::vector<int>& source, size_t len, size_t universe, Engine& rng) {
+    source.resize(universe);
+    std::iota(source.begin(), source.end(), 0);
+    std::shuffle(source.begin(), source.end(), rng);
+    if (len < universe) {
+        source.resize(len);
+    }
+}
+
 inline singlepp::Markers mock_markers(size_t nlabels, size_t len, size_t universe, int seed = 42) {
     singlepp::Markers output(nlabels);    
     std::mt19937_64 rng(seed);
-
     for (size_t i = 0; i < nlabels; ++i) {
         output[i].resize(nlabels);
         for (size_t j = 0; j < nlabels; ++j) {
             if (i != j) {
-                auto& source = output[i][j];
-                source.resize(universe);
-                std::iota(source.begin(), source.end(), 0);
-                std::shuffle(source.begin(), source.end(), rng);
-                if (len < universe) {
-                    source.resize(len);
-                }
+                fill_markers(output[i][j], len, universe, rng);
             }
         }
     }
+    return output;
+}
 
+inline singlepp::Markers mock_markers_diagonal(size_t nlabels, size_t len, size_t universe, int seed = 42) {
+    singlepp::Markers output(nlabels);    
+    std::mt19937_64 rng(seed);
+    for (size_t i = 0; i < nlabels; ++i) {
+        output[i].resize(nlabels);
+        fill_markers(output[i][i], len, universe, rng);
+    }
     return output;
 }
 
