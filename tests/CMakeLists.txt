@@ -27,6 +27,13 @@ target_link_libraries(
     singlepp
 )
 
+set(USE_OPENMP OFF CACHE BOOL "Compile with OpenMP support")
+if (USE_OPENMP)
+    find_package(OpenMP)
+    target_link_libraries(libtest OpenMP::OpenMP_CXX)
+endif()
+
+# Adding the load tests.
 add_executable(
     loadtest
     src/load_references.cpp
@@ -47,6 +54,22 @@ endif()
 find_package(ZLIB)
 target_link_libraries(loadtest ZLIB::ZLIB)
 
+# Check that the custom parallelization schemes are properly set up.
+add_executable(
+    custom_parallel
+    src/SinglePP.cpp
+    src/IntegratedBuilder.cpp
+    src/IntegratedScorer.cpp
+)
+
+set_target_properties(custom_parallel PROPERTIES COMPILE_DEFINITIONS "TEST_SINGLEPP_CUSTOM_PARALLEL")
+
+target_link_libraries(
+    custom_parallel
+    gtest_main
+    singlepp
+)
+
 set(CODE_COVERAGE "Enable coverage testing" OFF)
 if(CODE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(libtest PRIVATE -O0 -g --coverage)
@@ -55,6 +78,8 @@ if(CODE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_link_options(loadtest PRIVATE --coverage)
 endif()
 
+
 include(GoogleTest)
 gtest_discover_tests(libtest)
 gtest_discover_tests(loadtest)
+gtest_discover_tests(custom_parallel)

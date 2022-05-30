@@ -279,15 +279,25 @@ public:
                     last = in_use.back() + 1;
                 }
 
+#ifndef SINGLEPP_CUSTOM_PARALLEL
                 #pragma omp parallel
                 {
+#else
+                SINGLEPP_CUSTOM_PARALLEL(NC, [&](size_t start, size_t end) -> void {
+#endif
+
                     RankedVector<double, int> tmp_ranked;
                     tmp_ranked.reserve(in_use.size());
                     std::vector<double> buffer(NR);
                     auto wrk = curmat->new_workspace(false);
 
+#ifndef SINGLEPP_CUSTOM_PARALLEL
                     #pragma omp for
                     for (size_t c = 0; c < NC; ++c) {
+#else
+                    for (size_t c = start; c < end; ++c) {
+#endif
+
                         auto ptr = curmat->column(c, buffer.data(), first, last, wrk.get());
 
                         tmp_ranked.clear();
@@ -299,7 +309,12 @@ public:
                         auto& final_ranked = curref.ranked[curlab[c]][positions[c]];
                         simplify_ranks(tmp_ranked, final_ranked);
                     }
+
+#ifndef SINGLEPP_CUSTOM_PARALLEL
                 }
+#else
+                });
+#endif
 
             } else {
                 // If we do need to check availability, then we need to check
@@ -327,15 +342,25 @@ public:
                 }
                 last = std::max(last + 1, first);
 
+#ifndef SINGLEPP_CUSTOM_PARALLEL
                 #pragma omp parallel
                 {
+#else
+                SINGLEPP_CUSTOM_PARALLEL(NC, [&](size_t start, size_t end) -> void {
+#endif
+
                     RankedVector<double, int> tmp_ranked;
                     tmp_ranked.reserve(in_use.size());
                     std::vector<double> buffer(NR);
                     auto wrk = curmat->new_workspace(false);
 
+#ifndef SINGLEPP_CUSTOM_PARALLEL
                     #pragma omp for
                     for (size_t c = 0; c < NC; ++c) {
+#else
+                    for (size_t c = start; c < end; ++c) {
+#endif
+
                         auto ptr = curmat->column(c, buffer.data(), first, last, wrk.get());
 
                         tmp_ranked.clear();
@@ -347,7 +372,12 @@ public:
                         auto& final_ranked = curref.ranked[curlab[c]][positions[c]];
                         simplify_ranks(tmp_ranked, final_ranked);
                     }
+
+#ifndef SINGLEPP_CUSTOM_PARALLEL
                 }
+#else
+                });
+#endif
             }
         }
 

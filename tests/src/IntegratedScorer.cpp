@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include "custom_parallel.h"
 
 #include "singlepp/IntegratedScorer.hpp"
 #include "spawn_matrix.h"
