@@ -84,12 +84,12 @@ $(function() {
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="keyword">namespace </span>singlepp {</div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno"><a class="line" href="structsinglepp_1_1IntegratedReference.html">   23</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structsinglepp_1_1IntegratedReference.html">IntegratedReference</a> {</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno"><a class="line" href="structsinglepp_1_1IntegratedReference.html#a49ed31e67468d8375c595a45b932b9c6">   27</a></span>    <span class="keywordtype">size_t</span> <a class="code hl_function" href="structsinglepp_1_1IntegratedReference.html#a49ed31e67468d8375c595a45b932b9c6">num_labels</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="keyword">struct </span>IntegratedReference {</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    <span class="keywordtype">size_t</span> num_labels()<span class="keyword"> const </span>{</div>
 <div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>        <span class="keywordflow">return</span> markers.size();</div>
 <div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    }</div>
 <div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno"><a class="line" href="structsinglepp_1_1IntegratedReference.html#a1c4ca31a35f445f0ade706da2bde753b">   34</a></span>    <span class="keywordtype">size_t</span> <a class="code hl_function" href="structsinglepp_1_1IntegratedReference.html#a1c4ca31a35f445f0ade706da2bde753b">num_profiles</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    <span class="keywordtype">size_t</span> num_profiles()<span class="keyword"> const </span>{</div>
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>        <span class="keywordtype">size_t</span> n = 0;</div>
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; ref : ranked) {</div>
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>            n += ref.size();</div>
@@ -103,7 +103,7 @@ $(function() {
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    std::vector&lt;std::vector&lt;RankedVector&lt;int, int&gt; &gt; &gt; ranked;</div>
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>};</div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno"><a class="line" href="classsinglepp_1_1IntegratedBuilder.html">   66</a></span><span class="keyword">class </span><a class="code hl_class" href="classsinglepp_1_1IntegratedBuilder.html">IntegratedBuilder</a> {</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span><span class="keyword">class </span>IntegratedBuilder {</div>
 <div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    std::vector&lt;const tatami::Matrix&lt;double, int&gt;*&gt; stored_matrices;</div>
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    std::vector&lt;const int*&gt; stored_labels;</div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    std::vector&lt;IntegratedReference&gt; references;</div>
@@ -117,7 +117,7 @@ $(function() {
 <div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>        gene_mapping.resize(gene_mapping.size() + 1); </div>
 <div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    }</div>
 <div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    <span class="keywordtype">void</span> add(<span class="keyword">const</span> tatami::Matrix&lt;double, int&gt;* ref, <span class="keyword">const</span> <span class="keywordtype">int</span>* labels, <span class="keyword">const</span> <a class="code hl_typedef" href="Markers_8hpp.html#ae39cf61993000d182cb3464b4ace1406">Markers</a>&amp; old_markers, <span class="keyword">const</span> std::vector&lt;int&gt;&amp; subset) {</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    <span class="keywordtype">void</span> add(<span class="keyword">const</span> tatami::Matrix&lt;double, int&gt;* ref, <span class="keyword">const</span> <span class="keywordtype">int</span>* labels, <span class="keyword">const</span> Markers&amp; old_markers, <span class="keyword">const</span> std::vector&lt;int&gt;&amp; subset) {</div>
 <div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>        add(ref, labels);</div>
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span> </div>
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>        <span class="comment">// Adding the markers for each label, indexed according to their</span></div>
@@ -146,20 +146,20 @@ $(function() {
 <div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    }</div>
 <div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span> </div>
 <div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno"><a class="line" href="classsinglepp_1_1IntegratedBuilder.html#af855594cdb90ec5227c980dd701156e3">  121</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classsinglepp_1_1IntegratedBuilder.html#af855594cdb90ec5227c980dd701156e3">add</a>(<span class="keyword">const</span> tatami::Matrix&lt;double, int&gt;* ref, <span class="keyword">const</span> <span class="keywordtype">int</span>* labels, <span class="keyword">const</span> <a class="code hl_struct" href="structsinglepp_1_1SinglePP_1_1Prebuilt.html">SinglePP::Prebuilt</a>&amp; built) {</div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>        add(ref, labels, built.<a class="code hl_variable" href="structsinglepp_1_1SinglePP_1_1Prebuilt.html#a9f3f2e6f6d08904fa08264898e82d574">markers</a>, built.<a class="code hl_variable" href="structsinglepp_1_1SinglePP_1_1Prebuilt.html#a43455ed90d887169658eec98e21c91e2">subset</a>);</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    <span class="keywordtype">void</span> add(<span class="keyword">const</span> tatami::Matrix&lt;double, int&gt;* ref, <span class="keyword">const</span> <span class="keywordtype">int</span>* labels, <span class="keyword">const</span> SinglePP::Prebuilt&amp; built) {</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>        add(ref, labels, built.markers, built.subset);</div>
 <div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>        <span class="keywordflow">return</span>;</div>
 <div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    }</div>
 <div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
 <div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> Id&gt;</div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno"><a class="line" href="classsinglepp_1_1IntegratedBuilder.html#a3ee9ae83b010990ba4020bedc3f7dc61">  146</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classsinglepp_1_1IntegratedBuilder.html#a3ee9ae83b010990ba4020bedc3f7dc61">add</a>(<span class="keywordtype">size_t</span> mat_nrow,</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>    <span class="keywordtype">void</span> add(<span class="keywordtype">size_t</span> mat_nrow,</div>
 <div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>        <span class="keyword">const</span> Id* mat_id,</div>
 <div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>        <span class="keyword">const</span> tatami::Matrix&lt;double, int&gt;* ref, </div>
 <div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>        <span class="keyword">const</span> Id* ref_id,</div>
 <div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>        <span class="keyword">const</span> <span class="keywordtype">int</span>* labels, </div>
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>        <span class="keyword">const</span> <a class="code hl_struct" href="structsinglepp_1_1SinglePP_1_1PrebuiltIntersection.html">SinglePP::PrebuiltIntersection</a>&amp; built) </div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>        <span class="keyword">const</span> SinglePP::PrebuiltIntersection&amp; built) </div>
 <div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>    {</div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>        add(ref, labels, built.<a class="code hl_variable" href="structsinglepp_1_1SinglePP_1_1PrebuiltIntersection.html#a6db5b7217b3e793b6c527d5bb7f7883a">markers</a>, built.<a class="code hl_variable" href="structsinglepp_1_1SinglePP_1_1PrebuiltIntersection.html#a5d149331e425e1e516f7b9c87b2ef1ee">mat_subset</a>);</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>        add(ref, labels, built.markers, built.mat_subset);</div>
 <div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>        references.back().check_availability = <span class="keyword">true</span>;</div>
 <div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span> </div>
 <div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>        <span class="keyword">auto</span> intersection = intersect_features(mat_nrow, mat_id, ref-&gt;nrow(), ref_id);</div>
@@ -171,12 +171,12 @@ $(function() {
 <div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>    }</div>
 <div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span> </div>
 <div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> Id&gt;</div>
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno"><a class="line" href="classsinglepp_1_1IntegratedBuilder.html#a06e03554614ec7c2a2130888afecc3ae">  184</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classsinglepp_1_1IntegratedBuilder.html#a06e03554614ec7c2a2130888afecc3ae">add</a>(<span class="keywordtype">size_t</span> mat_nrow,</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>    <span class="keywordtype">void</span> add(<span class="keywordtype">size_t</span> mat_nrow,</div>
 <div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>        <span class="keyword">const</span> Id* mat_id,</div>
 <div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>        <span class="keyword">const</span> tatami::Matrix&lt;double, int&gt;* ref, </div>
 <div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>        <span class="keyword">const</span> Id* ref_id,</div>
 <div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>        <span class="keyword">const</span> <span class="keywordtype">int</span>* labels, </div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>        <span class="keyword">const</span> <a class="code hl_struct" href="structsinglepp_1_1SinglePP_1_1Prebuilt.html">SinglePP::Prebuilt</a>&amp; built) </div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>        <span class="keyword">const</span> SinglePP::Prebuilt&amp; built) </div>
 <div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>    {</div>
 <div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>        add(ref, labels);</div>
 <div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span> </div>
@@ -189,10 +189,10 @@ $(function() {
 <div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>        }</div>
 <div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span> </div>
 <div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>        <span class="keyword">auto</span>&amp; new_markers = references.back().markers;</div>
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>        new_markers.resize(built.<a class="code hl_variable" href="structsinglepp_1_1SinglePP_1_1Prebuilt.html#a9f3f2e6f6d08904fa08264898e82d574">markers</a>.size());</div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>        new_markers.resize(built.markers.size());</div>
 <div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span> </div>
-<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>        <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> i = 0; i &lt; built.<a class="code hl_variable" href="structsinglepp_1_1SinglePP_1_1Prebuilt.html#a9f3f2e6f6d08904fa08264898e82d574">markers</a>.size(); ++i) {</div>
-<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>            <span class="keyword">const</span> <span class="keyword">auto</span>&amp; cur_old_markers = built.<a class="code hl_variable" href="structsinglepp_1_1SinglePP_1_1Prebuilt.html#a9f3f2e6f6d08904fa08264898e82d574">markers</a>[i];</div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>        <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> i = 0; i &lt; built.markers.size(); ++i) {</div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>            <span class="keyword">const</span> <span class="keyword">auto</span>&amp; cur_old_markers = built.markers[i];</div>
 <div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span> </div>
 <div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>            std::unordered_set&lt;int&gt; unified;</div>
 <div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>            <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; x : cur_old_markers) {</div>
@@ -202,7 +202,7 @@ $(function() {
 <div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>            <span class="keyword">auto</span>&amp; cur_new_markers = new_markers[i];</div>
 <div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>            cur_new_markers.reserve(unified.size());</div>
 <div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>            <span class="keywordflow">for</span> (<span class="keyword">auto</span> y : unified) {</div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>                <span class="keyword">auto</span> it = reverse_map.find(built.<a class="code hl_variable" href="structsinglepp_1_1SinglePP_1_1Prebuilt.html#a43455ed90d887169658eec98e21c91e2">subset</a>[y]);</div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>                <span class="keyword">auto</span> it = reverse_map.find(built.subset[y]);</div>
 <div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>                <span class="keywordflow">if</span> (it != reverse_map.end()) {</div>
 <div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>                    cur_new_markers.push_back(it-&gt;second);</div>
 <div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>                }</div>
@@ -219,7 +219,7 @@ $(function() {
 <div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>    }</div>
 <div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span> </div>
 <div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00238" name="l00238"></a><span class="lineno"><a class="line" href="classsinglepp_1_1IntegratedBuilder.html#a980f86775bcb3de1f7d9ed24a1f3458b">  238</a></span>    std::vector&lt;IntegratedReference&gt; <a class="code hl_function" href="classsinglepp_1_1IntegratedBuilder.html#a980f86775bcb3de1f7d9ed24a1f3458b">finish</a>() {</div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>    std::vector&lt;IntegratedReference&gt; finish() {</div>
 <div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>        <span class="comment">// Identify the global set of all genes that will be in use here.</span></div>
 <div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>        std::unordered_set&lt;int&gt; in_use_tmp;</div>
 <div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; ref : references) {</div>
@@ -263,101 +263,116 @@ $(function() {
 <div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>                    last = in_use.back() + 1;</div>
 <div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>                }</div>
 <div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span> </div>
-<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span><span class="preprocessor">                #pragma omp parallel</span></div>
-<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>                {</div>
-<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>                    RankedVector&lt;double, int&gt; tmp_ranked;</div>
-<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>                    tmp_ranked.reserve(in_use.size());</div>
-<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>                    std::vector&lt;double&gt; buffer(NR);</div>
-<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>                    <span class="keyword">auto</span> wrk = curmat-&gt;new_workspace(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span><span class="preprocessor">#ifndef SINGLEPP_CUSTOM_PARALLEL</span></div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span><span class="preprocessor">                #pragma omp parallel</span></div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>                {</div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span><span class="preprocessor">#else</span></div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>                SINGLEPP_CUSTOM_PARALLEL(NC, [&amp;](<span class="keywordtype">size_t</span> start, <span class="keywordtype">size_t</span> end) -&gt; <span class="keywordtype">void</span> {</div>
+<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span> </div>
-<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span><span class="preprocessor">                    #pragma omp for</span></div>
-<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>                    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> c = 0; c &lt; NC; ++c) {</div>
-<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>                        <span class="keyword">auto</span> ptr = curmat-&gt;column(c, buffer.data(), first, last, wrk.get());</div>
-<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span> </div>
-<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>                        tmp_ranked.clear();</div>
-<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span>                        <span class="keywordflow">for</span> (<span class="keyword">auto</span> u : in_use) {</div>
-<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span>                            tmp_ranked.emplace_back(ptr[u - first], u);</div>
-<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span>                        }</div>
-<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span>                        std::sort(tmp_ranked.begin(), tmp_ranked.end());</div>
-<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span> </div>
-<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>                        <span class="keyword">auto</span>&amp; final_ranked = curref.ranked[curlab[c]][positions[c]];</div>
-<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>                        simplify_ranks(tmp_ranked, final_ranked);</div>
-<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>                    }</div>
-<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span>                }</div>
-<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span> </div>
-<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>            } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>                <span class="comment">// If we do need to check availability, then we need to check</span></div>
-<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>                <span class="comment">// the mapping of test genes to their reference row indices.</span></div>
-<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>                <span class="keyword">const</span> <span class="keyword">auto</span>&amp; cur_mapping = gene_mapping[r];</div>
-<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>                <span class="keyword">auto</span>&amp; cur_available = curref.available;</div>
-<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span>                std::unordered_map&lt;int, int&gt; remapping;</div>
-<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>                remapping.reserve(in_use.size());</div>
-<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>                <span class="keywordtype">size_t</span> first = NR, last = 0;</div>
+<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>                    RankedVector&lt;double, int&gt; tmp_ranked;</div>
+<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>                    tmp_ranked.reserve(in_use.size());</div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>                    std::vector&lt;double&gt; buffer(NR);</div>
+<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>                    <span class="keyword">auto</span> wrk = curmat-&gt;new_workspace(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span> </div>
+<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span><span class="preprocessor">#ifndef SINGLEPP_CUSTOM_PARALLEL</span></div>
+<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span><span class="preprocessor">                    #pragma omp for</span></div>
+<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span>                    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> c = 0; c &lt; NC; ++c) {</div>
+<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span><span class="preprocessor">#else</span></div>
+<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>                    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> c = start; c &lt; end; ++c) {</div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span> </div>
+<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>                        <span class="keyword">auto</span> ptr = curmat-&gt;column(c, buffer.data(), first, last, wrk.get());</div>
+<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span> </div>
+<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>                        tmp_ranked.clear();</div>
+<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>                        for (<span class="keyword">auto</span> u : in_use) {</div>
+<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>                            tmp_ranked.emplace_back(ptr[u - first], u);</div>
+<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>                        }</div>
+<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>                        std::sort(tmp_ranked.begin(), tmp_ranked.end());</div>
+<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span> </div>
+<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span>                        <span class="keyword">auto</span>&amp; final_ranked = curref.ranked[curlab[c]][positions[c]];</div>
+<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>                        simplify_ranks(tmp_ranked, final_ranked);</div>
+<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>                    }</div>
 <div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span> </div>
-<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span>                <span class="keywordflow">for</span> (<span class="keyword">auto</span> u : in_use) {</div>
-<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span>                    <span class="keyword">auto</span> it = cur_mapping.find(u);</div>
-<div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span>                    <span class="keywordflow">if</span> (it == cur_mapping.end()) {</div>
-<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>                        <span class="keywordflow">continue</span>;</div>
-<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>                    }</div>
+<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span><span class="preprocessor">#ifndef SINGLEPP_CUSTOM_PARALLEL</span></div>
+<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span>                }</div>
+<div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span><span class="preprocessor">#else</span></div>
+<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>                });</div>
+<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span> </div>
-<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span>                    remapping[u] = it-&gt;second;</div>
-<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span>                    cur_available.insert(u);</div>
-<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span>                    <span class="keywordflow">if</span> (it-&gt;second &lt; first) {</div>
-<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span>                        first = it-&gt;second;</div>
-<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span>                    }</div>
-<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span>                    <span class="keywordflow">if</span> (it-&gt;second &gt; last) {</div>
-<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span>                        last = it-&gt;second;</div>
-<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span>                    }</div>
-<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span>                }</div>
-<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span>                last = std::max(last + 1, first);</div>
-<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span> </div>
-<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span><span class="preprocessor">                #pragma omp parallel</span></div>
-<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>                {</div>
-<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span>                    RankedVector&lt;double, int&gt; tmp_ranked;</div>
-<div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span>                    tmp_ranked.reserve(in_use.size());</div>
-<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span>                    std::vector&lt;double&gt; buffer(NR);</div>
-<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span>                    <span class="keyword">auto</span> wrk = curmat-&gt;new_workspace(<span class="keyword">false</span>);</div>
-<div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span> </div>
-<div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span><span class="preprocessor">                    #pragma omp for</span></div>
-<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span>                    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> c = 0; c &lt; NC; ++c) {</div>
-<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span>                        <span class="keyword">auto</span> ptr = curmat-&gt;column(c, buffer.data(), first, last, wrk.get());</div>
-<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span> </div>
-<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span>                        tmp_ranked.clear();</div>
-<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span>                        <span class="keywordflow">for</span> (<span class="keyword">auto</span> p : remapping) {</div>
-<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span>                            tmp_ranked.emplace_back(ptr[p.second - first], p.first);</div>
-<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span>                        }</div>
-<div class="line"><a id="l00345" name="l00345"></a><span class="lineno">  345</span>                        std::sort(tmp_ranked.begin(), tmp_ranked.end());</div>
-<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span> </div>
-<div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span>                        <span class="keyword">auto</span>&amp; final_ranked = curref.ranked[curlab[c]][positions[c]];</div>
-<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span>                        simplify_ranks(tmp_ranked, final_ranked);</div>
-<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span>                    }</div>
-<div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span>                }</div>
-<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span>            }</div>
-<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span>        }</div>
-<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span> </div>
-<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span>        <span class="keywordflow">return</span> std::move(references);</div>
-<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>    }</div>
-<div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>};</div>
-<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span> </div>
-<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span>}</div>
-<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span> </div>
-<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span><span class="preprocessor">#endif</span></div>
-<div class="ttc" id="aMarkers_8hpp_html_ae39cf61993000d182cb3464b4ace1406"><div class="ttname"><a href="Markers_8hpp.html#ae39cf61993000d182cb3464b4ace1406">singlepp::Markers</a></div><div class="ttdeci">std::vector&lt; std::vector&lt; std::vector&lt; int &gt; &gt; &gt; Markers</div><div class="ttdef"><b>Definition:</b> Markers.hpp:37</div></div>
+<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span>            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span>                <span class="comment">// If we do need to check availability, then we need to check</span></div>
+<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span>                <span class="comment">// the mapping of test genes to their reference row indices.</span></div>
+<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span>                <span class="keyword">const</span> <span class="keyword">auto</span>&amp; cur_mapping = gene_mapping[r];</div>
+<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span>                <span class="keyword">auto</span>&amp; cur_available = curref.available;</div>
+<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span>                std::unordered_map&lt;int, int&gt; remapping;</div>
+<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span>                remapping.reserve(in_use.size());</div>
+<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span>                <span class="keywordtype">size_t</span> first = NR, last = 0;</div>
+<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span> </div>
+<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span>                <span class="keywordflow">for</span> (<span class="keyword">auto</span> u : in_use) {</div>
+<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span>                    <span class="keyword">auto</span> it = cur_mapping.find(u);</div>
+<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span>                    <span class="keywordflow">if</span> (it == cur_mapping.end()) {</div>
+<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>                        <span class="keywordflow">continue</span>;</div>
+<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span>                    }</div>
+<div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span> </div>
+<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span>                    remapping[u] = it-&gt;second;</div>
+<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span>                    cur_available.insert(u);</div>
+<div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span>                    <span class="keywordflow">if</span> (it-&gt;second &lt; first) {</div>
+<div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span>                        first = it-&gt;second;</div>
+<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span>                    }</div>
+<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span>                    <span class="keywordflow">if</span> (it-&gt;second &gt; last) {</div>
+<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span>                        last = it-&gt;second;</div>
+<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span>                    }</div>
+<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span>                }</div>
+<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span>                last = std::max(last + 1, first);</div>
+<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span> </div>
+<div class="line"><a id="l00345" name="l00345"></a><span class="lineno">  345</span><span class="preprocessor">#ifndef SINGLEPP_CUSTOM_PARALLEL</span></div>
+<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span><span class="preprocessor">                #pragma omp parallel</span></div>
+<div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span>                {</div>
+<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span><span class="preprocessor">#else</span></div>
+<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span>                SINGLEPP_CUSTOM_PARALLEL(NC, [&amp;](<span class="keywordtype">size_t</span> start, <span class="keywordtype">size_t</span> end) -&gt; <span class="keywordtype">void</span> {</div>
+<div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span> </div>
+<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span>                    RankedVector&lt;double, int&gt; tmp_ranked;</div>
+<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span>                    tmp_ranked.reserve(in_use.size());</div>
+<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span>                    std::vector&lt;double&gt; buffer(NR);</div>
+<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>                    <span class="keyword">auto</span> wrk = curmat-&gt;new_workspace(<span class="keyword">false</span>);</div>
+<div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span> </div>
+<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span><span class="preprocessor">#ifndef SINGLEPP_CUSTOM_PARALLEL</span></div>
+<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span><span class="preprocessor">                    #pragma omp for</span></div>
+<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>                    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> c = 0; c &lt; NC; ++c) {</div>
+<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span><span class="preprocessor">#else</span></div>
+<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span>                    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> c = start; c &lt; end; ++c) {</div>
+<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span> </div>
+<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>                        <span class="keyword">auto</span> ptr = curmat-&gt;column(c, buffer.data(), first, last, wrk.get());</div>
+<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span> </div>
+<div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span>                        tmp_ranked.clear();</div>
+<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>                        for (<span class="keyword">auto</span> p : remapping) {</div>
+<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span>                            tmp_ranked.emplace_back(ptr[p.second - first], p.first);</div>
+<div class="line"><a id="l00369" name="l00369"></a><span class="lineno">  369</span>                        }</div>
+<div class="line"><a id="l00370" name="l00370"></a><span class="lineno">  370</span>                        std::sort(tmp_ranked.begin(), tmp_ranked.end());</div>
+<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span> </div>
+<div class="line"><a id="l00372" name="l00372"></a><span class="lineno">  372</span>                        <span class="keyword">auto</span>&amp; final_ranked = curref.ranked[curlab[c]][positions[c]];</div>
+<div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span>                        simplify_ranks(tmp_ranked, final_ranked);</div>
+<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span>                    }</div>
+<div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span> </div>
+<div class="line"><a id="l00376" name="l00376"></a><span class="lineno">  376</span><span class="preprocessor">#ifndef SINGLEPP_CUSTOM_PARALLEL</span></div>
+<div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span>                }</div>
+<div class="line"><a id="l00378" name="l00378"></a><span class="lineno">  378</span><span class="preprocessor">#else</span></div>
+<div class="line"><a id="l00379" name="l00379"></a><span class="lineno">  379</span>                });</div>
+<div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span>            }</div>
+<div class="line"><a id="l00382" name="l00382"></a><span class="lineno">  382</span>        }</div>
+<div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span> </div>
+<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span>        <span class="keywordflow">return</span> std::move(references);</div>
+<div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span>    }</div>
+<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span>};</div>
+<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span> </div>
+<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span>}</div>
+<div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span> </div>
+<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="aSinglePP_8hpp_html"><div class="ttname"><a href="SinglePP_8hpp.html">SinglePP.hpp</a></div><div class="ttdoc">Defines the SinglePP class.</div></div>
-<div class="ttc" id="aclasssinglepp_1_1IntegratedBuilder_html"><div class="ttname"><a href="classsinglepp_1_1IntegratedBuilder.html">singlepp::IntegratedBuilder</a></div><div class="ttdoc">Factory to prepare multiple references for integrated classification.</div><div class="ttdef"><b>Definition:</b> IntegratedBuilder.hpp:66</div></div>
-<div class="ttc" id="aclasssinglepp_1_1IntegratedBuilder_html_a06e03554614ec7c2a2130888afecc3ae"><div class="ttname"><a href="classsinglepp_1_1IntegratedBuilder.html#a06e03554614ec7c2a2130888afecc3ae">singlepp::IntegratedBuilder::add</a></div><div class="ttdeci">void add(size_t mat_nrow, const Id *mat_id, const tatami::Matrix&lt; double, int &gt; *ref, const Id *ref_id, const int *labels, const SinglePP::Prebuilt &amp;built)</div><div class="ttdef"><b>Definition:</b> IntegratedBuilder.hpp:184</div></div>
-<div class="ttc" id="aclasssinglepp_1_1IntegratedBuilder_html_a3ee9ae83b010990ba4020bedc3f7dc61"><div class="ttname"><a href="classsinglepp_1_1IntegratedBuilder.html#a3ee9ae83b010990ba4020bedc3f7dc61">singlepp::IntegratedBuilder::add</a></div><div class="ttdeci">void add(size_t mat_nrow, const Id *mat_id, const tatami::Matrix&lt; double, int &gt; *ref, const Id *ref_id, const int *labels, const SinglePP::PrebuiltIntersection &amp;built)</div><div class="ttdef"><b>Definition:</b> IntegratedBuilder.hpp:146</div></div>
-<div class="ttc" id="aclasssinglepp_1_1IntegratedBuilder_html_a980f86775bcb3de1f7d9ed24a1f3458b"><div class="ttname"><a href="classsinglepp_1_1IntegratedBuilder.html#a980f86775bcb3de1f7d9ed24a1f3458b">singlepp::IntegratedBuilder::finish</a></div><div class="ttdeci">std::vector&lt; IntegratedReference &gt; finish()</div><div class="ttdef"><b>Definition:</b> IntegratedBuilder.hpp:238</div></div>
-<div class="ttc" id="aclasssinglepp_1_1IntegratedBuilder_html_af855594cdb90ec5227c980dd701156e3"><div class="ttname"><a href="classsinglepp_1_1IntegratedBuilder.html#af855594cdb90ec5227c980dd701156e3">singlepp::IntegratedBuilder::add</a></div><div class="ttdeci">void add(const tatami::Matrix&lt; double, int &gt; *ref, const int *labels, const SinglePP::Prebuilt &amp;built)</div><div class="ttdef"><b>Definition:</b> IntegratedBuilder.hpp:121</div></div>
-<div class="ttc" id="astructsinglepp_1_1IntegratedReference_html"><div class="ttname"><a href="structsinglepp_1_1IntegratedReference.html">singlepp::IntegratedReference</a></div><div class="ttdoc">Reference dataset prepared for integrated classification.</div><div class="ttdef"><b>Definition:</b> IntegratedBuilder.hpp:23</div></div>
-<div class="ttc" id="astructsinglepp_1_1IntegratedReference_html_a1c4ca31a35f445f0ade706da2bde753b"><div class="ttname"><a href="structsinglepp_1_1IntegratedReference.html#a1c4ca31a35f445f0ade706da2bde753b">singlepp::IntegratedReference::num_profiles</a></div><div class="ttdeci">size_t num_profiles() const</div><div class="ttdef"><b>Definition:</b> IntegratedBuilder.hpp:34</div></div>
-<div class="ttc" id="astructsinglepp_1_1IntegratedReference_html_a49ed31e67468d8375c595a45b932b9c6"><div class="ttname"><a href="structsinglepp_1_1IntegratedReference.html#a49ed31e67468d8375c595a45b932b9c6">singlepp::IntegratedReference::num_labels</a></div><div class="ttdeci">size_t num_labels() const</div><div class="ttdef"><b>Definition:</b> IntegratedBuilder.hpp:27</div></div>
-<div class="ttc" id="astructsinglepp_1_1SinglePP_1_1PrebuiltIntersection_html"><div class="ttname"><a href="structsinglepp_1_1SinglePP_1_1PrebuiltIntersection.html">singlepp::SinglePP::PrebuiltIntersection</a></div><div class="ttdoc">Prebuilt reference requiring an intersection of features.</div><div class="ttdef"><b>Definition:</b> SinglePP.hpp:422</div></div>
-<div class="ttc" id="astructsinglepp_1_1SinglePP_1_1PrebuiltIntersection_html_a5d149331e425e1e516f7b9c87b2ef1ee"><div class="ttname"><a href="structsinglepp_1_1SinglePP_1_1PrebuiltIntersection.html#a5d149331e425e1e516f7b9c87b2ef1ee">singlepp::SinglePP::PrebuiltIntersection::mat_subset</a></div><div class="ttdeci">std::vector&lt; int &gt; mat_subset</div><div class="ttdef"><b>Definition:</b> SinglePP.hpp:443</div></div>
-<div class="ttc" id="astructsinglepp_1_1SinglePP_1_1PrebuiltIntersection_html_a6db5b7217b3e793b6c527d5bb7f7883a"><div class="ttname"><a href="structsinglepp_1_1SinglePP_1_1PrebuiltIntersection.html#a6db5b7217b3e793b6c527d5bb7f7883a">singlepp::SinglePP::PrebuiltIntersection::markers</a></div><div class="ttdeci">Markers markers</div><div class="ttdef"><b>Definition:</b> SinglePP.hpp:437</div></div>
-<div class="ttc" id="astructsinglepp_1_1SinglePP_1_1Prebuilt_html"><div class="ttname"><a href="structsinglepp_1_1SinglePP_1_1Prebuilt.html">singlepp::SinglePP::Prebuilt</a></div><div class="ttdoc">Prebuilt reference that can be directly used for annotation.</div><div class="ttdef"><b>Definition:</b> SinglePP.hpp:178</div></div>
-<div class="ttc" id="astructsinglepp_1_1SinglePP_1_1Prebuilt_html_a43455ed90d887169658eec98e21c91e2"><div class="ttname"><a href="structsinglepp_1_1SinglePP_1_1Prebuilt.html#a43455ed90d887169658eec98e21c91e2">singlepp::SinglePP::Prebuilt::subset</a></div><div class="ttdeci">std::vector&lt; int &gt; subset</div><div class="ttdef"><b>Definition:</b> SinglePP.hpp:199</div></div>
-<div class="ttc" id="astructsinglepp_1_1SinglePP_1_1Prebuilt_html_a9f3f2e6f6d08904fa08264898e82d574"><div class="ttname"><a href="structsinglepp_1_1SinglePP_1_1Prebuilt.html#a9f3f2e6f6d08904fa08264898e82d574">singlepp::SinglePP::Prebuilt::markers</a></div><div class="ttdeci">Markers markers</div><div class="ttdef"><b>Definition:</b> SinglePP.hpp:193</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
