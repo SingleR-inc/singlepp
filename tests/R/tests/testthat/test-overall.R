@@ -1,9 +1,10 @@
-# Building the function.
-library(Rcpp)
-sourceCpp("test.cpp")
+# This runs the overall tests against the reference R implementation.
+# library(testthat); library(singlepp.tests); source("test-overall.R")
 
 library(SingleR)
 library(testthat)
+
+run_singlepp <- singlepp.tests:::run_singlepp
 
 test_that("results match up with SingleR (basic)", {
     # Setting up the data.

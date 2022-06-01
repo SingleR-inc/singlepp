@@ -2,8 +2,8 @@
 #include "singlepp/SinglePP.hpp"
 #include <algorithm>
 
-// [[Rcpp::plugins(cpp17)]]
-
+//' @useDynLib singlepp.tests
+//' @importFrom Rcpp sourceCpp
 // [[Rcpp::export(rng=false)]]
 Rcpp::List run_singlepp(Rcpp::NumericMatrix mat, Rcpp::NumericMatrix ref, Rcpp::IntegerVector labels, Rcpp::List markers) {
     // Setting up the inputs.
