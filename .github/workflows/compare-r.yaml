@@ -1,10 +1,10 @@
 on: [push, pull_request]
 
-name: SingleR comparison
+name: Comparison to R 
 
 jobs:
   build:
-    name: Compare to SingleR reference
+    name: Compare to R reference
     runs-on: ubuntu-latest
     container: bioconductor/bioconductor_docker:devel
     steps:
@@ -26,18 +26,16 @@ jobs:
         path: ${{ env.R_PKG_DIR }}
         key: preinstalled-packages
 
-    - name: Install packages
+    - name: Install dependencies
       shell: Rscript {0}
       run: |
         BiocManager::install(c("SingleR", "Rcpp", "testthat"))
 
-    - name: Build the test dependencies
-      run: |
-        cd tests/R
-        bash build.sh
+    - name: Install the test package
+      run: R CMD INSTALL tests/R
 
     - name: Run the comparisons
       shell: Rscript {0}
       run: |
-        setwd("tests/R")
-        testthat::test_file("run.R", stop_on_failure=TRUE)
+        setwd("tests/R/tests")
+        testthat::test_file("testthat.R", stop_on_failure=TRUE)
