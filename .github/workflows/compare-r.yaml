@@ -6,9 +6,9 @@ jobs:
   build:
     name: Compare to R reference
     runs-on: ubuntu-latest
-    container: bioconductor/bioconductor_docker:devel
+    container: rocker/rstudio:latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
 
     - name: Get latest CMake
       uses: lukka/get-cmake@latest
@@ -21,15 +21,14 @@ jobs:
         echo "R_PKG_DIR=${R_HOME}/site-library" >> $GITHUB_ENV
 
     - name: Restore the package directory
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ${{ env.R_PKG_DIR }}
         key: preinstalled-packages
 
     - name: Install dependencies
       shell: Rscript {0}
-      run: |
-        BiocManager::install(c("SingleR", "Rcpp", "testthat"))
+      run: install.packages(c("Rcpp", "testthat"))
 
     - name: Install the test package
       run: R CMD INSTALL tests/R
