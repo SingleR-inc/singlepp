@@ -2,3 +2,5 @@ build/
 *.swp
 docs/html
 docs/latex
+*.so
+*.o

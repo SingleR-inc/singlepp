@@ -1,0 +1,19 @@
+Package: singlepp.tests
+Title: R-based Tests for the singlepp C++ code
+Version: 0.1.0
+Date: 2022-05-31
+Description: 
+    Some extra tests for the singlepp code, migrated from the SingleR package.
+    Well, I already wrote them in R, so it would be a shame to not re-use them here.
+    This allows us to get rid of the heavier tests in the SingleR package.
+Authors@R: person("Aaron", "Lun", role=c("aut", "cre"), email="infinite.monkeys.with.keyboards@gmail.com")
+Imports:
+    Rcpp,
+    stats,
+    utils
+LinkingTo:
+    Rcpp
+Suggests:
+    testthat
+SystemRequirements: C++17
+RoxygenNote: 7.2.0
