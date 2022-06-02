@@ -1,65 +1,77 @@
 # This runs the overall tests against the reference R implementation.
-# library(testthat); library(singlepp.tests); source("test-overall.R")
+# library(testthat); library(singlepp.tests); source("setup.R"); source("test-overall.R")
 
-library(SingleR)
-library(testthat)
+test_that("results matches up with the reference R implementation (no fine tuning)", {
+    ngenes <- 5000
+    nlabels <- 5
 
-run_singlepp <- singlepp.tests:::run_singlepp
-
-test_that("results match up with SingleR (basic)", {
     # Setting up the data.
     set.seed(10000)
-    mat <- matrix(rnorm(500000), nrow=5000)
-    ref <- matrix(rnorm(100000), nrow=5000)
-    labels <- sample(5, ncol(ref), replace=TRUE)
-    rownames(mat) <- rownames(ref) <- paste0("GENE_", seq_len(nrow(mat)))
+    mat <- matrix(rnorm(ngenes * 100), nrow=ngenes)
+    ref <- matrix(rnorm(ngenes * 20), nrow=ngenes)
+    labels <- mock.labels(ncol(ref), nlabels)
+    markers <- mock.markers(ngenes, nlabels)
 
-    # Running the reference SingleR pipeline.
-    res <- SingleR(mat, ref, labels)
-
-    # Reindexing the markers.
-    markers <- metadata(res)$de.genes
-    markers <- relist(match(unlist(markers, use.names=FALSE), rownames(mat)), markers)
-
-    obs <- run_singlepp(mat, ref, labels, markers)
-    expect_equal(obs$scores, unname(res$scores))
-    expect_identical(obs$best, as.integer(res$labels))
+    res <- reference(mat, ref, labels, markers, fine.tune = FALSE)
+    obs <- run_singlepp(mat, ref, labels, markers, fine_tune = FALSE)
+    expect_equal(obs$scores, res$scores)
+    expect_identical(obs$best, res$best)
+    expect_equal(obs$delta, res$delta)
 })
 
-test_that("results match up with SingleR (fine-tuning)", {
+test_that("results matches up with the reference R implementation (standard fine tuning)", {
+    ngenes <- 1000
+    nlabels <- 4
+
     # Setting up the data.
-    set.seed(10000)
-    mat <- matrix(rnorm(500000), nrow=5000)
-    ref <- matrix(rnorm(100000), nrow=5000)
-    labels <- sample(5, ncol(ref), replace=TRUE)
-    rownames(mat) <- rownames(ref) <- paste0("GENE_", seq_len(nrow(mat)))
+    set.seed(20000)
+    mat <- matrix(rnorm(ngenes * 100), nrow=ngenes)
+    ref <- matrix(rnorm(ngenes * 20), nrow=ngenes)
+    labels <- mock.labels(ncol(ref), nlabels)
+    markers <- mock.markers(ngenes, nlabels)
 
-    # Setting up random markers. This encourages some activity during
-    # fine-tuning, otherwise properly detected markers are too good to warrant
-    # fine-tuning.
-    markers <- vector("list", 5)
-    names(markers) <- seq_along(markers)
-    for (i in seq_along(markers)) {
-        curmarkers <- vector("list", 5)
-        names(curmarkers) <- seq_along(curmarkers)
-        for (j in seq_along(curmarkers)) {
-            if (i!=j) {
-                curmarkers[[j]] <- sample(rownames(mat), 20)
-            } else {
-                curmarkers[[j]] <- character(0)
-            }
-        }
-        markers[[i]] <- curmarkers
-    }
+    # Running the reference pipeline.
+    res <- reference(mat, ref, labels, markers)
+    obs <- run_singlepp(mat, ref, labels, markers)
+    expect_equal(obs$scores, res$scores)
+    expect_identical(obs$best, res$best)
+    expect_equal(obs$delta, res$delta)
+})
 
-    res <- SingleR(mat, ref, labels, genes=markers)
-    res2 <- SingleR(mat, ref, labels, genes=markers, fine.tune=FALSE)
-    expect_false(identical(res$labels, res2$labels)) # i.e., fine-tuning has an effect
+test_that("results matches up with the reference R implementation (tight fine tuning)", {
+    ngenes <- 1000
+    nlabels <- 6
 
-    # Reindexing the markers.
-    markers2 <- relist(match(unlist(markers, use.names=FALSE), rownames(mat)), markers)
+    # Setting up the data.
+    set.seed(30000)
+    mat <- matrix(rnorm(ngenes * 100), nrow=ngenes)
+    ref <- matrix(rnorm(ngenes * 20), nrow=ngenes)
+    labels <- mock.labels(ncol(ref), nlabels)
+    markers <- mock.markers(ngenes, nlabels)
 
-    obs <- run_singlepp(mat, ref, labels, markers2)
-    expect_equal(obs$scores, unname(res$scores))
-    expect_identical(obs$best, as.integer(res$labels))
+    # Running the reference pipeline.
+    res <- reference(mat, ref, labels, markers, tune.thresh=0.01)
+    obs <- run_singlepp(mat, ref, labels, markers, tune_thresh=0.01)
+    expect_equal(obs$scores, res$scores)
+    expect_identical(obs$best, res$best)
+    expect_equal(obs$delta, res$delta)
+})
+
+test_that("results matches up with the reference R implementation (different top)", {
+    ngenes <- 1000
+    nlabels <- 3
+
+    # Setting up the data.
+    set.seed(40000)
+    mat <- matrix(rnorm(ngenes * 100), nrow=ngenes)
+    ref <- matrix(rnorm(ngenes * 20), nrow=ngenes)
+    labels <- mock.labels(ncol(ref), nlabels)
+    markers <- mock.markers(ngenes, nlabels)
+
+    # Running the reference pipeline.
+    res <- reference(mat, ref, labels, markers, top = 10)
+    obs <- run_singlepp(mat, ref, labels, markers, top = 10)
+    expect_equal(obs$scores, res$scores)
+    expect_identical(obs$best, res$best)
+    expect_equal(obs$delta, res$delta)
 })

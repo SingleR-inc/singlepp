@@ -9,7 +9,8 @@ Description:
 Authors@R: person("Aaron", "Lun", role=c("aut", "cre"), email="infinite.monkeys.with.keyboards@gmail.com")
 Imports:
     Rcpp,
-    stats
+    stats,
+    utils
 LinkingTo:
     Rcpp
 Suggests:

@@ -3,7 +3,8 @@
 
 #' @useDynLib singlepp.tests
 #' @importFrom Rcpp sourceCpp
-run_singlepp <- function(mat, ref, labels, markers) {
-    .Call('_singlepp_tests_run_singlepp', PACKAGE = 'singlepp.tests', mat, ref, labels, markers)
+#' @export
+run_singlepp <- function(mat, ref, labels, markers, quantile = 0.8, fine_tune = TRUE, tune_thresh = 0.05, top = 20L) {
+    .Call('_singlepp_tests_run_singlepp', PACKAGE = 'singlepp.tests', mat, ref, labels, markers, quantile, fine_tune, tune_thresh, top)
 }
 

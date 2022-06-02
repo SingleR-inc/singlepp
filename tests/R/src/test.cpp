@@ -4,8 +4,18 @@
 
 //' @useDynLib singlepp.tests
 //' @importFrom Rcpp sourceCpp
+//' @export
 // [[Rcpp::export(rng=false)]]
-Rcpp::List run_singlepp(Rcpp::NumericMatrix mat, Rcpp::NumericMatrix ref, Rcpp::IntegerVector labels, Rcpp::List markers) {
+Rcpp::List run_singlepp(
+    Rcpp::NumericMatrix mat, 
+    Rcpp::NumericMatrix ref, 
+    Rcpp::IntegerVector labels, 
+    Rcpp::List markers, 
+    double quantile = 0.8, 
+    bool fine_tune = true, 
+    double tune_thresh = 0.05,
+    int top = 20) 
+{
     // Setting up the inputs.
     size_t mNR = mat.nrow();
     size_t mNC = mat.ncol();
@@ -53,7 +63,8 @@ Rcpp::List run_singlepp(Rcpp::NumericMatrix mat, Rcpp::NumericMatrix ref, Rcpp::
 
     // Running everything.
     singlepp::SinglePP runner;
-    runner.set_top(100000); // no top filter, implicitly done by 'markers'.
+    runner.set_top(top).set_quantile(quantile).set_fine_tune(fine_tune).set_fine_tune_threshold(tune_thresh);
+
     runner.run(
         &mat_ptr, 
         &ref_ptr,

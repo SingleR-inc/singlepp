@@ -11,21 +11,25 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // run_singlepp
-Rcpp::List run_singlepp(Rcpp::NumericMatrix mat, Rcpp::NumericMatrix ref, Rcpp::IntegerVector labels, Rcpp::List markers);
-RcppExport SEXP _singlepp_tests_run_singlepp(SEXP matSEXP, SEXP refSEXP, SEXP labelsSEXP, SEXP markersSEXP) {
+Rcpp::List run_singlepp(Rcpp::NumericMatrix mat, Rcpp::NumericMatrix ref, Rcpp::IntegerVector labels, Rcpp::List markers, double quantile, bool fine_tune, double tune_thresh, int top);
+RcppExport SEXP _singlepp_tests_run_singlepp(SEXP matSEXP, SEXP refSEXP, SEXP labelsSEXP, SEXP markersSEXP, SEXP quantileSEXP, SEXP fine_tuneSEXP, SEXP tune_threshSEXP, SEXP topSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type mat(matSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type ref(refSEXP);
     Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type labels(labelsSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type markers(markersSEXP);
-    rcpp_result_gen = Rcpp::wrap(run_singlepp(mat, ref, labels, markers));
+    Rcpp::traits::input_parameter< double >::type quantile(quantileSEXP);
+    Rcpp::traits::input_parameter< bool >::type fine_tune(fine_tuneSEXP);
+    Rcpp::traits::input_parameter< double >::type tune_thresh(tune_threshSEXP);
+    Rcpp::traits::input_parameter< int >::type top(topSEXP);
+    rcpp_result_gen = Rcpp::wrap(run_singlepp(mat, ref, labels, markers, quantile, fine_tune, tune_thresh, top));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_singlepp_tests_run_singlepp", (DL_FUNC) &_singlepp_tests_run_singlepp, 4},
+    {"_singlepp_tests_run_singlepp", (DL_FUNC) &_singlepp_tests_run_singlepp, 8},
     {NULL, NULL, 0}
 };
 
