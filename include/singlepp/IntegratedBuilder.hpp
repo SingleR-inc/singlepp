@@ -205,15 +205,15 @@ public:
      * `ref` and `labels` are expected to remain valid until `finish()` is called.
      * `mat_id` and `mat_nrow` should also be constant for all invocations to `add()`.
      */
-    template<typename Id, class Subset>
-    void add_internal(size_t mat_nrow,
+    template<typename Id>
+    void add(size_t mat_nrow,
         const Id* mat_id,
         const tatami::Matrix<double, int>* ref, 
         const Id* ref_id,
         const int* labels, 
         const Markers& markers)
     {
-        add_internal(ref, mat_id, ref, ref_id, labels, markers, false);
+        add_internal(mat_nrow, mat_id, ref, ref_id, labels, markers, false);
     }
 
 public:

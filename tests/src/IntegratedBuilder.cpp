@@ -5,39 +5,80 @@
 #include "spawn_matrix.h"
 #include "mock_markers.h"
 
-class IntegratedBuilderTest : public ::testing::TestWithParam<int> {};
-
-TEST_P(IntegratedBuilderTest, SimpleCombine) {
-    // Mocking up the test and references.
-    size_t ngenes = 2000;
-    size_t nsamples = 50;
-    size_t nrefs = 3;
-    int ntop = GetParam();
-
+class IntegratedBuilderTest : public ::testing::TestWithParam<int> {
+protected:
     std::vector<std::shared_ptr<tatami::Matrix<double, int> > > matrices;
     std::vector<std::vector<int> > labels;
     std::vector<singlepp::Markers> markers;
+
+    size_t ngenes = 2000;
+    size_t nsamples = 50;
+    size_t nrefs = 3;
+protected:
+    void simulate_references() {
+        for (size_t r = 0; r < nrefs; ++r) {
+            size_t seed = r * 1000;
+            size_t nlabels = 3 + r;
+
+            matrices.push_back(spawn_matrix(ngenes, nsamples, seed));
+            labels.push_back(spawn_labels(nsamples, nlabels, seed * 2));
+            markers.push_back(mock_markers(nlabels, 50, ngenes, seed * 3));
+        }
+    }
+
+    std::vector<int> simulate_test_ids() const {
+        std::vector<int> ids(ngenes);
+        for (size_t g = 0; g < ngenes; ++g) {
+            ids[g] = g;
+        }
+        return ids;
+    }
+
+    std::vector<int> simulate_ref_ids(int seed) const {
+        std::vector<int> keep;
+        std::mt19937_64 rng(seed);
+        for (size_t s = 0; s < ngenes; ++s) {
+            if (rng() % 100 < 50) {
+                keep.push_back(s);
+            } else {
+                keep.push_back(-1); // i.e., unique to the reference.
+            }
+        }
+        return keep;
+    }
+
+    singlepp::Markers truncate_markers(singlepp::Markers remarkers, int ntop) const {
+        for (auto& x : remarkers) {
+            for (auto& y : x) {
+                if (y.size() > static_cast<size_t>(ntop)) {
+                    y.resize(ntop);
+                }
+            }
+        }
+        return remarkers;
+    }
+};
+
+TEST_P(IntegratedBuilderTest, SimpleCombine) {
+    // Mocking up the test and references.
+    int ntop = GetParam();
+    simulate_references();
+
     singlepp::SinglePP runner;
     runner.set_top(ntop);
     singlepp::IntegratedBuilder inter;
 
     for (size_t r = 0; r < nrefs; ++r) {
-        size_t seed = r * 1000;
-        size_t nlabels = 3 + r;
-
-        matrices.push_back(spawn_matrix(ngenes, nsamples, seed));
-        labels.push_back(spawn_labels(nsamples, nlabels, seed * 2));
-        markers.push_back(mock_markers(nlabels, 50, ngenes, seed * 3));
-
-        // Adding each one to the list.
-        auto pre = runner.build(matrices.back().get(), labels.back().data(), markers.back());
-        inter.add(matrices.back().get(), labels.back().data(), pre);
+        auto pre = runner.build(matrices[r].get(), labels[r].data(), markers[r]);
+        inter.add(matrices[r].get(), labels[r].data(), pre);
     }
 
     auto output = inter.finish();
 
-    std::vector<int> in_use;
+    // Checking the values of the built references.
     EXPECT_EQ(output.size(), nrefs);
+
+    std::vector<int> in_use;
     for (size_t r = 0; r < nrefs; ++r) {
         EXPECT_FALSE(output[r].check_availability);
 
@@ -97,48 +138,65 @@ TEST_P(IntegratedBuilderTest, SimpleCombine) {
     }
 }
 
+TEST_P(IntegratedBuilderTest, SimpleCombineNaked) {
+    // Mocking up the test and references.
+    int ntop = GetParam();
+    simulate_references();
+
+    singlepp::SinglePP runner;
+    runner.set_top(ntop);
+    singlepp::IntegratedBuilder alpha, bravo;
+
+    for (size_t r = 0; r < nrefs; ++r) {
+        auto pre = runner.build(matrices[r].get(), labels[r].data(), markers[r]);
+        alpha.add(matrices[r].get(), labels[r].data(), pre);
+
+        // Comparing what happens with direct input of markers of interest.
+        auto remarkers = truncate_markers(markers[r], ntop);
+        bravo.add(matrices[r].get(), labels[r].data(), remarkers);
+    }
+
+    auto alpha_output = alpha.finish();
+    auto bravo_output = bravo.finish();
+
+    // Checking the rank values for equality.
+    for (size_t r = 0; r < nrefs; ++r) {
+        const auto& cur_alpha = alpha_output[r];
+        const auto& cur_bravo = bravo_output[r];
+
+        ASSERT_EQ(cur_alpha.ranked.size(), cur_bravo.ranked.size());
+        for (size_t l = 0; l < cur_alpha.ranked.size(); ++l) {
+            const auto& rank_alpha = cur_alpha.ranked[l];
+            const auto& rank_bravo = cur_bravo.ranked[l];
+            ASSERT_EQ(rank_alpha.size(), rank_bravo.size());
+
+            for (size_t s = 0; s < rank_alpha.size(); ++s) {
+                EXPECT_EQ(rank_alpha[s], rank_bravo[s]);
+            }
+        }
+    }
+}
+
 TEST_P(IntegratedBuilderTest, IntersectedCombine) {
     // Mocking up the test and references.
-    size_t ngenes = 2000;
-    size_t nsamples = 50;
-    size_t nrefs = 3;
     int ntop = GetParam();
+    simulate_references();
 
-    std::vector<std::shared_ptr<tatami::Matrix<double, int> > > matrices;
-    std::vector<std::vector<int> > labels;
-    std::vector<singlepp::Markers> markers;
-
-    std::vector<int> ids(ngenes);
-    for (size_t g = 0; g < ngenes; ++g) {
-        ids[g] = g;
+    auto ids = simulate_test_ids();
+    std::vector<std::vector<int> > kept;
+    for (size_t r = 0; r < nrefs; ++r) {
+        size_t seed = r * 555;
+        kept.push_back(simulate_ref_ids(seed));
     }
-    std::vector<std::vector<int> > kept(nrefs);
 
     singlepp::SinglePP runner;
     runner.set_top(ntop);
     singlepp::IntegratedBuilder inter;
 
+    // Adding each one to the list.
     for (size_t r = 0; r < nrefs; ++r) {
-        size_t seed = r * 100;
-        size_t nlabels = 3 + r;
-
-        std::mt19937_64 rng(seed);
-        auto& keep = kept[r];
-        for (size_t s = 0; s < ngenes; ++s) {
-            if (rng() % 100 < 50) {
-                keep.push_back(s);
-            } else {
-                keep.push_back(-1); // i.e., unique to the reference.
-            }
-        }
-
-        matrices.push_back(spawn_matrix(keep.size(), nsamples, seed));
-        labels.push_back(spawn_labels(nsamples, nlabels, seed * 2));
-        markers.push_back(mock_markers(nlabels, 50, keep.size(), seed * 3));
-        
-        // Adding each one to the list.
-        auto pre = runner.build(ngenes, ids.data(), matrices.back().get(), keep.data(), labels.back().data(), markers.back());
-        inter.add(ngenes, ids.data(), matrices.back().get(), keep.data(), labels.back().data(), pre);
+        auto pre = runner.build(ngenes, ids.data(), matrices[r].get(), kept[r].data(), labels[r].data(), markers[r]);
+        inter.add(ngenes, ids.data(), matrices[r].get(), kept[r].data(), labels[r].data(), pre);
     }
 
     auto output = inter.finish();
@@ -202,30 +260,13 @@ TEST_P(IntegratedBuilderTest, IntersectedCombine) {
 
 TEST_P(IntegratedBuilderTest, IntersectedCombineAgain) {
     // Mocking up the test and references.
-    size_t ngenes = 2000;
-    size_t nsamples = 50;
-    size_t nrefs = 3;
     int ntop = GetParam();
 
-    std::vector<int> ids(ngenes);
-    for (size_t g = 0; g < ngenes; ++g) {
-        ids[g] = g;
-    }
-    std::vector<std::vector<int> > kept(nrefs);
-
+    auto ids = simulate_test_ids();
     size_t seed = ntop * 100;
+    std::vector<int> keep = simulate_ref_ids(seed);
+
     size_t nlabels = 3;
-
-    std::mt19937_64 rng(seed);
-    std::vector<int> keep;
-    for (size_t s = 0; s < ngenes; ++s) {
-        if (rng() % 100 < 50) {
-            keep.push_back(s);
-        } else {
-            keep.push_back(-1); // i.e., unique to the reference.
-        }
-    }
-
     auto mat = spawn_matrix(keep.size(), nsamples, seed);
     auto lab = spawn_labels(nsamples, nlabels, seed * 2);
     auto mrk = mock_markers(nlabels, 50, keep.size(), seed * 3);
@@ -264,8 +305,45 @@ TEST_P(IntegratedBuilderTest, IntersectedCombineAgain) {
 
     ASSERT_EQ(fin.ranked.size(), fin2.ranked.size());
     for (size_t i = 0; i < fin.ranked.size(); ++i) {
+        ASSERT_EQ(fin.ranked[i].size(), fin2.ranked[i].size());
         for (size_t j = 0; j < fin.ranked[i].size(); ++j) {
             EXPECT_EQ(fin.ranked[i][j], fin2.ranked[i][j]);
+        }
+    }
+}
+
+TEST_P(IntegratedBuilderTest, IntersectedCombineNaked) {
+    // Mocking up the test and references.
+    int ntop = GetParam();
+
+    auto ids = simulate_test_ids();
+    size_t seed = ntop * 100;
+    std::vector<int> keep = simulate_ref_ids(seed);
+
+    size_t nlabels = 3;
+    auto mat = spawn_matrix(keep.size(), nsamples, seed);
+    auto lab = spawn_labels(nsamples, nlabels, seed * 2);
+    auto mrk = mock_markers(nlabels, 50, keep.size(), seed * 3);
+
+    singlepp::SinglePP runner;
+    runner.set_top(ntop);
+    auto pre = runner.build(mat.get(), lab.data(), mrk);
+
+    singlepp::IntegratedBuilder alpha;
+    alpha.add(ngenes, ids.data(), mat.get(), keep.data(), lab.data(), pre);
+    auto aout = alpha.finish()[0];
+
+    // Comparing what happens with direct input of markers of interest.
+    auto remarkers = truncate_markers(mrk, ntop);
+    singlepp::IntegratedBuilder bravo;
+    bravo.add(ngenes, ids.data(), mat.get(), keep.data(), lab.data(), remarkers);
+    auto bout = bravo.finish()[0];
+
+    ASSERT_EQ(aout.ranked.size(), bout.ranked.size());
+    for (size_t i = 0; i < aout.ranked.size(); ++i) {
+        ASSERT_EQ(aout.ranked[i].size(), bout.ranked[i].size());
+        for (size_t j = 0; j < aout.ranked[i].size(); ++j) {
+            EXPECT_EQ(aout.ranked[i][j], bout.ranked[i][j]);
         }
     }
 }
