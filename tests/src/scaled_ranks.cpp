@@ -80,12 +80,23 @@ TEST(ScaledRanks, Basic) {
     );
 }
 
-TEST(ScaledRanks, AllZero) {
+TEST(ScaledRanks, NoVariance) {
     std::vector<double> all_zeroes(12);
-    auto ranks = fill_ranks(all_zeroes.size(), all_zeroes.data());
-    std::vector<double> out (all_zeroes.size());
-    singlepp::scaled_ranks(ranks, out.data());
-    EXPECT_EQ(out, all_zeroes);
+
+    {
+        auto ranks = fill_ranks(all_zeroes.size(), all_zeroes.data());
+        std::vector<double> out (all_zeroes.size());
+        singlepp::scaled_ranks(ranks, out.data());
+        EXPECT_EQ(out, all_zeroes);
+    }
+
+    {
+        std::vector<double> all_ones(12, 1);
+        auto ranks = fill_ranks(all_ones.size(), all_ones.data());
+        std::vector<double> out (all_ones.size());
+        singlepp::scaled_ranks(ranks, out.data());
+        EXPECT_EQ(out, all_zeroes); // centered to zero, but not scaled.
+    }
 }
 
 TEST(ScaledRanks, Ties) {
