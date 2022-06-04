@@ -1,5 +1,6 @@
 #include "Rcpp.h"
 #include "singlepp/SinglePP.hpp"
+#include "utils.h"
 #include <algorithm>
 
 //' @useDynLib singlepp.tests
@@ -17,41 +18,14 @@ Rcpp::List run_singlepp(
     int top = 20) 
 {
     // Setting up the inputs.
-    size_t mNR = mat.nrow();
-    size_t mNC = mat.ncol();
-    std::vector<double> mat_copy(mNR * mNC);
-    std::copy(mat.begin(), mat.end(), mat_copy.begin());
-    auto mat_ptr = tatami::DenseColumnMatrix<double, int>(mNR, mNC, std::move(mat_copy));
-
-    size_t rNR = ref.nrow();
-    size_t rNC = ref.ncol();
-    std::vector<double> ref_copy(rNR * rNC);
-    std::copy(ref.begin(), ref.end(), ref_copy.begin());
-    auto ref_ptr = tatami::DenseColumnMatrix<double, int>(rNR, rNC, std::move(ref_copy));
-
-    std::vector<int> labels2(labels.size());
-    std::copy(labels.begin(), labels.end(), labels2.begin());
-    for (auto& l : labels2) {
-        --l; // 0-based indexing.
-    }
-
-    size_t nlabels = markers.size();
-    singlepp::Markers markers2(nlabels);
-
-    for (size_t l = 0; l < nlabels; ++l) {
-        Rcpp::List inner = markers[l];
-        auto& inner2 = markers2[l];
-        inner2.resize(nlabels);
-        for (size_t l2 = 0; l2 < nlabels; ++l2) {
-            Rcpp::IntegerVector ranking = inner[l2];
-            inner2[l2] = std::vector<int>(ranking.begin(), ranking.end());  
-            for (auto& i : inner2[l2]) {
-                --i; // 0-based indexing.
-            }
-        }
-    }
+    auto parsed_mat = tatami::DenseColumnMatrix<double, int>(mat.nrow(), mat.ncol(), std::vector<double>(mat.begin(), mat.end()));
+    auto parsed_ref = tatami::DenseColumnMatrix<double, int>(ref.nrow(), ref.ncol(), std::vector<double>(ref.begin(), ref.end()));
+    auto labels2 = setup_labels(labels);
+    auto markers2 = setup_markers(markers);
 
     // Setting up the outputs.
+    size_t mNC = parsed_mat.ncol();
+    size_t nlabels = markers.size();
     Rcpp::IntegerVector output_best(mNC);
     Rcpp::NumericVector output_delta(mNC);
     Rcpp::NumericMatrix output_scores(mNC, nlabels);
@@ -66,8 +40,8 @@ Rcpp::List run_singlepp(
     runner.set_top(top).set_quantile(quantile).set_fine_tune(fine_tune).set_fine_tune_threshold(tune_thresh);
 
     runner.run(
-        &mat_ptr, 
-        &ref_ptr,
+        &parsed_mat, 
+        &parsed_ref,
         labels2.data(),
         markers2,
         static_cast<int*>(output_best.begin()),

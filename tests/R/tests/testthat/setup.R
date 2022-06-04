@@ -1,4 +1,4 @@
-mock.markers <- function(ngenes, nlabels) {
+mock.markers <- function(ngenes, nlabels, ntop=Inf) {
     markers <- vector("list", nlabels)
     for (m in seq_len(nlabels)) {
         current <- vector("list", nlabels)
@@ -7,6 +7,9 @@ mock.markers <- function(ngenes, nlabels) {
                 current[[n]] <- integer(0)
             } else {
                 current[[n]] <- sample(seq_len(ngenes))
+            }
+            if (is.finite(ntop)) {
+                current[[n]] <- head(current[[n]], ntop)
             }
         }
         markers[[m]] <- current
