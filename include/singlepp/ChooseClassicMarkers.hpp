@@ -156,8 +156,13 @@ public:
 #endif
             
             std::vector<std::pair<double, int> > sorter(ngenes), sorted_copy(ngenes);
-            std::vector<std::shared_ptr<tatami::Workspace> > rworks(nrefs), lworks(nrefs);
             std::vector<typename Matrix::data_type> rbuffer(ngenes), lbuffer(ngenes);
+
+            std::vector<std::shared_ptr<tatami::Workspace> > rworks(nrefs), lworks(nrefs);
+            for (size_t r = 0; r < nrefs; ++r) {
+                rworks[r] = representatives[r]->new_workspace(false);
+                lworks[r] = representatives[r]->new_workspace(false);
+            }
 
 #ifndef SINGLEPP_CUSTOM_PARALLEL
             #pragma omp for
