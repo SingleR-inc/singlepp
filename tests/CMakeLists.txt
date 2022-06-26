@@ -19,6 +19,7 @@ add_executable(
     src/fine_tune.cpp
     src/IntegratedBuilder.cpp
     src/IntegratedScorer.cpp
+    src/ChooseClassicMarkers.cpp
 )
 
 target_link_libraries(

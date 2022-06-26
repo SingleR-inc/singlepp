@@ -2,10 +2,10 @@
 #define SINGLEPP_CHOOSE_CLASSIC_MARKERS_HPP
 
 #include "Markers.hpp"
+#include "tatami/tatami.hpp"
 #include <vector>
 #include <cmath>
-#include <unordered_set>
-#include <algorithm>
+#include <set>
 
 /**
  * @file ChooseClassicMarkers.hpp
@@ -49,7 +49,7 @@ public:
      *
      * @return A reference to this `ChooseClassicMarkers` object.
      */
-    ChooseMarkers& set_number(int n = Defaults::number) {
+    ChooseClassicMarkers& set_number(int n = Defaults::number) {
         number = n;
         return *this;
     }
@@ -70,6 +70,7 @@ public:
 public:
     /**
      * @tparam Matrix A **tatami** matrix.
+     * @tparam Label Integer type for the label identity.
      *
      * @param references Vector of representative matrices.
      * Each matrix should contain one column per label; each column should have a representative log-expression profile for that label.
@@ -81,8 +82,8 @@ public:
      *
      * @return A `Markers` object containing the top markers for each pairwise comparison between labels.
      */
-    template<class Matrix>
-    Markers run(const std::vector<const Matrix*>& representatives, const std::vector<const int*>& labels) const {
+    template<class Matrix, typename Label>
+    Markers run(const std::vector<const Matrix*>& representatives, const std::vector<const Label*>& labels) const {
         size_t nrefs = representatives.size();
         if (nrefs != labels.size()) {
             throw std::runtime_error("'representatives' and 'labels' should have the same length");
@@ -90,7 +91,7 @@ public:
         if (nrefs == 0) {
             throw std::runtime_error("'representatives' should contain at least one entry");
         }
-        size_t ngenes = nrefs.front()->nrow();
+        size_t ngenes = representatives.front()->nrow();
 
         // Determining the total number of labels.
         int nlabels = 0;
@@ -122,13 +123,13 @@ public:
         // Generating pairs for compute; this sacrifices some memory for convenience.
         std::vector<std::pair<int, int> > pairs;
         {
-            std::unordered_set<std::pair<int, int> > pairs0;
+            std::set<std::pair<int, int> > pairs0;
             for (size_t r = 0; r < nrefs; ++r) {
                 size_t ncols = representatives[r]->ncol();
                 auto curlab = labels[r];
                 for (size_t c1 = 0; c1 < ncols; ++c1) {
                     for (size_t c2 = 0; c2 < c1; ++c2) {
-                        pairs0.emplace_back(curlab[c1], curlab[c2]);
+                        pairs0.emplace(curlab[c1], curlab[c2]);
                     }
                 }
             }
@@ -154,9 +155,9 @@ public:
         SINGLEPP_CUSTOM_PARALLEL(npairs, [&](size_t start, size_t end) -> void {
 #endif
             
-            std::vector<std::pair<double, int> > sorter(ngenes);
-            std::vector<std::shared_ptr<tatami::Workspace> > rworks(nref), lworks(nref);
-            std::vector<Matrix::value_type> rbuffer(ngenes), lbuffer(ngenes);
+            std::vector<std::pair<double, int> > sorter(ngenes), sorted_copy(ngenes);
+            std::vector<std::shared_ptr<tatami::Workspace> > rworks(nrefs), lworks(nrefs);
+            std::vector<typename Matrix::data_type> rbuffer(ngenes), lbuffer(ngenes);
 
 #ifndef SINGLEPP_CUSTOM_PARALLEL
             #pragma omp for
@@ -174,7 +175,7 @@ public:
                     sIt->second = g;
                 }
 
-                for (size_t i = 0; i < nref; ++i) {
+                for (size_t i = 0; i < nrefs; ++i) {
                     const auto& curavail = labels_to_index[i];
                     auto lcol = curavail[curleft];
                     auto rcol = curavail[curright];
@@ -182,25 +183,31 @@ public:
                         continue;                            
                     }
 
-                    auto lptr = refs[i]->column(lcol, lbuffer.data(), lworks[i].get());
-                    auto rptr = refs[i]->column(rcol, rbuffer.data(), rworks[i].get());
+                    auto lptr = representatives[i]->column(lcol, lbuffer.data(), lworks[i].get());
+                    auto rptr = representatives[i]->column(rcol, rbuffer.data(), rworks[i].get());
 
                     auto sIt = sorter.begin();
-                    for (int g = 0; g < ngenes; ++g, ++lptr, ++rptr) {
-                        sIt->second += *lptr - *rptr; 
+                    for (int g = 0; g < ngenes; ++g, ++lptr, ++rptr, ++sIt) {
+                        sIt->first += *lptr - *rptr; 
                     }
                 }
 
                 for (int flip = 0; flip < 2; ++flip) {
                     // Flipping the log-fold changes so we do the reverse. 
+                    // We do a copy so that the treatment of tries would be the same as if
+                    // we had sorted on the reversed log-fold changes in the first place;
+                    // otherwise the first sort might change the order of ties.
                     if (flip) {
+                        sorter = sorted_copy;
                         for (auto& s : sorter) {
                             s.first *= -1;
                         }
+                    } else {
+                        sorted_copy = sorter;
                     }
 
                     // partial sort is guaranteed to be stable due to the second index resolving ties.
-                    std::partial_sort(sorter.begin(), sorter.begin() + de_n, sorter.end());
+                    std::partial_sort(sorter.begin(), sorter.begin() + actual_number, sorter.end());
 
                     std::vector<int> stuff;
                     stuff.reserve(actual_number);
@@ -209,9 +216,9 @@ public:
                     }
 
                     if (flip) {
-                        store[curleft][curright] = std::move(stuff);
+                        output[curleft][curright] = std::move(stuff);
                     } else {
-                        store[curright][curleft] = std::move(stuff);
+                        output[curright][curleft] = std::move(stuff);
                     }
                 }
             }
