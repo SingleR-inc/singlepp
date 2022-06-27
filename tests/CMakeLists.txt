@@ -19,6 +19,7 @@ add_executable(
     src/fine_tune.cpp
     src/IntegratedBuilder.cpp
     src/IntegratedScorer.cpp
+    src/ChooseClassicMarkers.cpp
 )
 
 target_link_libraries(
@@ -60,6 +61,7 @@ add_executable(
     src/SinglePP.cpp
     src/IntegratedBuilder.cpp
     src/IntegratedScorer.cpp
+    src/ChooseClassicMarkers.cpp
 )
 
 set_target_properties(custom_parallel PROPERTIES COMPILE_DEFINITIONS "TEST_SINGLEPP_CUSTOM_PARALLEL")
