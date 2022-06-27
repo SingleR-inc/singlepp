@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['load_5freferences_2ehpp_0',['load_references.hpp',['../load__references_8hpp.html',1,'']]]
+  ['integratedbuilder_2ehpp_0',['IntegratedBuilder.hpp',['../IntegratedBuilder_8hpp.html',1,'']]],
+  ['integratedscorer_2ehpp_1',['IntegratedScorer.hpp',['../IntegratedScorer_8hpp.html',1,'']]]
 ];
