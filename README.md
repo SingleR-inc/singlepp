@@ -13,7 +13,7 @@ Each cell is treated independently so the entire process is trivially paralleliz
 Assuming the reference matrix, labels and markers are available, we can easily run the classification:
 
 ```cpp
-#include "singlepp/SinglePP.hpp"
+#include "singlepp/singlepp.hpp"
 
 // Prepare the reference matrix as a tatami::NumericMatrix.
 ref_mat;
@@ -25,7 +25,7 @@ ref_labels;
 ref_markers;
 
 // Running the classification on a test matrix.
-singlepp::SinglePP runner;
+singlepp::Classifier runner;
 auto res = runner.run(test_mat.get(), ref_mat.get(), ref_labels.data(), ref_markers);
 ```
 

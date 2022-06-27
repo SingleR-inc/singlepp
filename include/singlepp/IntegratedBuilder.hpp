@@ -1,7 +1,7 @@
 #ifndef SINGLEPP_INTEGRATOR_HPP
 #define SINGLEPP_INTEGRATOR_HPP
 
-#include "SinglePP.hpp"
+#include "Classifier.hpp"
 #include "scaled_ranks.hpp"
 
 #include <vector>
@@ -54,7 +54,7 @@ struct IntegratedReference {
 /**
  * @brief Factory to prepare multiple references for integrated classification.
  *
- * For each reference dataset, we expect a `SinglePP::Prebuilt` or `SinglePP::PrebuiltIntersection` object,
+ * For each reference dataset, we expect a `Classifier::Prebuilt` or `Classifier::PrebuiltIntersection` object,
  * as well as the original data structures (matrix, labels, etc.) used to construct that object.
  * These values are passed into `add()` to register that dataset, which can be repeated multiple times for different references.
  * Finally, calling `finish()` will return a vector of `IntegratedReference` objects that can be used in `IntegratedScorer`.
@@ -223,13 +223,13 @@ public:
      * The number and identity of features should be identical to the test dataset to be classified in `IntegratedScorer`.
      * @param[in] labels Pointer to an array of label assignments.
      * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
-     * @param built The built reference created by running `SinglePP::build()` on `ref` and `labels`.
+     * @param built The built reference created by running `Classifier::build()` on `ref` and `labels`.
      *
      * @return The reference dataset is registered for later use in `finish()`.
      *
      * `ref` and `labels` are expected to remain valid until `finish()` is called.
      */
-    void add(const tatami::Matrix<double, int>* ref, const int* labels, const SinglePP::Prebuilt& built) {
+    void add(const tatami::Matrix<double, int>* ref, const int* labels, const Classifier::Prebuilt& built) {
         add_internal(ref, labels, built.markers, built.subset);
         return;
     }
@@ -246,7 +246,7 @@ public:
      * This should contain a unique identifier for each row in `ref`, and should be comparable to `mat_id`.
      * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
      * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
-     * @param built The built reference created by running `SinglePP::build()` on all preceding arguments.
+     * @param built The built reference created by running `Classifier::build()` on all preceding arguments.
      *
      * @return The reference dataset is registered for later use in `finish()`.
      *
@@ -259,7 +259,7 @@ public:
         const tatami::Matrix<double, int>* ref, 
         const Id* ref_id,
         const int* labels, 
-        const SinglePP::PrebuiltIntersection& built) 
+        const Classifier::PrebuiltIntersection& built) 
     {
         add_internal(ref, labels, built.markers, built.mat_subset);
         references.back().check_availability = true;
@@ -285,7 +285,7 @@ public:
      * This should contain a unique identifier for each row in `ref`, and should be comparable to `mat_id`.
      * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
      * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
-     * @param built The built reference created by running `SinglePP::build()` on `ref` and `labels`.
+     * @param built The built reference created by running `Classifier::build()` on `ref` and `labels`.
      *
      * @return The reference dataset is registered for later use in `finish()`.
      *
@@ -298,7 +298,7 @@ public:
         const tatami::Matrix<double, int>* ref, 
         const Id* ref_id,
         const int* labels, 
-        const SinglePP::Prebuilt& built) 
+        const Classifier::Prebuilt& built) 
     {
         add_internal(mat_nrow, mat_id, ref, ref_id, labels, built.markers, built.subset);
     }

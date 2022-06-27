@@ -2,7 +2,7 @@
 #define UTILS_H
 
 #include "Rcpp.h"
-#include "singlepp/SinglePP.hpp"
+#include "singlepp/singlepp.hpp"
 #include <vector>
 
 std::vector<int> setup_labels(Rcpp::IntegerVector);

@@ -12,7 +12,7 @@ enable_testing()
 
 add_executable(
     libtest 
-    src/SinglePP.cpp
+    src/Classifier.cpp
     src/scaled_ranks.cpp
     src/compute_scores.cpp
     src/process_features.cpp
@@ -58,7 +58,7 @@ target_link_libraries(loadtest ZLIB::ZLIB)
 # Check that the custom parallelization schemes are properly set up.
 add_executable(
     custom_parallel
-    src/SinglePP.cpp
+    src/Classifier.cpp
     src/IntegratedBuilder.cpp
     src/IntegratedScorer.cpp
     src/ChooseClassicMarkers.cpp

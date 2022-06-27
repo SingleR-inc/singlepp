@@ -1,5 +1,5 @@
 #include "Rcpp.h"
-#include "singlepp/SinglePP.hpp"
+#include "singlepp/singlepp.hpp"
 #include "utils.h"
 #include <algorithm>
 
@@ -36,7 +36,7 @@ Rcpp::List run_singlepp(
     }
 
     // Running everything.
-    singlepp::SinglePP runner;
+    singlepp::Classifier runner;
     runner.set_top(top).set_quantile(quantile).set_fine_tune(fine_tune).set_fine_tune_threshold(tune_thresh);
 
     runner.run(

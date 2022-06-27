@@ -64,7 +64,7 @@ TEST_P(IntegratedBuilderTest, SimpleCombine) {
     int ntop = GetParam();
     simulate_references();
 
-    singlepp::SinglePP runner;
+    singlepp::Classifier runner;
     runner.set_top(ntop);
     singlepp::IntegratedBuilder inter;
 
@@ -143,7 +143,7 @@ TEST_P(IntegratedBuilderTest, SimpleCombineNaked) {
     int ntop = GetParam();
     simulate_references();
 
-    singlepp::SinglePP runner;
+    singlepp::Classifier runner;
     runner.set_top(ntop);
     singlepp::IntegratedBuilder alpha, bravo;
 
@@ -189,7 +189,7 @@ TEST_P(IntegratedBuilderTest, IntersectedCombine) {
         kept.push_back(simulate_ref_ids(seed));
     }
 
-    singlepp::SinglePP runner;
+    singlepp::Classifier runner;
     runner.set_top(ntop);
     singlepp::IntegratedBuilder inter;
 
@@ -273,11 +273,11 @@ TEST_P(IntegratedBuilderTest, IntersectedCombineAgain) {
 
     // Generating the prebuilts. Note that we can't just use build() to generate the Prebuilt,
     // as this will not choose markers among the intersection of features.
-    singlepp::SinglePP runner;
+    singlepp::Classifier runner;
     runner.set_top(ntop);
 
     auto interpre = runner.build(ngenes, ids.data(), mat.get(), keep.data(), lab.data(), mrk);
-    singlepp::SinglePP::Prebuilt pre(interpre.markers, interpre.ref_subset, interpre.references);
+    singlepp::Classifier::Prebuilt pre(interpre.markers, interpre.ref_subset, interpre.references);
 
     // Applying the addition operation.
     singlepp::IntegratedBuilder inter;
@@ -325,7 +325,7 @@ TEST_P(IntegratedBuilderTest, IntersectedCombineNaked) {
     auto lab = spawn_labels(nsamples, nlabels, seed * 2);
     auto mrk = mock_markers(nlabels, 50, keep.size(), seed * 3);
 
-    singlepp::SinglePP runner;
+    singlepp::Classifier runner;
     runner.set_top(ntop);
     auto pre = runner.build(mat.get(), lab.data(), mrk);
 

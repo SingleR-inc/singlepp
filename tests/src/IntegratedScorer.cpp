@@ -42,7 +42,7 @@ std::unordered_set<int> create_universe(size_t cell, const std::vector<Prebuilt>
         const auto& best_markers = pre.markers[chosen[r][cell]];
         for (const auto& x : best_markers) {
             for (auto y : x) {
-                if constexpr(std::is_same<Prebuilt, singlepp::SinglePP::Prebuilt>::value) {
+                if constexpr(std::is_same<Prebuilt, singlepp::Classifier::Prebuilt>::value) {
                     tmp.insert(pre.subset[y]);
                 } else {
                     tmp.insert(pre.mat_subset[y]);
@@ -66,13 +66,13 @@ TEST_P(IntegratedScorerTest, Basic) {
     int ntop = std::get<0>(param);
     double quantile = std::get<1>(param);
 
-    singlepp::SinglePP runner;
+    singlepp::Classifier runner;
     runner.set_top(ntop);
     singlepp::IntegratedBuilder builder;
 
     std::vector<std::shared_ptr<tatami::Matrix<double, int> > > matrices;
     std::vector<std::vector<int> > labels;
-    std::vector<singlepp::SinglePP::Prebuilt> prebuilts;
+    std::vector<singlepp::Classifier::Prebuilt> prebuilts;
 
     for (size_t r = 0; r < nrefs; ++r) {
         size_t seed = r * 321;
@@ -141,7 +141,7 @@ TEST_P(IntegratedScorerTest, Intersected) {
 
     std::vector<std::shared_ptr<tatami::Matrix<double, int> > > matrices;
     std::vector<std::vector<int> > labels;
-    std::vector<singlepp::SinglePP::PrebuiltIntersection> prebuilts;
+    std::vector<singlepp::Classifier::PrebuiltIntersection> prebuilts;
 
     std::vector<int> ids(ngenes);
     for (size_t g = 0; g < ngenes; ++g) {
@@ -149,7 +149,7 @@ TEST_P(IntegratedScorerTest, Intersected) {
     }
     std::vector<std::vector<int> > kept(nrefs);
 
-    singlepp::SinglePP runner;
+    singlepp::Classifier runner;
     runner.set_top(ntop);
     singlepp::IntegratedBuilder builder;
 

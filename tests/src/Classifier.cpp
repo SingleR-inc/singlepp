@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "custom_parallel.h"
 
-#include "singlepp/SinglePP.hpp"
+#include "singlepp/Classifier.hpp"
 #include "tatami/tatami.hpp"
 
 #include "mock_markers.h"
@@ -12,9 +12,9 @@
 #include <vector>
 #include <random>
 
-class SinglePPSimpleTest : public ::testing::TestWithParam<std::tuple<int, double> > {};
+class ClassifierSimpleTest : public ::testing::TestWithParam<std::tuple<int, double> > {};
 
-TEST_P(SinglePPSimpleTest, Simple) {
+TEST_P(ClassifierSimpleTest, Simple) {
     auto param = GetParam();
     int top = std::get<0>(param);
     double quantile = std::get<1>(param);
@@ -31,7 +31,7 @@ TEST_P(SinglePPSimpleTest, Simple) {
     auto markers = mock_markers(nlabels, 50, ngenes); 
 
     // Running the implementation.
-    singlepp::SinglePP runner;
+    singlepp::Classifier runner;
     runner.set_fine_tune(false).set_top(top).set_quantile(quantile);
     auto output = runner.run(mat.get(), refs.get(), labels.data(), markers);
 
@@ -50,7 +50,7 @@ TEST_P(SinglePPSimpleTest, Simple) {
     }
 }
 
-TEST_P(SinglePPSimpleTest, AlreadySubset) {
+TEST_P(ClassifierSimpleTest, AlreadySubset) {
     auto param = GetParam();
     int top = std::get<0>(param);
     double quantile = std::get<1>(param);
@@ -67,7 +67,7 @@ TEST_P(SinglePPSimpleTest, AlreadySubset) {
     auto markers = mock_markers(nlabels, 50, ngenes); 
 
     // Running the default.
-    singlepp::SinglePP runner;
+    singlepp::Classifier runner;
     runner.set_fine_tune(false).set_top(top).set_quantile(quantile);
     auto output = runner.run(mat.get(), refs.get(), labels.data(), markers);
 
@@ -97,17 +97,17 @@ TEST_P(SinglePPSimpleTest, AlreadySubset) {
 }
 
 INSTANTIATE_TEST_CASE_P(
-    SinglePP,
-    SinglePPSimpleTest,
+    Classifier,
+    ClassifierSimpleTest,
     ::testing::Combine(
         ::testing::Values(5, 10, 20), // number of top genes.
         ::testing::Values(1, 0.93, 0.8, 0.66) // quantile
     )
 );
 
-class SinglePPIntersectTest : public ::testing::TestWithParam<std::tuple<int, double, double> > {};
+class ClassifierIntersectTest : public ::testing::TestWithParam<std::tuple<int, double, double> > {};
 
-TEST_P(SinglePPIntersectTest, Intersect) {
+TEST_P(ClassifierIntersectTest, Intersect) {
     auto param = GetParam();
     int top = std::get<0>(param);
     double quantile = std::get<1>(param);
@@ -138,7 +138,7 @@ TEST_P(SinglePPIntersectTest, Intersect) {
     auto markers = mock_markers(nlabels, 50, right.size()); 
 
     // Computing the observed result.
-    singlepp::SinglePP runner;
+    singlepp::Classifier runner;
     runner.set_fine_tune(false).set_top(top).set_quantile(quantile);
     auto result = runner.run(mat.get(), left.data(), refs.get(), right.data(), labels.data(), markers);
 
@@ -186,8 +186,8 @@ TEST_P(SinglePPIntersectTest, Intersect) {
 }
 
 INSTANTIATE_TEST_CASE_P(
-    SinglePP,
-    SinglePPIntersectTest,
+    Classifier,
+    ClassifierIntersectTest,
     ::testing::Combine(
         ::testing::Values(5, 10, 20), // nuber of top genes.
         ::testing::Values(1, 0.8, 0.66), // quantile
@@ -195,7 +195,7 @@ INSTANTIATE_TEST_CASE_P(
     )
 );
 
-TEST(SinglePPTest, Simple) {
+TEST(ClassifierTest, Simple) {
     // Mocking up the references.
     size_t ngenes = 200;
  
@@ -209,7 +209,7 @@ TEST(SinglePPTest, Simple) {
     // Checking that we get an exact match when we use the references
     // directly for annotation. We set quantile = 1 so that a perfect
     // correlation to any reference profile guarantees a match.
-    singlepp::SinglePP runner;
+    singlepp::Classifier runner;
     runner.set_quantile(1);
 
     auto output = runner.run(refs.get(), refs.get(), labels.data(), markers);
@@ -219,7 +219,7 @@ TEST(SinglePPTest, Simple) {
     }
 }
 
-TEST(SinglePPTest, NoShared) {
+TEST(ClassifierTest, NoShared) {
     size_t ngenes = 100;
     size_t nlabels = 3;
     size_t nrefs = 50;
@@ -233,7 +233,7 @@ TEST(SinglePPTest, NoShared) {
     std::iota(left.begin(), left.end(), 0);
     std::iota(right.begin(), right.end(), ngenes);
 
-    singlepp::SinglePP runner;
+    singlepp::Classifier runner;
     auto built = runner.build(ngenes, left.data(), refs.get(), right.data(), labels.data(), markers);
     EXPECT_EQ(built.mat_subset.size(), 0);
     EXPECT_EQ(built.ref_subset.size(), 0);
@@ -248,7 +248,7 @@ TEST(SinglePPTest, NoShared) {
     EXPECT_EQ(output.delta, std::vector<double>(mat->ncol())); // all-zeros, no differences between first and second.
 }
 
-TEST(SinglePPTest, Nulls) {
+TEST(ClassifierTest, Nulls) {
     // Mocking up the test and references.
     size_t ngenes = 200;
     auto mat = spawn_matrix(ngenes, 5, 42);
@@ -261,7 +261,7 @@ TEST(SinglePPTest, Nulls) {
     auto markers = mock_markers(nlabels, 50, ngenes); 
 
     // Checking that nulls are respected.
-    singlepp::SinglePP runner;
+    singlepp::Classifier runner;
 
     std::vector<int> best(nrefs);
     std::vector<double*> nulls(nlabels, NULL);

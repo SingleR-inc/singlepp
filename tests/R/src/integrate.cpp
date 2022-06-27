@@ -1,6 +1,5 @@
 #include "Rcpp.h"
-#include "singlepp/IntegratedBuilder.hpp"
-#include "singlepp/IntegratedScorer.hpp"
+#include "singlepp/singlepp.hpp"
 #include "utils.h"
 #include <algorithm>
 #include <vector>
