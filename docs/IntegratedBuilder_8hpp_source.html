@@ -74,7 +74,7 @@ $(function() {
 <a href="IntegratedBuilder_8hpp.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef SINGLEPP_INTEGRATOR_HPP</span></div>
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define SINGLEPP_INTEGRATOR_HPP</span></div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
-<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;<a class="code" href="SinglePP_8hpp.html">SinglePP.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;<a class="code" href="Classifier_8hpp.html">Classifier.hpp</a>&quot;</span></div>
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &quot;scaled_ranks.hpp&quot;</span></div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;vector&gt;</span></div>
@@ -226,7 +226,7 @@ $(function() {
 <div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>    }</div>
 <div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span> </div>
 <div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>    <span class="keywordtype">void</span> add(<span class="keyword">const</span> tatami::Matrix&lt;double, int&gt;* ref, <span class="keyword">const</span> <span class="keywordtype">int</span>* labels, <span class="keyword">const</span> SinglePP::Prebuilt&amp; built) {</div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>    <span class="keywordtype">void</span> add(<span class="keyword">const</span> tatami::Matrix&lt;double, int&gt;* ref, <span class="keyword">const</span> <span class="keywordtype">int</span>* labels, <span class="keyword">const</span> Classifier::Prebuilt&amp; built) {</div>
 <div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>        add_internal(ref, labels, built.markers, built.subset);</div>
 <div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>        <span class="keywordflow">return</span>;</div>
 <div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>    }</div>
@@ -237,7 +237,7 @@ $(function() {
 <div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>        <span class="keyword">const</span> tatami::Matrix&lt;double, int&gt;* ref, </div>
 <div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>        <span class="keyword">const</span> Id* ref_id,</div>
 <div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>        <span class="keyword">const</span> <span class="keywordtype">int</span>* labels, </div>
-<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>        <span class="keyword">const</span> SinglePP::PrebuiltIntersection&amp; built) </div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>        <span class="keyword">const</span> Classifier::PrebuiltIntersection&amp; built) </div>
 <div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>    {</div>
 <div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>        add_internal(ref, labels, built.markers, built.mat_subset);</div>
 <div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>        references.back().check_availability = <span class="keyword">true</span>;</div>
@@ -257,7 +257,7 @@ $(function() {
 <div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>        <span class="keyword">const</span> tatami::Matrix&lt;double, int&gt;* ref, </div>
 <div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>        <span class="keyword">const</span> Id* ref_id,</div>
 <div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>        <span class="keyword">const</span> <span class="keywordtype">int</span>* labels, </div>
-<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>        <span class="keyword">const</span> SinglePP::Prebuilt&amp; built) </div>
+<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>        <span class="keyword">const</span> Classifier::Prebuilt&amp; built) </div>
 <div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span>    {</div>
 <div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>        add_internal(mat_nrow, mat_id, ref, ref_id, labels, built.markers, built.subset);</div>
 <div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>    }</div>
@@ -416,7 +416,7 @@ $(function() {
 <div class="line"><a id="l00463" name="l00463"></a><span class="lineno">  463</span>}</div>
 <div class="line"><a id="l00464" name="l00464"></a><span class="lineno">  464</span> </div>
 <div class="line"><a id="l00465" name="l00465"></a><span class="lineno">  465</span><span class="preprocessor">#endif</span></div>
-<div class="ttc" id="aSinglePP_8hpp_html"><div class="ttname"><a href="SinglePP_8hpp.html">SinglePP.hpp</a></div><div class="ttdoc">Defines the SinglePP class.</div></div>
+<div class="ttc" id="aClassifier_8hpp_html"><div class="ttname"><a href="Classifier_8hpp.html">Classifier.hpp</a></div><div class="ttdoc">Defines the Classifier class.</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

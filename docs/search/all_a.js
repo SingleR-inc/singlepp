@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['quantile_0',['quantile',['../structsinglepp_1_1SinglePP_1_1Defaults.html#aa838e3f883556a0f051c9cd82a02a54a',1,'singlepp::SinglePP::Defaults']]]
+  ['quantile_0',['quantile',['../structsinglepp_1_1Classifier_1_1Defaults.html#aa2b02289250da4ff08f1106a23850e14',1,'singlepp::Classifier::Defaults']]]
 ];

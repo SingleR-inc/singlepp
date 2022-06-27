@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['scores_0',['scores',['../structsinglepp_1_1SinglePP_1_1Results.html#ac95fe23be4d1096b26c70fc49961ffb2',1,'singlepp::SinglePP::Results']]],
-  ['subset_1',['subset',['../structsinglepp_1_1SinglePP_1_1Prebuilt.html#a43455ed90d887169658eec98e21c91e2',1,'singlepp::SinglePP::Prebuilt']]]
+  ['scores_0',['scores',['../structsinglepp_1_1Classifier_1_1Results.html#a3940ff9ee07347b67764b5ff9058d5f6',1,'singlepp::Classifier::Results']]],
+  ['subset_1',['subset',['../structsinglepp_1_1Classifier_1_1Prebuilt.html#a2eef3e1e6eee34870f1cdd56df4f1e1b',1,'singlepp::Classifier::Prebuilt']]]
 ];

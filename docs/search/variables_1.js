@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['best_0',['best',['../structsinglepp_1_1SinglePP_1_1Results.html#adcfecad00e22152fd96b4845ace74934',1,'singlepp::SinglePP::Results']]]
+  ['best_0',['best',['../structsinglepp_1_1Classifier_1_1Results.html#ab745117d9d64129e1f07f564c556764a',1,'singlepp::Classifier::Results']]]
 ];

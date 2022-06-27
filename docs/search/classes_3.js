@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['singlepp_0',['SinglePP',['../classsinglepp_1_1SinglePP.html',1,'singlepp']]]
+  ['results_0',['Results',['../structsinglepp_1_1Classifier_1_1Results.html',1,'singlepp::Classifier']]]
 ];
