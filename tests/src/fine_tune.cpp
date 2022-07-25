@@ -77,7 +77,8 @@ TEST(FineTuneTest, Basic) {
     auto references = singlepp::build_indices(refs.get(), labels.data(), subset,
         [](size_t nr, size_t nc, const double* ptr) { 
             return std::shared_ptr<knncolle::Base<int, double> >(new knncolle::KmknnEuclidean<int, double>(nr, nc, ptr)); 
-        }
+        },
+        1
     );
 
     // Running the fine-tuning edge cases.
@@ -158,7 +159,8 @@ TEST(FineTuneTest, Comparison) {
     auto references = singlepp::build_indices(refs.get(), labels.data(), subset,
         [](size_t nr, size_t nc, const double* ptr) { 
             return std::shared_ptr<knncolle::Base<int, double> >(new knncolle::KmknnEuclidean<int, double>(nr, nc, ptr)); 
-        }
+        },
+        1
     );
 
     for (size_t c = 0; c < mat->ncol(); ++c) {
@@ -205,7 +207,8 @@ TEST(FineTuneTest, Diagonal) {
     auto references = singlepp::build_indices(refs.get(), labels.data(), subset,
         [](size_t nr, size_t nc, const double* ptr) { 
             return std::shared_ptr<knncolle::Base<int, double> >(new knncolle::KmknnEuclidean<int, double>(nr, nc, ptr)); 
-        }
+        },
+        1
     );
 
     // Running the fine-tuner, making sure we pick up the reference label.

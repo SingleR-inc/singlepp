@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "custom_parallel.h"
 
+#include "singlepp/IntegratedBuilder.hpp"
 #include "singlepp/IntegratedScorer.hpp"
 #include "spawn_matrix.h"
 #include "mock_markers.h"
@@ -98,9 +99,8 @@ TEST_P(IntegratedScorerTest, Basic) {
     }
 
     // Comparing the IntegratedScorer output to a reference calculation.
-    singlepp::IntegratedScorer scorer;
-    scorer.set_quantile(quantile);
-    auto output = scorer.run(test.get(), chosen_ptrs, integrated);
+    integrated.set_quantile(quantile);
+    auto output = integrated.run(test.get(), chosen_ptrs);
     auto by_labels = split_by_labels(labels);
 
     for (size_t t = 0; t < ntest; ++t) {
@@ -188,9 +188,8 @@ TEST_P(IntegratedScorerTest, Intersected) {
     }
 
     // Comparing the IntegratedScorer to a reference calculation.
-    singlepp::IntegratedScorer scorer;
-    scorer.set_quantile(quantile);
-    auto output = scorer.run(test.get(), chosen_ptrs, integrated);
+    integrated.set_quantile(quantile);
+    auto output = integrated.run(test.get(), chosen_ptrs);
     auto by_labels = split_by_labels(labels);
 
     std::vector<std::unordered_map<int, int> > reverser(nrefs);

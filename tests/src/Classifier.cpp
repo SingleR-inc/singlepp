@@ -82,7 +82,7 @@ TEST_P(ClassifierSimpleTest, AlreadySubset) {
 
     std::vector<int> index(copy.size());
     std::iota(index.rbegin(), index.rend(), 0);
-    auto output2 = runner.run(sub.get(), built, index.data());
+    auto output2 = built.run(sub.get(), index.data());
 
     // Should get the same result.
     EXPECT_EQ(output.best, output2.best);
@@ -144,7 +144,7 @@ TEST_P(ClassifierIntersectTest, Intersect) {
 
     // Computing the result via the build method.
     auto build0 = runner.build(mat->nrow(), left.data(), refs.get(), right.data(), labels.data(), markers);
-    auto result0 = runner.run(mat.get(), build0);
+    auto result0 = build0.run(mat.get());
     EXPECT_EQ(result0.best, result.best);
     EXPECT_EQ(result0.delta, result.delta);
     EXPECT_EQ(build0.num_labels(), nlabels);
@@ -238,7 +238,7 @@ TEST(ClassifierTest, NoShared) {
     EXPECT_EQ(built.mat_subset.size(), 0);
     EXPECT_EQ(built.ref_subset.size(), 0);
 
-    auto output = runner.run(mat.get(), built);
+    auto output = built.run(mat.get());
     for (const auto& curscore : output.scores) {
         for (auto s : curscore) {
             EXPECT_EQ(s, 1); // distance of zero when there are no genes ==> correlation of 1.

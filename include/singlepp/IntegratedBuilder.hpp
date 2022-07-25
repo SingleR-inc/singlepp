@@ -1,8 +1,9 @@
-#ifndef SINGLEPP_INTEGRATOR_HPP
-#define SINGLEPP_INTEGRATOR_HPP
+#ifndef SINGLEPP_INTEGRATED_BUILDER_HPP
+#define SINGLEPP_INTEGRATED_BUILDER_HPP
 
-#include "Classifier.hpp"
 #include "scaled_ranks.hpp"
+#include "Classifier.hpp"
+#include "IntegratedScorer.hpp"
 
 #include <vector>
 #include <unordered_set>
@@ -18,52 +19,19 @@
 namespace singlepp {
 
 /**
- * @brief Reference dataset prepared for integrated classification.
- */
-struct IntegratedReference {
-    /**
-     * @return Number of labels in this reference.
-     */
-    size_t num_labels() const {
-        return markers.size();
-    }
-
-    /**
-     * @return Number of profiles in this reference.
-     */
-    size_t num_profiles() const {
-        size_t n = 0;
-        for (const auto& ref : ranked) {
-            n += ref.size();
-        }
-        return n;
-    }
-
-    /**
-     * @cond
-     */
-    bool check_availability = false;
-    std::unordered_set<int> available;
-    std::vector<std::vector<int> > markers;
-    std::vector<std::vector<RankedVector<int, int> > > ranked;
-    /**
-     * @endcond
-     */
-};
-
-/**
  * @brief Factory to prepare multiple references for integrated classification.
  *
  * For each reference dataset, we expect a `Classifier::Prebuilt` or `Classifier::PrebuiltIntersection` object,
  * as well as the original data structures (matrix, labels, etc.) used to construct that object.
  * These values are passed into `add()` to register that dataset, which can be repeated multiple times for different references.
- * Finally, calling `finish()` will return a vector of `IntegratedReference` objects that can be used in `IntegratedScorer`.
+ * Finally, calling `finish()` will return an `IntegratedScorer` object that can be applied to a target matrix for classification.
  * 
  * The preparation process mostly involves checking that the gene indices are consistent across references.
  * This is especially true when each reference contains a different set of features that must be intersected with the features in the test dataset.
  * See the documentation for `IntegratedScorer` for more details about what the integration process entails.
  */
 class IntegratedBuilder {
+private:
     std::vector<const tatami::Matrix<double, int>*> stored_matrices;
     std::vector<const int*> stored_labels;
     std::vector<IntegratedReference> references;
@@ -305,12 +273,15 @@ public:
 
 public:
     /**
-     * @return A vector of integrated references, for use in `IntegratedScorer::run()`.
+     * @return An `IntegratedScorer` instance. 
      *
      * This function should only be called once, after all reference datasets have been registered with `add()`.
      * Any further invocations of this function will not be valid.
      */
-    std::vector<IntegratedReference> finish() {
+    IntegratedScorer finish() {
+        /**
+         * @cond
+         */
         // Identify the global set of all genes that will be in use here.
         std::unordered_set<int> in_use_tmp;
         for (const auto& ref : references) {
@@ -455,8 +426,11 @@ public:
 #endif
             }
         }
+        /**
+         * @endcond
+         */
 
-        return std::move(references);
+        return IntegratedScorer(std::move(references));
     }
 };
 

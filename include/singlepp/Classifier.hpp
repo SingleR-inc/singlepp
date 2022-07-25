@@ -82,11 +82,15 @@ public:
     };
 
 private:
-    double quantile = Defaults::quantile;
-    double fine_tune_threshold = Defaults::fine_tune_threshold;
-    bool fine_tune = Defaults::fine_tune;
+    struct ClassifyParameters {
+        double quantile = Defaults::quantile;
+        double fine_tune_threshold = Defaults::fine_tune_threshold;
+        bool fine_tune = Defaults::fine_tune;
+    };
+
     int top = Defaults::top;
     bool approximate = Defaults::approximate;
+    ClassifyParameters cparams;
 
 public:
     /**
@@ -99,7 +103,7 @@ public:
      * which can be useful when the reference profiles themselves are heterogeneous.
      */
     Classifier& set_quantile(double q = Defaults::quantile) {
-        quantile = q;
+        cparams.quantile = q;
         return *this;
     }
 
@@ -113,7 +117,7 @@ public:
      * Otherwise, the first fine-tuning iteration would just contain all labels and there would be no reduction of the marker space.
      */
     Classifier& set_fine_tune_threshold(double t = Defaults::fine_tune_threshold) {
-        fine_tune_threshold = t;
+        cparams.fine_tune_threshold = t;
         return *this;
     }
 
@@ -124,7 +128,7 @@ public:
      * @return A reference to this `Classifier` object.
      */
     Classifier& set_fine_tune(bool f = Defaults::fine_tune) {
-        fine_tune = f;
+        cparams.fine_tune = f;
         return *this;
     }
 
@@ -174,159 +178,6 @@ private:
 
 public:
     /**
-     * @brief Prebuilt reference that can be directly used for annotation.
-     */
-    struct Prebuilt {
-        /**
-         * @cond
-         */
-        Prebuilt(Markers m, std::vector<int> s, std::vector<Reference> r) : 
-            markers(std::move(m)), subset(std::move(s)), references(std::move(r)) {}
-        /**
-         * @endcond
-         */
-
-        /**
-         * A vector of vectors of ranked marker genes to be used in the classification.
-         * Values are indices into the `subset` vector.
-         * The set of marker genes is typically a subset of those in the input `markers` in `build()`.
-         */
-        Markers markers;
-
-        /**
-         * The subset of features in the test/reference datasets that were used in the classification.
-         * Values are row indices into the relevant matrices.
-         */
-        std::vector<int> subset;
-
-        /**
-         * @return Number of labels in this reference.
-         */
-        size_t num_labels() const {
-            return references.size();
-        }
-
-        /**
-         * @return Number of profiles in this reference.
-         */
-        size_t num_profiles() const {
-            size_t n = 0;
-            for (const auto& ref : references) {
-                n += ref.ranked.size();
-            }
-            return n;
-        }
-
-        /**
-         * @cond
-         */
-        std::vector<Reference> references;
-        /**
-         * @endcond
-         */
-    };
-
-    /**
-     * @param ref Matrix for the reference expression profiles.
-     * Rows are genes while columns are samples.
-     * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
-     * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
-     * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
-     *
-     * @return A `Prebuilt` instance that can be used in `run()` for annotation of a test dataset.
-     */
-    Prebuilt build(const tatami::Matrix<double, int>* ref, const int* labels, Markers markers) {
-        auto subset = subset_markers(markers, top);
-        auto subref = build_internal(ref, labels, subset);
-        return Prebuilt(std::move(markers), std::move(subset), std::move(subref));
-    }
-
-public:
-    /**
-     * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
-     * This may have a different ordering of genes compared to the reference matrix used to create `built`,
-     * provided that all genes corresponding to `built.subset` are present.
-     * @param built An object produced by `build()`.
-     * @param[in] mat_subset Pointer to an array of length equal to that of `built.subset`,
-     * containing the index of the row of `mat` corresponding to each gene in `built.subset`.
-     * That is, row `mat_subset[i]` in `mat` should be the same gene as row `built.subset[i]` in the reference matrix.
-     * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
-     * This is filled with the index of the assigned label for each cell.
-     * @param[out] scores Vector of pointers to arrays of length equal to the number of columns in `mat`.
-     * This is filled with the (non-fine-tuned) score for each label for each cell.
-     * Any pointer may be `NULL` in which case the scores for that label will not be saved.
-     * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
-     * This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
-     * This may also be `NULL` in which case the deltas are not reported.
-     * @param already_subset Whether the rows of `mat` have already been subsetted to match `built.subset`.
-     *
-     * @return `best`, `scores` and `delta` are filled with their output values.
-     */
-    void run(const tatami::Matrix<double, int>* mat, const Prebuilt& built, const int* mat_subset, int* best, std::vector<double*>& scores, double* delta) {
-        annotate_cells_simple(
-            mat, 
-            built.subset.size(), 
-            mat_subset, 
-            built.references, 
-            built.markers, 
-            quantile, 
-            fine_tune, 
-            fine_tune_threshold, 
-            best, 
-            scores, 
-            delta
-        );
-        return;
-    }
-
-    /**
-     * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
-     * This should have the same order and identity of genes as the reference matrix used to create `built`.
-     * @param built An object produced by `build()`.
-     * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
-     * This is filled with the index of the assigned label for each cell.
-     * @param[out] scores Vector of pointers to arrays of length equal to the number of columns in `mat`.
-     * This is filled with the (non-fine-tuned) score for each label for each cell.
-     * Any pointer may be `NULL` in which case the scores for that label will not be saved.
-     * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
-     * This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
-     * This may also be `NULL` in which case the deltas are not reported.
-     * @param already_subset Whether the rows of `mat` have already been subsetted to match `built.subset`.
-     *
-     * @return `best`, `scores` and `delta` are filled with their output values.
-     */
-    void run(const tatami::Matrix<double, int>* mat, const Prebuilt& built, int* best, std::vector<double*>& scores, double* delta) {
-        run(mat, built, built.subset.data(), best, scores, delta);
-        return;
-    }
-
-    /**
-     * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
-     * @param ref An expression matrix for the reference expression profiles.
-     * This should have non-zero columns and the same number of rows (i.e., genes) at `mat`.
-     * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
-     * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
-     * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
-     * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
-     * This is filled with the index of the assigned label for each cell.
-     * @param[out] scores Vector of pointers of length equal to the number of labels.
-     * Each pointer should point to an array of length equal to the number of columns in `mat`.
-     * This is filled with the (non-fine-tuned) score for that label for each cell.
-     * Any pointer may be `NULL` in which case the scores for that label will not be saved.
-     * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
-     * This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
-     * This may also be `NULL` in which case the deltas are not reported.
-     *
-     * @return `best`, `scores` and `delta` are filled with their output values.
-     */
-    void run(const tatami::Matrix<double, int>* mat, const tatami::Matrix<double, int>* ref, const int* labels, Markers markers, int* best, std::vector<double*>& scores, double* delta) {
-        auto prebuilt = build(ref, labels, std::move(markers));
-        run(mat, prebuilt, best, scores, delta);
-        return;
-    }
-
-public:
-    /**
      * @brief Results of the automated annotation.
      */
     struct Results {
@@ -367,38 +218,190 @@ public:
         std::vector<double> delta;
     };
 
+public:
     /**
-     * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
-     * If `already_subset = false`, this should have the same identity of genes as the reference matrices used in `build()`;
-     * otherwise, each row should correspond to an element of `built.subset`.
-     * @param built An object produced by `build()`.
-     *
-     * @return A `Results` object containing the assigned labels and scores.
+     * @brief Prebuilt reference that can be directly used for annotation.
      */
-    Results run(const tatami::Matrix<double, int>* mat, const Prebuilt& built) {
-        size_t nlabels = built.references.size();
-        Results output(mat->ncol(), nlabels);
-        auto scores = output.scores_to_pointers();
-        run(mat, built, output.best.data(), scores, output.delta.data());
-        return output;
+    struct Prebuilt {
+        /**
+         * @cond
+         */
+        Prebuilt(Markers m, std::vector<int> s, std::vector<Reference> r, ClassifyParameters cp) : 
+            markers(std::move(m)), subset(std::move(s)), references(std::move(r)), cparams(std::move(cp)) {}
+
+        Prebuilt(Markers m, std::vector<int> s, std::vector<Reference> r) : Prebuilt(std::move(m), std::move(s), std::move(r), ClassifyParameters()) {}
+        /**
+         * @endcond
+         */
+
+        /**
+         * A vector of vectors of ranked marker genes to be used in the classification.
+         * Values are indices into the `subset` vector.
+         * The set of marker genes is typically a subset of those in the input `markers` in `build()`.
+         */
+        Markers markers;
+
+        /**
+         * The subset of features in the test/reference datasets that were used in the classification.
+         * Values are row indices into the relevant matrices.
+         */
+        std::vector<int> subset;
+
+        /**
+         * @return Number of labels in this reference.
+         */
+        size_t num_labels() const {
+            return references.size();
+        }
+
+        /**
+         * @return Number of profiles in this reference.
+         */
+        size_t num_profiles() const {
+            size_t n = 0;
+            for (const auto& ref : references) {
+                n += ref.ranked.size();
+            }
+            return n;
+        }
+
+        /**
+         * @cond
+         */
+        std::vector<Reference> references;
+
+        ClassifyParameters cparams;
+        /**
+         * @endcond
+         */
+
+    public:
+        /**
+         * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
+         * This may have a different ordering of genes compared to the reference matrix used to create this `Prebuilt` instance,
+         * provided that all genes corresponding to `Prebuilt::subset` are present.
+         * @param[in] mat_subset Pointer to an array of length equal to that of `Prebuilt::subset`,
+         * containing the index of the row of `mat` corresponding to each gene in `Prebuilt::subset`.
+         * That is, row `mat_subset[i]` in `mat` should be the same gene as row `subset[i]` in the reference matrix.
+         * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
+         * This is filled with the index of the assigned label for each cell.
+         * @param[out] scores Vector of pointers to arrays of length equal to the number of columns in `mat`.
+         * This is filled with the (non-fine-tuned) score for each label for each cell.
+         * Any pointer may be `NULL` in which case the scores for that label will not be saved.
+         * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
+         * This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
+         * This may also be `NULL` in which case the deltas are not reported.
+         *
+         * @return `best`, `scores` and `delta` are filled with their output values.
+         */
+        void run(const tatami::Matrix<double, int>* mat, const int* mat_subset, int* best, std::vector<double*>& scores, double* delta) {
+            annotate_cells_simple(
+                mat, 
+                subset.size(), 
+                mat_subset, 
+                references, 
+                markers, 
+                cparams.quantile, 
+                cparams.fine_tune, 
+                cparams.fine_tune_threshold, 
+                best, 
+                scores, 
+                delta
+            );
+            return;
+        }
+
+        /**
+         * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
+         * This should have the same order and identity of genes as the reference matrix used to create this `Prebuilt` instance.
+         * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
+         * This is filled with the index of the assigned label for each cell.
+         * @param[out] scores Vector of pointers to arrays of length equal to the number of columns in `mat`.
+         * This is filled with the (non-fine-tuned) score for each label for each cell.
+         * Any pointer may be `NULL` in which case the scores for that label will not be saved.
+         * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
+         * This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
+         * This may also be `NULL` in which case the deltas are not reported.
+         *
+         * @return `best`, `scores` and `delta` are filled with their output values.
+         */
+        void run(const tatami::Matrix<double, int>* mat, int* best, std::vector<double*>& scores, double* delta) {
+            run(mat, subset.data(), best, scores, delta);
+            return;
+        }
+
+    public:
+        /**
+         * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
+         * Each row should correspond to an element of `Prebuilt::subset`.
+         *
+         * @return A `Results` object containing the assigned labels and scores.
+         */
+        Classifier::Results run(const tatami::Matrix<double, int>* mat) {
+            size_t nlabels = references.size();
+            Classifier::Results output(mat->ncol(), nlabels);
+            auto scores = output.scores_to_pointers();
+            run(mat, output.best.data(), scores, output.delta.data());
+            return output;
+        }
+
+        /**
+         * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
+         * This may have a different ordering of genes compared to the reference matrix used in `build()`,
+         * provided that all genes corresponding to `Prebuilt::subset` are present.
+         * @param[in] mat_subset Pointer to an array of length equal to that of `Prebuilt::subset`,
+         * containing the index of the row of `mat` corresponding to each gene in `Prebuilt::subset`.
+         *
+         * @return A `Results` object containing the assigned labels and scores.
+         */
+        Classifier::Results run(const tatami::Matrix<double, int>* mat, const int* mat_subset) {
+            size_t nlabels = references.size();
+            Classifier::Results output(mat->ncol(), nlabels);
+            auto scores = output.scores_to_pointers();
+            run(mat, mat_subset, output.best.data(), scores, output.delta.data());
+            return output;
+        }
+    };
+
+public:
+    /**
+     * @param ref Matrix for the reference expression profiles.
+     * Rows are genes while columns are samples.
+     * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
+     * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
+     * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
+     *
+     * @return A `Prebuilt` instance that can be used in `run()` for annotation of a test dataset.
+     */
+    Prebuilt build(const tatami::Matrix<double, int>* ref, const int* labels, Markers markers) {
+        auto subset = subset_markers(markers, top);
+        auto subref = build_internal(ref, labels, subset);
+        return Prebuilt(std::move(markers), std::move(subset), std::move(subref), cparams);
     }
 
     /**
      * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
-     * This may have a different ordering of genes compared to the reference matrix used in `build()`,
-     * provided that all genes corresponding to `built.subset` are present.
-     * @param built An object produced by `build()`.
-     * @param[in] mat_subset Pointer to an array of length equal to that of `built.subset`,
-     * containing the index of the row of `mat` corresponding to each gene in `built.subset`.
+     * @param ref An expression matrix for the reference expression profiles.
+     * This should have non-zero columns and the same number of rows (i.e., genes) at `mat`.
+     * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
+     * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
+     * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
+     * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
+     * This is filled with the index of the assigned label for each cell.
+     * @param[out] scores Vector of pointers of length equal to the number of labels.
+     * Each pointer should point to an array of length equal to the number of columns in `mat`.
+     * This is filled with the (non-fine-tuned) score for that label for each cell.
+     * Any pointer may be `NULL` in which case the scores for that label will not be saved.
+     * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
+     * This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
+     * This may also be `NULL` in which case the deltas are not reported.
      *
-     * @return A `Results` object containing the assigned labels and scores.
+     * @return `best`, `scores` and `delta` are filled with their output values.
      */
-    Results run(const tatami::Matrix<double, int>* mat, const Prebuilt& built, const int* mat_subset) {
-        size_t nlabels = built.references.size();
-        Results output(mat->ncol(), nlabels);
-        auto scores = output.scores_to_pointers();
-        run(mat, built, mat_subset, output.best.data(), scores, output.delta.data());
-        return output;
+    void run(const tatami::Matrix<double, int>* mat, const tatami::Matrix<double, int>* ref, const int* labels, Markers markers, int* best, std::vector<double*>& scores, double* delta) {
+        auto prebuilt = build(ref, labels, std::move(markers));
+        prebuilt.run(mat, best, scores, delta);
+        return;
     }
 
     /**
@@ -413,7 +416,7 @@ public:
      */
     Results run(const tatami::Matrix<double, int>* mat, const tatami::Matrix<double, int>* ref, const int* labels, Markers markers) {
         auto prebuilt = build(ref, labels, std::move(markers));
-        return run(mat, prebuilt);
+        return prebuilt.run(mat);
     }
 
 public:
@@ -424,8 +427,8 @@ public:
         /**
          * @cond
          */
-        PrebuiltIntersection(Markers m, std::vector<int> mats, std::vector<int> refs, std::vector<Reference> r) : 
-            markers(std::move(m)), mat_subset(std::move(mats)), ref_subset(std::move(refs)), references(std::move(r)) {}
+        PrebuiltIntersection(Markers m, std::vector<int> mats, std::vector<int> refs, std::vector<Reference> r, ClassifyParameters p) : 
+            markers(std::move(m)), mat_subset(std::move(mats)), ref_subset(std::move(refs)), references(std::move(r)), cparams(std::move(p)) {}
         /**
          * @endcond
          */
@@ -460,11 +463,63 @@ public:
          * @cond
          */
         std::vector<Reference> references;
+
+        ClassifyParameters cparams;
         /**
          * @endcond
          */
+
+    public:
+        /**
+         * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
+         * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
+         * This is filled with the index of the assigned label for each cell.
+         * @param[out] scores Vector of pointers to arrays of length equal to the number of columns in `mat`.
+         * This is filled with the (non-fine-tuned) score for each label for each cell.
+         * Any pointer may be `NULL` in which case the scores for that label will not be saved.
+         * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
+         * This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
+         * This may also be `NULL` in which case the deltas are not reported.
+         * 
+         * @return `best`, `scores` and `delta` are filled with their output values.
+         */
+        void run(
+            const tatami::Matrix<double, int>* mat, 
+            int* best,
+            std::vector<double*>& scores,
+            double* delta) 
+        {
+            annotate_cells_simple(mat, 
+                mat_subset.size(), 
+                mat_subset.data(), 
+                references, 
+                markers, 
+                cparams.quantile, 
+                cparams.fine_tune, 
+                cparams.fine_tune_threshold, 
+                best, 
+                scores, 
+                delta
+            );
+            return;
+        }
+
+        /**
+         * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
+         *
+         * @return A `Results` object containing the assigned labels and scores.
+         */ 
+        Classifier::Results run(const tatami::Matrix<double, int>* mat) {
+            size_t nlabels = references.size();
+            Classifier::Results output(mat->ncol(), nlabels);
+            auto scores = output.scores_to_pointers();
+
+            run(mat, output.best.data(), scores, output.delta.data());
+            return output;
+        }
     };
 
+public:
     /**
      * @tparam Id Gene identifier for each row.
      *
@@ -497,10 +552,9 @@ public:
         subset_markers(intersection, markers, top);
         auto pairs = unzip(intersection);
         auto subref = build_internal(ref, labels, pairs.second);
-        return PrebuiltIntersection(std::move(markers), std::move(pairs.first), std::move(pairs.second), std::move(subref));
+        return PrebuiltIntersection(std::move(markers), std::move(pairs.first), std::move(pairs.second), std::move(subref), cparams);
     }
 
-public:
     /**
      * @tparam Id Gene identifier for each row.
      *
@@ -543,48 +597,10 @@ public:
         double* delta) 
     {
         auto built = build(mat->nrow(), mat_id, ref, ref_id, labels, std::move(markers));
-        run(mat, built, best, scores, delta);
+        built.run(mat, best, scores, delta);
         return;
     }
 
-    /**
-     * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
-     * @param built An object produced by `build()` with intersections.
-     * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
-     * This is filled with the index of the assigned label for each cell.
-     * @param[out] scores Vector of pointers to arrays of length equal to the number of columns in `mat`.
-     * This is filled with the (non-fine-tuned) score for each label for each cell.
-     * Any pointer may be `NULL` in which case the scores for that label will not be saved.
-     * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
-     * This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
-     * This may also be `NULL` in which case the deltas are not reported.
-     * 
-     * @return `best`, `scores` and `delta` are filled with their output values.
-     */
-    void run(
-        const tatami::Matrix<double, int>* mat, 
-        const PrebuiltIntersection& built,
-        int* best,
-        std::vector<double*>& scores,
-        double* delta) 
-    {
-        annotate_cells_simple(mat, 
-            built.mat_subset.size(), 
-            built.mat_subset.data(), 
-            built.references, 
-            built.markers, 
-            quantile, 
-            fine_tune, 
-            fine_tune_threshold, 
-            best, 
-            scores, 
-            delta
-        );
-        return;
-    }
-
-
-public:
     /**
      * @tparam Id Gene identifier for each row.
      *
@@ -604,39 +620,9 @@ public:
     template<class Id>
     Results run(const tatami::Matrix<double, int>* mat, const Id* mat_id, const tatami::Matrix<double, int>* ref, const Id* ref_id, const int* labels, Markers markers) {
         auto built = build(mat->nrow(), mat_id, ref, ref_id, labels, std::move(markers));
-
-        size_t nlabels = built.references.size();
-        Results output(mat->ncol(), nlabels);
-        auto scores = output.scores_to_pointers();
-
-        run(mat, built, output.best.data(), scores, output.delta.data());
-        return output;
-    }
-
-    /**
-     * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
-     * @param built An object produced by `build()` with intersections.
-     *
-     * @return A `Results` object containing the assigned labels and scores.
-     */ 
-    Results run(const tatami::Matrix<double, int>* mat, const PrebuiltIntersection& built) {
-        size_t nlabels = built.references.size();
-        Results output(mat->ncol(), nlabels);
-        auto scores = output.scores_to_pointers();
-
-        run(mat, built, output.best.data(), scores, output.delta.data());
-        return output;
+        return built.run(mat);
     }
 };
-
-/**
- * @cond
- */
-// For back-compatibility.
-typedef Classifier SinglePP;
-/**
- * @endcond
- */
 
 }
 

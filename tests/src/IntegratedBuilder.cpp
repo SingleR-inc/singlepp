@@ -73,7 +73,7 @@ TEST_P(IntegratedBuilderTest, SimpleCombine) {
         inter.add(matrices[r].get(), labels[r].data(), pre);
     }
 
-    auto output = inter.finish();
+    auto output = inter.finish().references;
 
     // Checking the values of the built references.
     EXPECT_EQ(output.size(), nrefs);
@@ -156,8 +156,8 @@ TEST_P(IntegratedBuilderTest, SimpleCombineNaked) {
         bravo.add(matrices[r].get(), labels[r].data(), remarkers);
     }
 
-    auto alpha_output = alpha.finish();
-    auto bravo_output = bravo.finish();
+    auto alpha_output = alpha.finish().references;
+    auto bravo_output = bravo.finish().references;
 
     // Checking the rank values for equality.
     for (size_t r = 0; r < nrefs; ++r) {
@@ -199,7 +199,7 @@ TEST_P(IntegratedBuilderTest, IntersectedCombine) {
         inter.add(ngenes, ids.data(), matrices[r].get(), kept[r].data(), labels[r].data(), pre);
     }
 
-    auto output = inter.finish();
+    auto output = inter.finish().references;
 
     EXPECT_EQ(output.size(), nrefs);
     for (size_t r = 0; r < nrefs; ++r) {
@@ -271,8 +271,9 @@ TEST_P(IntegratedBuilderTest, IntersectedCombineAgain) {
     auto lab = spawn_labels(nsamples, nlabels, seed * 2);
     auto mrk = mock_markers(nlabels, 50, keep.size(), seed * 3);
 
-    // Generating the prebuilts. Note that we can't just use build() to generate the Prebuilt,
-    // as this will not choose markers among the intersection of features.
+    // Generating the prebuilts with and without an intersection. Note that we
+    // can't just use build() to generate the no-intersection Prebuilt, as this
+    // will not choose markers among the intersection of features.
     singlepp::Classifier runner;
     runner.set_top(ntop);
 
@@ -286,8 +287,8 @@ TEST_P(IntegratedBuilderTest, IntersectedCombineAgain) {
     inter.add(ngenes, ids.data(), mat.get(), keep.data(), lab.data(), pre);
     inter2.add(ngenes, ids.data(), mat.get(), keep.data(), lab.data(), interpre);
 
-    auto fin = inter.finish()[0];
-    auto fin2 = inter2.finish()[0];
+    auto fin = inter.finish().references[0];
+    auto fin2 = inter2.finish().references[0];
 
     // Checking for identical bits and pieces.
     EXPECT_EQ(fin.check_availability, fin2.check_availability);
@@ -331,13 +332,13 @@ TEST_P(IntegratedBuilderTest, IntersectedCombineNaked) {
 
     singlepp::IntegratedBuilder alpha;
     alpha.add(ngenes, ids.data(), mat.get(), keep.data(), lab.data(), pre);
-    auto aout = alpha.finish()[0];
+    auto aout = alpha.finish().references[0];
 
     // Comparing what happens with direct input of markers of interest.
     auto remarkers = truncate_markers(mrk, ntop);
     singlepp::IntegratedBuilder bravo;
     bravo.add(ngenes, ids.data(), mat.get(), keep.data(), lab.data(), remarkers);
-    auto bout = bravo.finish()[0];
+    auto bout = bravo.finish().references[0];
 
     ASSERT_EQ(aout.ranked.size(), bout.ranked.size());
     for (size_t i = 0; i < aout.ranked.size(); ++i) {

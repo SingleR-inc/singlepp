@@ -3,7 +3,8 @@
 
 #include "compute_scores.hpp"
 #include "scaled_ranks.hpp"
-#include "IntegratedBuilder.hpp"
+#include "tatami/tatami.hpp"
+#include "Classifier.hpp"
 
 #include <vector>
 #include <unordered_map>
@@ -16,6 +17,40 @@
  */
 
 namespace singlepp {
+
+/**
+ * @brief Single reference dataset prepared for integrated classification.
+ */
+struct IntegratedReference {
+    /**
+     * @return Number of labels in this reference.
+     */
+    size_t num_labels() const {
+        return markers.size();
+    }
+
+    /**
+     * @return Number of profiles in this reference.
+     */
+    size_t num_profiles() const {
+        size_t n = 0;
+        for (const auto& ref : ranked) {
+            n += ref.size();
+        }
+        return n;
+    }
+
+    /**
+     * @cond
+     */
+    bool check_availability = false;
+    std::unordered_set<int> available;
+    std::vector<std::vector<int> > markers;
+    std::vector<std::vector<RankedVector<int, int> > > ranked;
+    /**
+     * @endcond
+     */
+};
 
 /**
  * @brief Integrate classifications from multiple references.
@@ -60,17 +95,31 @@ public:
         return *this;
     }
 
+public:
+    /**
+     * @cond
+     */
+    IntegratedScorer(std::vector<IntegratedReference> r) : references(std::move(r)) {}
+    /**
+     * @endcond
+     */
+
+    /**
+     * Vector of integrated references, as constructed by `IntegratedBuilder::finish()`.
+     * Each entry corresponds to a single reference added by `IntegratedBuilder::add()`, in the supplied order.
+     */
+    std::vector<IntegratedReference> references;
+
 private:
     /* Here, we've split out some of the functions for easier reading.
      * Otherwise everything would land in a single mega-function.
      */
 
-    static void build_universe(int cell,
+    void build_universe(int cell,
         const std::vector<const int*>& assigned,
-        const std::vector<IntegratedReference>& references, 
         std::unordered_set<int>& uset, 
         std::vector<int>& uvec) 
-    {
+    const {
         uset.clear();
         for (size_t r = 0; r < references.size(); ++r) {
             auto best = assigned[r][cell];
@@ -145,7 +194,6 @@ public:
      * @param[in] assigned Vector of pointers of length equal to the number of references.
      * Each pointer should point to an array of length equal to the number of columns in `mat`,
      * containing the assigned label for each column in each reference.
-     * @param references Vector of integrated references produced by `IntegratedBuilder::finish()`.
      * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
      * This is filled with the index of the reference with the best label for each cell.
      * @param[out] scores Vector of pointers of length equal to the number of references.
@@ -161,11 +209,13 @@ public:
     void run(
         const tatami::Matrix<double, int>* mat,
         const std::vector<const int*>& assigned,
-        const std::vector<IntegratedReference>& references,
         int* best,
         std::vector<double*>& scores,
         double* delta)
     {
+        /**
+         * @cond
+         */
         size_t NR = mat->nrow();
         size_t NC = mat->ncol();
 
@@ -199,7 +249,7 @@ public:
             for (size_t i = start; i < end; ++i) {
 #endif
 
-                build_universe(i, assigned, references, universe_tmp, universe);
+                build_universe(i, assigned, universe_tmp, universe);
                 fill_ranks(mat, universe, i, buffer, wrk.get(), data_ranked);
 
                 // Scanning through each reference and computing the score for the best group.
@@ -259,6 +309,9 @@ public:
 #else
         });
 #endif
+        /**
+         * @endcond
+         */
 
         return;
     }
@@ -310,18 +363,13 @@ public:
      * @param[in] assigned Vector of pointers of length equal to the number of references.
      * Each pointer should point to an array of length equal to the number of columns in `mat`,
      * containing the assigned label for each column in each reference.
-     * @param references Vector of integrated references produced by `IntegratedBuilder::finish()`.
      *
      * @return A `Results` object containing the assigned labels and scores.
      */
-    Results run( 
-        const tatami::Matrix<double, int>* mat,
-        const std::vector<const int*>& assigned,
-        const std::vector<IntegratedReference>& references)
-    {
+    Results run(const tatami::Matrix<double, int>* mat, const std::vector<const int*>& assigned) {
         Results output(mat->ncol(), references.size());
         auto scores = output.scores_to_pointers();
-        run(mat, assigned, references, output.best.data(), scores, output.delta.data());
+        run(mat, assigned, output.best.data(), scores, output.delta.data());
         return output;
     }
 };
