@@ -85,6 +85,10 @@ $(function() {
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a52a313c39e014b75120a635730890539"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1Classifier_1_1PrebuiltIntersection.html#a52a313c39e014b75120a635730890539">num_labels</a> () const</td></tr>
 <tr class="separator:a52a313c39e014b75120a635730890539"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a958009e8b64f6f256a9a81526519db5c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1Classifier_1_1PrebuiltIntersection.html#a958009e8b64f6f256a9a81526519db5c">run</a> (const tatami::Matrix&lt; double, int &gt; *mat, int *best, std::vector&lt; double * &gt; &amp;scores, double *delta)</td></tr>
+<tr class="separator:a958009e8b64f6f256a9a81526519db5c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee6c0057cdb54d59c285917a0633c689"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structsinglepp_1_1Classifier_1_1Results.html">Classifier::Results</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1Classifier_1_1PrebuiltIntersection.html#aee6c0057cdb54d59c285917a0633c689">run</a> (const tatami::Matrix&lt; double, int &gt; *mat)</td></tr>
+<tr class="separator:aee6c0057cdb54d59c285917a0633c689"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -121,6 +125,97 @@ Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>Number of labels in this reference. </dd></dl>
+
+</div>
+</div>
+<a id="aee6c0057cdb54d59c285917a0633c689" name="aee6c0057cdb54d59c285917a0633c689"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aee6c0057cdb54d59c285917a0633c689">&#9670;&nbsp;</a></span>run() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structsinglepp_1_1Classifier_1_1Results.html">Classifier::Results</a> singlepp::Classifier::PrebuiltIntersection::run </td>
+          <td>(</td>
+          <td class="paramtype">const tatami::Matrix&lt; double, int &gt; *&#160;</td>
+          <td class="paramname"><em>mat</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mat</td><td>Expression matrix of the test dataset, where rows are genes and columns are cells.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <code><a class="el" href="structsinglepp_1_1Classifier_1_1Results.html" title="Results of the automated annotation.">Results</a></code> object containing the assigned labels and scores. </dd></dl>
+
+</div>
+</div>
+<a id="a958009e8b64f6f256a9a81526519db5c" name="a958009e8b64f6f256a9a81526519db5c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a958009e8b64f6f256a9a81526519db5c">&#9670;&nbsp;</a></span>run() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void singlepp::Classifier::PrebuiltIntersection::run </td>
+          <td>(</td>
+          <td class="paramtype">const tatami::Matrix&lt; double, int &gt; *&#160;</td>
+          <td class="paramname"><em>mat</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>best</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::vector&lt; double * &gt; &amp;&#160;</td>
+          <td class="paramname"><em>scores</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>delta</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir"></td><td class="paramname">mat</td><td>Expression matrix of the test dataset, where rows are genes and columns are cells. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">best</td><td>Pointer to an array of length equal to the number of columns in <code>mat</code>. This is filled with the index of the assigned label for each cell. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">scores</td><td>Vector of pointers to arrays of length equal to the number of columns in <code>mat</code>. This is filled with the (non-fine-tuned) score for each label for each cell. Any pointer may be <code>NULL</code> in which case the scores for that label will not be saved. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">delta</td><td>Pointer to an array of length equal to the number of columns in <code>mat</code>. This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning. This may also be <code>NULL</code> in which case the deltas are not reported.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><code>best</code>, <code>scores</code> and <code>delta</code> are filled with their output values. </dd></dl>
 
 </div>
 </div>

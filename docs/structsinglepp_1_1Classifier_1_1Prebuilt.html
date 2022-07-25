@@ -87,6 +87,14 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ae34da82e05ba1cc55265d83c5e454890"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a573001557e3ff0fb4ad6da3cc5dfb736"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1Classifier_1_1Prebuilt.html#a573001557e3ff0fb4ad6da3cc5dfb736">num_profiles</a> () const</td></tr>
 <tr class="separator:a573001557e3ff0fb4ad6da3cc5dfb736"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab3384c84f3d7e7c5994cc56a9b5c17b7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1Classifier_1_1Prebuilt.html#ab3384c84f3d7e7c5994cc56a9b5c17b7">run</a> (const tatami::Matrix&lt; double, int &gt; *mat, const int *mat_subset, int *best, std::vector&lt; double * &gt; &amp;scores, double *delta)</td></tr>
+<tr class="separator:ab3384c84f3d7e7c5994cc56a9b5c17b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af959793a40c3288b5b2c940c0218294b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1Classifier_1_1Prebuilt.html#af959793a40c3288b5b2c940c0218294b">run</a> (const tatami::Matrix&lt; double, int &gt; *mat, int *best, std::vector&lt; double * &gt; &amp;scores, double *delta)</td></tr>
+<tr class="separator:af959793a40c3288b5b2c940c0218294b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e7d78ac637ea0138ffc966bed2d5b7f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structsinglepp_1_1Classifier_1_1Results.html">Classifier::Results</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1Classifier_1_1Prebuilt.html#a6e7d78ac637ea0138ffc966bed2d5b7f">run</a> (const tatami::Matrix&lt; double, int &gt; *mat)</td></tr>
+<tr class="separator:a6e7d78ac637ea0138ffc966bed2d5b7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad98ba4aeaf24db76084ced003ab8f7d4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structsinglepp_1_1Classifier_1_1Results.html">Classifier::Results</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1Classifier_1_1Prebuilt.html#ad98ba4aeaf24db76084ced003ab8f7d4">run</a> (const tatami::Matrix&lt; double, int &gt; *mat, const int *mat_subset)</td></tr>
+<tr class="separator:ad98ba4aeaf24db76084ced003ab8f7d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -147,6 +155,206 @@ Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>Number of profiles in this reference. </dd></dl>
+
+</div>
+</div>
+<a id="a6e7d78ac637ea0138ffc966bed2d5b7f" name="a6e7d78ac637ea0138ffc966bed2d5b7f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6e7d78ac637ea0138ffc966bed2d5b7f">&#9670;&nbsp;</a></span>run() <span class="overload">[1/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structsinglepp_1_1Classifier_1_1Results.html">Classifier::Results</a> singlepp::Classifier::Prebuilt::run </td>
+          <td>(</td>
+          <td class="paramtype">const tatami::Matrix&lt; double, int &gt; *&#160;</td>
+          <td class="paramname"><em>mat</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mat</td><td>Expression matrix of the test dataset, where rows are genes and columns are cells. Each row should correspond to an element of <code><a class="el" href="structsinglepp_1_1Classifier_1_1Prebuilt.html#a2eef3e1e6eee34870f1cdd56df4f1e1b">Prebuilt::subset</a></code>.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <code><a class="el" href="structsinglepp_1_1Classifier_1_1Results.html" title="Results of the automated annotation.">Results</a></code> object containing the assigned labels and scores. </dd></dl>
+
+</div>
+</div>
+<a id="ad98ba4aeaf24db76084ced003ab8f7d4" name="ad98ba4aeaf24db76084ced003ab8f7d4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad98ba4aeaf24db76084ced003ab8f7d4">&#9670;&nbsp;</a></span>run() <span class="overload">[2/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structsinglepp_1_1Classifier_1_1Results.html">Classifier::Results</a> singlepp::Classifier::Prebuilt::run </td>
+          <td>(</td>
+          <td class="paramtype">const tatami::Matrix&lt; double, int &gt; *&#160;</td>
+          <td class="paramname"><em>mat</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const int *&#160;</td>
+          <td class="paramname"><em>mat_subset</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir"></td><td class="paramname">mat</td><td>Expression matrix of the test dataset, where rows are genes and columns are cells. This may have a different ordering of genes compared to the reference matrix used in <code><a class="el" href="classsinglepp_1_1Classifier.html#a29c0f5ce6b3636f9dec21758aa4008b7">build()</a></code>, provided that all genes corresponding to <code><a class="el" href="structsinglepp_1_1Classifier_1_1Prebuilt.html#a2eef3e1e6eee34870f1cdd56df4f1e1b">Prebuilt::subset</a></code> are present. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">mat_subset</td><td>Pointer to an array of length equal to that of <code><a class="el" href="structsinglepp_1_1Classifier_1_1Prebuilt.html#a2eef3e1e6eee34870f1cdd56df4f1e1b">Prebuilt::subset</a></code>, containing the index of the row of <code>mat</code> corresponding to each gene in <code><a class="el" href="structsinglepp_1_1Classifier_1_1Prebuilt.html#a2eef3e1e6eee34870f1cdd56df4f1e1b">Prebuilt::subset</a></code>.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <code><a class="el" href="structsinglepp_1_1Classifier_1_1Results.html" title="Results of the automated annotation.">Results</a></code> object containing the assigned labels and scores. </dd></dl>
+
+</div>
+</div>
+<a id="ab3384c84f3d7e7c5994cc56a9b5c17b7" name="ab3384c84f3d7e7c5994cc56a9b5c17b7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab3384c84f3d7e7c5994cc56a9b5c17b7">&#9670;&nbsp;</a></span>run() <span class="overload">[3/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void singlepp::Classifier::Prebuilt::run </td>
+          <td>(</td>
+          <td class="paramtype">const tatami::Matrix&lt; double, int &gt; *&#160;</td>
+          <td class="paramname"><em>mat</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const int *&#160;</td>
+          <td class="paramname"><em>mat_subset</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>best</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::vector&lt; double * &gt; &amp;&#160;</td>
+          <td class="paramname"><em>scores</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>delta</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir"></td><td class="paramname">mat</td><td>Expression matrix of the test dataset, where rows are genes and columns are cells. This may have a different ordering of genes compared to the reference matrix used to create this <code><a class="el" href="structsinglepp_1_1Classifier_1_1Prebuilt.html" title="Prebuilt reference that can be directly used for annotation.">Prebuilt</a></code> instance, provided that all genes corresponding to <code><a class="el" href="structsinglepp_1_1Classifier_1_1Prebuilt.html#a2eef3e1e6eee34870f1cdd56df4f1e1b">Prebuilt::subset</a></code> are present. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">mat_subset</td><td>Pointer to an array of length equal to that of <code><a class="el" href="structsinglepp_1_1Classifier_1_1Prebuilt.html#a2eef3e1e6eee34870f1cdd56df4f1e1b">Prebuilt::subset</a></code>, containing the index of the row of <code>mat</code> corresponding to each gene in <code><a class="el" href="structsinglepp_1_1Classifier_1_1Prebuilt.html#a2eef3e1e6eee34870f1cdd56df4f1e1b">Prebuilt::subset</a></code>. That is, row <code>mat_subset[i]</code> in <code>mat</code> should be the same gene as row <code>subset[i]</code> in the reference matrix. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">best</td><td>Pointer to an array of length equal to the number of columns in <code>mat</code>. This is filled with the index of the assigned label for each cell. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">scores</td><td>Vector of pointers to arrays of length equal to the number of columns in <code>mat</code>. This is filled with the (non-fine-tuned) score for each label for each cell. Any pointer may be <code>NULL</code> in which case the scores for that label will not be saved. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">delta</td><td>Pointer to an array of length equal to the number of columns in <code>mat</code>. This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning. This may also be <code>NULL</code> in which case the deltas are not reported.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><code>best</code>, <code>scores</code> and <code>delta</code> are filled with their output values. </dd></dl>
+
+</div>
+</div>
+<a id="af959793a40c3288b5b2c940c0218294b" name="af959793a40c3288b5b2c940c0218294b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af959793a40c3288b5b2c940c0218294b">&#9670;&nbsp;</a></span>run() <span class="overload">[4/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void singlepp::Classifier::Prebuilt::run </td>
+          <td>(</td>
+          <td class="paramtype">const tatami::Matrix&lt; double, int &gt; *&#160;</td>
+          <td class="paramname"><em>mat</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>best</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::vector&lt; double * &gt; &amp;&#160;</td>
+          <td class="paramname"><em>scores</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>delta</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir"></td><td class="paramname">mat</td><td>Expression matrix of the test dataset, where rows are genes and columns are cells. This should have the same order and identity of genes as the reference matrix used to create this <code><a class="el" href="structsinglepp_1_1Classifier_1_1Prebuilt.html" title="Prebuilt reference that can be directly used for annotation.">Prebuilt</a></code> instance. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">best</td><td>Pointer to an array of length equal to the number of columns in <code>mat</code>. This is filled with the index of the assigned label for each cell. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">scores</td><td>Vector of pointers to arrays of length equal to the number of columns in <code>mat</code>. This is filled with the (non-fine-tuned) score for each label for each cell. Any pointer may be <code>NULL</code> in which case the scores for that label will not be saved. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">delta</td><td>Pointer to an array of length equal to the number of columns in <code>mat</code>. This is filled with the difference between the highest and second-highest scores, possibly after fine-tuning. This may also be <code>NULL</code> in which case the deltas are not reported.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><code>best</code>, <code>scores</code> and <code>delta</code> are filled with their output values. </dd></dl>
 
 </div>
 </div>
