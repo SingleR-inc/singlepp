@@ -69,6 +69,7 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classsinglepp_1_1IntegratedBuilder-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">singlepp::IntegratedBuilder Class Reference</div></div>
@@ -80,8 +81,16 @@ $(function() {
 
 <p><code>#include &lt;<a class="el" href="IntegratedBuilder_8hpp_source.html">IntegratedBuilder.hpp</a>&gt;</code></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1IntegratedBuilder_1_1Defaults.html">Defaults</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default parameters.  <a href="structsinglepp_1_1IntegratedBuilder_1_1Defaults.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:a75d68b2e5f5486305c6704980557b1d5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsinglepp_1_1IntegratedBuilder.html">IntegratedBuilder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a75d68b2e5f5486305c6704980557b1d5">set_num_threads</a> (int n=<a class="el" href="structsinglepp_1_1IntegratedBuilder_1_1Defaults.html#ab1c51c569e9b4a3fc016ac915a701ef1">Defaults::num_threads</a>)</td></tr>
+<tr class="separator:a75d68b2e5f5486305c6704980557b1d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7f3c49224a66c3e9ed5bdd1c140f03aa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a7f3c49224a66c3e9ed5bdd1c140f03aa">add</a> (const tatami::Matrix&lt; double, int &gt; *ref, const int *labels, const <a class="el" href="Markers_8hpp.html#ae39cf61993000d182cb3464b4ace1406">Markers</a> &amp;markers)</td></tr>
 <tr class="separator:a7f3c49224a66c3e9ed5bdd1c140f03aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7346fa4b606a8654d52868ffde505ab2"><td class="memTemplParams" colspan="2">template&lt;typename Id &gt; </td></tr>
@@ -474,6 +483,39 @@ template&lt;typename Id &gt; </div>
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>An <code><a class="el" href="classsinglepp_1_1IntegratedScorer.html" title="Integrate classifications from multiple references.">IntegratedScorer</a></code> instance.</dd></dl>
 <p>This function should only be called once, after all reference datasets have been registered with <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a7f3c49224a66c3e9ed5bdd1c140f03aa">add()</a></code>. Any further invocations of this function will not be valid. </p>
+
+</div>
+</div>
+<a id="a75d68b2e5f5486305c6704980557b1d5" name="a75d68b2e5f5486305c6704980557b1d5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a75d68b2e5f5486305c6704980557b1d5">&#9670;&nbsp;</a></span>set_num_threads()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classsinglepp_1_1IntegratedBuilder.html">IntegratedBuilder</a> &amp; singlepp::IntegratedBuilder::set_num_threads </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>n</em> = <code><a class="el" href="structsinglepp_1_1IntegratedBuilder_1_1Defaults.html#ab1c51c569e9b4a3fc016ac915a701ef1">Defaults::num_threads</a></code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">n</td><td>Number of threads to use.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A reference to this <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html" title="Factory to prepare multiple references for integrated classification.">IntegratedBuilder</a></code> object. </dd></dl>
 
 </div>
 </div>
