@@ -79,27 +79,49 @@ struct IntegratedReference {
  * by just passing along the existing labels and leaving it to the user's interpretation.
  */
 class IntegratedScorer {
-private:
-    double quantile = Classifier::Defaults::quantile;
-
 public:
+    /**
+     * @brief Default parameters.
+     */
+    struct Defaults {
+        /**
+         * See `set_quantile()` for details.
+         */
+        static constexpr double quantile = Classifier::Defaults::quantile;
+    };
+
     /**
      * @param q Quantile to use to compute a per-label score from the correlations.
      *
-     * @return A reference to this `Classifier` object.
+     * @return A reference to this `IntegratedScorer` object.
      *
      * See `Classifier::set_quantile()` for more details.
      */
-    IntegratedScorer& set_quantile(double q = Classifier::Defaults::quantile) {
+    IntegratedScorer& set_quantile(double q = Defaults::quantile) {
         quantile = q;
         return *this;
     }
+
+    /**
+     * @param n Number of threads to use.
+     * By default, this is inherited from the parent `IntegratedBuilder` object. 
+     *
+     * @return A reference to this `IntegratedScorer` object.
+     */
+    IntegratedScorer& set_num_threads(int n) {
+        nthreads = n;
+        return *this;
+    }
+
+private:
+    double quantile = Defaults::quantile;
+    int nthreads;
 
 public:
     /**
      * @cond
      */
-    IntegratedScorer(std::vector<IntegratedReference> r) : references(std::move(r)) {}
+    IntegratedScorer(std::vector<IntegratedReference> r, int n) : references(std::move(r)), nthreads(n) {}
     /**
      * @endcond
      */
@@ -220,7 +242,7 @@ public:
         size_t NC = mat->ncol();
 
 #ifndef SINGLEPP_CUSTOM_PARALLEL
-        #pragma omp parallel
+        #pragma omp parallel num_threads(nthreads)
         {
 #else
         SINGLEPP_CUSTOM_PARALLEL(NC, [&](size_t start, size_t end) -> void {
@@ -307,7 +329,7 @@ public:
 #ifndef SINGLEPP_CUSTOM_PARALLEL
         }
 #else
-        });
+        }, nthreads);
 #endif
         /**
          * @endcond

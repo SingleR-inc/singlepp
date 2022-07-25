@@ -36,6 +36,28 @@ private:
     std::vector<const int*> stored_labels;
     std::vector<IntegratedReference> references;
     std::vector<std::unordered_map<int, int> > gene_mapping;
+    int nthreads = Defaults::num_threads;
+
+public:
+    /**
+     * @brief Default parameters.
+     */
+    struct Defaults {
+        /**
+         * See `set_num_threads()` for details.
+         */
+        static constexpr int num_threads = 1;
+    };
+
+    /**
+     * @param n Number of threads to use.
+     *
+     * @return A reference to this `IntegratedBuilder` object.
+     */
+    IntegratedBuilder& set_num_threads(int n = Defaults::num_threads) {
+        nthreads = n;
+        return *this;
+    }
 
 private:
     void add_internal(const tatami::Matrix<double, int>* ref, const int* labels) {
@@ -326,7 +348,7 @@ public:
                 }
 
 #ifndef SINGLEPP_CUSTOM_PARALLEL
-                #pragma omp parallel
+                #pragma omp parallel num_threads(nthreads)
                 {
 #else
                 SINGLEPP_CUSTOM_PARALLEL(NC, [&](size_t start, size_t end) -> void {
@@ -359,7 +381,7 @@ public:
 #ifndef SINGLEPP_CUSTOM_PARALLEL
                 }
 #else
-                });
+                }, nthreads);
 #endif
 
             } else {
@@ -389,7 +411,7 @@ public:
                 last = std::max(last + 1, first);
 
 #ifndef SINGLEPP_CUSTOM_PARALLEL
-                #pragma omp parallel
+                #pragma omp parallel num_threads(nthreads)
                 {
 #else
                 SINGLEPP_CUSTOM_PARALLEL(NC, [&](size_t start, size_t end) -> void {
@@ -422,7 +444,7 @@ public:
 #ifndef SINGLEPP_CUSTOM_PARALLEL
                 }
 #else
-                });
+                }, nthreads);
 #endif
             }
         }
@@ -430,7 +452,7 @@ public:
          * @endcond
          */
 
-        return IntegratedScorer(std::move(references));
+        return IntegratedScorer(std::move(references), nthreads);
     }
 };
 

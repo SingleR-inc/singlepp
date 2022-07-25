@@ -60,6 +60,17 @@ TEST_P(ChooseClassicMarkersTest, Simple) {
             }
         }
     }
+
+    // Same result when parallelized.
+    mrk.set_num_threads(3);
+    auto outputp = mrk.run(mat.get(), groupings.data());
+    for (size_t l = 0; l < nlabels; ++l) {
+        const auto& serial = output[l];
+        const auto& parallel = outputp[l];
+        for (size_t l2 = 0; l2 < nlabels; ++l2) {
+            EXPECT_EQ(serial[l2], parallel[l2]);
+        }
+    }
 }
 
 TEST_P(ChooseClassicMarkersTest, Blocked) { 

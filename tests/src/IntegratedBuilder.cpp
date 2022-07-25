@@ -5,7 +5,7 @@
 #include "spawn_matrix.h"
 #include "mock_markers.h"
 
-class IntegratedBuilderTest : public ::testing::TestWithParam<int> {
+class IntegratedBuilderTestCore {
 protected:
     std::vector<std::shared_ptr<tatami::Matrix<double, int> > > matrices;
     std::vector<std::vector<int> > labels;
@@ -59,14 +59,23 @@ protected:
     }
 };
 
-TEST_P(IntegratedBuilderTest, SimpleCombine) {
+/********************************************/
+
+class IntegratedBuilderBasicTest : public ::testing::TestWithParam<std::tuple<int, int> >, public IntegratedBuilderTestCore {};
+
+TEST_P(IntegratedBuilderBasicTest, SimpleCombine) {
+    auto param = GetParam();
+    int ntop = std::get<0>(param);
+    int nthreads = std::get<1>(param);
+
     // Mocking up the test and references.
-    int ntop = GetParam();
     simulate_references();
 
     singlepp::Classifier runner;
     runner.set_top(ntop);
+
     singlepp::IntegratedBuilder inter;
+    inter.set_num_threads(nthreads);
 
     for (size_t r = 0; r < nrefs; ++r) {
         auto pre = runner.build(matrices[r].get(), labels[r].data(), markers[r]);
@@ -138,7 +147,20 @@ TEST_P(IntegratedBuilderTest, SimpleCombine) {
     }
 }
 
-TEST_P(IntegratedBuilderTest, SimpleCombineNaked) {
+INSTANTIATE_TEST_CASE_P(
+    IntegratedBuilder,
+    IntegratedBuilderBasicTest,
+    ::testing::Combine(
+        ::testing::Values(5, 10, 20), // number of top genes.
+        ::testing::Values(1, 3) // number of threads
+    )
+);
+
+/********************************************/
+
+class IntegratedBuilderMoreTest : public ::testing::TestWithParam<int>, public IntegratedBuilderTestCore {};
+
+TEST_P(IntegratedBuilderMoreTest, SimpleCombineNaked) {
     // Mocking up the test and references.
     int ntop = GetParam();
     simulate_references();
@@ -177,7 +199,7 @@ TEST_P(IntegratedBuilderTest, SimpleCombineNaked) {
     }
 }
 
-TEST_P(IntegratedBuilderTest, IntersectedCombine) {
+TEST_P(IntegratedBuilderMoreTest, IntersectedCombine) {
     // Mocking up the test and references.
     int ntop = GetParam();
     simulate_references();
@@ -258,7 +280,7 @@ TEST_P(IntegratedBuilderTest, IntersectedCombine) {
     }
 }
 
-TEST_P(IntegratedBuilderTest, IntersectedCombineAgain) {
+TEST_P(IntegratedBuilderMoreTest, IntersectedCombineAgain) {
     // Mocking up the test and references.
     int ntop = GetParam();
 
@@ -313,7 +335,7 @@ TEST_P(IntegratedBuilderTest, IntersectedCombineAgain) {
     }
 }
 
-TEST_P(IntegratedBuilderTest, IntersectedCombineNaked) {
+TEST_P(IntegratedBuilderMoreTest, IntersectedCombineNaked) {
     // Mocking up the test and references.
     int ntop = GetParam();
 
@@ -351,6 +373,6 @@ TEST_P(IntegratedBuilderTest, IntersectedCombineNaked) {
 
 INSTANTIATE_TEST_CASE_P(
     IntegratedBuilder,
-    IntegratedBuilderTest,
+    IntegratedBuilderMoreTest,
     ::testing::Values(5, 10, 20) // number of top genes.
 );

@@ -36,6 +36,7 @@ TEST_P(ClassifierSimpleTest, Simple) {
     auto output = runner.run(mat.get(), refs.get(), labels.data(), markers);
 
     // Implementing the reference score calculation.
+    auto original_markers = markers;
     auto subset = singlepp::subset_markers(markers, top);
     auto naive = naive_method(nlabels, labels, refs, mat, subset, quantile);
 
@@ -47,6 +48,15 @@ TEST_P(ClassifierSimpleTest, Simple) {
         for (size_t r = 0; r < nlabels; ++r) {
             EXPECT_TRUE(std::abs(naive.scores[r][c] - output.scores[r][c]) < 1e-6);
         }
+    }
+
+    // Same result with multiple threads.
+    runner.set_num_threads(3);
+    auto poutput = runner.run(mat.get(), refs.get(), labels.data(), original_markers);
+    EXPECT_EQ(output.best, poutput.best);
+    EXPECT_EQ(output.delta, poutput.delta);
+    for (size_t r = 0; r < nlabels; ++r) {
+        EXPECT_EQ(output.scores[r], poutput.scores[r]);
     }
 }
 

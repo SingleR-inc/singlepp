@@ -79,6 +79,11 @@ public:
          * See `set_approximate()` for details.
          */
         static constexpr bool approximate = false;
+
+        /**
+         * See `set_num_threads()` for details.
+         */
+        static constexpr int num_threads = 1;
     };
 
 private:
@@ -86,6 +91,7 @@ private:
         double quantile = Defaults::quantile;
         double fine_tune_threshold = Defaults::fine_tune_threshold;
         bool fine_tune = Defaults::fine_tune;
+        int nthreads = Defaults::num_threads;
     };
 
     int top = Defaults::top;
@@ -157,6 +163,16 @@ public:
         return *this;
     }
 
+    /**
+     * @param n Number of threads to use.
+     *
+     * @return A reference to this `Classifier` object.
+     */
+    Classifier& set_num_threads(int n = Defaults::num_threads) {
+        cparams.nthreads = n;
+        return *this;
+    }
+
 private:
     std::vector<Reference> build_internal(const tatami::Matrix<double, int>* ref, const int* labels, const std::vector<int>& subset) {
         std::vector<Reference> subref;
@@ -164,13 +180,15 @@ private:
             subref = build_indices(ref, labels, subset, 
                 [](size_t nr, size_t nc, const double* ptr) { 
                     return std::shared_ptr<knncolle::Base<int, double> >(new knncolle::AnnoyEuclidean<int, double>(nr, nc, ptr)); 
-                }
+                },
+                cparams.nthreads
             );
         } else {
             subref = build_indices(ref, labels, subset,
                 [](size_t nr, size_t nc, const double* ptr) { 
                     return std::shared_ptr<knncolle::Base<int, double> >(new knncolle::KmknnEuclidean<int, double>(nr, nc, ptr)); 
-                }
+                },
+                cparams.nthreads
             );
         }
         return subref;
@@ -306,7 +324,8 @@ public:
                 cparams.fine_tune_threshold, 
                 best, 
                 scores, 
-                delta
+                delta,
+                cparams.nthreads
             );
             return;
         }
@@ -499,7 +518,8 @@ public:
                 cparams.fine_tune_threshold, 
                 best, 
                 scores, 
-                delta
+                delta,
+                cparams.nthreads
             );
             return;
         }

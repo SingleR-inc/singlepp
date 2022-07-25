@@ -124,6 +124,15 @@ TEST_P(IntegratedScorerTest, Basic) {
         *best = -100000;
         EXPECT_FLOAT_EQ(output.delta[t], best_score - *std::max_element(all_scores.begin(), all_scores.end()));
     }
+
+    // Same results in parallel.
+    integrated.set_num_threads(3);
+    auto poutput = integrated.run(test.get(), chosen_ptrs);
+    EXPECT_EQ(output.best, poutput.best);
+    EXPECT_EQ(output.delta, poutput.delta);
+    for (size_t r = 0; r < nrefs; ++r) {
+        EXPECT_EQ(output.scores[r], poutput.scores[r]);
+    }
 }
 
 TEST_P(IntegratedScorerTest, Intersected) {
