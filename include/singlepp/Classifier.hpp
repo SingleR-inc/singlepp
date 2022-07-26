@@ -170,20 +170,30 @@ public:
 private:
     BasicBuilder::Prebuilt build_reference(const tatami::Matrix<double, int>* ref, const int* labels, Markers markers) const {
         BasicBuilder builder;
-        builder.set_top(top).set_approximate(approximate);
+        builder
+            .set_top(top)
+            .set_approximate(approximate)
+            .set_num_threads(nthreads);
         return builder.run(ref, labels, std::move(markers));
     }
 
     template<class Id>
     BasicBuilder::PrebuiltIntersection build_reference(size_t mat_nrow, const Id* mat_id, const tatami::Matrix<double, int>* ref, const Id* ref_id, const int* labels, Markers markers) const {
         BasicBuilder builder;
-        builder.set_top(top).set_approximate(approximate);
+        builder
+            .set_top(top)
+            .set_approximate(approximate)
+            .set_num_threads(nthreads);
         return builder.run(mat_nrow, mat_id, ref, ref_id, labels, std::move(markers));
     }
 
     BasicScorer set_up_scorer() const {
         BasicScorer scorer;
-        scorer.set_quantile(quantile).set_fine_tune(fine_tune).set_fine_tune_threshold(fine_tune_threshold);
+        scorer
+            .set_quantile(quantile)
+            .set_fine_tune(fine_tune)
+            .set_fine_tune_threshold(fine_tune_threshold)
+            .set_num_threads(nthreads);
         return scorer;
     }
 
