@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['defaults_0',['Defaults',['../structsinglepp_1_1ChooseClassicMarkers_1_1Defaults.html',1,'singlepp::ChooseClassicMarkers::Defaults'],['../structsinglepp_1_1Classifier_1_1Defaults.html',1,'singlepp::Classifier::Defaults'],['../structsinglepp_1_1IntegratedBuilder_1_1Defaults.html',1,'singlepp::IntegratedBuilder::Defaults'],['../structsinglepp_1_1IntegratedScorer_1_1Defaults.html',1,'singlepp::IntegratedScorer::Defaults']]]
+  ['chooseclassicmarkers_0',['ChooseClassicMarkers',['../classsinglepp_1_1ChooseClassicMarkers.html',1,'singlepp']]],
+  ['classifier_1',['Classifier',['../classsinglepp_1_1Classifier.html',1,'singlepp']]]
 ];

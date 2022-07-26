@@ -1,5 +1,8 @@
 var searchData=
 [
-  ['best_0',['best',['../structsinglepp_1_1Classifier_1_1Results.html#ab745117d9d64129e1f07f564c556764a',1,'singlepp::Classifier::Results::best()'],['../structsinglepp_1_1IntegratedScorer_1_1Results.html#ae849163062f5af249b2096736384cef1',1,'singlepp::IntegratedScorer::Results::best()']]],
-  ['build_1',['build',['../classsinglepp_1_1Classifier.html#a29c0f5ce6b3636f9dec21758aa4008b7',1,'singlepp::Classifier::build(const tatami::Matrix&lt; double, int &gt; *ref, const int *labels, Markers markers)'],['../classsinglepp_1_1Classifier.html#acce2642df2b69740d675443a2c79ed6a',1,'singlepp::Classifier::build(size_t mat_nrow, const Id *mat_id, const tatami::Matrix&lt; double, int &gt; *ref, const Id *ref_id, const int *labels, Markers markers)']]]
+  ['basicbuilder_0',['BasicBuilder',['../classsinglepp_1_1BasicBuilder.html',1,'singlepp']]],
+  ['basicbuilder_2ehpp_1',['BasicBuilder.hpp',['../BasicBuilder_8hpp.html',1,'']]],
+  ['basicscorer_2',['BasicScorer',['../classsinglepp_1_1BasicScorer.html',1,'singlepp']]],
+  ['basicscorer_2ehpp_3',['BasicScorer.hpp',['../BasicScorer_8hpp.html',1,'']]],
+  ['best_4',['best',['../structsinglepp_1_1BasicScorer_1_1Results.html#ad7203ebf38cf9dc1b42a57641c8427e3',1,'singlepp::BasicScorer::Results::best()'],['../structsinglepp_1_1IntegratedScorer_1_1Results.html#ae849163062f5af249b2096736384cef1',1,'singlepp::IntegratedScorer::Results::best()']]]
 ];

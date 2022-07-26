@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['chooseclassicmarkers_0',['ChooseClassicMarkers',['../classsinglepp_1_1ChooseClassicMarkers.html',1,'singlepp']]],
-  ['classifier_1',['Classifier',['../classsinglepp_1_1Classifier.html',1,'singlepp']]]
+  ['basicbuilder_0',['BasicBuilder',['../classsinglepp_1_1BasicBuilder.html',1,'singlepp']]],
+  ['basicscorer_1',['BasicScorer',['../classsinglepp_1_1BasicScorer.html',1,'singlepp']]]
 ];

@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['chooseclassicmarkers_2ehpp_0',['ChooseClassicMarkers.hpp',['../ChooseClassicMarkers_8hpp.html',1,'']]],
-  ['classifier_2ehpp_1',['Classifier.hpp',['../Classifier_8hpp.html',1,'']]]
+  ['basicbuilder_2ehpp_0',['BasicBuilder.hpp',['../BasicBuilder_8hpp.html',1,'']]],
+  ['basicscorer_2ehpp_1',['BasicScorer.hpp',['../BasicScorer_8hpp.html',1,'']]]
 ];

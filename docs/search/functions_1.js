@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['build_0',['build',['../classsinglepp_1_1Classifier.html#a29c0f5ce6b3636f9dec21758aa4008b7',1,'singlepp::Classifier::build(const tatami::Matrix&lt; double, int &gt; *ref, const int *labels, Markers markers)'],['../classsinglepp_1_1Classifier.html#acce2642df2b69740d675443a2c79ed6a',1,'singlepp::Classifier::build(size_t mat_nrow, const Id *mat_id, const tatami::Matrix&lt; double, int &gt; *ref, const Id *ref_id, const int *labels, Markers markers)']]]
+  ['finish_0',['finish',['../classsinglepp_1_1IntegratedBuilder.html#a980f86775bcb3de1f7d9ed24a1f3458b',1,'singlepp::IntegratedBuilder']]]
 ];
