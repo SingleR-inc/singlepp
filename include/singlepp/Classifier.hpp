@@ -207,7 +207,7 @@ public:
      *
      * @return `best`, `scores` and `delta` are filled with their output values.
      */
-    void run(const tatami::Matrix<double, int>* mat, const tatami::Matrix<double, int>* ref, const int* labels, Markers markers, int* best, std::vector<double*>& scores, double* delta) {
+    void run(const tatami::Matrix<double, int>* mat, const tatami::Matrix<double, int>* ref, const int* labels, Markers markers, int* best, std::vector<double*>& scores, double* delta) const {
         auto prebuilt = build_reference(ref, labels, std::move(markers));
         set_up_scorer().run(mat, prebuilt, best, scores, delta);
         return;
@@ -223,7 +223,7 @@ public:
      *
      * @return A `BasicScorer::Results` object containing the assigned labels and scores.
      */
-    BasicScorer::Results run(const tatami::Matrix<double, int>* mat, const tatami::Matrix<double, int>* ref, const int* labels, Markers markers) {
+    BasicScorer::Results run(const tatami::Matrix<double, int>* mat, const tatami::Matrix<double, int>* ref, const int* labels, Markers markers) const {
         auto prebuilt = build_reference(ref, labels, std::move(markers));
         return set_up_scorer().run(mat, prebuilt);
     }
@@ -269,7 +269,7 @@ public:
         int* best,
         std::vector<double*>& scores,
         double* delta) 
-    {
+    const {
         auto built = build_reference(mat->nrow(), mat_id, ref, ref_id, labels, std::move(markers));
         set_up_scorer().run(mat, built, best, scores, delta);
         return;
@@ -292,7 +292,7 @@ public:
      * @return A `BasicScorer::Results` object containing the assigned labels and scores.
      */ 
     template<class Id>
-    BasicScorer::Results run(const tatami::Matrix<double, int>* mat, const Id* mat_id, const tatami::Matrix<double, int>* ref, const Id* ref_id, const int* labels, Markers markers) {
+    BasicScorer::Results run(const tatami::Matrix<double, int>* mat, const Id* mat_id, const tatami::Matrix<double, int>* ref, const Id* ref_id, const int* labels, Markers markers) const {
         auto built = build_reference(mat->nrow(), mat_id, ref, ref_id, labels, std::move(markers));
         return set_up_scorer().run(mat, built);
     }

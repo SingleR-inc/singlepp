@@ -138,7 +138,7 @@ private:
         return;
     }
 
-    void prepare_mapping(
+    static void prepare_mapping(
         const IntegratedReference& ref, 
         const std::vector<int>& universe,
         std::unordered_map<int, int>& mapping)
@@ -195,7 +195,7 @@ public:
         int* best,
         std::vector<double*>& scores,
         double* delta)
-    {
+    const {
         /**
          * @cond
          */
@@ -350,7 +350,7 @@ public:
      *
      * @return A `Results` object containing the assigned labels and scores.
      */
-    Results run(const tatami::Matrix<double, int>* mat, const std::vector<const int*>& assigned, const std::vector<IntegratedReference>& references) {
+    Results run(const tatami::Matrix<double, int>* mat, const std::vector<const int*>& assigned, const std::vector<IntegratedReference>& references) const {
         Results output(mat->ncol(), references.size());
         auto scores = output.scores_to_pointers();
         run(mat, assigned, references, output.best.data(), scores, output.delta.data());

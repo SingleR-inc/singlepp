@@ -123,7 +123,7 @@ public:
      *
      * @return `best`, `scores` and `delta` are filled with their output values.
      */
-    void run(const tatami::Matrix<double, int>* mat, const BasicBuilder::Prebuilt& built, const int* mat_subset, int* best, std::vector<double*>& scores, double* delta) {
+    void run(const tatami::Matrix<double, int>* mat, const BasicBuilder::Prebuilt& built, const int* mat_subset, int* best, std::vector<double*>& scores, double* delta) const {
         annotate_cells_simple(
             mat, 
             built.subset.size(), 
@@ -156,7 +156,7 @@ public:
      *
      * @return `best`, `scores` and `delta` are filled with their output values.
      */
-    void run(const tatami::Matrix<double, int>* mat, const BasicBuilder::Prebuilt& built, int* best, std::vector<double*>& scores, double* delta) {
+    void run(const tatami::Matrix<double, int>* mat, const BasicBuilder::Prebuilt& built, int* best, std::vector<double*>& scores, double* delta) const {
         run(mat, built, built.subset.data(), best, scores, delta);
         return;
     }
@@ -209,7 +209,7 @@ public:
      *
      * @return A `Results` object containing the assigned labels and scores.
      */
-    Results run(const tatami::Matrix<double, int>* mat, const BasicBuilder::Prebuilt& built) {
+    Results run(const tatami::Matrix<double, int>* mat, const BasicBuilder::Prebuilt& built) const {
         size_t nlabels = built.references.size();
         Results output(mat->ncol(), nlabels);
         auto scores = output.scores_to_pointers();
@@ -227,7 +227,7 @@ public:
      *
      * @return A `Results` object containing the assigned labels and scores.
      */
-    Results run(const tatami::Matrix<double, int>* mat, const BasicBuilder::Prebuilt& built, const int* mat_subset) {
+    Results run(const tatami::Matrix<double, int>* mat, const BasicBuilder::Prebuilt& built, const int* mat_subset) const {
         size_t nlabels = built.references.size();
         Results output(mat->ncol(), nlabels);
         auto scores = output.scores_to_pointers();
@@ -256,7 +256,7 @@ public:
         int* best,
         std::vector<double*>& scores,
         double* delta) 
-    {
+    const {
         annotate_cells_simple(mat, 
             built.mat_subset.size(), 
             built.mat_subset.data(), 
@@ -279,7 +279,7 @@ public:
      *
      * @return A `Results` object containing the assigned labels and scores.
      */ 
-    Results run(const tatami::Matrix<double, int>* mat, const BasicBuilder::PrebuiltIntersection& built) {
+    Results run(const tatami::Matrix<double, int>* mat, const BasicBuilder::PrebuiltIntersection& built) const {
         size_t nlabels = built.references.size();
         Results output(mat->ncol(), nlabels);
         auto scores = output.scores_to_pointers();

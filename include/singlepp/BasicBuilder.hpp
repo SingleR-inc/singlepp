@@ -82,7 +82,7 @@ public:
     }
 
 private:
-    std::vector<Reference> build_internal(const tatami::Matrix<double, int>* ref, const int* labels, const std::vector<int>& subset) {
+    std::vector<Reference> build_internal(const tatami::Matrix<double, int>* ref, const int* labels, const std::vector<int>& subset) const {
         std::vector<Reference> subref;
         if (approximate) {
             subref = build_indices(
@@ -171,7 +171,7 @@ public:
      *
      * @return A `Prebuilt` instance that can be used in `run()` for annotation of a test dataset.
      */
-    Prebuilt run(const tatami::Matrix<double, int>* ref, const int* labels, Markers markers) {
+    Prebuilt run(const tatami::Matrix<double, int>* ref, const int* labels, Markers markers) const {
         auto subset = subset_markers(markers, top);
         auto subref = build_internal(ref, labels, subset);
         return Prebuilt(std::move(markers), std::move(subset), std::move(subref));
@@ -253,7 +253,7 @@ public:
         const Id* ref_id, 
         const int* labels,
         Markers markers) 
-    {
+    const {
         auto intersection = intersect_features(mat_nrow, mat_id, ref->nrow(), ref_id);
         subset_markers(intersection, markers, top);
         auto pairs = unzip(intersection);
