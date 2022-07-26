@@ -44,10 +44,11 @@ Rcpp::List integrate_singlepp(
     for (size_t r = 0; r < nrefs; ++r) {
         builder.add(rematrices[r].get(), relabels[r].data(), setup_markers(markers[r]));
     }
-    auto finished = builder.finish();
+    auto integrated = builder.finish();
 
     // Scoring.
-    finished.set_quantile(quantile);
+    singlepp::IntegratedScorer scorer;
+    scorer.set_quantile(quantile);
 
     auto parsed_mat = tatami::DenseColumnMatrix<double, int>(mat.nrow(), mat.ncol(), std::vector<double>(mat.begin(), mat.end()));
     std::vector<const int*> resptrs;
@@ -65,9 +66,10 @@ Rcpp::List integrate_singlepp(
         score_ptrs[r] = static_cast<double*>(output_scores.begin()) + r * mNC;
     }
 
-    finished.run(
+    scorer.run(
         &parsed_mat,
         resptrs,
+        integrated,
         static_cast<int*>(output_best.begin()),
         score_ptrs,
         static_cast<double*>(output_delta.begin())
