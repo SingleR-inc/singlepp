@@ -5,6 +5,7 @@
 #include "scaled_ranks.hpp"
 #include "tatami/tatami.hpp"
 #include "Classifier.hpp"
+#include "IntegratedBuilder.hpp"
 
 #include <vector>
 #include <unordered_map>
@@ -17,40 +18,6 @@
  */
 
 namespace singlepp {
-
-/**
- * @brief Single reference dataset prepared for integrated classification.
- */
-struct IntegratedReference {
-    /**
-     * @return Number of labels in this reference.
-     */
-    size_t num_labels() const {
-        return markers.size();
-    }
-
-    /**
-     * @return Number of profiles in this reference.
-     */
-    size_t num_profiles() const {
-        size_t n = 0;
-        for (const auto& ref : ranked) {
-            n += ref.size();
-        }
-        return n;
-    }
-
-    /**
-     * @cond
-     */
-    bool check_availability = false;
-    std::unordered_set<int> available;
-    std::vector<std::vector<int> > markers;
-    std::vector<std::vector<RankedVector<int, int> > > ranked;
-    /**
-     * @endcond
-     */
-};
 
 /**
  * @brief Integrate classifications from multiple references.
@@ -67,7 +34,8 @@ struct IntegratedReference {
  * We then compute the correlation-based score between the test cell's expression profile and its predicted label from each reference, using that common set of genes.
  * The label with the highest score is considered the best representative across all references.
  *
- * This strategy is similar to `Classifier` without fine-tuning, except that we are choosing between the best labels from each reference rather than all labels from one reference.
+ * This strategy is similar to using `Classifier::run()` without fine-tuning, 
+ * except that we are choosing between the best labels from all references rather than between all labels from one reference.
  * The main idea is to create a common feature set so that the correlations can be reasonably compared across references.
  * Note that differences in the feature sets across references are tolerated by simply ignoring missing genes when computing the correlations.
  * This reduces the comparability of the scores as the effective feature set will vary a little (or a lot, depending) across references;
@@ -88,6 +56,11 @@ public:
          * See `set_quantile()` for details.
          */
         static constexpr double quantile = Classifier::Defaults::quantile;
+
+        /**
+         * See `set_num_threads()` for details.
+         */
+        static constexpr int num_threads = 1;
     };
 
     /**
@@ -108,40 +81,26 @@ public:
      *
      * @return A reference to this `IntegratedScorer` object.
      */
-    IntegratedScorer& set_num_threads(int n) {
+    IntegratedScorer& set_num_threads(int n = Defaults::num_threads) {
         nthreads = n;
         return *this;
     }
 
 private:
     double quantile = Defaults::quantile;
-    int nthreads;
-
-public:
-    /**
-     * @cond
-     */
-    IntegratedScorer(std::vector<IntegratedReference> r, int n) : references(std::move(r)), nthreads(n) {}
-    /**
-     * @endcond
-     */
-
-    /**
-     * Vector of integrated references, as constructed by `IntegratedBuilder::finish()`.
-     * Each entry corresponds to a single reference added by `IntegratedBuilder::add()`, in the supplied order.
-     */
-    std::vector<IntegratedReference> references;
+    int nthreads = Defaults::num_threads;
 
 private:
     /* Here, we've split out some of the functions for easier reading.
      * Otherwise everything would land in a single mega-function.
      */
 
-    void build_universe(int cell,
+    static void build_universe(int cell,
         const std::vector<const int*>& assigned,
+        const std::vector<IntegratedReference>& references,
         std::unordered_set<int>& uset, 
         std::vector<int>& uvec) 
-    const {
+    {
         uset.clear();
         for (size_t r = 0; r < references.size(); ++r) {
             auto best = assigned[r][cell];
@@ -216,6 +175,7 @@ public:
      * @param[in] assigned Vector of pointers of length equal to the number of references.
      * Each pointer should point to an array of length equal to the number of columns in `mat`,
      * containing the assigned label for each column in each reference.
+     * @param references Vector of integrated references produced by `IntegratedBuilder::finish()`.
      * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
      * This is filled with the index of the reference with the best label for each cell.
      * @param[out] scores Vector of pointers of length equal to the number of references.
@@ -231,6 +191,7 @@ public:
     void run(
         const tatami::Matrix<double, int>* mat,
         const std::vector<const int*>& assigned,
+        const std::vector<IntegratedReference>& references,
         int* best,
         std::vector<double*>& scores,
         double* delta)
@@ -271,7 +232,7 @@ public:
             for (size_t i = start; i < end; ++i) {
 #endif
 
-                build_universe(i, assigned, universe_tmp, universe);
+                build_universe(i, assigned, references, universe_tmp, universe);
                 fill_ranks(mat, universe, i, buffer, wrk.get(), data_ranked);
 
                 // Scanning through each reference and computing the score for the best group.
@@ -385,13 +346,14 @@ public:
      * @param[in] assigned Vector of pointers of length equal to the number of references.
      * Each pointer should point to an array of length equal to the number of columns in `mat`,
      * containing the assigned label for each column in each reference.
+     * @param references Vector of integrated references produced by `IntegratedBuilder::finish()`.
      *
      * @return A `Results` object containing the assigned labels and scores.
      */
-    Results run(const tatami::Matrix<double, int>* mat, const std::vector<const int*>& assigned) {
+    Results run(const tatami::Matrix<double, int>* mat, const std::vector<const int*>& assigned, const std::vector<IntegratedReference>& references) {
         Results output(mat->ncol(), references.size());
         auto scores = output.scores_to_pointers();
-        run(mat, assigned, output.best.data(), scores, output.delta.data());
+        run(mat, assigned, references, output.best.data(), scores, output.delta.data());
         return output;
     }
 };

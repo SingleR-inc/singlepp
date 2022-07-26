@@ -2,8 +2,7 @@
 #define SINGLEPP_INTEGRATED_BUILDER_HPP
 
 #include "scaled_ranks.hpp"
-#include "Classifier.hpp"
-#include "IntegratedScorer.hpp"
+#include "BasicBuilder.hpp"
 
 #include <vector>
 #include <unordered_set>
@@ -19,16 +18,50 @@
 namespace singlepp {
 
 /**
+ * @brief Single reference dataset prepared for integrated classification.
+ */
+struct IntegratedReference {
+    /**
+     * @return Number of labels in this reference.
+     */
+    size_t num_labels() const {
+        return markers.size();
+    }
+
+    /**
+     * @return Number of profiles in this reference.
+     */
+    size_t num_profiles() const {
+        size_t n = 0;
+        for (const auto& ref : ranked) {
+            n += ref.size();
+        }
+        return n;
+    }
+
+    /**
+     * @cond
+     */
+    bool check_availability = false;
+    std::unordered_set<int> available;
+    std::vector<std::vector<int> > markers;
+    std::vector<std::vector<RankedVector<int, int> > > ranked;
+    /**
+     * @endcond
+     */
+};
+
+/**
  * @brief Factory to prepare multiple references for integrated classification.
  *
- * For each reference dataset, we expect a `Classifier::Prebuilt` or `Classifier::PrebuiltIntersection` object,
+ * For each reference dataset, we expect a `BasicBuilder::Prebuilt` or `BasicBuilder::PrebuiltIntersection` object,
  * as well as the original data structures (matrix, labels, etc.) used to construct that object.
  * These values are passed into `add()` to register that dataset, which can be repeated multiple times for different references.
- * Finally, calling `finish()` will return an `IntegratedScorer` object that can be applied to a target matrix for classification.
+ * Finally, calling `finish()` will return a vector of integrated references that can be used in `IntegratedScorer::run()`.
  * 
  * The preparation process mostly involves checking that the gene indices are consistent across references.
  * This is especially true when each reference contains a different set of features that must be intersected with the features in the test dataset.
- * See the documentation for `IntegratedScorer` for more details about what the integration process entails.
+ * See the documentation for `IntegratedScorer` for more details on the classification based on the integrated references.
  */
 class IntegratedBuilder {
 private:
@@ -213,13 +246,13 @@ public:
      * The number and identity of features should be identical to the test dataset to be classified in `IntegratedScorer`.
      * @param[in] labels Pointer to an array of label assignments.
      * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
-     * @param built The built reference created by running `Classifier::build()` on `ref` and `labels`.
+     * @param built The built reference created by running `BasicBuilder::run()` on `ref` and `labels`.
      *
      * @return The reference dataset is registered for later use in `finish()`.
      *
      * `ref` and `labels` are expected to remain valid until `finish()` is called.
      */
-    void add(const tatami::Matrix<double, int>* ref, const int* labels, const Classifier::Prebuilt& built) {
+    void add(const tatami::Matrix<double, int>* ref, const int* labels, const BasicBuilder::Prebuilt& built) {
         add_internal(ref, labels, built.markers, built.subset);
         return;
     }
@@ -236,7 +269,7 @@ public:
      * This should contain a unique identifier for each row in `ref`, and should be comparable to `mat_id`.
      * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
      * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
-     * @param built The built reference created by running `Classifier::build()` on all preceding arguments.
+     * @param built The built reference created by running `BasicBuilder::run()` on all preceding arguments.
      *
      * @return The reference dataset is registered for later use in `finish()`.
      *
@@ -249,7 +282,7 @@ public:
         const tatami::Matrix<double, int>* ref, 
         const Id* ref_id,
         const int* labels, 
-        const Classifier::PrebuiltIntersection& built) 
+        const BasicBuilder::PrebuiltIntersection& built) 
     {
         add_internal(ref, labels, built.markers, built.mat_subset);
         references.back().check_availability = true;
@@ -275,7 +308,7 @@ public:
      * This should contain a unique identifier for each row in `ref`, and should be comparable to `mat_id`.
      * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
      * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
-     * @param built The built reference created by running `Classifier::build()` on `ref` and `labels`.
+     * @param built The built reference created by running `BasicBuilder::run()` on `ref` and `labels`.
      *
      * @return The reference dataset is registered for later use in `finish()`.
      *
@@ -288,19 +321,20 @@ public:
         const tatami::Matrix<double, int>* ref, 
         const Id* ref_id,
         const int* labels, 
-        const Classifier::Prebuilt& built) 
+        const BasicBuilder::Prebuilt& built) 
     {
         add_internal(mat_nrow, mat_id, ref, ref_id, labels, built.markers, built.subset);
     }
 
 public:
     /**
-     * @return An `IntegratedScorer` instance. 
+     * @return A vector of `IntegratedReference` objects.
+     * Each object corresponds to the reference used in an `add()` call, in the same order.
      *
      * This function should only be called once, after all reference datasets have been registered with `add()`.
      * Any further invocations of this function will not be valid.
      */
-    IntegratedScorer finish() {
+    std::vector<IntegratedReference> finish() {
         /**
          * @cond
          */
@@ -452,7 +486,7 @@ public:
          * @endcond
          */
 
-        return IntegratedScorer(std::move(references), nthreads);
+        return std::move(references);
     }
 };
 

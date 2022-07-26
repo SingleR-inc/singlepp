@@ -791,6 +791,8 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = ../include/singlepp/Classifier.hpp \
+                         ../include/singlepp/BasicBuilder.hpp \
+                         ../include/singlepp/BasicScorer.hpp \
                          ../include/singlepp/Markers.hpp \
                          ../include/singlepp/IntegratedBuilder.hpp \
                          ../include/singlepp/IntegratedScorer.hpp \

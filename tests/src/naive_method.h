@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <algorithm>
-#include "singlepp/Classifier.hpp"
+#include "singlepp/BasicScorer.hpp"
 #include "fill_ranks.h"
 
 template<class Labels>
@@ -28,7 +28,7 @@ double naive_score(const std::vector<double>& scaled_test, const std::vector<int
 
 template<class Labels, class Matrix, class RefMatrix>
 auto naive_method(size_t nlabels, const Labels& labels, const RefMatrix& refs, const Matrix& mat, const std::vector<int>& subset, double quantile) {
-    singlepp::Classifier::Results output(mat->ncol(), nlabels);
+    singlepp::BasicScorer::Results output(mat->ncol(), nlabels);
 
     auto by_labels = split_by_label(nlabels, labels);
 

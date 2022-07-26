@@ -84,7 +84,9 @@ TEST_P(ClassifierSimpleTest, AlreadySubset) {
     // Comparing to running on a prebuilt with a provided subset vector. We
     // make it a little complicated (hence the delayed subset and reversal)
     // just to check that all the indexing is correct.
-    auto built = runner.build(refs.get(), labels.data(), markers);
+    singlepp::BasicBuilder builder;
+    builder.set_top(top);
+    auto built = builder.run(refs.get(), labels.data(), markers);
 
     auto copy = built.subset;
     std::reverse(copy.begin(), copy.end());
@@ -92,7 +94,10 @@ TEST_P(ClassifierSimpleTest, AlreadySubset) {
 
     std::vector<int> index(copy.size());
     std::iota(index.rbegin(), index.rend(), 0);
-    auto output2 = built.run(sub.get(), index.data());
+
+    singlepp::BasicScorer scorer;
+    scorer.set_fine_tune(false).set_quantile(quantile);
+    auto output2 = scorer.run(sub.get(), built, index.data());
 
     // Should get the same result.
     EXPECT_EQ(output.best, output2.best);
@@ -153,8 +158,14 @@ TEST_P(ClassifierIntersectTest, Intersect) {
     auto result = runner.run(mat.get(), left.data(), refs.get(), right.data(), labels.data(), markers);
 
     // Computing the result via the build method.
-    auto build0 = runner.build(mat->nrow(), left.data(), refs.get(), right.data(), labels.data(), markers);
-    auto result0 = build0.run(mat.get());
+    singlepp::BasicBuilder builder;
+    builder.set_top(top);
+    auto build0 = builder.run(mat->nrow(), left.data(), refs.get(), right.data(), labels.data(), markers);
+
+    singlepp::BasicScorer scorer;
+    scorer.set_fine_tune(false).set_quantile(quantile);
+    auto result0 = scorer.run(mat.get(), build0);
+
     EXPECT_EQ(result0.best, result.best);
     EXPECT_EQ(result0.delta, result.delta);
     EXPECT_EQ(build0.num_labels(), nlabels);
@@ -243,12 +254,13 @@ TEST(ClassifierTest, NoShared) {
     std::iota(left.begin(), left.end(), 0);
     std::iota(right.begin(), right.end(), ngenes);
 
-    singlepp::Classifier runner;
-    auto built = runner.build(ngenes, left.data(), refs.get(), right.data(), labels.data(), markers);
+    singlepp::BasicBuilder builder;
+    auto built = builder.run(ngenes, left.data(), refs.get(), right.data(), labels.data(), markers);
     EXPECT_EQ(built.mat_subset.size(), 0);
     EXPECT_EQ(built.ref_subset.size(), 0);
 
-    auto output = built.run(mat.get());
+    singlepp::BasicScorer scorer;
+    auto output = scorer.run(mat.get(), built);
     for (const auto& curscore : output.scores) {
         for (auto s : curscore) {
             EXPECT_EQ(s, 1); // distance of zero when there are no genes ==> correlation of 1.

@@ -43,7 +43,7 @@ std::unordered_set<int> create_universe(size_t cell, const std::vector<Prebuilt>
         const auto& best_markers = pre.markers[chosen[r][cell]];
         for (const auto& x : best_markers) {
             for (auto y : x) {
-                if constexpr(std::is_same<Prebuilt, singlepp::Classifier::Prebuilt>::value) {
+                if constexpr(std::is_same<Prebuilt, singlepp::BasicBuilder::Prebuilt>::value) {
                     tmp.insert(pre.subset[y]);
                 } else {
                     tmp.insert(pre.mat_subset[y]);
@@ -67,13 +67,13 @@ TEST_P(IntegratedScorerTest, Basic) {
     int ntop = std::get<0>(param);
     double quantile = std::get<1>(param);
 
-    singlepp::Classifier runner;
-    runner.set_top(ntop);
-    singlepp::IntegratedBuilder builder;
+    singlepp::BasicBuilder builder;
+    builder.set_top(ntop);
+    singlepp::IntegratedBuilder ibuilder;
 
     std::vector<std::shared_ptr<tatami::Matrix<double, int> > > matrices;
     std::vector<std::vector<int> > labels;
-    std::vector<singlepp::Classifier::Prebuilt> prebuilts;
+    std::vector<singlepp::BasicBuilder::Prebuilt> prebuilts;
 
     for (size_t r = 0; r < nrefs; ++r) {
         size_t seed = r * 321;
@@ -83,13 +83,13 @@ TEST_P(IntegratedScorerTest, Basic) {
         labels.push_back(spawn_labels(nsamples, nlabels, seed * 2));
 
         auto markers = mock_markers(nlabels, 50, ngenes, seed * 3);
-        auto pre = runner.build(matrices.back().get(), labels.back().data(), std::move(markers));
+        auto pre = builder.run(matrices.back().get(), labels.back().data(), std::move(markers));
         prebuilts.push_back(std::move(pre));
 
-        builder.add(matrices.back().get(), labels.back().data(), prebuilts.back());
+        ibuilder.add(matrices.back().get(), labels.back().data(), prebuilts.back());
     }
 
-    auto integrated = builder.finish();
+    auto integrated = ibuilder.finish();
 
     // Mocking up some of the best choices.
     auto chosen = mock_best_choices(ntest, prebuilts, 13579);
@@ -99,8 +99,9 @@ TEST_P(IntegratedScorerTest, Basic) {
     }
 
     // Comparing the IntegratedScorer output to a reference calculation.
-    integrated.set_quantile(quantile);
-    auto output = integrated.run(test.get(), chosen_ptrs);
+    singlepp::IntegratedScorer scorer;
+    scorer.set_quantile(quantile);
+    auto output = scorer.run(test.get(), chosen_ptrs, integrated);
     auto by_labels = split_by_labels(labels);
 
     for (size_t t = 0; t < ntest; ++t) {
@@ -126,8 +127,8 @@ TEST_P(IntegratedScorerTest, Basic) {
     }
 
     // Same results in parallel.
-    integrated.set_num_threads(3);
-    auto poutput = integrated.run(test.get(), chosen_ptrs);
+    scorer.set_num_threads(3);
+    auto poutput = scorer.run(test.get(), chosen_ptrs, integrated);
     EXPECT_EQ(output.best, poutput.best);
     EXPECT_EQ(output.delta, poutput.delta);
     for (size_t r = 0; r < nrefs; ++r) {
@@ -150,7 +151,7 @@ TEST_P(IntegratedScorerTest, Intersected) {
 
     std::vector<std::shared_ptr<tatami::Matrix<double, int> > > matrices;
     std::vector<std::vector<int> > labels;
-    std::vector<singlepp::Classifier::PrebuiltIntersection> prebuilts;
+    std::vector<singlepp::BasicBuilder::PrebuiltIntersection> prebuilts;
 
     std::vector<int> ids(ngenes);
     for (size_t g = 0; g < ngenes; ++g) {
@@ -158,9 +159,9 @@ TEST_P(IntegratedScorerTest, Intersected) {
     }
     std::vector<std::vector<int> > kept(nrefs);
 
-    singlepp::Classifier runner;
-    runner.set_top(ntop);
-    singlepp::IntegratedBuilder builder;
+    singlepp::BasicBuilder builder;
+    builder.set_top(ntop);
+    singlepp::IntegratedBuilder ibuilder;
 
     for (size_t r = 0; r < nrefs; ++r) {
         size_t seed = r * 10;
@@ -181,13 +182,13 @@ TEST_P(IntegratedScorerTest, Intersected) {
 
         // Adding each one to the list.
         auto markers = mock_markers(nlabels, 50, keep.size(), seed * 3);
-        auto pre = runner.build(ngenes, ids.data(), matrices.back().get(), keep.data(), labels.back().data(), markers);
+        auto pre = builder.run(ngenes, ids.data(), matrices.back().get(), keep.data(), labels.back().data(), markers);
         prebuilts.push_back(std::move(pre));
 
-        builder.add(ngenes, ids.data(), matrices.back().get(), keep.data(), labels.back().data(), prebuilts.back());
+        ibuilder.add(ngenes, ids.data(), matrices.back().get(), keep.data(), labels.back().data(), prebuilts.back());
     }
 
-    auto integrated = builder.finish();
+    auto integrated = ibuilder.finish();
 
     // Mocking up some of the best choices.
     auto chosen = mock_best_choices(ntest, prebuilts, 2468);
@@ -197,8 +198,9 @@ TEST_P(IntegratedScorerTest, Intersected) {
     }
 
     // Comparing the IntegratedScorer to a reference calculation.
-    integrated.set_quantile(quantile);
-    auto output = integrated.run(test.get(), chosen_ptrs);
+    singlepp::IntegratedScorer scorer;
+    scorer.set_quantile(quantile);
+    auto output = scorer.run(test.get(), chosen_ptrs, integrated);
     auto by_labels = split_by_labels(labels);
 
     std::vector<std::unordered_map<int, int> > reverser(nrefs);
