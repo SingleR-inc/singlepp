@@ -54,6 +54,15 @@ std::unordered_set<int> create_universe(size_t cell, const std::vector<Prebuilt>
     return tmp;
 }
 
+std::vector<double> quick_scaled_ranks(const std::vector<double>& col, const std::vector<int>& universe) {
+    std::vector<double> copy;
+    copy.reserve(universe.size());
+    for (auto u : universe) {
+        copy.push_back(col[u]);
+    }
+    return quick_scaled_ranks(copy);
+}
+
 TEST_P(IntegratedScorerTest, Basic) {
     // Mocking up the test and individual references, and creating the
     // integrated set of references with IntegratedBuilder.
@@ -103,14 +112,16 @@ TEST_P(IntegratedScorerTest, Basic) {
     scorer.set_quantile(quantile);
     auto output = scorer.run(test.get(), chosen_ptrs, integrated);
     auto by_labels = split_by_labels(labels);
+    auto wrk = test->dense_column();
 
     for (size_t t = 0; t < ntest; ++t) {
         auto my_universe = create_universe(t, prebuilts, chosen);
         std::vector<int> universe(my_universe.begin(), my_universe.end());
         std::sort(universe.begin(), universe.end());
 
-        auto col = test->column(t);
+        auto col = wrk->fetch(t);
         auto scaled = quick_scaled_ranks(col, universe);
+
         std::vector<double> all_scores;
         for (size_t r = 0; r < nrefs; ++r) {
             double score = naive_score(scaled, by_labels[r][chosen[r][t]], matrices[r].get(), universe, quantile);
@@ -211,6 +222,7 @@ TEST_P(IntegratedScorerTest, Intersected) {
         }
     }
 
+    auto wrk = test->dense_column();
     for (size_t t = 0; t < ntest; ++t) {
         auto my_universe = create_universe(t, prebuilts, chosen);
 
@@ -225,8 +237,9 @@ TEST_P(IntegratedScorerTest, Intersected) {
                 }
             }
 
-            auto col = test->column(t);
+            auto col = wrk->fetch(t);
             auto scaled = quick_scaled_ranks(col, universe_test);
+
             double score = naive_score(scaled, by_labels[r][chosen[r][t]], matrices[r].get(), universe_ref, quantile);
             EXPECT_FLOAT_EQ(score, output.scores[r][t]);
             all_scores.push_back(score);

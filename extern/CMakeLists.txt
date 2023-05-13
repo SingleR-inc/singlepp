@@ -11,7 +11,7 @@ FetchContent_MakeAvailable(knncolle)
 FetchContent_Declare(
   tatami
   GIT_REPOSITORY https://github.com/LTLA/tatami
-  GIT_TAG 69339622de87e406b6a6dca0c5ffd22daae42f67
+  GIT_TAG e2097fcaa877b6fa8b642a73deda8daaffadc209
 )
 
 FetchContent_MakeAvailable(tatami)
@@ -19,7 +19,7 @@ FetchContent_MakeAvailable(tatami)
 FetchContent_Declare(
   byteme
   GIT_REPOSITORY https://github.com/LTLA/byteme
-  GIT_TAG f9ed015693c45424aa2835d79fc8e58128a24c93
+  GIT_TAG c638112d307eb873ec0c719046cf202d061dc4d0
 )
 
 FetchContent_MakeAvailable(byteme)

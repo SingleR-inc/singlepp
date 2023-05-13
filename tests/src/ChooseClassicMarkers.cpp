@@ -24,13 +24,15 @@ TEST_P(ChooseClassicMarkersTest, Simple) {
     singlepp::ChooseClassicMarkers mrk;
     mrk.set_number(requested);
     auto output = mrk.run(mat.get(), groupings.data());
+    auto lwrk = mat->dense_column();
+    auto rwrk = mat->dense_column();
 
     // Comparing against a naive implementation.
     EXPECT_EQ(output.size(), nlabels);
     for (size_t l = 0; l < nlabels; ++l) {
         const auto& current = output[l];
         EXPECT_EQ(current.size(), nlabels);
-        auto left = mat->column(reverse ? nlabels - l - 1 : l);
+        auto left = lwrk->fetch(reverse ? nlabels - l - 1 : l);
 
         for (size_t l2 = 0; l2 < nlabels; ++l2) {
             const auto& markers = current[l2];
@@ -43,7 +45,7 @@ TEST_P(ChooseClassicMarkersTest, Simple) {
                 EXPECT_TRUE(nmarkers <= requested);
             }
 
-            auto right = mat->column(reverse ? nlabels - l2 - 1 : l2);
+            auto right = rwrk->fetch(reverse ? nlabels - l2 - 1 : l2);
             std::vector<std::pair<double, int> > sorted;
             for (size_t i = 0; i < right.size(); ++i) {
                 sorted.emplace_back(right[i] - left[i], i);
@@ -96,10 +98,13 @@ TEST_P(ChooseClassicMarkersTest, Blocked) {
 
     // Summing the two matrices together.
     std::vector<double> combined(ngenes * nlabels);
+    auto wrk1 = mat1->dense_column();
+    auto wrk2 = mat2->dense_column();
     auto cIt = combined.begin();
+
     for (size_t l = 0; l < nlabels; ++l) {
-        auto col1 = mat1->column(l);
-        auto col2 = mat2->column(l);
+        auto col1 = wrk1->fetch(l);
+        auto col2 = wrk2->fetch(l);
         for (size_t g = 0; g < ngenes; ++g, ++cIt) {
             *cIt = col1[g] + col2[g];
         }

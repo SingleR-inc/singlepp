@@ -200,8 +200,9 @@ class LoadRankingsTest : public ::testing::TestWithParam<int> {};
 
 std::vector<int> extract_ranks(const singlepp::RankMatrix<int, int>& mat) {
     std::vector<int> copy(mat.nrow() * mat.ncol());
+    auto wrk = mat.dense_column();
     for (size_t i = 0; i < mat.ncol(); ++i) {
-        mat.column_copy(i, copy.data() + i * mat.nrow());
+        wrk->fetch_copy(i, copy.data() + i * mat.nrow());
     }
     return copy;
 }

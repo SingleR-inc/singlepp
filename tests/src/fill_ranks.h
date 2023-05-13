@@ -3,27 +3,23 @@
 
 #include <numeric>
 #include <vector>
+#include <algorithm>
 #include "singlepp/scaled_ranks.hpp"
-
-// Testing overloads.
-template<typename Stat, typename Index = int>
-singlepp::RankedVector<Stat, Index> fill_ranks(const std::vector<int>& subset, const Stat* ptr, int offset = 0) {
-    singlepp::RankedVector<Stat, Index> vec(subset.size());
-    singlepp::fill_ranks(subset, ptr, vec, offset);
-    return vec;
-}
 
 template<typename Stat, typename Index = int>
 singlepp::RankedVector<Stat, Index> fill_ranks(size_t n, const Stat* ptr) {
-    std::vector<int> everything(n);
-    std::iota(everything.begin(), everything.end(), 0);
-    return fill_ranks(everything, ptr);
+    singlepp::RankedVector<Stat, Index> vec(n);
+    for (size_t s = 0; s < n; ++s, ++ptr) {
+        vec[s].first = *ptr;
+        vec[s].second = s;
+    }
+    std::sort(vec.begin(), vec.end());
+    return vec;
 }
 
-inline std::vector<double> quick_scaled_ranks(const std::vector<double>& values, const std::vector<int>& subset) {
-    singlepp::RankedVector<double, int> vec(subset.size());
-    singlepp::fill_ranks(subset, values.data(), vec);
-    std::vector<double> scaled(subset.size());
+inline std::vector<double> quick_scaled_ranks(const std::vector<double>& values) {
+    auto vec = fill_ranks(values.size(), values.data());
+    std::vector<double> scaled(values.size());
     singlepp::scaled_ranks(vec, scaled.data());
     return scaled;
 }

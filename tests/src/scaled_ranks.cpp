@@ -13,47 +13,80 @@ double expected_variance(double n) {
     return 1 / (4.0 * (n - 1));
 }
 
-TEST(FillRanks, Basic) {
+TEST(SubsetSorter, Basic) {
     std::vector<double> stuff { 0.34817868, 0.24918308, 0.75879770, 0.71893282, 0.78199329, 0.09039928 };
-    auto ranks = fill_ranks(stuff.size(), stuff.data());
-    double prev = 0;
-    for (size_t i = 0; i < ranks.size(); ++i) {
-        EXPECT_TRUE(ranks[i].first > prev);
-        EXPECT_EQ(ranks[i].first, stuff[ranks[i].second]);
-        prev = ranks[i].first;
-    }
-}
 
-TEST(FillRanks, Subsetted) {
-    std::vector<double> stuff { 2.505, 0.933, -0.109, -0.954, -1.314, 0.050, 1.297 };
-
+    // No-op.
     {
-        std::vector<int> odds { 1, 3, 5 };
-        auto ranks = fill_ranks(odds, stuff.data());
-        double prev = -1000;
-        for (size_t i = 0; i < ranks.size(); ++i) {
-            EXPECT_TRUE(ranks[i].first > prev);
-            EXPECT_EQ(ranks[i].first, stuff[odds[ranks[i].second]]);
-            prev = ranks[i].first;
-        }
+        std::vector<int> foo{ 2, 6, 18, 23, 53, 99 };
+        singlepp::SubsetSorter ss(foo);
+        EXPECT_FALSE(ss.use_sorted_subset);
+        EXPECT_EQ(ss.extraction_subset(), foo);
+        EXPECT_EQ(&ss.extraction_subset(), &foo); // exact some object, in fact.
 
-        prev = -1000;
-        ranks = fill_ranks(odds, stuff.data(), 1);
-        for (size_t i = 0; i < ranks.size(); ++i) {
-            EXPECT_TRUE(ranks[i].first > prev);
-            EXPECT_EQ(ranks[i].first, stuff[odds[ranks[i].second] - 1]);
-            prev = ranks[i].first;
+        singlepp::RankedVector<double, int> vec(foo.size());
+        ss.fill_ranks(stuff.data(), vec);
+
+        double prev = -100000;
+        for (size_t i = 0; i < vec.size(); ++i) {
+            EXPECT_TRUE(vec[i].first > prev);
+            EXPECT_EQ(vec[i].first, stuff[vec[i].second]);
+            prev = vec[i].first;
         }
     }
 
+    // Resorting.
     {
-        std::vector<int> evens { 6, 4, 2, 0 };
-        auto ranks = fill_ranks(evens, stuff.data());
-        double prev = -1000;
-        for (size_t i = 0; i < ranks.size(); ++i) {
-            EXPECT_TRUE(ranks[i].first > prev);
-            EXPECT_EQ(ranks[i].first, stuff[evens[ranks[i].second]]);
-            prev = ranks[i].first;
+        std::vector<int> foo{ 5, 2, 29, 12, 23, 0 };
+        singlepp::SubsetSorter ss(foo);
+        EXPECT_TRUE(ss.use_sorted_subset);
+
+        auto foocopy = foo;
+        std::sort(foocopy.begin(), foocopy.end());
+        EXPECT_EQ(ss.extraction_subset(), foocopy);
+        
+        // Here, stuff corresponds to _sorted_ foo, i.e., foocopy,
+        // as we're extracting based on the sorted subsets.
+        singlepp::RankedVector<double, int> vec(foocopy.size());
+        ss.fill_ranks(stuff.data(), vec); 
+
+        // Check that we get the same results as if we had done a full column
+        // extraction and then extracted the subset from the array.
+        std::vector<double> expanded(*std::max_element(foo.begin(), foo.end()) + 1);
+        for (size_t s = 0; s < foocopy.size(); ++s) {
+            expanded[foocopy[s]] = stuff[s];
+        }
+
+        for (size_t i = 0; i < vec.size(); ++i) {
+            auto s = foo[vec[i].second]; // check it was correctly reindexed back to foo.
+            EXPECT_EQ(vec[i].first, expanded[s]);
+        }
+    }
+
+    // Deduplicating.
+    {
+        std::vector<int> foo{ 1, 2, 1, 5, 2, 9, 9, 4, 1, 0 };
+        singlepp::SubsetSorter ss(foo);
+        EXPECT_TRUE(ss.use_sorted_subset);
+
+        std::vector<int> foocopy{ 0, 1, 2, 4, 5, 9 };
+        EXPECT_EQ(ss.extraction_subset(), foocopy);
+        
+        // Here, stuff corresponds to _deduplicated_ foo, i.e., foocopy,
+        // as we're extracting based on the deduplicated + sorted subsets.
+        singlepp::RankedVector<double, int> vec(foo.size());
+        ss.fill_ranks(stuff.data(), vec); 
+
+        // Check that we get the same results as if we had done a full column
+        // extraction and then extracted the subset from the array.
+        std::vector<double> expanded(*std::max_element(foo.begin(), foo.end()) + 1);
+        for (size_t s = 0; s < foocopy.size(); ++s) {
+            expanded[foocopy[s]] = stuff[s];
+        }
+
+        for (size_t i = 0; i < vec.size(); ++i) {
+            auto s = foo[vec[i].second]; // check it was correctly reindexed back to foo.
+            EXPECT_EQ(vec[i].first, expanded[s]);
         }
     }
 }
@@ -145,26 +178,6 @@ TEST(ScaledRanks, Ties) {
     for (size_t s = 0; s < original_size; ++s) {
         EXPECT_FLOAT_EQ(first_half[s] * std::sqrt(2.0), ref[s]);
     }
-}
-
-TEST(ScaledRanks, Subset) {
-    std::vector<double> stuff { 0.358, 0.496, 0.125, 0.408, 0.618, 0.264, 0.905, 0.895, 0.264, 0.865, 0.069, 0.581 };
-    std::vector<int> sub { 2, 7, 0, 3, 5, 10 };
-
-    auto ranks = fill_ranks(sub, stuff.data());
-    std::vector<double> out(sub.size());
-    singlepp::scaled_ranks(ranks, out.data());
-
-    // Reference comparison.
-    std::vector<double> stuff2;
-    for (auto s : sub) {
-        stuff2.push_back(stuff[s]);
-    }
-
-    ranks = fill_ranks(stuff2.size(), stuff2.data());
-    std::vector<double> out2(sub.size());
-    singlepp::scaled_ranks(ranks, out2.data());
-    EXPECT_EQ(out, out2);
 }
 
 TEST(ScaledRanks, CorrelationCheck) {

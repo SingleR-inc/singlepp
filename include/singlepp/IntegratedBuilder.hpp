@@ -335,9 +335,6 @@ public:
      * Any further invocations of this function will not be valid.
      */
     std::vector<IntegratedReference> finish() {
-        /**
-         * @cond
-         */
         // Identify the global set of all genes that will be in use here.
         std::unordered_set<int> in_use_tmp;
         for (const auto& ref : references) {
@@ -375,116 +372,76 @@ public:
                 // If we don't need to check availability, this implies that 
                 // the reference has 1:1 feature mapping to the test dataset.
                 // In that case, we can proceed quite simply.
-                size_t first = 0, last = 0;
-                if (in_use.size()) {
-                    first = in_use.front();
-                    last = in_use.back() + 1;
-                }
-
-#ifndef SINGLEPP_CUSTOM_PARALLEL
-                #pragma omp parallel num_threads(nthreads)
-                {
-#else
-                SINGLEPP_CUSTOM_PARALLEL(NC, [&](size_t start, size_t end) -> void {
-#endif
-
+                tatami::parallelize([&](int, int start, int len) -> void {
                     RankedVector<double, int> tmp_ranked;
                     tmp_ranked.reserve(in_use.size());
                     std::vector<double> buffer(NR);
-                    auto wrk = curmat->new_workspace(false);
+                    auto wrk = tatami::consecutive_extractor<false, false>(curmat, start, len, in_use); // 'in_use' is guaranteed to be sorted and unique, see above.
 
-#ifndef SINGLEPP_CUSTOM_PARALLEL
-                    #pragma omp for
-                    for (size_t c = 0; c < NC; ++c) {
-#else
-                    for (size_t c = start; c < end; ++c) {
-#endif
-
-                        auto ptr = curmat->column(c, buffer.data(), first, last, wrk.get());
+                    for (int c = start, end = start + len; c < end; ++c) {
+                        auto ptr = wrk->fetch(c, buffer.data());
 
                         tmp_ranked.clear();
                         for (auto u : in_use) {
-                            tmp_ranked.emplace_back(ptr[u - first], u);
+                            tmp_ranked.emplace_back(*ptr, u);
+                            ++ptr;
                         }
                         std::sort(tmp_ranked.begin(), tmp_ranked.end());
 
                         auto& final_ranked = curref.ranked[curlab[c]][positions[c]];
                         simplify_ranks(tmp_ranked, final_ranked);
                     }
-
-#ifndef SINGLEPP_CUSTOM_PARALLEL
-                }
-#else
-                }, nthreads);
-#endif
+                }, NC, nthreads);
 
             } else {
                 // If we do need to check availability, then we need to check
                 // the mapping of test genes to their reference row indices.
                 const auto& cur_mapping = gene_mapping[r];
                 auto& cur_available = curref.available;
-                std::unordered_map<int, int> remapping;
+                std::vector<std::pair<int, int> > remapping; 
                 remapping.reserve(in_use.size());
-                size_t first = NR, last = 0;
 
                 for (auto u : in_use) {
                     auto it = cur_mapping.find(u);
-                    if (it == cur_mapping.end()) {
-                        continue;
-                    }
-
-                    remapping[u] = it->second;
-                    cur_available.insert(u);
-                    if (it->second < first) {
-                        first = it->second;
-                    }
-                    if (it->second > last) {
-                        last = it->second;
+                    if (it != cur_mapping.end()) {
+                        remapping.emplace_back(it->second, u);
+                        cur_available.insert(u);
                     }
                 }
-                last = std::max(last + 1, first);
 
-#ifndef SINGLEPP_CUSTOM_PARALLEL
-                #pragma omp parallel num_threads(nthreads)
-                {
-#else
-                SINGLEPP_CUSTOM_PARALLEL(NC, [&](size_t start, size_t end) -> void {
-#endif
+                // This section is just to enable indexed extraction by tatami.
+                // There's no need to consider duplicates among the
+                // 'remapping[i].first', as 'gene_mapping[r]->second' is
+                // guaranteed to be unique when intersect_features returns.
+                std::vector<int> remapped_in_use; 
+                std::sort(remapping.begin(), remapping.end());
+                remapped_in_use.reserve(remapping.size());
+                for (const auto& p : remapping) {
+                    remapped_in_use.push_back(p.first);
+                }
 
+                tatami::parallelize([&](int, int start, int len) -> void {
                     RankedVector<double, int> tmp_ranked;
-                    tmp_ranked.reserve(in_use.size());
-                    std::vector<double> buffer(NR);
-                    auto wrk = curmat->new_workspace(false);
+                    tmp_ranked.reserve(remapped_in_use.size());
+                    std::vector<double> buffer(remapped_in_use.size());
+                    auto wrk = tatami::consecutive_extractor<false, false>(curmat, start, len, remapped_in_use);
 
-#ifndef SINGLEPP_CUSTOM_PARALLEL
-                    #pragma omp for
-                    for (size_t c = 0; c < NC; ++c) {
-#else
-                    for (size_t c = start; c < end; ++c) {
-#endif
-
-                        auto ptr = curmat->column(c, buffer.data(), first, last, wrk.get());
+                    for (size_t c = start, end = start + len; c < end; ++c) {
+                        auto ptr = wrk->fetch(c, buffer.data());
 
                         tmp_ranked.clear();
-                        for (auto p : remapping) {
-                            tmp_ranked.emplace_back(ptr[p.second - first], p.first);
+                        for (const auto& p : remapping) {
+                            tmp_ranked.emplace_back(*ptr, p.second); // remember, p.second corresponds to values of 'in_use', the global set of all genes.
+                            ++ptr;
                         }
                         std::sort(tmp_ranked.begin(), tmp_ranked.end());
 
                         auto& final_ranked = curref.ranked[curlab[c]][positions[c]];
                         simplify_ranks(tmp_ranked, final_ranked);
                     }
-
-#ifndef SINGLEPP_CUSTOM_PARALLEL
-                }
-#else
-                }, nthreads);
-#endif
+                }, NC, nthreads);
             }
         }
-        /**
-         * @endcond
-         */
 
         return std::move(references);
     }

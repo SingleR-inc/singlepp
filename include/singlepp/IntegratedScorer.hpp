@@ -115,11 +115,10 @@ private:
     }
 
     static void fill_ranks(
-        const tatami::Matrix<double, int>* mat, 
-        const std::vector<int>& universe, 
+        tatami::FullDenseExtractor<double, int>* wrk,
+        const std::vector<int>& universe,        
         int cell,
         std::vector<double>& buffer,
-        tatami::Workspace* wrk,
         RankedVector<double, int>& data_ranked) 
     {
         data_ranked.clear();
@@ -127,13 +126,11 @@ private:
             return;
         }
 
-        size_t first = universe.front();
-        size_t last = universe.back() + 1;
-        auto ptr = mat->column(cell, buffer.data(), first, last, wrk);
-
+        auto ptr = wrk->fetch(cell, buffer.data());
         for (auto u : universe) {
-            data_ranked.emplace_back(ptr[u - first], u);                    
+            data_ranked.emplace_back(ptr[u], u);
         }
+
         std::sort(data_ranked.begin(), data_ranked.end());
         return;
     }
@@ -196,21 +193,11 @@ public:
         std::vector<double*>& scores,
         double* delta)
     const {
-        /**
-         * @cond
-         */
-        size_t NR = mat->nrow();
-        size_t NC = mat->ncol();
+        auto NR = mat->nrow();
 
-#ifndef SINGLEPP_CUSTOM_PARALLEL
-        #pragma omp parallel num_threads(nthreads)
-        {
-#else
-        SINGLEPP_CUSTOM_PARALLEL(NC, [&](size_t start, size_t end) -> void {
-#endif
-            
+        tatami::parallelize([&](int, int start, int len) -> void {
             std::vector<double> buffer(NR);
-            auto wrk = mat->new_workspace(false);
+            auto wrk = tatami::consecutive_extractor<false, false>(mat, start, len);
 
             RankedVector<double, int> data_ranked, data_ranked2;
             data_ranked.reserve(NR);
@@ -225,15 +212,9 @@ public:
             std::unordered_map<int, int> mapping;
             std::vector<double> all_correlations;
 
-#ifndef SINGLEPP_CUSTOM_PARALLEL
-            #pragma omp for
-            for (size_t i = 0; i < NC; ++i) {
-#else
-            for (size_t i = start; i < end; ++i) {
-#endif
-
+            for (int i = start, end = start + len; i < end; ++i) {
                 build_universe(i, assigned, references, universe_tmp, universe);
-                fill_ranks(mat, universe, i, buffer, wrk.get(), data_ranked);
+                fill_ranks(wrk.get(), universe, i, buffer, data_ranked);
 
                 // Scanning through each reference and computing the score for the best group.
                 double best_score = -1000, next_best = -1000;
@@ -287,16 +268,7 @@ public:
                 }
             }
 
-#ifndef SINGLEPP_CUSTOM_PARALLEL
-        }
-#else
-        }, nthreads);
-#endif
-        /**
-         * @endcond
-         */
-
-        return;
+        }, mat->ncol(), nthreads);
     }
 
 public:
