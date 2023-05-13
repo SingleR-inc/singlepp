@@ -376,10 +376,10 @@ public:
                     RankedVector<double, int> tmp_ranked;
                     tmp_ranked.reserve(in_use.size());
                     std::vector<double> buffer(NR);
-                    auto wrk = tatami::consecutive_extractor<false, false>(curmat.get(), start, len, in_use); // in_use is guaranteed to be sorted, see above.
+                    auto wrk = tatami::consecutive_extractor<false, false>(curmat, start, len, in_use); // 'in_use' is guaranteed to be sorted and unique, see above.
 
                     for (int c = start, end = start + len; c < end; ++c) {
-                        auto ptr = curmat->column(c, buffer.data(), first, last, wrk.get());
+                        auto ptr = wrk->fetch(c, buffer.data());
 
                         tmp_ranked.clear();
                         for (auto u : in_use) {
@@ -409,20 +409,24 @@ public:
                     }
                 }
 
+                // This section is just to enable indexed extraction by tatami.
+                // There's no need to consider duplicates among the
+                // 'remapping[i].first', as 'gene_mapping[r]->second' is
+                // guaranteed to be unique when intersect_features returns.
+                std::vector<int> remapped_in_use; 
                 std::sort(remapping.begin(), remapping.end());
-                std::vector<int> remapped_in_use; // just to enable indexed extraction.
                 remapped_in_use.reserve(remapping.size());
                 for (const auto& p : remapping) {
-                    remapped_in_use.push_back(r.first);
+                    remapped_in_use.push_back(p.first);
                 }
 
                 tatami::parallelize([&](int, int start, int len) -> void {
                     RankedVector<double, int> tmp_ranked;
-                    tmp_ranked.reserve(in_use.size());
-                    std::vector<double> buffer(NR);
-                    auto wrk = tatami::consecutive_extractor<false, false>(curmat.get(), start, len, remapped_in_use);
+                    tmp_ranked.reserve(remapped_in_use.size());
+                    std::vector<double> buffer(remapped_in_use.size());
+                    auto wrk = tatami::consecutive_extractor<false, false>(curmat, start, len, remapped_in_use);
 
-                    for (size_t c = start; c < end; ++c) {
+                    for (size_t c = start, end = start + len; c < end; ++c) {
                         auto ptr = wrk->fetch(c, buffer.data());
 
                         tmp_ranked.clear();
@@ -435,7 +439,6 @@ public:
                         auto& final_ranked = curref.ranked[curlab[c]][positions[c]];
                         simplify_ranks(tmp_ranked, final_ranked);
                     }
-
                 }, NC, nthreads);
             }
         }

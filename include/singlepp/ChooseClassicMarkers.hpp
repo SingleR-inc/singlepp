@@ -175,8 +175,10 @@ public:
 #endif
             
             std::vector<std::pair<double, int> > sorter(ngenes), sorted_copy(ngenes);
-            std::vector<typename Matrix::data_type> rbuffer(ngenes), lbuffer(ngenes);
-            std::vector<std::shared_ptr<tatami::FullDenseExtractor> > rworks(nrefs), lworks(nrefs);
+            typedef typename  Matrix::value_type Value_;
+            typedef typename  Matrix::index_type Index_;
+            std::vector<Value_> rbuffer(ngenes), lbuffer(ngenes);
+            std::vector<std::shared_ptr<tatami::FullDenseExtractor<Value_, Index_> > > rworks(nrefs), lworks(nrefs);
 
 #ifndef SINGLEPP_CUSTOM_PARALLEL
             #pragma omp for

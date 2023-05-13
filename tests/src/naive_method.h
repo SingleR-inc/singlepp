@@ -18,9 +18,10 @@ auto split_by_label(size_t nlabels, const Labels& labels) {
 template<class RefMatrix>
 double naive_score(const std::vector<double>& scaled_test, const std::vector<int>& in_label, const RefMatrix& refs, const std::vector<int>& subset, double quantile) {
     std::vector<double> correlations;
+    auto wrk = refs->dense_column(subset);
     for (auto l : in_label) {
-        auto col = refs->column(l);
-        const auto scaled_ref = quick_scaled_ranks(col, subset);
+        auto col = wrk->fetch(l);
+        const auto scaled_ref = quick_scaled_ranks(col);
         correlations.push_back(singlepp::distance_to_correlation(scaled_test.size(), scaled_test.data(), scaled_ref.data()));
     }
     return singlepp::correlations_to_scores(correlations, quantile);
@@ -31,10 +32,11 @@ auto naive_method(size_t nlabels, const Labels& labels, const RefMatrix& refs, c
     singlepp::BasicScorer::Results output(mat->ncol(), nlabels);
 
     auto by_labels = split_by_label(nlabels, labels);
+    auto wrk = mat->dense_column(subset);
 
     for (size_t c = 0; c < mat->ncol(); ++c) {
-        auto col = mat->column(c);
-        auto scaled = quick_scaled_ranks(col, subset);
+        auto col = wrk->fetch(c);
+        auto scaled = quick_scaled_ranks(col);
 
         std::vector<std::pair<double, size_t> > my_scores;
         for (size_t r = 0; r < nlabels; ++r) {

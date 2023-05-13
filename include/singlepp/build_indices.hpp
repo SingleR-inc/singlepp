@@ -55,15 +55,17 @@ std::vector<Reference> build_indices(const tatami::Matrix<double, int>* ref, con
         }
     }
 
+    SubsetSorter subsorter(subset);
+
     tatami::parallelize([&](int, int start, int len) -> void {
         RankedVector<double, int> ranked(NR);
         std::vector<double> buffer(ref->nrow());
-        auto wrk = tatami::consecutive_extractor<false, false>(ref.get(), start, len, subset);
+        auto wrk = tatami::consecutive_extractor<false, false>(ref, start, len, subsorter.extraction_subset());
 
         for (int c = start, end = start + len; c < end; ++c) {
-            auto ptr = wrk->fetch(c, buffer.data(), first, last, wrk.get());
-            fill_ranks(num_subset, ptr, vec); 
-            scaled_ranks(vec, buffer.data()); // 'buffer' can be written to, as all data is extracted to 'vec'.
+            auto ptr = wrk->fetch(c, buffer.data());
+            subsorter.fill_ranks(ptr, ranked); 
+            scaled_ranks(ranked, buffer.data()); // 'buffer' can be written to, as all data is extracted to 'vec'.
 
             auto curlab = labels[c];
             auto curoff = offsets[c];

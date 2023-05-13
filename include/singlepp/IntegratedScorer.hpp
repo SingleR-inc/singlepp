@@ -115,10 +115,10 @@ private:
     }
 
     static void fill_ranks(
-        const tatami::Matrix<double, int>* mat, 
+        tatami::FullDenseExtractor<double, int>* wrk,
+        const std::vector<int>& universe,        
         int cell,
         std::vector<double>& buffer,
-        tatami::IndexedDenseExtractor<double, int>* wrk,
         RankedVector<double, int>& data_ranked) 
     {
         data_ranked.clear();
@@ -126,10 +126,9 @@ private:
             return;
         }
 
-        auto ptr = wrk->fetch(cell, buffer.data(),);
+        auto ptr = wrk->fetch(cell, buffer.data());
         for (auto u : universe) {
-            data_ranked.emplace_back(ptr, u);
-            ++ptr;
+            data_ranked.emplace_back(ptr[u], u);
         }
 
         std::sort(data_ranked.begin(), data_ranked.end());
@@ -198,7 +197,7 @@ public:
 
         tatami::parallelize([&](int, int start, int len) -> void {
             std::vector<double> buffer(NR);
-            auto wrk = tatami::consecutive_extractor<false, false>(mat.get(), start, len, universe);
+            auto wrk = tatami::consecutive_extractor<false, false>(mat, start, len);
 
             RankedVector<double, int> data_ranked, data_ranked2;
             data_ranked.reserve(NR);
@@ -215,7 +214,7 @@ public:
 
             for (int i = start, end = start + len; i < end; ++i) {
                 build_universe(i, assigned, references, universe_tmp, universe);
-                fill_ranks(mat, i, buffer, wrk.get(), data_ranked);
+                fill_ranks(wrk.get(), universe, i, buffer, data_ranked);
 
                 // Scanning through each reference and computing the score for the best group.
                 double best_score = -1000, next_best = -1000;

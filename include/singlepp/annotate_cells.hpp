@@ -14,14 +14,6 @@
 
 namespace singlepp {
 
-inline bool is_subset_sorted(size_t num_subset, const int* subset) {
-    for (size_t i = 1; i < num_subset; ++i) {
-        if (subset[i] <= subset[i-1]) {
-            throw std::runtime_error("subset indices should be strictly increasing");
-        }
-    }
-}
-
 inline void annotate_cells_simple(
     const tatami::Matrix<double, int>* mat,
     size_t num_subset,
@@ -55,10 +47,11 @@ inline void annotate_cells_simple(
         coeffs[r].second = prod - static_cast<double>(k - 2);
     }
 
-    is_subset_sorted(num_subset, subset);
+    std::vector<int> subcopy(subset, subset + num_subset);
+    SubsetSorter subsorted(subcopy);
 
     tatami::parallelize([&](int, int start, int length) -> void {
-        auto wrk = tatami::consecutive_extractor<false, false>(mat.get(), start, length, std::vector<int>(subset, subset + num_subset));
+        auto wrk = tatami::consecutive_extractor<false, false>(mat, start, length, subsorted.extraction_subset());
         RankedVector<double, int> vec(num_subset);
         std::vector<double> buffer(num_subset);
 
@@ -67,7 +60,7 @@ inline void annotate_cells_simple(
 
         for (int c = start, end = start + length; c < end; ++c) {
             auto ptr = wrk->fetch(c, buffer.data());
-            fill_ranks(num_subset, ptr, vec); 
+            subsorted.fill_ranks(ptr, vec);
             scaled_ranks(vec, buffer.data()); // 'buffer' can be written to, as all data is extracted to 'vec'.
 
             curscores.resize(NL);
