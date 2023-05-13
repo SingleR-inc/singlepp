@@ -14,6 +14,14 @@
 
 namespace singlepp {
 
+inline bool is_subset_sorted(size_t num_subset, const int* subset) {
+    for (size_t i = 1; i < num_subset; ++i) {
+        if (subset[i] <= subset[i-1]) {
+            throw std::runtime_error("subset indices should be strictly increasing");
+        }
+    }
+}
+
 inline void annotate_cells_simple(
     const tatami::Matrix<double, int>* mat,
     size_t num_subset,
@@ -28,16 +36,6 @@ inline void annotate_cells_simple(
     double* delta,
     int nthreads)
 {
-    size_t first = 0, last = 0;
-    if (num_subset) {
-        // Technically, subset is sorted in some cases, so we could
-        // just take the first and last elements; but better to be safe.
-        first = *std::min_element(subset, subset + num_subset);
-        last = *std::max_element(subset, subset + num_subset) + 1;
-    }
-
-    const size_t NC = mat->ncol();
-
     // Figuring out how many neighbors to keep and how to compute the quantiles.
     const size_t NL = ref.size();
     std::vector<int> search_k(NL);
@@ -57,37 +55,25 @@ inline void annotate_cells_simple(
         coeffs[r].second = prod - static_cast<double>(k - 2);
     }
 
-#ifndef SINGLEPP_CUSTOM_PARALLEL
-    #pragma omp parallel num_threads(nthreads)
-    {
-#else
-    SINGLEPP_CUSTOM_PARALLEL(NC, [&](size_t start, size_t end) -> void {
-#endif
+    is_subset_sorted(num_subset, subset);
 
-        std::vector<double> buffer(last - first);
-        auto wrk = mat->new_workspace(false);
-
+    tatami::parallelize([&](int, int start, int length) -> void {
+        auto wrk = tatami::consecutive_extractor<false, false>(mat.get(), start, length, std::vector<int>(subset, subset + num_subset));
         RankedVector<double, int> vec(num_subset);
-        std::vector<double> scaled(num_subset);
+        std::vector<double> buffer(num_subset);
 
         FineTuner ft;
         std::vector<double> curscores(NL);
 
-#ifndef SINGLEPP_CUSTOM_PARALLEL
-        #pragma omp for
-        for (size_t c = 0; c < NC; ++c) {
-#else
-        for (size_t c = start; c < end; ++c) {
-#endif
-
-            auto ptr = mat->column(c, buffer.data(), first, last, wrk.get());
-            fill_ranks(num_subset, subset, ptr, vec, first);
-            scaled_ranks(vec, scaled.data());
+        for (int c = start, end = start + length; c < end; ++c) {
+            auto ptr = wrk->fetch(c, buffer.data());
+            fill_ranks(num_subset, ptr, vec); 
+            scaled_ranks(vec, buffer.data()); // 'buffer' can be written to, as all data is extracted to 'vec'.
 
             curscores.resize(NL);
             for (size_t r = 0; r < NL; ++r) {
                 size_t k = search_k[r];
-                auto current = ref[r].index->find_nearest_neighbors(scaled.data(), k);
+                auto current = ref[r].index->find_nearest_neighbors(buffer.data(), k);
 
                 double last = current[k - 1].second;
                 last = 1 - 2 * last * last;
@@ -125,11 +111,7 @@ inline void annotate_cells_simple(
             }
         }
 
-#ifndef SINGLEPP_CUSTOM_PARALLEL
-    }
-#else
-    }, nthreads);
-#endif
+    }, mat->ncol(), nthreads);
 
     return;
 }
