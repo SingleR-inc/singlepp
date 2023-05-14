@@ -112,19 +112,20 @@ public:
     }
 
 private:
-    void add_internal(const tatami::Matrix<double, int>* ref, const int* labels) {
+    void add_internal_base(const tatami::Matrix<double, int>* ref, const int* labels) {
         stored_matrices.push_back(ref);
         stored_labels.push_back(labels);
         references.resize(stored_matrices.size());
         gene_mapping.resize(stored_matrices.size());
     }
 
+    // Adding a reference without requiring any pruning of markers.
     template<class Subset>
-    void add_internal(const tatami::Matrix<double, int>* ref, const int* labels, const Markers& old_markers, const Subset& subset) {
-        add_internal(ref, labels);
+    void add_internal_direct(const tatami::Matrix<double, int>* ref, const int* labels, const Markers& old_markers, const Subset& mat_subset) {
+        add_internal_base(ref, labels);
 
         // Adding the markers for each label, indexed according to their
-        // position in the test matrix. This assumes that 'subset' is
+        // position in the test matrix. This assumes that 'mat_subset' is
         // appropriately specified to contain the test's row indices. 
         auto& new_markers = references.markers.back();
         new_markers.reserve(old_markers.size());
@@ -142,25 +143,24 @@ private:
             if constexpr(!std::is_same<Subset, bool>::value) {
                 auto& cur_new_markers = new_markers.back();
                 for (auto& y : cur_new_markers) {
-                    y = subset[y];
+                    y = mat_subset[y];
                 }
             }
         }
         return;
     }
 
-    template<typename Id, class Subset>
-    void add_internal(size_t mat_nrow,
-        const Id* mat_id,
+    // Adding a reference with different features from the test, requiring some
+    // pruning to remove markers that are not present in the intersection.
+    template<class Subset>
+    void add_internal_intersect(
+        const std::vector<std::pair<int, int> >& intersection,
         const tatami::Matrix<double, int>* ref, 
-        const Id* ref_id,
         const int* labels, 
         const Markers& old_markers,
-        const Subset& subset)
+        const Subset& ref_subset)
     {
-        add_internal(ref, labels);
-
-        auto intersection = intersect_features(mat_nrow, mat_id, ref->nrow(), ref_id);
+        add_internal_base(ref, labels);
 
         // Manually constructing the markers. This involves (i) pruning out the
         // markers that aren't present in the intersection, and (ii) updating 
@@ -172,7 +172,7 @@ private:
 
         auto subindex = [&](int i) -> int {
             if constexpr(!std::is_same<Subset, bool>::value) {
-                return subset[i];
+                return ref_subset[i];
             } else {
                 return i;
             }
@@ -223,7 +223,7 @@ public:
      * `ref` and `labels` are expected to remain valid until `finish()` is called.
      */
     void add(const tatami::Matrix<double, int>* ref, const int* labels, const Markers& markers) {
-        add_internal(ref, labels, markers, false);    
+        add_internal_direct(ref, labels, markers, false);    
     }
 
     /**
@@ -255,7 +255,8 @@ public:
         const int* labels, 
         const Markers& markers)
     {
-        add_internal(mat_nrow, mat_id, ref, ref_id, labels, markers, false);
+        auto intersection = intersect_features(mat_nrow, mat_id, ref->nrow(), ref_id);
+        add_internal_intersect(intersection, ref, labels, markers, false);
     }
 
 public:
@@ -272,7 +273,39 @@ public:
      * `ref` and `labels` are expected to remain valid until `finish()` is called.
      */
     void add(const tatami::Matrix<double, int>* ref, const int* labels, const BasicBuilder::Prebuilt& built) {
-        add_internal(ref, labels, built.markers, built.subset);
+        add_internal_direct(ref, labels, built.markers, built.subset);
+        return;
+    }
+
+    /**
+     * @param intersection Vector defining the intersection of features betweent the test and reference datasets.
+     * Each entry is a pair where the first element is the row index in the test matrix,
+     * and the second element is the row index for the corresponding feature in the reference matrix.
+     * Each row index for either matrix should occur no more than once in `intersection`.
+     * @param ref An expression matrix for the reference expression profiles, where rows are genes and columns are cells.
+     * This should have non-zero columns.
+     * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
+     * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
+     * @param built The built reference created by running `BasicBuilder::run()` on all preceding arguments.
+     *
+     * @return The reference dataset is registered for later use in `finish()`.
+     *
+     * `ref` and `labels` are expected to remain valid until `finish()` is called.
+     * `mat_id` and `mat_nrow` should also be constant for all invocations to `add()`.
+     */
+    void add(const std::vector<std::pair<int, int> >& intersection,
+        const tatami::Matrix<double, int>* ref, 
+        const int* labels, 
+        const BasicBuilder::PrebuiltIntersection& built) 
+    {
+        add_internal_direct(ref, labels, built.markers, built.mat_subset);
+        references.check_availability.back() = true;
+
+        // Constructing the mapping of mat's rows to the reference rows.
+        auto& mapping = gene_mapping.back();
+        for (const auto& i : intersection) {
+            mapping[i.first] = i.second;
+        }
         return;
     }
 
@@ -305,16 +338,33 @@ public:
         const int* labels, 
         const BasicBuilder::PrebuiltIntersection& built) 
     {
-        add_internal(ref, labels, built.markers, built.mat_subset);
-        references.check_availability.back() = true;
-
-        // Constructing the mapping of mat's rows to the reference rows.
         auto intersection = intersect_features(mat_nrow, mat_id, ref->nrow(), ref_id);
-        auto& mapping = gene_mapping.back();
-        for (const auto& i : intersection) {
-            mapping[i.first] = i.second;
-        }
+        add(intersection, ref, labels, built);
         return;
+    }
+
+    /**
+     * @param intersection Vector defining the intersection of features betweent the test and reference datasets.
+     * Each entry is a pair where the first element is the row index in the test matrix,
+     * and the second element is the row index for the corresponding feature in the reference matrix.
+     * Each row index for either matrix should occur no more than once in `intersection`.
+     * @param ref An expression matrix for the reference expression profiles, where rows are genes and columns are cells.
+     * This should have non-zero columns.
+     * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
+     * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
+     * @param built The built reference created by running `BasicBuilder::run()` on `ref` and `labels`.
+     *
+     * @return The reference dataset is registered for later use in `finish()`.
+     *
+     * `ref` and `labels` are expected to remain valid until `finish()` is called.
+     * `mat_id` and `mat_nrow` should also be constant for all invocations to `add()`.
+     */
+    void add(const std::vector<std::pair<int, int> >& intersection,
+        const tatami::Matrix<double, int>* ref, 
+        const int* labels, 
+        const BasicBuilder::Prebuilt& built) 
+    {
+        add_internal_intersect(intersection, ref, labels, built.markers, built.subset);
     }
 
     /**
@@ -346,7 +396,8 @@ public:
         const int* labels, 
         const BasicBuilder::Prebuilt& built) 
     {
-        add_internal(mat_nrow, mat_id, ref, ref_id, labels, built.markers, built.subset);
+        auto intersection = intersect_features(mat_nrow, mat_id, ref->nrow(), ref_id);
+        add(intersection, ref, labels, built);
     }
 
 private:
