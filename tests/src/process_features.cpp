@@ -12,6 +12,7 @@ TEST(IntersectFeatures, Basic) {
     std::vector<std::string> second { "gene_3", "gene_1", "gene_4", "gene_8", "gene_2", "gene_7" };
 
     auto intersection = singlepp::intersect_features(first.size(), first.data(), second.size(), second.data());
+    std::sort(intersection.begin(), intersection.end());
     EXPECT_EQ(intersection.size(), 3);
     EXPECT_EQ(intersection[0], std::make_pair(0, 1));
     EXPECT_EQ(intersection[1], std::make_pair(1, 4));

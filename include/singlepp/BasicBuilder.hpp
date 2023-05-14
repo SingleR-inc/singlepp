@@ -255,6 +255,7 @@ public:
         Markers markers) 
     const {
         auto intersection = intersect_features(mat_nrow, mat_id, ref->nrow(), ref_id);
+        std::sort(intersection.begin(), intersection.end());
         subset_markers(intersection, markers, top);
         auto pairs = unzip(intersection);
         auto subref = build_internal(ref, labels, pairs.second);

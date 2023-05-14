@@ -34,7 +34,6 @@ Intersection intersect_features(size_t mat_n, const Id* mat_id, size_t ref_n, co
         }
     }
 
-    std::sort(pairings.begin(), pairings.end());
     return pairings;
 }
 

@@ -173,6 +173,7 @@ TEST_P(ClassifierIntersectTest, Intersect) {
     // Computing the reference result using the other run() method,
     // after effectively subsetting the input matrices and reindexing the markers.
     auto intersection = singlepp::intersect_features(left.size(), left.data(), right.size(), right.data());
+    std::sort(intersection.begin(), intersection.end());
     auto pairs = singlepp::unzip(intersection);
     auto submat = tatami::make_DelayedSubset<0>(mat, pairs.first);
     auto subrefs = tatami::make_DelayedSubset<0>(refs, pairs.second);
