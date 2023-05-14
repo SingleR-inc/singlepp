@@ -201,44 +201,42 @@ $(function() {
 <div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span><span class="keyword">    const </span>{</div>
 <div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>        <span class="comment">// Sorting it if it wasn&#39;t already.</span></div>
 <div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>        <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> i = 1, end = intersection.size(); i &lt; end; ++i) {</div>
-<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>            <span class="keyword">const</span> <span class="keyword">auto</span>&amp; current = intersection[i];</div>
-<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>            <span class="keyword">const</span> <span class="keyword">auto</span>&amp; previous = intersection[i-1];</div>
-<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>            <span class="keywordflow">if</span> (current.first &lt; previous.first || (current.first == previous.first &amp;&amp; current.second &lt; previous.second)) {</div>
-<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>                std::sort(intersection.begin(), intersection.end());</div>
-<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>                <span class="keywordflow">break</span>;</div>
-<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>            }</div>
-<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>        }</div>
-<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span> </div>
-<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>        subset_markers(intersection, markers, top);</div>
-<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>        <span class="keyword">auto</span> pairs = unzip(intersection);</div>
-<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>        <span class="keyword">auto</span> subref = build_internal(ref, labels, pairs.second);</div>
-<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>        <span class="keywordflow">return</span> <a class="code hl_struct" href="structsinglepp_1_1BasicBuilder_1_1PrebuiltIntersection.html">PrebuiltIntersection</a>(std::move(markers), std::move(pairs.first), std::move(pairs.second), std::move(subref));</div>
-<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>    }</div>
-<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span> </div>
-<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>    <span class="keyword">template</span>&lt;<span class="keyword">class</span> Id&gt;</div>
-<div class="line"><a id="l00289" name="l00289"></a><span class="lineno"><a class="line" href="classsinglepp_1_1BasicBuilder.html#ae113106e662149f160158535bfbe57da">  289</a></span>    <a class="code hl_struct" href="structsinglepp_1_1BasicBuilder_1_1PrebuiltIntersection.html">PrebuiltIntersection</a> <a class="code hl_function" href="classsinglepp_1_1BasicBuilder.html#ae113106e662149f160158535bfbe57da">run</a>(</div>
-<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>        <span class="keywordtype">size_t</span> mat_nrow,</div>
-<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>        <span class="keyword">const</span> Id* mat_id, </div>
-<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>        <span class="keyword">const</span> tatami::Matrix&lt;double, int&gt;* ref, </div>
-<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>        <span class="keyword">const</span> Id* ref_id, </div>
-<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span>        <span class="keyword">const</span> <span class="keywordtype">int</span>* labels,</div>
-<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span>        <a class="code hl_typedef" href="namespacesinglepp.html#ae39cf61993000d182cb3464b4ace1406">Markers</a> markers)<span class="keyword"> </span></div>
-<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span><span class="keyword">    const </span>{</div>
-<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span>        <span class="keyword">auto</span> intersection = intersect_features(mat_nrow, mat_id, ref-&gt;nrow(), ref_id);</div>
-<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classsinglepp_1_1BasicBuilder.html#a3a482bb20652991e23596520b1a0de1f">run</a>(std::move(intersection), ref, labels, std::move(markers));</div>
-<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>    }</div>
-<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>};</div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>            <span class="keywordflow">if</span> (intersection[i] &lt; intersection[i-1]) {</div>
+<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>                std::sort(intersection.begin(), intersection.end());</div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>                <span class="keywordflow">break</span>;</div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>            }</div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>        }</div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span> </div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>        subset_markers(intersection, markers, top);</div>
+<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>        <span class="keyword">auto</span> pairs = unzip(intersection);</div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>        <span class="keyword">auto</span> subref = build_internal(ref, labels, pairs.second);</div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>        <span class="keywordflow">return</span> <a class="code hl_struct" href="structsinglepp_1_1BasicBuilder_1_1PrebuiltIntersection.html">PrebuiltIntersection</a>(std::move(markers), std::move(pairs.first), std::move(pairs.second), std::move(subref));</div>
+<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>    }</div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span> </div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>    <span class="keyword">template</span>&lt;<span class="keyword">class</span> Id&gt;</div>
+<div class="line"><a id="l00287" name="l00287"></a><span class="lineno"><a class="line" href="classsinglepp_1_1BasicBuilder.html#ae113106e662149f160158535bfbe57da">  287</a></span>    <a class="code hl_struct" href="structsinglepp_1_1BasicBuilder_1_1PrebuiltIntersection.html">PrebuiltIntersection</a> <a class="code hl_function" href="classsinglepp_1_1BasicBuilder.html#ae113106e662149f160158535bfbe57da">run</a>(</div>
+<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>        <span class="keywordtype">size_t</span> mat_nrow,</div>
+<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>        <span class="keyword">const</span> Id* mat_id, </div>
+<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>        <span class="keyword">const</span> tatami::Matrix&lt;double, int&gt;* ref, </div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>        <span class="keyword">const</span> Id* ref_id, </div>
+<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>        <span class="keyword">const</span> <span class="keywordtype">int</span>* labels,</div>
+<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>        <a class="code hl_typedef" href="namespacesinglepp.html#ae39cf61993000d182cb3464b4ace1406">Markers</a> markers)<span class="keyword"> </span></div>
+<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span><span class="keyword">    const </span>{</div>
+<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span>        <span class="keyword">auto</span> intersection = intersect_features(mat_nrow, mat_id, ref-&gt;nrow(), ref_id);</div>
+<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classsinglepp_1_1BasicBuilder.html#a3a482bb20652991e23596520b1a0de1f">run</a>(std::move(intersection), ref, labels, std::move(markers));</div>
+<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span>    }</div>
+<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>};</div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span> </div>
+<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>}</div>
 <div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span> </div>
-<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span>}</div>
-<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span> </div>
-<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="aclasssinglepp_1_1BasicBuilder_html"><div class="ttname"><a href="classsinglepp_1_1BasicBuilder.html">singlepp::BasicBuilder</a></div><div class="ttdoc">Construct a single pre-built reference for further classification.</div><div class="ttdef"><b>Definition:</b> BasicBuilder.hpp:26</div></div>
 <div class="ttc" id="aclasssinglepp_1_1BasicBuilder_html_a11119df6d27bc1b19079eab20501460b"><div class="ttname"><a href="classsinglepp_1_1BasicBuilder.html#a11119df6d27bc1b19079eab20501460b">singlepp::BasicBuilder::set_approximate</a></div><div class="ttdeci">BasicBuilder &amp; set_approximate(bool a=Defaults::approximate)</div><div class="ttdef"><b>Definition:</b> BasicBuilder.hpp:69</div></div>
 <div class="ttc" id="aclasssinglepp_1_1BasicBuilder_html_a3a482bb20652991e23596520b1a0de1f"><div class="ttname"><a href="classsinglepp_1_1BasicBuilder.html#a3a482bb20652991e23596520b1a0de1f">singlepp::BasicBuilder::run</a></div><div class="ttdeci">Prebuilt run(const tatami::Matrix&lt; double, int &gt; *ref, const int *labels, Markers markers) const</div><div class="ttdef"><b>Definition:</b> BasicBuilder.hpp:174</div></div>
 <div class="ttc" id="aclasssinglepp_1_1BasicBuilder_html_a91d0485d4d273ad0725dcfd69758a497"><div class="ttname"><a href="classsinglepp_1_1BasicBuilder.html#a91d0485d4d273ad0725dcfd69758a497">singlepp::BasicBuilder::set_num_threads</a></div><div class="ttdeci">BasicBuilder &amp; set_num_threads(int n=Defaults::num_threads)</div><div class="ttdef"><b>Definition:</b> BasicBuilder.hpp:79</div></div>
 <div class="ttc" id="aclasssinglepp_1_1BasicBuilder_html_aac9fae1de326bc9dde2e0551e7dc3413"><div class="ttname"><a href="classsinglepp_1_1BasicBuilder.html#aac9fae1de326bc9dde2e0551e7dc3413">singlepp::BasicBuilder::set_top</a></div><div class="ttdeci">BasicBuilder &amp; set_top(int t=Defaults::top)</div><div class="ttdef"><b>Definition:</b> BasicBuilder.hpp:59</div></div>
 <div class="ttc" id="aclasssinglepp_1_1BasicBuilder_html_adb1de54c8a13ed1870f0f9f549caac3f"><div class="ttname"><a href="classsinglepp_1_1BasicBuilder.html#adb1de54c8a13ed1870f0f9f549caac3f">singlepp::BasicBuilder::run</a></div><div class="ttdeci">PrebuiltIntersection run(std::vector&lt; std::pair&lt; int, int &gt; &gt; intersection, const tatami::Matrix&lt; double, int &gt; *ref, const int *labels, Markers markers) const</div><div class="ttdef"><b>Definition:</b> BasicBuilder.hpp:245</div></div>
-<div class="ttc" id="aclasssinglepp_1_1BasicBuilder_html_ae113106e662149f160158535bfbe57da"><div class="ttname"><a href="classsinglepp_1_1BasicBuilder.html#ae113106e662149f160158535bfbe57da">singlepp::BasicBuilder::run</a></div><div class="ttdeci">PrebuiltIntersection run(size_t mat_nrow, const Id *mat_id, const tatami::Matrix&lt; double, int &gt; *ref, const Id *ref_id, const int *labels, Markers markers) const</div><div class="ttdef"><b>Definition:</b> BasicBuilder.hpp:289</div></div>
+<div class="ttc" id="aclasssinglepp_1_1BasicBuilder_html_ae113106e662149f160158535bfbe57da"><div class="ttname"><a href="classsinglepp_1_1BasicBuilder.html#ae113106e662149f160158535bfbe57da">singlepp::BasicBuilder::run</a></div><div class="ttdeci">PrebuiltIntersection run(size_t mat_nrow, const Id *mat_id, const tatami::Matrix&lt; double, int &gt; *ref, const Id *ref_id, const int *labels, Markers markers) const</div><div class="ttdef"><b>Definition:</b> BasicBuilder.hpp:287</div></div>
 <div class="ttc" id="anamespacesinglepp_html"><div class="ttname"><a href="namespacesinglepp.html">singlepp</a></div><div class="ttdef"><b>Definition:</b> Classifier.hpp:17</div></div>
 <div class="ttc" id="anamespacesinglepp_html_ae39cf61993000d182cb3464b4ace1406"><div class="ttname"><a href="namespacesinglepp.html#ae39cf61993000d182cb3464b4ace1406">singlepp::Markers</a></div><div class="ttdeci">std::vector&lt; std::vector&lt; std::vector&lt; int &gt; &gt; &gt; Markers</div><div class="ttdef"><b>Definition:</b> Markers.hpp:37</div></div>
 <div class="ttc" id="astructsinglepp_1_1BasicBuilder_1_1Defaults_html"><div class="ttname"><a href="structsinglepp_1_1BasicBuilder_1_1Defaults.html">singlepp::BasicBuilder::Defaults</a></div><div class="ttdoc">Default parameters for reference building.</div><div class="ttdef"><b>Definition:</b> BasicBuilder.hpp:31</div></div>
