@@ -232,10 +232,12 @@ public:
      * @param mat_nrow Number of rows (genes) in the test dataset.
      * @param[in] mat_id Pointer to an array of identifiers of length equal to `mat_nrow`.
      * This should contain a unique identifier for each row of `mat` (typically a gene name or index).
+     * If any duplicate IDs are present, only the first occurrence is used.
      * @param ref An expression matrix for the reference expression profiles, where rows are genes and columns are cells.
      * This should have non-zero columns.
      * @param[in] ref_id Pointer to an array of identifiers of length equal to the number of rows of any `ref`.
      * This should contain a unique identifier for each row in `ref`, and should be comparable to `mat_id`.
+     * If any duplicate IDs are present, only the first occurrence is used.
      * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
      * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
      * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels in `ref`, see `Markers` for more details.
@@ -280,10 +282,12 @@ public:
      * @param mat_nrow Number of rows (genes) in the test dataset.
      * @param[in] mat_id Pointer to an array of identifiers of length equal to `mat_nrow`.
      * This should contain a unique identifier for each row of `mat` (typically a gene name or index).
+     * If any duplicate IDs are present, only the first occurrence is used.
      * @param ref An expression matrix for the reference expression profiles, where rows are genes and columns are cells.
      * This should have non-zero columns.
      * @param[in] ref_id Pointer to an array of identifiers of length equal to the number of rows of any `ref`.
      * This should contain a unique identifier for each row in `ref`, and should be comparable to `mat_id`.
+     * If any duplicate IDs are present, only the first occurrence is used.
      * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
      * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
      * @param built The built reference created by running `BasicBuilder::run()` on all preceding arguments.
@@ -319,10 +323,12 @@ public:
      * @param mat_nrow Number of rows (genes) in the test dataset.
      * @param[in] mat_id Pointer to an array of identifiers of length equal to `mat_nrow`.
      * This should contain a unique identifier for each row of `mat` (typically a gene name or index).
+     * If any duplicate IDs are present, only the first occurrence is used.
      * @param ref An expression matrix for the reference expression profiles, where rows are genes and columns are cells.
      * This should have non-zero columns.
      * @param[in] ref_id Pointer to an array of identifiers of length equal to the number of rows of any `ref`.
      * This should contain a unique identifier for each row in `ref`, and should be comparable to `mat_id`.
+     * If any duplicate IDs are present, only the first occurrence is used.
      * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
      * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
      * @param built The built reference created by running `BasicBuilder::run()` on `ref` and `labels`.

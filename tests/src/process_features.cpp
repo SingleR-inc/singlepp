@@ -26,6 +26,20 @@ TEST(IntersectFeatures, Basic) {
     EXPECT_EQ(unzipped.second, ref2);
 }
 
+TEST(IntersectFeatures, Duplicates) {
+    std::vector<std::string> first { "gene_1", "gene_3", "gene_1", "gene_3", "gene_2" };
+    std::vector<std::string> second { "gene_3", "gene_2", "gene_3", "gene_1", "gene_2", "gene_1" };
+
+    auto intersection = singlepp::intersect_features(first.size(), first.data(), second.size(), second.data());
+    std::sort(intersection.begin(), intersection.end());
+
+    // We only report the first occurrence of duplicated IDs.
+    EXPECT_EQ(intersection.size(), 3);
+    EXPECT_EQ(intersection[0], std::make_pair(0, 3));
+    EXPECT_EQ(intersection[1], std::make_pair(1, 0));
+    EXPECT_EQ(intersection[2], std::make_pair(4, 1));
+}
+
 TEST(SubsetMarkers, Simple) {
     size_t nlabels = 4;
     auto markers = mock_markers(nlabels, 20, 100);
