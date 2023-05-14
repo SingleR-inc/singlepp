@@ -248,16 +248,12 @@ TEST_P(IntegratedBuilderMoreTest, IntersectedCombine) {
         }
 
         // Check consistency of the availability set.
-        bool not_found = false;
+        int not_found = false;
         const auto& available = output.available[r];
-
         for (const auto& a : available) {
-            if (mapping.find(universe[a]) == mapping.end()) {
-                not_found = true;
-                break;
-            }
+            not_found += (mapping.find(universe[a]) == mapping.end());
         }
-        EXPECT_FALSE(not_found);
+        EXPECT_EQ(not_found, 0);
 
         std::vector<int> local_universe(available.begin(), available.end());
         for (auto& x : local_universe) {
@@ -282,15 +278,11 @@ TEST_P(IntegratedBuilderMoreTest, IntersectedCombine) {
                 }
             }
 
-            bool not_found = false;
+            int not_found = 0;
             for (auto& x : outmarkers[l]) {
-                if (kept.find(universe[x]) == kept.end()) {
-                    std::cout << universe[x] << std::endl;
-                    not_found = true;
-                    break;
-                }
+                not_found += (kept.find(universe[x]) == kept.end());
             }
-            EXPECT_FALSE(not_found);
+            EXPECT_EQ(not_found, 0);
         }
 
         // Checking rankings for consistency with the availabilities.
