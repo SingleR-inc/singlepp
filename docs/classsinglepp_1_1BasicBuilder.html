@@ -110,6 +110,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a91d0485d4d273ad0725dcfd69758a497"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3a482bb20652991e23596520b1a0de1f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structsinglepp_1_1BasicBuilder_1_1Prebuilt.html">Prebuilt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsinglepp_1_1BasicBuilder.html#a3a482bb20652991e23596520b1a0de1f">run</a> (const tatami::Matrix&lt; double, int &gt; *ref, const int *labels, <a class="el" href="namespacesinglepp.html#ae39cf61993000d182cb3464b4ace1406">Markers</a> markers) const</td></tr>
 <tr class="separator:a3a482bb20652991e23596520b1a0de1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adb1de54c8a13ed1870f0f9f549caac3f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structsinglepp_1_1BasicBuilder_1_1PrebuiltIntersection.html">PrebuiltIntersection</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsinglepp_1_1BasicBuilder.html#adb1de54c8a13ed1870f0f9f549caac3f">run</a> (std::vector&lt; std::pair&lt; int, int &gt; &gt; intersection, const tatami::Matrix&lt; double, int &gt; *ref, const int *labels, <a class="el" href="namespacesinglepp.html#ae39cf61993000d182cb3464b4ace1406">Markers</a> markers) const</td></tr>
+<tr class="separator:adb1de54c8a13ed1870f0f9f549caac3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae113106e662149f160158535bfbe57da"><td class="memTemplParams" colspan="2">template&lt;class Id &gt; </td></tr>
 <tr class="memitem:ae113106e662149f160158535bfbe57da"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structsinglepp_1_1BasicBuilder_1_1PrebuiltIntersection.html">PrebuiltIntersection</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsinglepp_1_1BasicBuilder.html#ae113106e662149f160158535bfbe57da">run</a> (size_t mat_nrow, const Id *mat_id, const tatami::Matrix&lt; double, int &gt; *ref, const Id *ref_id, const int *labels, <a class="el" href="namespacesinglepp.html#ae39cf61993000d182cb3464b4ace1406">Markers</a> markers) const</td></tr>
 <tr class="separator:ae113106e662149f160158535bfbe57da"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -119,7 +121,7 @@ Public Member Functions</h2></td></tr>
 <p>This class prepares a single labelled reference dataset for classification of a test dataset. We select the top marker genes to use for each pairwise comparison between labels, and we use them to pre-compute the ranks in advance of computing the Spearman correlations. The pre-built reference can then be used in <code><a class="el" href="classsinglepp_1_1BasicScorer.html#a988f7cebb10373c6382ad052124138dc">BasicScorer::run()</a></code>. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a3a482bb20652991e23596520b1a0de1f" name="a3a482bb20652991e23596520b1a0de1f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3a482bb20652991e23596520b1a0de1f">&#9670;&#160;</a></span>run() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a3a482bb20652991e23596520b1a0de1f">&#9670;&#160;</a></span>run() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -170,7 +172,7 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="ae113106e662149f160158535bfbe57da" name="ae113106e662149f160158535bfbe57da"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae113106e662149f160158535bfbe57da">&#9670;&#160;</a></span>run() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ae113106e662149f160158535bfbe57da">&#9670;&#160;</a></span>run() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -237,9 +239,68 @@ template&lt;class Id &gt; </div>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir"></td><td class="paramname">mat_nrow</td><td>Number of rows (genes) in the test dataset. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">mat_id</td><td>Pointer to an array of identifiers of length equal to <code>mat_nrow</code>. This should contain a unique identifier for each row of <code>mat</code> (typically a gene name or index). </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">mat_id</td><td>Pointer to an array of identifiers of length equal to <code>mat_nrow</code>. This should contain a unique identifier for each row of <code>mat</code> (typically a gene name or index). If any duplicate IDs are present, only the first occurrence is used. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">ref</td><td>An expression matrix for the reference expression profiles, where rows are genes and columns are cells. This should have non-zero columns. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">ref_id</td><td>Pointer to an array of identifiers of length equal to the number of rows of any <code>ref</code>. This should contain a unique identifier for each row in <code>ref</code>, and should be comparable to <code>mat_id</code>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ref_id</td><td>Pointer to an array of identifiers of length equal to the number of rows of any <code>ref</code>. This should contain a unique identifier for each row in <code>ref</code>, and should be comparable to <code>mat_id</code>. If any duplicate IDs are present, only the first occurrence is used. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each sample. The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>A vector of vectors of ranked marker genes for each pairwise comparison between labels, see <code>Markers</code> for more details.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <code><a class="el" href="structsinglepp_1_1BasicBuilder_1_1PrebuiltIntersection.html" title="Prebuilt reference requiring an intersection of features.">PrebuiltIntersection</a></code> instance that can be used in <code><a class="el" href="classsinglepp_1_1BasicBuilder.html#a3a482bb20652991e23596520b1a0de1f">run()</a></code> for annotation of a test dataset with the same order of genes as specified in <code>mat_id</code>.</dd></dl>
+<p>This method deals with the case where the genes are not in the same order and number across the test and reference datasets. It finds the intersection of genes and then prepares the references accordingly. </p>
+
+</div>
+</div>
+<a id="adb1de54c8a13ed1870f0f9f549caac3f" name="adb1de54c8a13ed1870f0f9f549caac3f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adb1de54c8a13ed1870f0f9f549caac3f">&#9670;&#160;</a></span>run() <span class="overload">[3/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structsinglepp_1_1BasicBuilder_1_1PrebuiltIntersection.html">PrebuiltIntersection</a> singlepp::BasicBuilder::run </td>
+          <td>(</td>
+          <td class="paramtype">std::vector&lt; std::pair&lt; int, int &gt; &gt;&#160;</td>
+          <td class="paramname"><em>intersection</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const tatami::Matrix&lt; double, int &gt; *&#160;</td>
+          <td class="paramname"><em>ref</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const int *&#160;</td>
+          <td class="paramname"><em>labels</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespacesinglepp.html#ae39cf61993000d182cb3464b4ace1406">Markers</a>&#160;</td>
+          <td class="paramname"><em>markers</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir"></td><td class="paramname">intersection</td><td>Vector defining the intersection of features betweent the test and reference datasets. Each entry is a pair where the first element is the row index in the test matrix, and the second element is the row index for the corresponding feature in the reference matrix. Each row index for either matrix should occur no more than once in <code>intersection</code>. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">ref</td><td>An expression matrix for the reference expression profiles, where rows are genes and columns are cells. This should have non-zero columns. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each sample. The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">markers</td><td>A vector of vectors of ranked marker genes for each pairwise comparison between labels, see <code>Markers</code> for more details.</td></tr>
   </table>
