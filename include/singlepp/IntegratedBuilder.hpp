@@ -362,7 +362,10 @@ private:
         tatami::parallelize([&](int, int start, int len) -> void {
             RankedVector<double, int> tmp_ranked;
             tmp_ranked.reserve(in_use.size());
-            auto wrk = tatami::consecutive_extractor<false, false>(curmat, start, len, in_use); // 'in_use' is guaranteed to be sorted and unique, see above.
+
+            // 'in_use' is guaranteed to be sorted and unique, see its derivation in finish().
+            // This means we can directly use it for indexed extraction.
+            auto wrk = tatami::consecutive_extractor<false, false>(curmat, start, len, in_use); 
             std::vector<double> buffer(wrk->index_length);
 
             for (int c = start, end = start + len; c < end; ++c) {
@@ -398,7 +401,7 @@ private:
         for (int i = 0, end = in_use.size(); i < end; ++i) {
             auto it = cur_mapping.find(in_use[i]);
             if (it != cur_mapping.end()) {
-                remapping.emplace_back(it->second, i); // using 'i' instead of 'in_use[i]', as we want to store the indices into 'in_use', not the values.
+                remapping.emplace_back(it->second, i); // using 'i' instead of 'in_use[i]', as we want to work with indices into 'in_use', not the values of 'in_use' themselves.
                 cur_available.insert(i);
             }
         }
@@ -407,8 +410,8 @@ private:
 
         // This section is just to enable indexed extraction by tatami.
         // There's no need to consider duplicates among the
-        // 'remapping[i].first', as 'cur_mapping->second' is guaranteed to be
-        // unique (as a consequence of how intersect_features works).
+        // 'remapping[i].first', 'cur_mapping->second' is guaranteed to be
+        // unique as a consequence of how intersect_features works.
         std::vector<int> remapped_in_use; 
         remapped_in_use.reserve(remapping.size());
         for (const auto& p : remapping) {
@@ -445,7 +448,7 @@ public:
      * Any further invocations of this function will not be valid.
      */
     IntegratedReferences finish() {
-        // Identify the global set of all genes that will be in use here.
+        // Identify the union of all marker genes.
         auto& in_use = references.universe;
         std::unordered_map<int, int> remap_to_universe;
         {
@@ -496,6 +499,7 @@ public:
                 }
             }
 
+            // Finally filling the rankings.
             if (!references.check_availability[r]) {
                 fill_ranks(curmat, curlab, in_use, positions, references.ranked[r], nthreads);
             } else {
