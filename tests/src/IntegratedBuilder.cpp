@@ -86,16 +86,16 @@ TEST_P(IntegratedBuilderBasicTest, SimpleCombine) {
     auto output = inter.finish();
 
     // Checking the values of the built references.
-    EXPECT_EQ(output.size(), nrefs);
+    EXPECT_EQ(output.num_references(), nrefs);
+    const auto& universe = output.universe;
 
-    std::vector<int> in_use;
     for (size_t r = 0; r < nrefs; ++r) {
-        EXPECT_FALSE(output[r].check_availability);
+        EXPECT_FALSE(output.check_availability[r]);
 
         size_t nlabels = 3 + r;
-        EXPECT_EQ(output[r].markers.size(), nlabels);
-        EXPECT_EQ(output[r].num_labels(), nlabels);
-        EXPECT_EQ(output[r].num_profiles(), nsamples);
+        EXPECT_EQ(output.markers[r].size(), nlabels);
+        EXPECT_EQ(output.num_labels(r), nlabels);
+        EXPECT_EQ(output.num_profiles(r), nsamples);
 
         // Checking the contents of the markers. 
         const auto& cur_markers = markers[r];
@@ -112,8 +112,13 @@ TEST_P(IntegratedBuilderBasicTest, SimpleCombine) {
 
             std::vector<int> to_use(kept.begin(), kept.end());
             std::sort(to_use.begin(), to_use.end());
-            auto copy = output[r].markers[l];
+
+            auto copy = output.markers[r][l];
+            for (auto& x : copy) {
+                x = universe[x];
+            }
             std::sort(copy.begin(), copy.end());
+
             EXPECT_EQ(to_use, copy);
         }
 
@@ -123,29 +128,25 @@ TEST_P(IntegratedBuilderBasicTest, SimpleCombine) {
 
         for (size_t s = 0; s < nsamples; ++s) {
             int lab = labels[r][s]; 
-            const auto& target = output[r].ranked[lab][offsets[lab]];
+            const auto& target = output.ranked[r][lab][offsets[lab]];
             ++offsets[lab];
 
             double last_original = -100000000;
             auto col = wrk->fetch(s);
             std::vector<int> test_in_use;
-            test_in_use.push_back(target[0].second);
+            test_in_use.push_back(universe[target[0].second]);
 
             for (size_t i = 1; i < target.size(); ++i) {
                 const auto& prev = target[i-1];
                 const auto& x = target[i];
                 EXPECT_TRUE(prev.first < x.first); // no ties in this simulation.
-                EXPECT_TRUE(col[prev.second] < col[x.second]);
-                test_in_use.push_back(x.second);
+                EXPECT_TRUE(col[universe[prev.second]] < col[universe[x.second]]);
+                test_in_use.push_back(universe[x.second]);
             }
 
-            // Checking that all values are represented.
+            // Checking that all features are represented.
             std::sort(test_in_use.begin(), test_in_use.end());
-            if (in_use.size()) {
-                EXPECT_EQ(test_in_use, in_use);
-            } else {
-                in_use.swap(test_in_use);
-            }
+            EXPECT_EQ(test_in_use, universe);
         }
     }
 }
@@ -184,15 +185,18 @@ TEST_P(IntegratedBuilderMoreTest, SimpleCombineNaked) {
     auto alpha_output = alpha.finish();
     auto bravo_output = bravo.finish();
 
+    EXPECT_EQ(alpha_output.universe, bravo_output.universe);
+    EXPECT_EQ(alpha_output.num_references(), bravo_output.num_references());
+
     // Checking the rank values for equality.
     for (size_t r = 0; r < nrefs; ++r) {
-        const auto& cur_alpha = alpha_output[r];
-        const auto& cur_bravo = bravo_output[r];
+        const auto& cur_alpha = alpha_output.ranked[r];
+        const auto& cur_bravo = bravo_output.ranked[r];
+        ASSERT_EQ(cur_alpha.size(), cur_bravo.size());
 
-        ASSERT_EQ(cur_alpha.ranked.size(), cur_bravo.ranked.size());
-        for (size_t l = 0; l < cur_alpha.ranked.size(); ++l) {
-            const auto& rank_alpha = cur_alpha.ranked[l];
-            const auto& rank_bravo = cur_bravo.ranked[l];
+        for (size_t l = 0; l < cur_alpha.size(); ++l) {
+            const auto& rank_alpha = cur_alpha[l];
+            const auto& rank_bravo = cur_bravo[l];
             ASSERT_EQ(rank_alpha.size(), rank_bravo.size());
 
             for (size_t s = 0; s < rank_alpha.size(); ++s) {
@@ -218,21 +222,22 @@ TEST_P(IntegratedBuilderMoreTest, IntersectedCombine) {
     builder.set_top(ntop);
     singlepp::IntegratedBuilder inter;
 
-    // Adding each one to the list.
+    // Adding each reference to the list. We store the single prebuilts for testing later.
+    std::vector<typename singlepp::BasicBuilder::PrebuiltIntersection> single_ref;
     for (size_t r = 0; r < nrefs; ++r) {
         auto pre = builder.run(ngenes, ids.data(), matrices[r].get(), kept[r].data(), labels[r].data(), markers[r]);
+        single_ref.push_back(pre);
         inter.add(ngenes, ids.data(), matrices[r].get(), kept[r].data(), labels[r].data(), pre);
     }
 
     auto output = inter.finish();
 
-    EXPECT_EQ(output.size(), nrefs);
-    for (size_t r = 0; r < nrefs; ++r) {
-        EXPECT_TRUE(output[r].check_availability);
+    EXPECT_EQ(output.num_references(), nrefs);
+    const auto& universe = output.universe;
 
-        size_t nlabels = 3 + r;
-        EXPECT_EQ(output[r].markers.size(), nlabels);
- 
+    for (size_t r = 0; r < nrefs; ++r) {
+        EXPECT_TRUE(output.check_availability[r]);
+
         // Creating a mapping.
         std::unordered_map<int, int> mapping;
         const auto& keep = kept[r];
@@ -244,17 +249,49 @@ TEST_P(IntegratedBuilderMoreTest, IntersectedCombine) {
 
         // Check consistency of the availability set.
         bool not_found = false;
-        const auto& available = output[r].available;
-        EXPECT_TRUE(available.size() > 0);
+        const auto& available = output.available[r];
 
         for (const auto& a : available) {
-            if (mapping.find(a) == mapping.end()) {
+            if (mapping.find(universe[a]) == mapping.end()) {
                 not_found = true;
+                break;
             }
         }
         EXPECT_FALSE(not_found);
-        std::vector<int> in_use(available.begin(), available.end());
-        std::sort(in_use.begin(), in_use.end());
+
+        std::vector<int> local_universe(available.begin(), available.end());
+        for (auto& x : local_universe) {
+            x = universe[x];
+        }
+        std::sort(local_universe.begin(), local_universe.end());
+
+        // Check consistency of the markers.
+        const auto& outmarkers = output.markers[r];
+        const auto& cur_markers = single_ref[r].markers;
+        size_t nlabels = outmarkers.size();
+        EXPECT_EQ(cur_markers.size(), nlabels);
+
+        for (size_t l = 0; l < nlabels; ++l) {
+            std::unordered_set<int> kept;
+            for (size_t l2 = 0; l2 < nlabels; ++l2) {
+                if (l != l2) {
+                    const auto& current = cur_markers[l][l2];
+                    for (auto x : current) {
+                        kept.insert(single_ref[r].mat_subset[x]); // for comparison to universe indices, which are all relative to the test matrix.
+                    }
+                }
+            }
+
+            bool not_found = false;
+            for (auto& x : outmarkers[l]) {
+                if (kept.find(universe[x]) == kept.end()) {
+                    std::cout << universe[x] << std::endl;
+                    not_found = true;
+                    break;
+                }
+            }
+            EXPECT_FALSE(not_found);
+        }
 
         // Checking rankings for consistency with the availabilities.
         std::vector<int> offsets(nlabels);
@@ -262,25 +299,25 @@ TEST_P(IntegratedBuilderMoreTest, IntersectedCombine) {
 
         for (size_t s = 0; s < nsamples; ++s) {
             int lab = labels[r][s]; 
-            const auto& target = output[r].ranked[lab][offsets[lab]];
+            const auto& target = output.ranked[r][lab][offsets[lab]];
             ++offsets[lab];
 
             double last_original = -100000000;
             auto col = wrk->fetch(s);
             std::vector<int> test_in_use;
-            test_in_use.push_back(target[0].second);
+            test_in_use.push_back(universe[target[0].second]);
 
             for (size_t i = 1; i < target.size(); ++i) {
                 const auto& prev = target[i-1];
                 const auto& x = target[i];
                 EXPECT_TRUE(prev.first < x.first); // no ties in this simulation.
-                EXPECT_TRUE(col[mapping[prev.second]] < col[mapping[x.second]]);
-                test_in_use.push_back(x.second);
+                EXPECT_TRUE(col[mapping[universe[prev.second]]] < col[mapping[universe[x.second]]]);
+                test_in_use.push_back(universe[x.second]);
             }
 
-            // Checking that all values are represented.
+            // Checking that all features are represented.
             std::sort(test_in_use.begin(), test_in_use.end());
-            EXPECT_EQ(test_in_use, in_use);
+            EXPECT_EQ(test_in_use, local_universe);
         }
     }
 }
@@ -314,28 +351,32 @@ TEST_P(IntegratedBuilderMoreTest, IntersectedCombineAgain) {
     inter.add(ngenes, ids.data(), mat.get(), keep.data(), lab.data(), pre);
     inter2.add(ngenes, ids.data(), mat.get(), keep.data(), lab.data(), interpre);
 
-    auto fin = inter.finish()[0];
-    auto fin2 = inter2.finish()[0];
+    auto fin = inter.finish();
+    auto fin2 = inter2.finish();
 
     // Checking for identical bits and pieces.
-    EXPECT_EQ(fin.check_availability, fin2.check_availability);
+    EXPECT_EQ(fin.check_availability[0], fin2.check_availability[0]);
 
-    std::vector<int> avail(fin.available.begin(), fin.available.end());
+    std::vector<int> avail(fin.available[0].begin(), fin.available[0].end());
     std::sort(avail.begin(), avail.end());
-    std::vector<int> avail2(fin2.available.begin(), fin2.available.end());
+    std::vector<int> avail2(fin2.available[0].begin(), fin2.available[0].end());
     std::sort(avail2.begin(), avail2.end());
     EXPECT_EQ(avail, avail2);
 
-    ASSERT_EQ(fin.markers.size(), fin2.markers.size());
-    for (size_t m = 0; m < fin.markers.size(); ++m) {
-        EXPECT_EQ(fin.markers[m], fin2.markers[m]);
+    const auto& markers = fin.markers[0];
+    const auto& markers2 = fin2.markers[0];
+    ASSERT_EQ(markers.size(), markers2.size());
+    for (size_t m = 0; m < markers.size(); ++m) {
+        EXPECT_EQ(markers[m], markers2[m]);
     }
 
-    ASSERT_EQ(fin.ranked.size(), fin2.ranked.size());
-    for (size_t i = 0; i < fin.ranked.size(); ++i) {
-        ASSERT_EQ(fin.ranked[i].size(), fin2.ranked[i].size());
-        for (size_t j = 0; j < fin.ranked[i].size(); ++j) {
-            EXPECT_EQ(fin.ranked[i][j], fin2.ranked[i][j]);
+    const auto& ranked = fin.ranked[0];
+    const auto& ranked2 = fin2.ranked[0];
+    ASSERT_EQ(ranked.size(), ranked2.size());
+    for (size_t i = 0; i < ranked.size(); ++i) {
+        ASSERT_EQ(ranked[i].size(), ranked2[i].size());
+        for (size_t j = 0; j < ranked[i].size(); ++j) {
+            EXPECT_EQ(ranked[i][j], ranked2[i][j]);
         }
     }
 }
@@ -359,19 +400,22 @@ TEST_P(IntegratedBuilderMoreTest, IntersectedCombineNaked) {
 
     singlepp::IntegratedBuilder alpha;
     alpha.add(ngenes, ids.data(), mat.get(), keep.data(), lab.data(), pre);
-    auto aout = alpha.finish()[0];
+    auto aout = alpha.finish();
 
     // Comparing what happens with direct input of markers of interest.
     auto remarkers = truncate_markers(mrk, ntop);
     singlepp::IntegratedBuilder bravo;
     bravo.add(ngenes, ids.data(), mat.get(), keep.data(), lab.data(), remarkers);
-    auto bout = bravo.finish()[0];
+    auto bout = bravo.finish();
 
-    ASSERT_EQ(aout.ranked.size(), bout.ranked.size());
-    for (size_t i = 0; i < aout.ranked.size(); ++i) {
-        ASSERT_EQ(aout.ranked[i].size(), bout.ranked[i].size());
-        for (size_t j = 0; j < aout.ranked[i].size(); ++j) {
-            EXPECT_EQ(aout.ranked[i][j], bout.ranked[i][j]);
+    const auto& aranked = aout.ranked[0];
+    const auto& branked = bout.ranked[0];
+
+    ASSERT_EQ(aranked.size(), branked.size());
+    for (size_t i = 0; i < aranked.size(); ++i) {
+        ASSERT_EQ(aranked[i].size(), branked[i].size());
+        for (size_t j = 0; j < aranked[i].size(); ++j) {
+            EXPECT_EQ(aranked[i][j], branked[i][j]);
         }
     }
 }
