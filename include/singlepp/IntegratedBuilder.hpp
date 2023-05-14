@@ -18,22 +18,32 @@
 namespace singlepp {
 
 /**
- * @brief Single reference dataset prepared for integrated classification.
+ * @brief Reference datasets prepared for integrated classification.
  */
-struct IntegratedReference {
+struct IntegratedReferences {
     /**
-     * @return Number of labels in this reference.
+     * @return Number of reference datasets.
+     * Each object corresponds to the reference used in an `IntegratedBuilder::add()` call, in the same order.
      */
-    size_t num_labels() const {
+    size_t num_references() const {
         return markers.size();
     }
 
     /**
+     * @param r Reference dataset of interest.
+     * @return Number of labels in this reference.
+     */
+    size_t num_labels(size_t r) const {
+        return markers[r].size();
+    }
+
+    /**
+     * @param r Reference dataset of interest.
      * @return Number of profiles in this reference.
      */
-    size_t num_profiles() const {
+    size_t num_profiles(size_t r) const {
         size_t n = 0;
-        for (const auto& ref : ranked) {
+        for (const auto& ref : ranked[r]) {
             n += ref.size();
         }
         return n;
@@ -42,10 +52,19 @@ struct IntegratedReference {
     /**
      * @cond
      */
-    bool check_availability = false;
-    std::unordered_set<int> available;
-    std::vector<std::vector<int> > markers;
-    std::vector<std::vector<RankedVector<int, int> > > ranked;
+    std::vector<int> universe; // To be used by IntegratedScorer for indexed extraction.
+
+    std::vector<bool> check_availability;
+    std::vector<std::unordered_set<int> > available; // indices to 'universe'
+    std::vector<std::vector<std::vector<int> > > markers; // indices to 'universe'
+    std::vector<std::vector<std::vector<RankedVector<int, int> > > > ranked; // .second contains indices to 'universe'
+
+    void resize(size_t n) {
+        check_availability.resize(n);
+        available.resize(n);
+        markers.resize(n);
+        ranked.resize(n);
+    }
     /**
      * @endcond
      */
@@ -67,7 +86,7 @@ class IntegratedBuilder {
 private:
     std::vector<const tatami::Matrix<double, int>*> stored_matrices;
     std::vector<const int*> stored_labels;
-    std::vector<IntegratedReference> references;
+    IntegratedReferences references;
     std::vector<std::unordered_map<int, int> > gene_mapping;
     int nthreads = Defaults::num_threads;
 
@@ -96,8 +115,8 @@ private:
     void add_internal(const tatami::Matrix<double, int>* ref, const int* labels) {
         stored_matrices.push_back(ref);
         stored_labels.push_back(labels);
-        references.resize(references.size() + 1);
-        gene_mapping.resize(gene_mapping.size() + 1); 
+        references.resize(stored_matrices.size());
+        gene_mapping.resize(stored_matrices.size());
     }
 
     template<class Subset>
@@ -106,10 +125,8 @@ private:
 
         // Adding the markers for each label, indexed according to their
         // position in the test matrix. This assumes that 'subset' is
-        // appropriately specified to contain the test's row indices. Note that
-        // these are positions in the test, not the ref; IntegratedScorer will
-        // use the gene_mapping to convert them to row indices of 'ref'.
-        auto& new_markers = references.back().markers;
+        // appropriately specified to contain the test's row indices. 
+        auto& new_markers = references.markers.back();
         new_markers.reserve(old_markers.size());
 
         for (size_t i = 0; i < old_markers.size(); ++i) {
@@ -161,7 +178,7 @@ private:
             }
         };
 
-        auto& new_markers = references.back().markers;
+        auto& new_markers = references.markers.back();
         new_markers.resize(old_markers.size());
 
         for (size_t i = 0; i < old_markers.size(); ++i) {
@@ -184,7 +201,7 @@ private:
         }
 
         // Constructing the mapping of mat's rows to the reference rows.
-        references.back().check_availability = true;
+        references.check_availability.back() = true;
         auto& mapping = gene_mapping.back();
         for (const auto& i : intersection) {
             mapping[i.first] = i.second;
@@ -285,7 +302,7 @@ public:
         const BasicBuilder::PrebuiltIntersection& built) 
     {
         add_internal(ref, labels, built.markers, built.mat_subset);
-        references.back().check_availability = true;
+        references.check_availability.back() = true;
 
         // Constructing the mapping of mat's rows to the reference rows.
         auto intersection = intersect_features(mat_nrow, mat_id, ref->nrow(), ref_id);
@@ -326,120 +343,167 @@ public:
         add_internal(mat_nrow, mat_id, ref, ref_id, labels, built.markers, built.subset);
     }
 
+private:
+    /* Here, we've split out some of the functions for easier reading.
+     * Otherwise everything would land in a single mega-function.
+     */
+
+    static void fill_ranks(
+        const tatami::Matrix<double, int>* curmat, 
+        const int* curlab, 
+        const std::vector<int>& in_use, 
+        const std::vector<int>& positions, 
+        std::vector<std::vector<RankedVector<int, int> > >& cur_ranked,
+        int nthreads) 
+    {
+        // If we don't need to check availability, this implies that 
+        // the reference has 1:1 feature mapping to the test dataset.
+        // In that case, we can proceed quite simply.
+        tatami::parallelize([&](int, int start, int len) -> void {
+            RankedVector<double, int> tmp_ranked;
+            tmp_ranked.reserve(in_use.size());
+
+            // 'in_use' is guaranteed to be sorted and unique, see its derivation in finish().
+            // This means we can directly use it for indexed extraction.
+            auto wrk = tatami::consecutive_extractor<false, false>(curmat, start, len, in_use); 
+            std::vector<double> buffer(wrk->index_length);
+
+            for (int c = start, end = start + len; c < end; ++c) {
+                auto ptr = wrk->fetch(c, buffer.data());
+
+                tmp_ranked.clear();
+                for (int i = 0, end = in_use.size(); i < end; ++i, ++ptr) {
+                    tmp_ranked.emplace_back(*ptr, i);
+                }
+                std::sort(tmp_ranked.begin(), tmp_ranked.end());
+
+                auto& final_ranked = cur_ranked[curlab[c]][positions[c]];
+                simplify_ranks(tmp_ranked, final_ranked);
+            }
+        }, curmat->ncol(), nthreads);
+    }
+
+    static void fill_ranks(
+        const tatami::Matrix<double, int>* curmat, 
+        const int* curlab, 
+        const std::vector<int>& in_use, 
+        const std::vector<int>& positions,
+        const std::unordered_map<int, int>& cur_mapping,
+        std::unordered_set<int>& cur_available,
+        std::vector<std::vector<RankedVector<int, int> > >& cur_ranked,
+        int nthreads)
+    {
+        // If we need to check availability, then we need to check
+        // the mapping of test genes to row indices of the reference.
+        std::vector<std::pair<int, int> > remapping; 
+        remapping.reserve(in_use.size());
+
+        for (int i = 0, end = in_use.size(); i < end; ++i) {
+            auto it = cur_mapping.find(in_use[i]);
+            if (it != cur_mapping.end()) {
+                remapping.emplace_back(it->second, i); // using 'i' instead of 'in_use[i]', as we want to work with indices into 'in_use', not the values of 'in_use' themselves.
+                cur_available.insert(i);
+            }
+        }
+
+        std::sort(remapping.begin(), remapping.end());
+
+        // This section is just to enable indexed extraction by tatami.
+        // There's no need to consider duplicates among the
+        // 'remapping[i].first', 'cur_mapping->second' is guaranteed to be
+        // unique as a consequence of how intersect_features works.
+        std::vector<int> remapped_in_use; 
+        remapped_in_use.reserve(remapping.size());
+        for (const auto& p : remapping) {
+            remapped_in_use.push_back(p.first);
+        }
+
+        tatami::parallelize([&](int, int start, int len) -> void {
+            RankedVector<double, int> tmp_ranked;
+            tmp_ranked.reserve(remapped_in_use.size());
+            std::vector<double> buffer(remapped_in_use.size());
+            auto wrk = tatami::consecutive_extractor<false, false>(curmat, start, len, remapped_in_use);
+
+            for (size_t c = start, end = start + len; c < end; ++c) {
+                auto ptr = wrk->fetch(c, buffer.data());
+
+                tmp_ranked.clear();
+                for (const auto& p : remapping) {
+                    tmp_ranked.emplace_back(*ptr, p.second); // remember, 'p.second' corresponds to indices into 'in_use'.
+                    ++ptr;
+                }
+                std::sort(tmp_ranked.begin(), tmp_ranked.end());
+
+                auto& final_ranked = cur_ranked[curlab[c]][positions[c]];
+                simplify_ranks(tmp_ranked, final_ranked);
+            }
+        }, curmat->ncol(), nthreads);
+    }
+
 public:
     /**
-     * @return A vector of `IntegratedReference` objects.
-     * Each object corresponds to the reference used in an `add()` call, in the same order.
+     * @return The set of integrated references, for use in `IntegratedScorer`.
      *
      * This function should only be called once, after all reference datasets have been registered with `add()`.
      * Any further invocations of this function will not be valid.
      */
-    std::vector<IntegratedReference> finish() {
-        // Identify the global set of all genes that will be in use here.
-        std::unordered_set<int> in_use_tmp;
-        for (const auto& ref : references) {
-            for (const auto& mrk : ref.markers) {
-                in_use_tmp.insert(mrk.begin(), mrk.end());
+    IntegratedReferences finish() {
+        // Identify the union of all marker genes.
+        auto& in_use = references.universe;
+        std::unordered_map<int, int> remap_to_universe;
+        {
+            std::unordered_set<int> in_use_tmp;
+            for (const auto& refmarkers : references.markers) {
+                for (const auto& mrk : refmarkers) {
+                    in_use_tmp.insert(mrk.begin(), mrk.end());
+                }
+            }
+
+            in_use.insert(in_use.end(), in_use_tmp.begin(), in_use_tmp.end());
+            std::sort(in_use.begin(), in_use.end());
+
+            for (int i = 0, end = in_use.size(); i < end; ++i) {
+                remap_to_universe[in_use[i]] = i;
             }
         }
 
-        std::vector<int> in_use(in_use_tmp.begin(), in_use_tmp.end());
-        std::sort(in_use.begin(), in_use.end());
-
-        for (size_t r = 0; r < references.size(); ++r) {
-            auto& curref = references[r];
+        for (size_t r = 0, end = references.num_references(); r < end; ++r) {
             auto curlab = stored_labels[r];
             auto curmat = stored_matrices[r];
 
-            size_t NR = curmat->nrow();
-            size_t NC = curmat->ncol();
-            size_t nlabels = curref.markers.size();
-
-            std::vector<int> positions(NC);
-            std::vector<int> samples_per_label(nlabels);
-            for (size_t c = 0; c < NC; ++c) {
-                auto& pos = samples_per_label[curlab[c]];
-                positions[c] = pos;
-                ++pos;
+            // Reindexing the markers to point to the universe.
+            auto& curmarkers = references.markers[r];
+            for (auto& outer : curmarkers) {
+                for (auto& x : outer) {
+                    x = remap_to_universe.find(x)->second;
+                }
             }
 
-            curref.ranked.resize(nlabels);
-            for (size_t l = 0; l < nlabels; ++l) {
-                curref.ranked[l].resize(samples_per_label[l]);
+            auto& cur_ranked = references.ranked[r];
+            std::vector<int> positions;
+            {
+                size_t nlabels = curmarkers.size();
+                size_t NC = curmat->ncol();
+                positions.reserve(NC);                
+
+                std::vector<int> samples_per_label(nlabels);
+                for (size_t c = 0; c < NC; ++c) {
+                    auto& pos = samples_per_label[curlab[c]];
+                    positions.push_back(pos);
+                    ++pos;
+                }
+
+                cur_ranked.resize(nlabels);
+                for (size_t l = 0; l < nlabels; ++l) {
+                    cur_ranked[l].resize(samples_per_label[l]);
+                }
             }
 
-            if (!curref.check_availability) {
-                // If we don't need to check availability, this implies that 
-                // the reference has 1:1 feature mapping to the test dataset.
-                // In that case, we can proceed quite simply.
-                tatami::parallelize([&](int, int start, int len) -> void {
-                    RankedVector<double, int> tmp_ranked;
-                    tmp_ranked.reserve(in_use.size());
-                    std::vector<double> buffer(NR);
-                    auto wrk = tatami::consecutive_extractor<false, false>(curmat, start, len, in_use); // 'in_use' is guaranteed to be sorted and unique, see above.
-
-                    for (int c = start, end = start + len; c < end; ++c) {
-                        auto ptr = wrk->fetch(c, buffer.data());
-
-                        tmp_ranked.clear();
-                        for (auto u : in_use) {
-                            tmp_ranked.emplace_back(*ptr, u);
-                            ++ptr;
-                        }
-                        std::sort(tmp_ranked.begin(), tmp_ranked.end());
-
-                        auto& final_ranked = curref.ranked[curlab[c]][positions[c]];
-                        simplify_ranks(tmp_ranked, final_ranked);
-                    }
-                }, NC, nthreads);
-
+            // Finally filling the rankings.
+            if (!references.check_availability[r]) {
+                fill_ranks(curmat, curlab, in_use, positions, references.ranked[r], nthreads);
             } else {
-                // If we do need to check availability, then we need to check
-                // the mapping of test genes to their reference row indices.
-                const auto& cur_mapping = gene_mapping[r];
-                auto& cur_available = curref.available;
-                std::vector<std::pair<int, int> > remapping; 
-                remapping.reserve(in_use.size());
-
-                for (auto u : in_use) {
-                    auto it = cur_mapping.find(u);
-                    if (it != cur_mapping.end()) {
-                        remapping.emplace_back(it->second, u);
-                        cur_available.insert(u);
-                    }
-                }
-
-                // This section is just to enable indexed extraction by tatami.
-                // There's no need to consider duplicates among the
-                // 'remapping[i].first', as 'gene_mapping[r]->second' is
-                // guaranteed to be unique when intersect_features returns.
-                std::vector<int> remapped_in_use; 
-                std::sort(remapping.begin(), remapping.end());
-                remapped_in_use.reserve(remapping.size());
-                for (const auto& p : remapping) {
-                    remapped_in_use.push_back(p.first);
-                }
-
-                tatami::parallelize([&](int, int start, int len) -> void {
-                    RankedVector<double, int> tmp_ranked;
-                    tmp_ranked.reserve(remapped_in_use.size());
-                    std::vector<double> buffer(remapped_in_use.size());
-                    auto wrk = tatami::consecutive_extractor<false, false>(curmat, start, len, remapped_in_use);
-
-                    for (size_t c = start, end = start + len; c < end; ++c) {
-                        auto ptr = wrk->fetch(c, buffer.data());
-
-                        tmp_ranked.clear();
-                        for (const auto& p : remapping) {
-                            tmp_ranked.emplace_back(*ptr, p.second); // remember, p.second corresponds to values of 'in_use', the global set of all genes.
-                            ++ptr;
-                        }
-                        std::sort(tmp_ranked.begin(), tmp_ranked.end());
-
-                        auto& final_ranked = curref.ranked[curlab[c]][positions[c]];
-                        simplify_ranks(tmp_ranked, final_ranked);
-                    }
-                }, NC, nthreads);
+                fill_ranks(curmat, curlab, in_use, positions, gene_mapping[r], references.available[r], references.ranked[r], nthreads);
             }
         }
 
