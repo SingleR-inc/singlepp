@@ -111,12 +111,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:acb41038a992f436c7a49a2f1e053e6ad"><td class="memTemplParams" colspan="2">template&lt;typename Id &gt; </td></tr>
 <tr class="memitem:acb41038a992f436c7a49a2f1e053e6ad"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#acb41038a992f436c7a49a2f1e053e6ad">add</a> (size_t mat_nrow, const Id *mat_id, const tatami::Matrix&lt; double, int &gt; *ref, const Id *ref_id, const int *labels, const <a class="el" href="structsinglepp_1_1BasicBuilder_1_1Prebuilt.html">BasicBuilder::Prebuilt</a> &amp;built)</td></tr>
 <tr class="separator:acb41038a992f436c7a49a2f1e053e6ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a980f86775bcb3de1f7d9ed24a1f3458b"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structsinglepp_1_1IntegratedReference.html">IntegratedReference</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a980f86775bcb3de1f7d9ed24a1f3458b">finish</a> ()</td></tr>
-<tr class="separator:a980f86775bcb3de1f7d9ed24a1f3458b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a07b59ff274e8fa87ddc0443896fff8f3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structsinglepp_1_1IntegratedReferences.html">IntegratedReferences</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a07b59ff274e8fa87ddc0443896fff8f3">finish</a> ()</td></tr>
+<tr class="separator:a07b59ff274e8fa87ddc0443896fff8f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Factory to prepare multiple references for integrated classification. </p>
-<p>For each reference dataset, we expect a <code><a class="el" href="structsinglepp_1_1BasicBuilder_1_1Prebuilt.html" title="Prebuilt reference that can be directly used for annotation.">BasicBuilder::Prebuilt</a></code> or <code><a class="el" href="structsinglepp_1_1BasicBuilder_1_1PrebuiltIntersection.html" title="Prebuilt reference requiring an intersection of features.">BasicBuilder::PrebuiltIntersection</a></code> object, as well as the original data structures (matrix, labels, etc.) used to construct that object. These values are passed into <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a7f3c49224a66c3e9ed5bdd1c140f03aa">add()</a></code> to register that dataset, which can be repeated multiple times for different references. Finally, calling <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a980f86775bcb3de1f7d9ed24a1f3458b">finish()</a></code> will return a vector of integrated references that can be used in <code><a class="el" href="classsinglepp_1_1IntegratedScorer.html#a9ea67add3480038327b1d0280924e275">IntegratedScorer::run()</a></code>.</p>
+<p>For each reference dataset, we expect a <code><a class="el" href="structsinglepp_1_1BasicBuilder_1_1Prebuilt.html" title="Prebuilt reference that can be directly used for annotation.">BasicBuilder::Prebuilt</a></code> or <code><a class="el" href="structsinglepp_1_1BasicBuilder_1_1PrebuiltIntersection.html" title="Prebuilt reference requiring an intersection of features.">BasicBuilder::PrebuiltIntersection</a></code> object, as well as the original data structures (matrix, labels, etc.) used to construct that object. These values are passed into <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a7f3c49224a66c3e9ed5bdd1c140f03aa">add()</a></code> to register that dataset, which can be repeated multiple times for different references. Finally, calling <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a07b59ff274e8fa87ddc0443896fff8f3">finish()</a></code> will return a vector of integrated references that can be used in <code><a class="el" href="classsinglepp_1_1IntegratedScorer.html#a654120c9074b8106cfa11052ee7fdb03">IntegratedScorer::run()</a></code>.</p>
 <p>The preparation process mostly involves checking that the gene indices are consistent across references. This is especially true when each reference contains a different set of features that must be intersected with the features in the test dataset. See the documentation for <code><a class="el" href="classsinglepp_1_1IntegratedScorer.html" title="Integrate classifications from multiple references.">IntegratedScorer</a></code> for more details on the classification based on the integrated references. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="afad4d33c0232ce792feee05498ae16d4" name="afad4d33c0232ce792feee05498ae16d4"></a>
@@ -166,8 +166,8 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The reference dataset is registered for later use in <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a980f86775bcb3de1f7d9ed24a1f3458b">finish()</a></code>.</dd></dl>
-<p><code>ref</code> and <code>labels</code> are expected to remain valid until <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a980f86775bcb3de1f7d9ed24a1f3458b">finish()</a></code> is called. </p>
+<dl class="section return"><dt>Returns</dt><dd>The reference dataset is registered for later use in <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a07b59ff274e8fa87ddc0443896fff8f3">finish()</a></code>.</dd></dl>
+<p><code>ref</code> and <code>labels</code> are expected to remain valid until <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a07b59ff274e8fa87ddc0443896fff8f3">finish()</a></code> is called. </p>
 
 </div>
 </div>
@@ -218,8 +218,8 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The reference dataset is registered for later use in <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a980f86775bcb3de1f7d9ed24a1f3458b">finish()</a></code>.</dd></dl>
-<p><code>ref</code> and <code>labels</code> are expected to remain valid until <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a980f86775bcb3de1f7d9ed24a1f3458b">finish()</a></code> is called. </p>
+<dl class="section return"><dt>Returns</dt><dd>The reference dataset is registered for later use in <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a07b59ff274e8fa87ddc0443896fff8f3">finish()</a></code>.</dd></dl>
+<p><code>ref</code> and <code>labels</code> are expected to remain valid until <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a07b59ff274e8fa87ddc0443896fff8f3">finish()</a></code> is called. </p>
 
 </div>
 </div>
@@ -299,8 +299,8 @@ template&lt;typename Id &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The reference dataset is registered for later use in <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a980f86775bcb3de1f7d9ed24a1f3458b">finish()</a></code>.</dd></dl>
-<p><code>ref</code> and <code>labels</code> are expected to remain valid until <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a980f86775bcb3de1f7d9ed24a1f3458b">finish()</a></code> is called. <code>mat_id</code> and <code>mat_nrow</code> should also be constant for all invocations to <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a7f3c49224a66c3e9ed5bdd1c140f03aa">add()</a></code>. </p>
+<dl class="section return"><dt>Returns</dt><dd>The reference dataset is registered for later use in <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a07b59ff274e8fa87ddc0443896fff8f3">finish()</a></code>.</dd></dl>
+<p><code>ref</code> and <code>labels</code> are expected to remain valid until <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a07b59ff274e8fa87ddc0443896fff8f3">finish()</a></code> is called. <code>mat_id</code> and <code>mat_nrow</code> should also be constant for all invocations to <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a7f3c49224a66c3e9ed5bdd1c140f03aa">add()</a></code>. </p>
 
 </div>
 </div>
@@ -380,8 +380,8 @@ template&lt;typename Id &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The reference dataset is registered for later use in <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a980f86775bcb3de1f7d9ed24a1f3458b">finish()</a></code>.</dd></dl>
-<p><code>ref</code> and <code>labels</code> are expected to remain valid until <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a980f86775bcb3de1f7d9ed24a1f3458b">finish()</a></code> is called. <code>mat_id</code> and <code>mat_nrow</code> should also be constant for all invocations to <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a7f3c49224a66c3e9ed5bdd1c140f03aa">add()</a></code>. </p>
+<dl class="section return"><dt>Returns</dt><dd>The reference dataset is registered for later use in <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a07b59ff274e8fa87ddc0443896fff8f3">finish()</a></code>.</dd></dl>
+<p><code>ref</code> and <code>labels</code> are expected to remain valid until <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a07b59ff274e8fa87ddc0443896fff8f3">finish()</a></code> is called. <code>mat_id</code> and <code>mat_nrow</code> should also be constant for all invocations to <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a7f3c49224a66c3e9ed5bdd1c140f03aa">add()</a></code>. </p>
 
 </div>
 </div>
@@ -461,13 +461,13 @@ template&lt;typename Id &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The reference dataset is registered for later use in <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a980f86775bcb3de1f7d9ed24a1f3458b">finish()</a></code>.</dd></dl>
-<p><code>ref</code> and <code>labels</code> are expected to remain valid until <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a980f86775bcb3de1f7d9ed24a1f3458b">finish()</a></code> is called. <code>mat_id</code> and <code>mat_nrow</code> should also be constant for all invocations to <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a7f3c49224a66c3e9ed5bdd1c140f03aa">add()</a></code>. </p>
+<dl class="section return"><dt>Returns</dt><dd>The reference dataset is registered for later use in <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a07b59ff274e8fa87ddc0443896fff8f3">finish()</a></code>.</dd></dl>
+<p><code>ref</code> and <code>labels</code> are expected to remain valid until <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a07b59ff274e8fa87ddc0443896fff8f3">finish()</a></code> is called. <code>mat_id</code> and <code>mat_nrow</code> should also be constant for all invocations to <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a7f3c49224a66c3e9ed5bdd1c140f03aa">add()</a></code>. </p>
 
 </div>
 </div>
-<a id="a980f86775bcb3de1f7d9ed24a1f3458b" name="a980f86775bcb3de1f7d9ed24a1f3458b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a980f86775bcb3de1f7d9ed24a1f3458b">&#9670;&#160;</a></span>finish()</h2>
+<a id="a07b59ff274e8fa87ddc0443896fff8f3" name="a07b59ff274e8fa87ddc0443896fff8f3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a07b59ff274e8fa87ddc0443896fff8f3">&#9670;&#160;</a></span>finish()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -476,7 +476,7 @@ template&lt;typename Id &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt; <a class="el" href="structsinglepp_1_1IntegratedReference.html">IntegratedReference</a> &gt; singlepp::IntegratedBuilder::finish </td>
+          <td class="memname"><a class="el" href="structsinglepp_1_1IntegratedReferences.html">IntegratedReferences</a> singlepp::IntegratedBuilder::finish </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -488,7 +488,7 @@ template&lt;typename Id &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>A vector of <code><a class="el" href="structsinglepp_1_1IntegratedReference.html" title="Single reference dataset prepared for integrated classification.">IntegratedReference</a></code> objects. Each object corresponds to the reference used in an <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a7f3c49224a66c3e9ed5bdd1c140f03aa">add()</a></code> call, in the same order.</dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The set of integrated references, for use in <code><a class="el" href="classsinglepp_1_1IntegratedScorer.html" title="Integrate classifications from multiple references.">IntegratedScorer</a></code>.</dd></dl>
 <p>This function should only be called once, after all reference datasets have been registered with <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a7f3c49224a66c3e9ed5bdd1c140f03aa">add()</a></code>. Any further invocations of this function will not be valid. </p>
 
 </div>

@@ -103,10 +103,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a6c6636928a00394e858f3be701db9bee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a616be74bb3f7de8b91748309b2946a5f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsinglepp_1_1IntegratedScorer.html">IntegratedScorer</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsinglepp_1_1IntegratedScorer.html#a616be74bb3f7de8b91748309b2946a5f">set_num_threads</a> (int n=<a class="el" href="structsinglepp_1_1IntegratedScorer_1_1Defaults.html#a7a85157f514e497ecf23c147e939a2da">Defaults::num_threads</a>)</td></tr>
 <tr class="separator:a616be74bb3f7de8b91748309b2946a5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9ea67add3480038327b1d0280924e275"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsinglepp_1_1IntegratedScorer.html#a9ea67add3480038327b1d0280924e275">run</a> (const tatami::Matrix&lt; double, int &gt; *mat, const std::vector&lt; const int * &gt; &amp;assigned, const std::vector&lt; <a class="el" href="structsinglepp_1_1IntegratedReference.html">IntegratedReference</a> &gt; &amp;references, int *best, std::vector&lt; double * &gt; &amp;scores, double *delta) const</td></tr>
-<tr class="separator:a9ea67add3480038327b1d0280924e275"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a453ac192a21743bec5121c7b5dd670c6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structsinglepp_1_1IntegratedScorer_1_1Results.html">Results</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsinglepp_1_1IntegratedScorer.html#a453ac192a21743bec5121c7b5dd670c6">run</a> (const tatami::Matrix&lt; double, int &gt; *mat, const std::vector&lt; const int * &gt; &amp;assigned, const std::vector&lt; <a class="el" href="structsinglepp_1_1IntegratedReference.html">IntegratedReference</a> &gt; &amp;references) const</td></tr>
-<tr class="separator:a453ac192a21743bec5121c7b5dd670c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a654120c9074b8106cfa11052ee7fdb03"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsinglepp_1_1IntegratedScorer.html#a654120c9074b8106cfa11052ee7fdb03">run</a> (const tatami::Matrix&lt; double, int &gt; *mat, const std::vector&lt; const int * &gt; &amp;assigned, const <a class="el" href="structsinglepp_1_1IntegratedReferences.html">IntegratedReferences</a> &amp;built, int *best, std::vector&lt; double * &gt; &amp;scores, double *delta) const</td></tr>
+<tr class="separator:a654120c9074b8106cfa11052ee7fdb03"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8130ad99101c6101258d5561cc123f46"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structsinglepp_1_1IntegratedScorer_1_1Results.html">Results</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsinglepp_1_1IntegratedScorer.html#a8130ad99101c6101258d5561cc123f46">run</a> (const tatami::Matrix&lt; double, int &gt; *mat, const std::vector&lt; const int * &gt; &amp;assigned, const <a class="el" href="structsinglepp_1_1IntegratedReferences.html">IntegratedReferences</a> &amp;built) const</td></tr>
+<tr class="separator:a8130ad99101c6101258d5561cc123f46"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Integrate classifications from multiple references. </p>
@@ -115,8 +115,8 @@ Public Member Functions</h2></td></tr>
 <p>This strategy is similar to using <code><a class="el" href="classsinglepp_1_1Classifier.html#ac9820063ea590a345ca82bb6919289d6">Classifier::run()</a></code> without fine-tuning, except that we are choosing between the best labels from all references rather than between all labels from one reference. The main idea is to create a common feature set so that the correlations can be reasonably compared across references. Note that differences in the feature sets across references are tolerated by simply ignoring missing genes when computing the correlations. This reduces the comparability of the scores as the effective feature set will vary a little (or a lot, depending) across references; nonetheless, it is preferred to taking the intersection, which is liable to leave us with very few genes.</p>
 <p>Our approach avoids any direct comparison between the expression profiles of different references, allowing us to side-step the question of how to deal with the batch effects. Similarly, we defer responsibility on solving the issue of label heterogeneity, by just passing along the existing labels and leaving it to the user's interpretation. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a453ac192a21743bec5121c7b5dd670c6" name="a453ac192a21743bec5121c7b5dd670c6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a453ac192a21743bec5121c7b5dd670c6">&#9670;&#160;</a></span>run() <span class="overload">[1/2]</span></h2>
+<a id="a8130ad99101c6101258d5561cc123f46" name="a8130ad99101c6101258d5561cc123f46"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8130ad99101c6101258d5561cc123f46">&#9670;&#160;</a></span>run() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -139,8 +139,8 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::vector&lt; <a class="el" href="structsinglepp_1_1IntegratedReference.html">IntegratedReference</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>references</em>&#160;</td>
+          <td class="paramtype">const <a class="el" href="structsinglepp_1_1IntegratedReferences.html">IntegratedReferences</a> &amp;&#160;</td>
+          <td class="paramname"><em>built</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -158,7 +158,7 @@ Public Member Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir"></td><td class="paramname">mat</td><td>Expression matrix of the test dataset, where rows are genes and columns are cells. The identity of the rows should be consistent with the arguments used in <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a7f3c49224a66c3e9ed5bdd1c140f03aa">IntegratedBuilder::add()</a></code>. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">assigned</td><td>Vector of pointers of length equal to the number of references. Each pointer should point to an array of length equal to the number of columns in <code>mat</code>, containing the assigned label for each column in each reference. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">references</td><td>Vector of integrated references produced by <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a980f86775bcb3de1f7d9ed24a1f3458b">IntegratedBuilder::finish()</a></code>.</td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">built</td><td>Set of integrated references produced by <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a07b59ff274e8fa87ddc0443896fff8f3">IntegratedBuilder::finish()</a></code>.</td></tr>
   </table>
   </dd>
 </dl>
@@ -166,8 +166,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a9ea67add3480038327b1d0280924e275" name="a9ea67add3480038327b1d0280924e275"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9ea67add3480038327b1d0280924e275">&#9670;&#160;</a></span>run() <span class="overload">[2/2]</span></h2>
+<a id="a654120c9074b8106cfa11052ee7fdb03" name="a654120c9074b8106cfa11052ee7fdb03"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a654120c9074b8106cfa11052ee7fdb03">&#9670;&#160;</a></span>run() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -190,8 +190,8 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::vector&lt; <a class="el" href="structsinglepp_1_1IntegratedReference.html">IntegratedReference</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>references</em>, </td>
+          <td class="paramtype">const <a class="el" href="structsinglepp_1_1IntegratedReferences.html">IntegratedReferences</a> &amp;&#160;</td>
+          <td class="paramname"><em>built</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -227,7 +227,7 @@ Public Member Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir"></td><td class="paramname">mat</td><td>Expression matrix of the test dataset, where rows are genes and columns are cells. The identity of the rows should be consistent with the arguments used in <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a7f3c49224a66c3e9ed5bdd1c140f03aa">IntegratedBuilder::add()</a></code>. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">assigned</td><td>Vector of pointers of length equal to the number of references. Each pointer should point to an array of length equal to the number of columns in <code>mat</code>, containing the assigned label for each column in each reference. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">references</td><td>Vector of integrated references produced by <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a980f86775bcb3de1f7d9ed24a1f3458b">IntegratedBuilder::finish()</a></code>. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">built</td><td>Set of integrated references produced by <code><a class="el" href="classsinglepp_1_1IntegratedBuilder.html#a07b59ff274e8fa87ddc0443896fff8f3">IntegratedBuilder::finish()</a></code>. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">best</td><td>Pointer to an array of length equal to the number of columns in <code>mat</code>. This is filled with the index of the reference with the best label for each cell. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">scores</td><td>Vector of pointers of length equal to the number of references. Each pointer should point to an array of length equal to the number of columns in <code>mat</code>. This is filled with the (non-fine-tuned) score for the best label of that reference for each cell. Any pointer may be <code>NULL</code> in which case the scores for that label will not be saved. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">delta</td><td>Pointer to an array of length equal to the number of columns in <code>mat</code>. This is filled with the difference between the highest and second-highest scores. This may also be <code>NULL</code> in which case the deltas are not reported.</td></tr>
