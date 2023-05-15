@@ -7,7 +7,7 @@
 #include <thread>
 
 template<class Function>
-void parallelize(size_t n, Function f, int nthreads) {
+void parallelize(Function f, size_t n, int nthreads) {
     size_t jobs_per_worker = std::ceil(static_cast<double>(n) / nthreads);
     size_t start = 0;
     std::vector<std::thread> jobs;
@@ -17,7 +17,7 @@ void parallelize(size_t n, Function f, int nthreads) {
         if (start >= end) {
             break;
         }
-        jobs.emplace_back(f, start, end);
+        jobs.emplace_back(f, w, start, end);
         start += jobs_per_worker;
     }
 

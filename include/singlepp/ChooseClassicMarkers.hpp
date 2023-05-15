@@ -171,7 +171,7 @@ public:
         #pragma omp parallel num_threads(nthreads)
         {
 #else
-        SINGLEPP_CUSTOM_PARALLEL(npairs, [&](size_t start, size_t end) -> void {
+        SINGLEPP_CUSTOM_PARALLEL([&](int, size_t start, size_t end) -> void {
 #endif
             
             std::vector<std::pair<double, int> > sorter(ngenes), sorted_copy(ngenes);
@@ -257,7 +257,7 @@ public:
 #ifndef SINGLEPP_CUSTOM_PARALLEL
         }
 #else    
-        }, nthreads);
+        }, npairs, nthreads);
 #endif        
         /**
          * @endcond
