@@ -1,8 +1,12 @@
 #ifndef SINGLEPP_CHOOSE_CLASSIC_MARKERS_HPP
 #define SINGLEPP_CHOOSE_CLASSIC_MARKERS_HPP
 
-#include "Markers.hpp"
+#include "macros.hpp"
+
 #include "tatami/tatami.hpp"
+
+#include "Markers.hpp"
+
 #include <vector>
 #include <cmath>
 #include <set>

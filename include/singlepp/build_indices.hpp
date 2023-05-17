@@ -1,15 +1,17 @@
 #ifndef SINGLEPP_BUILD_INDICES_HPP
 #define SINGLEPP_BUILD_INDICES_HPP
 
-#include <vector>
-#include <memory>
-#include <algorithm>
+#include "macros.hpp"
 
 #include "knncolle/knncolle.hpp"
 #include "tatami/tatami.hpp"
 
 #include "process_features.hpp"
 #include "scaled_ranks.hpp"
+
+#include <vector>
+#include <memory>
+#include <algorithm>
 
 namespace singlepp {
 
