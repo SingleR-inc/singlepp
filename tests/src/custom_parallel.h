@@ -17,7 +17,7 @@ void parallelize(Function f, size_t n, int nthreads) {
         if (start >= end) {
             break;
         }
-        jobs.emplace_back(f, w, start, end);
+        jobs.emplace_back(f, w, start, end - start);
         start += jobs_per_worker;
     }
 

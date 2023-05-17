@@ -84,8 +84,8 @@ std::vector<Reference> build_indices(const tatami::Matrix<double, int>* ref, con
     #pragma omp parallel for num_threads(nthreads)
     for (size_t l = 0; l < nlabels; ++l) {
 #else
-    SINGLEPP_CUSTOM_PARALLEL([&](int, size_t start, size_t end) -> void {
-    for (size_t l = start; l < end; ++l) {
+    SINGLEPP_CUSTOM_PARALLEL([&](int, size_t start, size_t len) -> void {
+    for (size_t l = start, end = start + len; l < end; ++l) {
 #endif
         nnrefs[l].index = build(NR, label_count[l], nndata[l].data());
 
