@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['scores_0',['scores',['../structsinglepp_1_1BasicScorer_1_1Results.html#aab05d54c3efc45124ddc373972fdcd07',1,'singlepp::BasicScorer::Results::scores()'],['../structsinglepp_1_1IntegratedScorer_1_1Results.html#af433daddb526e36105e09c56af7f7704',1,'singlepp::IntegratedScorer::Results::scores()']]],
+  ['scores_0',['scores',['../structsinglepp_1_1BasicScorer_1_1Results.html#aab05d54c3efc45124ddc373972fdcd07',1,'singlepp::BasicScorer::Results::scores'],['../structsinglepp_1_1IntegratedScorer_1_1Results.html#af433daddb526e36105e09c56af7f7704',1,'singlepp::IntegratedScorer::Results::scores']]],
   ['set_5fapproximate_1',['set_approximate',['../classsinglepp_1_1Classifier.html#a7460114bf15720c699327f0f51d462da',1,'singlepp::Classifier::set_approximate()'],['../classsinglepp_1_1BasicBuilder.html#a11119df6d27bc1b19079eab20501460b',1,'singlepp::BasicBuilder::set_approximate()']]],
   ['set_5ffine_5ftune_2',['set_fine_tune',['../classsinglepp_1_1Classifier.html#aed20bfa64b9dd557f38b665116e8005a',1,'singlepp::Classifier::set_fine_tune()'],['../classsinglepp_1_1BasicScorer.html#aede57b2a0876ae9e3fe020e26128f7c7',1,'singlepp::BasicScorer::set_fine_tune()']]],
   ['set_5ffine_5ftune_5fthreshold_3',['set_fine_tune_threshold',['../classsinglepp_1_1Classifier.html#a2a5cc599c01248cd5e14508a4b0ec0e5',1,'singlepp::Classifier::set_fine_tune_threshold()'],['../classsinglepp_1_1BasicScorer.html#a63bf5e2dad193fcb36bfece13bc35c03',1,'singlepp::BasicScorer::set_fine_tune_threshold()']]],

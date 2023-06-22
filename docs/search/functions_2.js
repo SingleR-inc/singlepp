@@ -1,18 +1,18 @@
 var searchData=
 [
-  ['load_5ffeatures_5ffrom_5fgzip_5ffile_0',['load_features_from_gzip_file',['../namespacesinglepp.html#a6e67f3b92cea94d573aac8317cf5a905',1,'singlepp']]],
-  ['load_5ffeatures_5ffrom_5ftext_5ffile_1',['load_features_from_text_file',['../namespacesinglepp.html#a6ca4d3e9d46a6c18b725ec4b7db6c3ef',1,'singlepp']]],
-  ['load_5ffeatures_5ffrom_5fzlib_5fbuffer_2',['load_features_from_zlib_buffer',['../namespacesinglepp.html#a293f617f8a7593171e75e99a8921de5e',1,'singlepp']]],
-  ['load_5flabel_5fnames_5ffrom_5fgzip_5ffile_3',['load_label_names_from_gzip_file',['../namespacesinglepp.html#a0ec96c18e8a1571d3b302bc32e97347f',1,'singlepp']]],
-  ['load_5flabel_5fnames_5ffrom_5ftext_5ffile_4',['load_label_names_from_text_file',['../namespacesinglepp.html#acadd9f3bfbfe97c417981fe224e8fc14',1,'singlepp']]],
-  ['load_5flabel_5fnames_5ffrom_5fzlib_5fbuffer_5',['load_label_names_from_zlib_buffer',['../namespacesinglepp.html#a7cc79580e1844f5d0c470f9e342447c9',1,'singlepp']]],
-  ['load_5flabels_5ffrom_5fgzip_5ffile_6',['load_labels_from_gzip_file',['../namespacesinglepp.html#abda524812b77e2b663d0312796649edc',1,'singlepp']]],
-  ['load_5flabels_5ffrom_5ftext_5ffile_7',['load_labels_from_text_file',['../namespacesinglepp.html#ad69f0a4f64834c498f7c401b12c46123',1,'singlepp']]],
-  ['load_5flabels_5ffrom_5fzlib_5fbuffer_8',['load_labels_from_zlib_buffer',['../namespacesinglepp.html#a5b9a92eb0882d4504e4329de2942b122',1,'singlepp']]],
-  ['load_5fmarkers_5ffrom_5fgzip_5ffile_9',['load_markers_from_gzip_file',['../namespacesinglepp.html#afaea991c7e0d45c6a91c277c67bd6ed3',1,'singlepp']]],
-  ['load_5fmarkers_5ffrom_5ftext_5ffile_10',['load_markers_from_text_file',['../namespacesinglepp.html#a4809d6047d73b5b1752b2c6400a3b92b',1,'singlepp']]],
-  ['load_5fmarkers_5ffrom_5fzlib_5fbuffer_11',['load_markers_from_zlib_buffer',['../namespacesinglepp.html#a19cb0d64d929ba8eb5954ebcda4a0de4',1,'singlepp']]],
-  ['load_5frankings_5ffrom_5fgzip_5ffile_12',['load_rankings_from_gzip_file',['../namespacesinglepp.html#a71a38ddfaf38ce1d0549cc1dcd935873',1,'singlepp']]],
-  ['load_5frankings_5ffrom_5ftext_5ffile_13',['load_rankings_from_text_file',['../namespacesinglepp.html#af67f4e1def1555a5a21068d7d4bfdb12',1,'singlepp']]],
-  ['load_5frankings_5ffrom_5fzlib_5fbuffer_14',['load_rankings_from_zlib_buffer',['../namespacesinglepp.html#aad5cf0d5abaedaaa6e31ebdc8ef50888',1,'singlepp']]]
+  ['load_5ffeatures_5ffrom_5fgzip_5ffile_0',['load_features_from_gzip_file',['../namespacesinglepp.html#a586796abc2b9fee9a5e6164e2a941a0c',1,'singlepp']]],
+  ['load_5ffeatures_5ffrom_5ftext_5ffile_1',['load_features_from_text_file',['../namespacesinglepp.html#ad39179283e07be40a5682e295bd8ffa8',1,'singlepp']]],
+  ['load_5ffeatures_5ffrom_5fzlib_5fbuffer_2',['load_features_from_zlib_buffer',['../namespacesinglepp.html#a49896d2aadb5a23391a38ac2aee4436e',1,'singlepp']]],
+  ['load_5flabel_5fnames_5ffrom_5fgzip_5ffile_3',['load_label_names_from_gzip_file',['../namespacesinglepp.html#a11981bf2415263c3af3537aa715f530f',1,'singlepp']]],
+  ['load_5flabel_5fnames_5ffrom_5ftext_5ffile_4',['load_label_names_from_text_file',['../namespacesinglepp.html#aa77a7375b1acb5785ae37080297ece71',1,'singlepp']]],
+  ['load_5flabel_5fnames_5ffrom_5fzlib_5fbuffer_5',['load_label_names_from_zlib_buffer',['../namespacesinglepp.html#ae0a79b526b73debbf3de4931e4ca9d2e',1,'singlepp']]],
+  ['load_5flabels_5ffrom_5fgzip_5ffile_6',['load_labels_from_gzip_file',['../namespacesinglepp.html#a58095c8ccda647564410c6ee33bad6f1',1,'singlepp']]],
+  ['load_5flabels_5ffrom_5ftext_5ffile_7',['load_labels_from_text_file',['../namespacesinglepp.html#ac9e38562b296cc7c7d7682f194514634',1,'singlepp']]],
+  ['load_5flabels_5ffrom_5fzlib_5fbuffer_8',['load_labels_from_zlib_buffer',['../namespacesinglepp.html#a74c5cb9cae30f6db572de03a143c9e06',1,'singlepp']]],
+  ['load_5fmarkers_5ffrom_5fgzip_5ffile_9',['load_markers_from_gzip_file',['../namespacesinglepp.html#ae6802494860feb29abbe873991857b84',1,'singlepp']]],
+  ['load_5fmarkers_5ffrom_5ftext_5ffile_10',['load_markers_from_text_file',['../namespacesinglepp.html#aa7853d2074f033573a3074c2cec42d0e',1,'singlepp']]],
+  ['load_5fmarkers_5ffrom_5fzlib_5fbuffer_11',['load_markers_from_zlib_buffer',['../namespacesinglepp.html#ae5b52377d9b6d6bb1a8db2070c343e8f',1,'singlepp']]],
+  ['load_5frankings_5ffrom_5fgzip_5ffile_12',['load_rankings_from_gzip_file',['../namespacesinglepp.html#a7e53df2a196132201f5de886c066959c',1,'singlepp']]],
+  ['load_5frankings_5ffrom_5ftext_5ffile_13',['load_rankings_from_text_file',['../namespacesinglepp.html#a01271d95d083bd7d3f1c3b26e9febe18',1,'singlepp']]],
+  ['load_5frankings_5ffrom_5fzlib_5fbuffer_14',['load_rankings_from_zlib_buffer',['../namespacesinglepp.html#ac0f1d95625ad9468a29b03c5e3cee0e4',1,'singlepp']]]
 ];
