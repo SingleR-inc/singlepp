@@ -149,7 +149,7 @@ TEST_P(ChooseClassicMarkersTest, BlockedMissing) {
 
     // Creating the two references. We remove label 0 (i.e., the first column) from mat2 to 
     // match the groups available in mat1; we also just compute markers from mat2 alone.
-    auto sub = tatami::make_DelayedSubsetBlock<1>(mat2, 1, nlabels);
+    auto sub = tatami::make_DelayedSubsetBlock<1>(mat2, 1, static_cast<int>(nlabels));
     auto ref_comb = mrk.run(std::vector<const tatami::Matrix<double, int>*>{ mat1.get(), sub.get() },
                             std::vector<const int*>{ groupings1.data(), groupings2.data() + 1 });               
     

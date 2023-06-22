@@ -3,6 +3,7 @@
 
 #include "macros.hpp"
 
+#include "byteme/PerByte.hpp"
 #include "byteme/RawFileReader.hpp"
 #include "tatami/tatami.hpp"
 
@@ -16,6 +17,7 @@
 #include <string>
 #include <vector>
 #include <cctype>
+#include <type_traits>
 
 /**
  * @file load_references.hpp
@@ -28,6 +30,9 @@ namespace singlepp {
 /** 
  * @cond
  */
+template<bool parallel_>
+using SuperPerByte = typename std::conditional<parallel_, byteme::PerByte<char>, byteme::PerByteParallel<char> >::type;
+
 template<bool parallel_, class Reader_>
 std::vector<int> load_labels_internal(Reader_& reader) {
     bool non_empty = false;
@@ -35,23 +40,23 @@ std::vector<int> load_labels_internal(Reader_& reader) {
     std::vector<int> labels;
     bool remaining = true;
 
-    byteme::PerByte<parallel_> pb(&reader);
+    SuperPerByte<parallel_> pb(&reader);
     bool okay = pb.valid();
     while (okay) {
         char x = pb.get();
         okay = pb.advance();
 
-        if (buffer[i] == '\n') {
+        if (x == '\n') {
             if (!non_empty) {
                 throw std::runtime_error("label index must be an integer");
             }
             labels.push_back(current);
             current = 0;
             non_empty = false;
-        } else if (std::isdigit(buffer[i])) {
+        } else if (std::isdigit(x)) {
             non_empty = true;
             current *= 10;
-            current += (buffer[i] - '0');
+            current += (x - '0');
         } else {
             throw std::runtime_error("label index must be an integer");
         }
@@ -131,7 +136,7 @@ std::vector<std::string> load_names_internal(Reader_& reader) {
     std::string current;
     std::vector<std::string> names;
 
-    byteme::PerByte<parallel_> pb(&reader);
+    SuperPerByte<parallel_> pb(&reader);
     bool okay = pb.valid();
     while (okay) {
         char x = pb.get();
@@ -214,7 +219,7 @@ std::pair<std::vector<std::string>, std::vector<std::string> > load_features_int
     std::string current;
     std::vector<std::string> ensembl, symbols;
 
-    byteme::PerByte<parallel_> pb(&reader);
+    SuperPerByte<parallel_> pb(&reader);
     bool okay = pb.valid();
     while (okay) {
         current.clear();
@@ -350,7 +355,7 @@ RankMatrix<Data, Index> load_rankings_internal(Reader& reader) {
         }
     };
 
-    byteme::PerByte<parallel_> pb(&reader);
+    SuperPerByte<parallel_> pb(&reader);
     bool okay = pb.valid();
     while (okay) {
         char x = pb.get();
@@ -379,7 +384,7 @@ RankMatrix<Data, Index> load_rankings_internal(Reader& reader) {
         } else if (std::isdigit(x)) {
             non_empty = true;
             current *= 10;
-            current += (buffer[i] - '0');
+            current += (x - '0');
 
         } else {
             throw std::runtime_error("fields should only contain integer ranks");
@@ -477,14 +482,10 @@ Markers load_markers_internal(size_t nfeatures, size_t nlabels, Reader& reader) 
     }
 
     std::vector<int> values;
-
-    auto newline = [&]() -> void {
-        return;
-    };
-
-    byteme::PerByte<parallel_> pb(&reader);
+    SuperPerByte<parallel_> pb(&reader);
     bool okay = pb.valid();
     while (okay) {
+
         // Processing the label IDs.
         size_t first = 0, second = 0;
         for (int l = 0; l < 2; ++l) {
@@ -493,7 +494,7 @@ Markers load_markers_internal(size_t nfeatures, size_t nlabels, Reader& reader) 
 
             do {
                 char x = pb.get();
-                okay = x.advance();
+                okay = pb.advance();
 
                 if (x == '\t') {
                     if (!non_empty) {
@@ -522,12 +523,12 @@ Markers load_markers_internal(size_t nfeatures, size_t nlabels, Reader& reader) 
         int current = 0;
         while (okay) {
             char x = pb.get();
-            okay = x.advance();
+            okay = pb.advance();
 
             if (std::isdigit(x)) {
                 non_empty = true;
                 current *= 10;
-                current += (buffer[i] - '0');
+                current += (x - '0');
 
             } else if (x == '\t') {
                 if (!non_empty) {
