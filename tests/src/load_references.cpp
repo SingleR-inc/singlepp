@@ -14,7 +14,7 @@
 class LoadFeaturesTest : public ::testing::TestWithParam<int> {};
 
 TEST_P(LoadFeaturesTest, TextFile) {
-    auto path = buffin::temp_file_path("feat_text");
+    auto path = byteme::temp_file_path("feat_text");
     std::vector<std::string> ensembl, symbols;
     {
         std::ofstream out(path, std::ofstream::out);
@@ -33,7 +33,7 @@ TEST_P(LoadFeaturesTest, TextFile) {
 }
 
 TEST_P(LoadFeaturesTest, GzipFile) {
-    auto path = buffin::temp_file_path("feat_gzip");
+    auto path = byteme::temp_file_path("feat_gzip");
     std::vector<std::string> ensembl, symbols;
     {
         std::string output;
@@ -80,20 +80,20 @@ void quick_feature_err(std::string path, std::string msg) {
 
 TEST(LoadFeatures, EdgeCases) {
     {
-        auto path = buffin::temp_file_path("feat_err");
+        auto path = byteme::temp_file_path("feat_err");
         quick_dump(path, "asd\nasdasd,asdasd");
-        quick_feature_err(path, "two fields");
+        quick_feature_err(path, "two comma-separated fields");
     }
 
     {
-        auto path = buffin::temp_file_path("feat_err");
+        auto path = byteme::temp_file_path("feat_err");
         quick_dump(path, "asdasdasd,ad\nasdasd");
-        quick_feature_err(path, "last line");
+        quick_feature_err(path, "two comma-separated fields");
     }
 
     // Empty fields are ok, though, along with non-newline termination.
     {
-        auto path = buffin::temp_file_path("feat_ok");
+        auto path = byteme::temp_file_path("feat_ok");
         quick_dump(path, "asdasdasd,\n,asdasd");
         auto output = singlepp::load_features_from_text_file(path.c_str());
         EXPECT_EQ(output.first[0], "asdasdasd");
@@ -114,7 +114,7 @@ INSTANTIATE_TEST_SUITE_P(
 class LoadLabelsTest : public ::testing::TestWithParam<int> {};
 
 TEST_P(LoadLabelsTest, TextFile) {
-    auto path = buffin::temp_file_path("lab_text");
+    auto path = byteme::temp_file_path("lab_text");
     std::vector<int> labels;
     {
         std::ofstream out(path, std::ofstream::out);
@@ -129,7 +129,7 @@ TEST_P(LoadLabelsTest, TextFile) {
 }
 
 TEST_P(LoadLabelsTest, GzipFile) {
-    auto path = buffin::temp_file_path("lab_gzip");
+    auto path = byteme::temp_file_path("lab_gzip");
     std::vector<int> labels;
     {
         std::string output;
@@ -166,20 +166,20 @@ void quick_label_err(std::string path, std::string msg) {
 
 TEST(LoadLabels, EdgeCases) {
     {
-        auto path = buffin::temp_file_path("label_err");
+        auto path = byteme::temp_file_path("label_err");
         quick_dump(path, "1\n2\n3a\n4\n");
         quick_label_err(path, "must be an integer");
     }
 
     {
-        auto path = buffin::temp_file_path("label_err");
+        auto path = byteme::temp_file_path("label_err");
         quick_dump(path, "1\n2\n\n4\n");
         quick_label_err(path, "must be an integer");
     }
 
     // Non-newline termination is ok, as are empty fields.
     {
-        auto path = buffin::temp_file_path("feat_ok");
+        auto path = byteme::temp_file_path("feat_ok");
         quick_dump(path, "1\n2");
         auto output = singlepp::load_labels_from_text_file(path.c_str());
         EXPECT_EQ(output.size(), 2);
@@ -208,7 +208,7 @@ std::vector<int> extract_ranks(const singlepp::RankMatrix<int, int>& mat) {
 }
 
 TEST_P(LoadRankingsTest, TextFile) {
-    auto path = buffin::temp_file_path("rank_text");
+    auto path = byteme::temp_file_path("rank_text");
     size_t nfeat = 49, nprof = 13;
     std::vector<int> ranks;
     {
@@ -242,7 +242,7 @@ TEST_P(LoadRankingsTest, TextFile) {
 }
 
 TEST_P(LoadRankingsTest, GzipFile) {
-    auto path = buffin::temp_file_path("rank_gzip");
+    auto path = byteme::temp_file_path("rank_gzip");
     size_t nfeat = 51, nprof = 17;
     std::vector<int> ranks;
     {
@@ -296,44 +296,44 @@ void quick_ranking_err(std::string path, std::string msg) {
 
 TEST(LoadRankings, EdgeCases) {
     {
-        auto path = buffin::temp_file_path("rank_err");
+        auto path = byteme::temp_file_path("rank_err");
         quick_dump(path, "a,v,b,d\n");
         quick_ranking_err(path, "integer ranks");
     }
 
     {
-        auto path = buffin::temp_file_path("rank_err");
+        auto path = byteme::temp_file_path("rank_err");
         quick_dump(path, "1,2,3,4\n1,2,3\n1,2,3,4\n");
         quick_ranking_err(path, "number of fields");
     }
 
     {
-        auto path = buffin::temp_file_path("rank_err");
+        auto path = byteme::temp_file_path("rank_err");
         quick_dump(path, "1,2,3,4\n1,2,3,\n1,2,3,4\n");
         quick_ranking_err(path, "not be empty");
     }
 
     {
-        auto path = buffin::temp_file_path("rank_err");
+        auto path = byteme::temp_file_path("rank_err");
         quick_dump(path, "1,2,3,4\n1,2,,4\n1,2,3,4\n");
         quick_ranking_err(path, "not be empty");
     }
 
     {
-        auto path = buffin::temp_file_path("rank_err");
+        auto path = byteme::temp_file_path("rank_err");
         quick_dump(path, "1,2,3,4\n1,2,3,4\n1,2,3\n");
         quick_ranking_err(path, "number of fields");
     }
 
     {
-        auto path = buffin::temp_file_path("rank_err");
+        auto path = byteme::temp_file_path("rank_err");
         quick_dump(path, "1,2,3,4\n1,2,3,4\n1,2,3,\n");
         quick_ranking_err(path, "not be empty");
     }
 
     // Non-newline termination is ok.
     {
-        auto path = buffin::temp_file_path("feat_ok");
+        auto path = byteme::temp_file_path("feat_ok");
         quick_dump(path, "1,2,3,4\n5,6,7,8");
         auto output = singlepp::load_rankings_from_text_file<int, int>(path.c_str());
         std::vector<int> expected { 1,2,3,4,5,6,7,8 };
@@ -367,7 +367,7 @@ protected:
 };
 
 TEST_P(LoadMarkersTest, TextFile) {
-    auto path = buffin::temp_file_path("mark_text");
+    auto path = byteme::temp_file_path("mark_text");
 
     std::mt19937_64 rng(GetParam());
     size_t nfeatures = 1000, nlabels = 3;
@@ -400,7 +400,7 @@ TEST_P(LoadMarkersTest, TextFile) {
 }
 
 TEST_P(LoadMarkersTest, GzipFile) {
-    auto path = buffin::temp_file_path("mark_text");
+    auto path = byteme::temp_file_path("mark_text");
 
     std::mt19937_64 rng(GetParam());
     size_t nfeatures = 1000, nlabels = 3;
@@ -455,55 +455,55 @@ void quick_marker_err(std::string path, size_t nf, size_t nl, std::string msg) {
 
 TEST(LoadMarkers, EdgeCases) {
     {
-        auto path = buffin::temp_file_path("mark_err");
+        auto path = byteme::temp_file_path("mark_err");
         quick_dump(path, "1\t2\t1000\n");
         quick_marker_err(path, 1, 3, "gene index out of range");
     }
 
     {
-        auto path = buffin::temp_file_path("mark_err");
+        auto path = byteme::temp_file_path("mark_err");
         quick_dump(path, "5\t1\t2\n");
-        quick_marker_err(path, 5, 3, "first label index out of range");
+        quick_marker_err(path, 5, 3, "label index out of range");
     }
 
     {
-        auto path = buffin::temp_file_path("mark_err");
+        auto path = byteme::temp_file_path("mark_err");
         quick_dump(path, "1\t5\t2\n");
-        quick_marker_err(path, 5, 3, "second label index out of range");
+        quick_marker_err(path, 5, 3, "label index out of range");
     }
 
     {
-        auto path = buffin::temp_file_path("mark_err");
+        auto path = byteme::temp_file_path("mark_err");
         quick_dump(path, "1\t1\t\n");
         quick_marker_err(path, 5, 3, "not be empty");
     }
 
     {
-        auto path = buffin::temp_file_path("mark_err");
+        auto path = byteme::temp_file_path("mark_err");
         quick_dump(path, "1\t1\t\t1\n");
         quick_marker_err(path, 5, 3, "not be empty");
     }
 
     {
-        auto path = buffin::temp_file_path("mark_err");
+        auto path = byteme::temp_file_path("mark_err");
         quick_dump(path, "1\t1\n");
-        quick_marker_err(path, 5, 3, "at least three fields");
+        quick_marker_err(path, 5, 3, "at least three tab-separated fields");
     }
 
     {
-        auto path = buffin::temp_file_path("mark_err");
+        auto path = byteme::temp_file_path("mark_err");
         quick_dump(path, "1\t1\t1\n1\t1\t1\n");
         quick_marker_err(path, 5, 3, "multiple marker");
     }
 
     {
-        auto path = buffin::temp_file_path("mark_err");
+        auto path = byteme::temp_file_path("mark_err");
         quick_dump(path, "2\t1\t1\n1\t2\t1a\n");
         quick_marker_err(path, 5, 3, "integer");
     }
 
     {
-        auto path = buffin::temp_file_path("mark_ok");
+        auto path = byteme::temp_file_path("mark_ok");
         quick_dump(path, "2\t1\t1\n1\t2\t0");
         auto output = singlepp::load_markers_from_text_file(path.c_str(), 5, 3);
         EXPECT_EQ(output.size(), 3);
@@ -523,7 +523,7 @@ INSTANTIATE_TEST_SUITE_P(
 class LoadLabelNamesTest : public ::testing::TestWithParam<int> {};
 
 TEST_P(LoadLabelNamesTest, TextFile) {
-    auto path = buffin::temp_file_path("lab_text");
+    auto path = byteme::temp_file_path("lab_text");
     std::vector<std::string> labels;
     {
         std::ofstream out(path, std::ofstream::out);
@@ -539,7 +539,7 @@ TEST_P(LoadLabelNamesTest, TextFile) {
 }
 
 TEST_P(LoadLabelNamesTest, GzipFile) {
-    auto path = buffin::temp_file_path("lab_gzip");
+    auto path = byteme::temp_file_path("lab_gzip");
     std::vector<std::string> labels;
     {
         std::string output;
@@ -566,7 +566,7 @@ TEST_P(LoadLabelNamesTest, GzipFile) {
 TEST(LoadLabelNames, EdgeCases) {
     // Non-newline termination is ok, as are empty fields.
     {
-        auto path = buffin::temp_file_path("feat_ok");
+        auto path = byteme::temp_file_path("feat_ok");
         quick_dump(path, "asdasdasd\n\nasdasd");
         auto output = singlepp::load_label_names_from_text_file(path.c_str());
         EXPECT_EQ(output[0], "asdasdasd");
