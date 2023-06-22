@@ -150,6 +150,10 @@ std::vector<std::string> load_names_internal(Reader_& reader) {
         }
     }
 
+    if (!current.empty()) { // absence of trailing newline is okay.
+        names.emplace_back(std::move(current));
+    }
+
     return names;
 };
 /** 
@@ -229,7 +233,10 @@ std::pair<std::vector<std::string>, std::vector<std::string> > load_features_int
             char x = pb.get();
             if (x == ',') { // don't advance yet, so that okay check below doesn't trigger if the symbol is empty and file is not newline terminated.
                 break;
-            } 
+            } else if (x == '\n') {
+                okay = false; // hit the error below.
+                break;
+            }
             current += x;
             okay = pb.advance();
         } while (okay);
@@ -500,6 +507,9 @@ Markers load_markers_internal(size_t nfeatures, size_t nlabels, Reader& reader) 
                     if (!non_empty) {
                         throw std::runtime_error("empty field detected in the label indices");
                     }
+                    break;
+                } else if (x == '\n') {
+                    okay = false; // hit the error below.
                     break;
                 } else if (!std::isdigit(x)) {
                     throw std::runtime_error("label indices should be integers");

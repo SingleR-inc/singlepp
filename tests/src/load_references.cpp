@@ -82,13 +82,13 @@ TEST(LoadFeatures, EdgeCases) {
     {
         auto path = byteme::temp_file_path("feat_err");
         quick_dump(path, "asd\nasdasd,asdasd");
-        quick_feature_err(path, "two fields");
+        quick_feature_err(path, "two comma-separated fields");
     }
 
     {
         auto path = byteme::temp_file_path("feat_err");
         quick_dump(path, "asdasdasd,ad\nasdasd");
-        quick_feature_err(path, "last line");
+        quick_feature_err(path, "two comma-separated fields");
     }
 
     // Empty fields are ok, though, along with non-newline termination.
@@ -463,13 +463,13 @@ TEST(LoadMarkers, EdgeCases) {
     {
         auto path = byteme::temp_file_path("mark_err");
         quick_dump(path, "5\t1\t2\n");
-        quick_marker_err(path, 5, 3, "first label index out of range");
+        quick_marker_err(path, 5, 3, "label index out of range");
     }
 
     {
         auto path = byteme::temp_file_path("mark_err");
         quick_dump(path, "1\t5\t2\n");
-        quick_marker_err(path, 5, 3, "second label index out of range");
+        quick_marker_err(path, 5, 3, "label index out of range");
     }
 
     {
@@ -487,7 +487,7 @@ TEST(LoadMarkers, EdgeCases) {
     {
         auto path = byteme::temp_file_path("mark_err");
         quick_dump(path, "1\t1\n");
-        quick_marker_err(path, 5, 3, "at least three fields");
+        quick_marker_err(path, 5, 3, "at least three tab-separated fields");
     }
 
     {
