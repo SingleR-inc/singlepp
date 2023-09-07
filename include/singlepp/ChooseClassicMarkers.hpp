@@ -69,7 +69,7 @@ public:
      *
      * @return An appropriate number of markers for each pairwise comparison.
      *
-     * The exact expression is defined as $500 (\frac{2}{3})^{\log_2{N}}$ for $N$ labels,
+     * The exact expression is defined as \f$500 (\frac{2}{3})^{\log_2{N}}\f$ for \f$N\f$ labels,
      * which steadily decreases the markers per comparison as the number of labels increases.
      * This aims to avoid an excessive number of features when dealing with references with many labels.
      */
