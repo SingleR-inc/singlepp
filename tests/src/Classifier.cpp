@@ -87,6 +87,8 @@ TEST_P(ClassifierSimpleTest, AlreadySubset) {
     singlepp::BasicBuilder builder;
     builder.set_top(top);
     auto built = builder.run(refs.get(), labels.data(), markers);
+    EXPECT_EQ(built.num_labels(), nlabels);
+    EXPECT_EQ(built.num_profiles(), nrefs);
 
     auto copy = built.subset;
     std::reverse(copy.begin(), copy.end());
@@ -161,6 +163,8 @@ TEST_P(ClassifierIntersectTest, Intersect) {
     singlepp::BasicBuilder builder;
     builder.set_top(top);
     auto build0 = builder.run(mat->nrow(), left.data(), refs.get(), right.data(), labels.data(), markers);
+    EXPECT_EQ(build0.num_labels(), nlabels);
+    EXPECT_EQ(build0.num_profiles(), nrefs);
 
     singlepp::BasicScorer scorer;
     scorer.set_fine_tune(false).set_quantile(quantile);

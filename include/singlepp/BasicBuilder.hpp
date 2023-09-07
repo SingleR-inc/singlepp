@@ -222,6 +222,17 @@ public:
         }
 
         /**
+         * @return Number of profiles in this reference.
+         */
+        size_t num_profiles() const {
+            size_t n = 0;
+            for (const auto& ref : references) {
+                n += ref.ranked.size();
+            }
+            return n;
+        }
+
+        /**
          * @cond
          */
         std::vector<Reference> references;
