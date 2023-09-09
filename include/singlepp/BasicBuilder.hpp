@@ -36,7 +36,7 @@ public:
         /**
          * See `set_top()` for details.
          */
-        static constexpr int top = 20;
+        static constexpr int top = -1;
 
         /**
          * See `set_approximate()` for details.

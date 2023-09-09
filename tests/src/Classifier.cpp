@@ -260,6 +260,7 @@ TEST(ClassifierTest, NoShared) {
     std::iota(right.begin(), right.end(), ngenes);
 
     singlepp::BasicBuilder builder;
+    builder.set_top(20);
     auto built = builder.run(ngenes, left.data(), refs.get(), right.data(), labels.data(), markers);
     EXPECT_EQ(built.mat_subset.size(), 0);
     EXPECT_EQ(built.ref_subset.size(), 0);

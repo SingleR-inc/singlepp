@@ -21,7 +21,7 @@ ref_mat;
 // Prepare a vector of labels, one per column of ref_mat.
 ref_labels;
 
-// Prepare a vector of vectors of marker rankings.
+// Prepare a vector of vectors of markers for pairwise comparisons between labels.
 ref_markers;
 
 // Running the classification on a test matrix.
@@ -62,7 +62,7 @@ A reference dataset should have at least three components:
   Only the rank of the expression values are used by **singlepp**, so one could apply any transformation that preserves the ranks.
 - A vector of length equal to the number of columns of the matrix, containing the label for each reference profile.
   These labels should be integers from `[0, N)` where `N` is the number of unique labels.
-- A vector of vector of integer vectors, containing the ranked marker genes from pairwise comparisons between labels.
+- A vector of vector of integer vectors, containing the chosen marker genes from pairwise comparisons between labels.
   Say that `y` is this object, then `y[i][j][k]` should contain the `k`-th best marker gene that is upregulated in label `i` compared to label `j`. 
   Marker genes should be reported as row indices of the expression matrix.
 
@@ -74,6 +74,33 @@ In practical usage, they will also contain:
   This is not used by **singlepp** itself, which only deals with the integers.
 
 See [here](https://github.com/clusterfork/singlepp-references) for some references that have been formatted in this manner.
+
+## Identifying markers
+
+Given a reference dataset, **singlepp** implements a simple method of identifying marker genes between labels.
+This is based on ranking the differences in median log-expression values between labels and is the "classic" method provided in the original **SingleR** package.
+
+```cpp
+singlepp::ChooseClassicMarkers mrk;
+auto markers = mrk.run(ref_mat.get(), ref_labels.data());
+```
+
+`markers` can then be directly used in `Classifier::run()`.
+Of course, other marker detection schemes can be used depending on the type of reference dataset;
+for single-cell references, users may be interested in some of the differential analysis methods in the [**libscran**](https://github.com/LTLA/libscran) package.
+
+By default, it is expected that the `markers` supplied to `Classifier::run()` has already been filtered to only the top markers for each pairwise comparison.
+However, in some cases, it might be more convenient for `markers` to contain a ranking of all genes such that the desired subset of top markers can be chosen later.
+This is achieved by calling `Classifier::set_top()` to the desired number of markers per comparison, e.g., for 20 markers:
+
+```cpp
+runner.set_top(20);
+auto res20 = mrk.run(ref_mat.get(), ref_labels.data());
+```
+
+Doing so is roughly equivalent to slicing each vector in `markers` to the top 20 entries before calling `Classifier::run()`.
+In fact, calling `set_top()` is the better approach when intersecting feature spaces - see below -
+as the top set will not be contaminated by genes that are not present in the test dataset.
 
 ## Intersecting feature sets
 
