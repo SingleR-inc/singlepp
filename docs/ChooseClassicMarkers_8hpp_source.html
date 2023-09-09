@@ -196,7 +196,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span> </div>
 <div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>        <span class="keywordtype">int</span> actual_number = number;</div>
 <div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>        <span class="keywordflow">if</span> (number &lt; 0) {</div>
-<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>            actual_number = std::round(500.0 * std::pow(2.0/3.0, std::log(<span class="keyword">static_cast&lt;</span><span class="keywordtype">double</span><span class="keyword">&gt;</span>(nlabels)) / std::log(2.0)));</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>            actual_number = <a class="code hl_function" href="classsinglepp_1_1ChooseClassicMarkers.html#aaa9f0ce7ba6a2aff369cc01e152ba821">number_of_markers</a>(nlabels);</div>
 <div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>        } </div>
 <div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>        <span class="keywordflow">if</span> (actual_number &gt; <span class="keyword">static_cast&lt;</span><span class="keywordtype">int</span><span class="keyword">&gt;</span>(ngenes)) {</div>
 <div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>            actual_number = ngenes;</div>
