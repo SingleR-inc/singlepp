@@ -86,7 +86,7 @@ $(function() {
 <div class="line"><span class="comment">// Prepare a vector of labels, one per column of ref_mat.</span></div>
 <div class="line">ref_labels;</div>
 <div class="line"> </div>
-<div class="line"><span class="comment">// Prepare a vector of vectors of marker rankings.</span></div>
+<div class="line"><span class="comment">// Prepare a vector of vectors of markers for pairwise comparisons between labels.</span></div>
 <div class="line">ref_markers;</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Running the classification on a test matrix.</span></div>
@@ -119,7 +119,7 @@ $(function() {
 <ul>
 <li>The "expression" matrix, where rows are features and columns are reference profiles. Only the rank of the expression values are used by <b>singlepp</b>, so one could apply any transformation that preserves the ranks.</li>
 <li>A vector of length equal to the number of columns of the matrix, containing the label for each reference profile. These labels should be integers from <code>[0, N)</code> where <code>N</code> is the number of unique labels.</li>
-<li>A vector of vector of integer vectors, containing the ranked marker genes from pairwise comparisons between labels. Say that <code>y</code> is this object, then <code>y[i][j][k]</code> should contain the <code>k</code>-th best marker gene that is upregulated in label <code>i</code> compared to label <code>j</code>. Marker genes should be reported as row indices of the expression matrix.</li>
+<li>A vector of vector of integer vectors, containing the chosen marker genes from pairwise comparisons between labels. Say that <code>y</code> is this object, then <code>y[i][j][k]</code> should contain the <code>k</code>-th best marker gene that is upregulated in label <code>i</code> compared to label <code>j</code>. Marker genes should be reported as row indices of the expression matrix.</li>
 </ul>
 <p>In practical usage, they will also contain:</p>
 <ul>
@@ -127,6 +127,18 @@ $(function() {
 <li>Label names, to map the integer labels to something that is meaningful to the user. This is not used by <b>singlepp</b> itself, which only deals with the integers.</li>
 </ul>
 <p>See <a href="https://github.com/clusterfork/singlepp-references">here</a> for some references that have been formatted in this manner.</p>
+<h1>Identifying markers</h1>
+<p>Given a reference dataset, <b>singlepp</b> implements a simple method of identifying marker genes between labels. This is based on ranking the differences in median log-expression values between labels and is the "classic" method provided in the original <b>SingleR</b> package.</p>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classsinglepp_1_1ChooseClassicMarkers.html">singlepp::ChooseClassicMarkers</a> mrk;</div>
+<div class="line"><span class="keyword">auto</span> markers = mrk.<a class="code hl_function" href="classsinglepp_1_1ChooseClassicMarkers.html#aa9c977f369dbe3a7321a3e9d2781bbd2">run</a>(ref_mat.get(), ref_labels.data());</div>
+<div class="ttc" id="aclasssinglepp_1_1ChooseClassicMarkers_html"><div class="ttname"><a href="classsinglepp_1_1ChooseClassicMarkers.html">singlepp::ChooseClassicMarkers</a></div><div class="ttdoc">Classic method for choosing markers.</div><div class="ttdef"><b>Definition</b> ChooseClassicMarkers.hpp:34</div></div>
+<div class="ttc" id="aclasssinglepp_1_1ChooseClassicMarkers_html_aa9c977f369dbe3a7321a3e9d2781bbd2"><div class="ttname"><a href="classsinglepp_1_1ChooseClassicMarkers.html#aa9c977f369dbe3a7321a3e9d2781bbd2">singlepp::ChooseClassicMarkers::run</a></div><div class="ttdeci">Markers run(const std::vector&lt; const Matrix * &gt; &amp;representatives, const std::vector&lt; const Label * &gt; &amp;labels) const</div><div class="ttdef"><b>Definition</b> ChooseClassicMarkers.hpp:106</div></div>
+</div><!-- fragment --><p><code>markers</code> can then be directly used in <code>Classifier::run()</code>. Of course, other marker detection schemes can be used depending on the type of reference dataset; for single-cell references, users may be interested in some of the differential analysis methods in the <a href="https://github.com/LTLA/libscran"><b>libscran</b></a> package.</p>
+<p>By default, it is expected that the <code>markers</code> supplied to <code>Classifier::run()</code> has already been filtered to only the top markers for each pairwise comparison. However, in some cases, it might be more convenient for <code>markers</code> to contain a ranking of all genes such that the desired subset of top markers can be chosen later. This is achieved by calling <code>Classifier::set_top()</code> to the desired number of markers per comparison, e.g., for 20 markers:</p>
+<div class="fragment"><div class="line">runner.<a class="code hl_function" href="classsinglepp_1_1Classifier.html#a5406afbfe172ec57062f803d26c45f83">set_top</a>(20);</div>
+<div class="line"><span class="keyword">auto</span> res20 = mrk.<a class="code hl_function" href="classsinglepp_1_1ChooseClassicMarkers.html#aa9c977f369dbe3a7321a3e9d2781bbd2">run</a>(ref_mat.get(), ref_labels.data());</div>
+<div class="ttc" id="aclasssinglepp_1_1Classifier_html_a5406afbfe172ec57062f803d26c45f83"><div class="ttname"><a href="classsinglepp_1_1Classifier.html#a5406afbfe172ec57062f803d26c45f83">singlepp::Classifier::set_top</a></div><div class="ttdeci">Classifier &amp; set_top(int t=Defaults::top)</div><div class="ttdef"><b>Definition</b> Classifier.hpp:147</div></div>
+</div><!-- fragment --><p>Doing so is roughly equivalent to slicing each vector in <code>markers</code> to the top 20 entries before calling <code>Classifier::run()</code>. In fact, calling <code>set_top()</code> is the better approach when intersecting feature spaces - see below - as the top set will not be contaminated by genes that are not present in the test dataset.</p>
 <h1>Intersecting feature sets</h1>
 <p>Often the reference dataset will not have the same features as the test dataset. To handle this case, users can provide identifiers for the rows of the reference and test matrices. <b>singlepp</b> will then perform classification using the intersection of features.</p>
 <div class="fragment"><div class="line">test_names; <span class="comment">// vector of feature names of the test data</span></div>
