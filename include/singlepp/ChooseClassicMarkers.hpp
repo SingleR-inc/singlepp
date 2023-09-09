@@ -165,7 +165,7 @@ public:
 
         int actual_number = number;
         if (number < 0) {
-            actual_number = std::round(500.0 * std::pow(2.0/3.0, std::log(static_cast<double>(nlabels)) / std::log(2.0)));
+            actual_number = number_of_markers(nlabels);
         } 
         if (actual_number > static_cast<int>(ngenes)) {
             actual_number = ngenes;
