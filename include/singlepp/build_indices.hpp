@@ -67,7 +67,6 @@ std::vector<Reference> build_indices(const tatami::Matrix<double, int>* ref, con
         for (int c = start, end = start + len; c < end; ++c) {
             auto ptr = wrk->fetch(c, buffer.data());
             subsorter.fill_ranks(ptr, ranked); 
-            scaled_ranks(ranked, buffer.data()); // 'buffer' can be written to, as all data is extracted to 'vec'.
 
             auto curlab = labels[c];
             auto curoff = offsets[c];
