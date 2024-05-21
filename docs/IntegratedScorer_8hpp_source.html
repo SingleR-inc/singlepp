@@ -227,8 +227,8 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>        tatami::parallelize([&amp;](<span class="keywordtype">int</span>, <span class="keywordtype">int</span> start, <span class="keywordtype">int</span> len) -&gt; <span class="keywordtype">void</span> {</div>
 <div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>            <span class="comment">// We perform an indexed extraction, so all subsequent indices</span></div>
 <div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>            <span class="comment">// will refer to indices into this subset (i.e., &#39;built.universe&#39;).</span></div>
-<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>            <span class="keyword">auto</span> wrk = tatami::consecutive_extractor&lt;false, false&gt;(mat, start, len, built.universe); </div>
-<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>            std::vector&lt;double&gt; buffer(wrk-&gt;index_length);</div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>            <span class="keyword">auto</span> wrk = tatami::consecutive_extractor&lt;false&gt;(mat, <span class="keyword">false</span>, start, len, built.universe); </div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>            std::vector&lt;double&gt; buffer(built.universe.size());</div>
 <div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span> </div>
 <div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>            RankedVector&lt;double, int&gt; data_ranked, data_ranked2;</div>
 <div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>            data_ranked.reserve(NR);</div>

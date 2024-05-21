@@ -213,7 +213,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>            <span class="keyword">typedef</span> <span class="keyword">typename</span>  Matrix::value_type Value_;</div>
 <div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>            <span class="keyword">typedef</span> <span class="keyword">typename</span>  Matrix::index_type Index_;</div>
 <div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>            std::vector&lt;Value_&gt; rbuffer(ngenes), lbuffer(ngenes);</div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>            std::vector&lt;std::shared_ptr&lt;tatami::FullDenseExtractor&lt;Value_, Index_&gt; &gt; &gt; rworks(nrefs), lworks(nrefs);</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>            std::vector&lt;std::shared_ptr&lt;tatami::MyopicDenseExtractor&lt;Value_, Index_&gt; &gt; &gt; rworks(nrefs), lworks(nrefs);</div>
 <div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span> </div>
 <div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span><span class="preprocessor">#ifndef SINGLEPP_CUSTOM_PARALLEL</span></div>
 <div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span><span class="preprocessor">            #pragma omp for</span></div>

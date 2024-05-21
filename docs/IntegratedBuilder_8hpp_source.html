@@ -367,8 +367,8 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00427" name="l00427"></a><span class="lineno">  427</span> </div>
 <div class="line"><a id="l00428" name="l00428"></a><span class="lineno">  428</span>            <span class="comment">// &#39;in_use&#39; is guaranteed to be sorted and unique, see its derivation in finish().</span></div>
 <div class="line"><a id="l00429" name="l00429"></a><span class="lineno">  429</span>            <span class="comment">// This means we can directly use it for indexed extraction.</span></div>
-<div class="line"><a id="l00430" name="l00430"></a><span class="lineno">  430</span>            <span class="keyword">auto</span> wrk = tatami::consecutive_extractor&lt;false, false&gt;(curmat, start, len, in_use); </div>
-<div class="line"><a id="l00431" name="l00431"></a><span class="lineno">  431</span>            std::vector&lt;double&gt; buffer(wrk-&gt;index_length);</div>
+<div class="line"><a id="l00430" name="l00430"></a><span class="lineno">  430</span>            <span class="keyword">auto</span> wrk = tatami::consecutive_extractor&lt;false&gt;(curmat, <span class="keyword">false</span>, start, len, in_use); </div>
+<div class="line"><a id="l00431" name="l00431"></a><span class="lineno">  431</span>            std::vector&lt;double&gt; buffer(in_use.size());</div>
 <div class="line"><a id="l00432" name="l00432"></a><span class="lineno">  432</span> </div>
 <div class="line"><a id="l00433" name="l00433"></a><span class="lineno">  433</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> c = start, end = start + len; c &lt; end; ++c) {</div>
 <div class="line"><a id="l00434" name="l00434"></a><span class="lineno">  434</span>                <span class="keyword">auto</span> ptr = wrk-&gt;fetch(c, buffer.data());</div>
@@ -424,7 +424,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00484" name="l00484"></a><span class="lineno">  484</span>            RankedVector&lt;double, int&gt; tmp_ranked;</div>
 <div class="line"><a id="l00485" name="l00485"></a><span class="lineno">  485</span>            tmp_ranked.reserve(remapped_in_use.size());</div>
 <div class="line"><a id="l00486" name="l00486"></a><span class="lineno">  486</span>            std::vector&lt;double&gt; buffer(remapped_in_use.size());</div>
-<div class="line"><a id="l00487" name="l00487"></a><span class="lineno">  487</span>            <span class="keyword">auto</span> wrk = tatami::consecutive_extractor&lt;false, false&gt;(curmat, start, len, remapped_in_use);</div>
+<div class="line"><a id="l00487" name="l00487"></a><span class="lineno">  487</span>            <span class="keyword">auto</span> wrk = tatami::consecutive_extractor&lt;false&gt;(curmat, <span class="keyword">false</span>, start, len, remapped_in_use);</div>
 <div class="line"><a id="l00488" name="l00488"></a><span class="lineno">  488</span> </div>
 <div class="line"><a id="l00489" name="l00489"></a><span class="lineno">  489</span>            <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> c = start, end = start + len; c &lt; end; ++c) {</div>
 <div class="line"><a id="l00490" name="l00490"></a><span class="lineno">  490</span>                <span class="keyword">auto</span> ptr = wrk-&gt;fetch(c, buffer.data());</div>
