@@ -125,6 +125,7 @@ TEST_P(IntegratedBuilderBasicTest, SimpleCombine) {
         // Checking the ranked values.
         std::vector<int> offsets(nlabels);
         auto wrk = matrices[r]->dense_column();
+        std::vector<double> buffer(matrices[r]->nrow());
 
         for (size_t s = 0; s < nsamples; ++s) {
             int lab = labels[r][s]; 
@@ -132,7 +133,7 @@ TEST_P(IntegratedBuilderBasicTest, SimpleCombine) {
             ++offsets[lab];
 
             double last_original = -100000000;
-            auto col = wrk->fetch(s);
+            auto col = wrk->fetch(s, buffer.data());
             std::vector<int> test_in_use;
             test_in_use.push_back(universe[target[0].second]);
 
@@ -288,6 +289,7 @@ TEST_P(IntegratedBuilderMoreTest, IntersectedCombine) {
         // Checking rankings for consistency with the availabilities.
         std::vector<int> offsets(nlabels);
         auto wrk = matrices[r]->dense_column();
+        std::vector<double> buffer(matrices[r]->nrow());
 
         for (size_t s = 0; s < nsamples; ++s) {
             int lab = labels[r][s]; 
@@ -295,7 +297,7 @@ TEST_P(IntegratedBuilderMoreTest, IntersectedCombine) {
             ++offsets[lab];
 
             double last_original = -100000000;
-            auto col = wrk->fetch(s);
+            auto col = wrk->fetch(s, buffer.data());
             std::vector<int> test_in_use;
             test_in_use.push_back(universe[target[0].second]);
 

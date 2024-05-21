@@ -202,7 +202,9 @@ std::vector<int> extract_ranks(const singlepp::RankMatrix<int, int>& mat) {
     std::vector<int> copy(mat.nrow() * mat.ncol());
     auto wrk = mat.dense_column();
     for (size_t i = 0; i < mat.ncol(); ++i) {
-        wrk->fetch_copy(i, copy.data() + i * mat.nrow());
+        auto dest = copy.data() + i * mat.nrow();
+        auto ptr = wrk->fetch(i, dest);
+        tatami::copy_n(ptr, mat.nrow(), dest);
     }
     return copy;
 }

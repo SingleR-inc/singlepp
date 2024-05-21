@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "singlepp/scaled_ranks.hpp"
-#include "tatami/tatami.hpp"
+#include "tatami_stats/tatami_stats.hpp"
 #include "singlepp/compute_scores.hpp"
 
 #include <algorithm>
@@ -98,7 +98,7 @@ TEST(ScaledRanks, Basic) {
     singlepp::scaled_ranks(ranks, out.data());
 
     // Mean should be zero, variance should be... something.
-    auto stats = tatami::stats::variances::compute_direct(out.data(), out.size());
+    auto stats = tatami_stats::variances::direct(out.data(), out.size(), false);
     EXPECT_TRUE(std::abs(stats.first) < 1e-8);
     EXPECT_FLOAT_EQ(stats.second, expected_variance(stuff.size()));
 
@@ -141,7 +141,7 @@ TEST(ScaledRanks, Ties) {
     singlepp::scaled_ranks(ranks, ref.data());
 
     // Checking values aren't NA or infinite.
-    auto stats = tatami::stats::variances::compute_direct(ref.data(), ref.size());
+    auto stats = tatami_stats::variances::direct(ref.data(), ref.size(), false);
     EXPECT_TRUE(std::abs(stats.first) < 1e-8);
     EXPECT_FLOAT_EQ(stats.second, expected_variance(original_size));
 
@@ -154,7 +154,7 @@ TEST(ScaledRanks, Ties) {
     EXPECT_EQ(tied[0], tied.back()); // same rank
     EXPECT_NE(tied[0], ref[0]); // changes the ranks; note that this doesn't work if the first element is right in the middle.
 
-    auto stats2 = tatami::stats::variances::compute_direct(tied.data(), tied.size()); // these properties still hold.
+    auto stats2 = tatami_stats::variances::direct(tied.data(), tied.size(), false); // these properties still hold.
     EXPECT_TRUE(std::abs(stats2.first) < 1e-8);
     EXPECT_FLOAT_EQ(stats2.second, expected_variance(tied.size()));
 
@@ -167,7 +167,7 @@ TEST(ScaledRanks, Ties) {
     std::vector<double> dupped(stuff.size());
     singlepp::scaled_ranks(ranks, dupped.data());
 
-    auto stats3 = tatami::stats::variances::compute_direct(dupped.data(), dupped.size()); 
+    auto stats3 = tatami_stats::variances::direct(dupped.data(), dupped.size(), false); 
     EXPECT_TRUE(std::abs(stats3.first) < 1e-8);
     EXPECT_FLOAT_EQ(stats3.second, expected_variance(original_size * 2));
 

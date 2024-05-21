@@ -11,7 +11,7 @@ FetchContent_MakeAvailable(knncolle)
 FetchContent_Declare(
   tatami
   GIT_REPOSITORY https://github.com/LTLA/tatami
-  GIT_TAG 09770b07db2c71bde6a515b47748bcf5d3557a4c
+  GIT_TAG master
 )
 
 FetchContent_MakeAvailable(tatami)

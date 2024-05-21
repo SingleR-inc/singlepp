@@ -86,8 +86,9 @@ TEST(FineTuneTest, Basic) {
 
     // Check early exit conditions.
     {
-        auto vec = refs->dense_column()->fetch(0); // doesn't really matter what we pick here.
-        auto ranked = fill_ranks(vec.size(), vec.data());
+        std::vector<double> buffer(ngenes);
+        auto vec = refs->dense_column()->fetch(0, buffer.data()); // doesn't really matter what we pick here.
+        auto ranked = fill_ranks(ngenes, vec);
 
         std::vector<double> scores { 0.2, 0.5, 0.1 };
         auto output = ft.run(ranked, references, markers, scores, 0.8, 0.05);
@@ -104,8 +105,9 @@ TEST(FineTuneTest, Basic) {
     // Check edge case when there is only a single label, 
     // based on the length of 'scores'.
     {
-        auto vec = refs->dense_column()->fetch(1); // doesn't really matter
-        auto ranked = fill_ranks(vec.size(), vec.data());
+        std::vector<double> buffer(ngenes);
+        auto vec = refs->dense_column()->fetch(1, buffer.data()); // doesn't really matter which one we pick.
+        auto ranked = fill_ranks(ngenes, vec);
 
         std::vector<double> scores { 0.5 };
         auto output = ft.run(ranked, references, markers, scores, 0.8, 0.05);
@@ -117,9 +119,10 @@ TEST(FineTuneTest, Basic) {
     // is identical to one of the references. We set the quantile to 1 to
     // guarantee a score of 1 from a correlation of 1.
     auto wrk = refs->dense_column();
+    std::vector<double> buffer(ngenes);
     for (size_t r = 0; r < nrefs; ++r) {
-        auto vec = wrk->fetch(r);
-        auto ranked = fill_ranks(vec.size(), vec.data());
+        auto vec = wrk->fetch(r, buffer.data());
+        auto ranked = fill_ranks(ngenes, vec);
 
         // Setting the template parameter test = true to force it to do
         // calculations; otherwise it would exit early with the top score.
@@ -165,9 +168,10 @@ TEST(FineTuneTest, Comparison) {
     );
 
     auto wrk = mat->dense_column(subset);
+    std::vector<double> buffer(subset.size());
     for (size_t c = 0; c < mat->ncol(); ++c) {
-        auto vec = wrk->fetch(c); 
-        auto ranked = fill_ranks(vec.size(), vec.data());
+        auto vec = wrk->fetch(c, buffer.data()); 
+        auto ranked = fill_ranks(refs->ncol(), vec);
 
         std::vector<double> scores;
         for (size_t l = 0; l < nlabels; ++l) {
@@ -220,9 +224,10 @@ TEST(FineTuneTest, Diagonal) {
     singlepp::FineTuner ft;
 
     auto wrk = refs->dense_column();
+    std::vector<double> buffer(ngenes);
     for (size_t r = 0; r < nrefs; ++r) {
-        auto vec = wrk->fetch(r); 
-        auto ranked = fill_ranks(vec.size(), vec.data());
+        auto vec = wrk->fetch(r, buffer.data()); 
+        auto ranked = fill_ranks(ngenes, vec);
         std::vector<double> scores { 0.49, 0.5, 0.48 };
         auto output = ft.run<true>(ranked, references, markers, scores, 1, 0.05);
 

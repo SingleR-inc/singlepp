@@ -19,11 +19,15 @@ template<class RefMatrix>
 double naive_score(const std::vector<double>& scaled_test, const std::vector<int>& in_label, const RefMatrix& refs, const std::vector<int>& subset, double quantile) {
     std::vector<double> correlations;
     auto wrk = refs->dense_column(subset);
+    std::vector<double> buffer(subset.size());
+
     for (auto l : in_label) {
-        auto col = wrk->fetch(l);
-        const auto scaled_ref = quick_scaled_ranks(col);
+        auto col = wrk->fetch(l, buffer.data());
+        tatami::copy_n(col, buffer.size(), buffer.data());
+        const auto scaled_ref = quick_scaled_ranks(buffer);
         correlations.push_back(singlepp::distance_to_correlation(scaled_test.size(), scaled_test.data(), scaled_ref.data()));
     }
+
     return singlepp::correlations_to_scores(correlations, quantile);
 }
 
@@ -33,10 +37,12 @@ auto naive_method(size_t nlabels, const Labels& labels, const RefMatrix& refs, c
 
     auto by_labels = split_by_label(nlabels, labels);
     auto wrk = mat->dense_column(subset);
+    std::vector<double> buffer(subset.size());
 
     for (size_t c = 0; c < mat->ncol(); ++c) {
-        auto col = wrk->fetch(c);
-        auto scaled = quick_scaled_ranks(col);
+        auto col = wrk->fetch(c, buffer.data());
+        tatami::copy_n(col, buffer.size(), buffer.data());
+        auto scaled = quick_scaled_ranks(buffer);
 
         std::vector<std::pair<double, size_t> > my_scores;
         for (size_t r = 0; r < nlabels; ++r) {

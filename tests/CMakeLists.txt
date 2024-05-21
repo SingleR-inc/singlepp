@@ -22,10 +22,20 @@ add_executable(
     src/ChooseClassicMarkers.cpp
 )
 
+
+FetchContent_Declare(
+  tatami_stats
+  GIT_REPOSITORY https://github.com/tatami-inc/tatami_stats
+  GIT_TAG master
+)
+
+FetchContent_MakeAvailable(tatami_stats)
+
 target_link_libraries(
     libtest
     gtest_main
     singlepp
+    tatami_stats
 )
 
 set(USE_OPENMP OFF CACHE BOOL "Compile with OpenMP support")
