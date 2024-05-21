@@ -19,7 +19,7 @@ template<class RefMatrix>
 double naive_score(const std::vector<double>& scaled_test, const std::vector<int>& in_label, const RefMatrix& refs, const std::vector<int>& subset, double quantile) {
     std::vector<double> correlations;
     auto wrk = refs->dense_column(subset);
-    std::vector<typename RefMatrix::element_type::value_type> buffer(refs->nrow());
+    std::vector<double> buffer(refs->nrow());
 
     for (auto l : in_label) {
         auto col = wrk->fetch(l, buffer.data());

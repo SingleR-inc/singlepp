@@ -113,14 +113,16 @@ TEST_P(IntegratedScorerTest, Basic) {
     auto output = scorer.run(test.get(), chosen_ptrs, integrated);
     auto by_labels = split_by_labels(labels);
     auto wrk = test->dense_column();
+    std::vector<double> buffer(test->nrow());
 
     for (size_t t = 0; t < ntest; ++t) {
         auto my_universe = create_universe(t, prebuilts, chosen);
         std::vector<int> universe(my_universe.begin(), my_universe.end());
         std::sort(universe.begin(), universe.end());
 
-        auto col = wrk->fetch(t);
-        auto scaled = quick_scaled_ranks(col, universe);
+        auto col = wrk->fetch(t, buffer.data());
+        tatami::copy_n(col, test->nrow(), buffer.data());
+        auto scaled = quick_scaled_ranks(buffer, universe);
 
         std::vector<double> all_scores;
         for (size_t r = 0; r < nrefs; ++r) {
@@ -223,6 +225,7 @@ TEST_P(IntegratedScorerTest, Intersected) {
     }
 
     auto wrk = test->dense_column();
+    std::vector<double> buffer(test->nrow());
     for (size_t t = 0; t < ntest; ++t) {
         auto my_universe = create_universe(t, prebuilts, chosen);
 
@@ -237,8 +240,9 @@ TEST_P(IntegratedScorerTest, Intersected) {
                 }
             }
 
-            auto col = wrk->fetch(t);
-            auto scaled = quick_scaled_ranks(col, universe_test);
+            auto col = wrk->fetch(t, buffer.data());
+            tatami::copy_n(col, buffer.size(), buffer.data());
+            auto scaled = quick_scaled_ranks(buffer, universe_test);
 
             double score = naive_score(scaled, by_labels[r][chosen[r][t]], matrices[r].get(), universe_ref, quantile);
             EXPECT_FLOAT_EQ(score, output.scores[r][t]);

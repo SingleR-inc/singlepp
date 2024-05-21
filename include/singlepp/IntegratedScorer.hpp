@@ -207,7 +207,7 @@ public:
             // We perform an indexed extraction, so all subsequent indices
             // will refer to indices into this subset (i.e., 'built.universe').
             auto wrk = tatami::consecutive_extractor<false>(mat, false, start, len, built.universe); 
-            std::vector<double> buffer(wrk->index_length);
+            std::vector<double> buffer(built.universe.size());
 
             RankedVector<double, int> data_ranked, data_ranked2;
             data_ranked.reserve(NR);
