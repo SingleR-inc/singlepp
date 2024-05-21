@@ -427,7 +427,7 @@ private:
 
             // 'in_use' is guaranteed to be sorted and unique, see its derivation in finish().
             // This means we can directly use it for indexed extraction.
-            auto wrk = tatami::consecutive_extractor<false, false>(curmat, start, len, in_use); 
+            auto wrk = tatami::consecutive_extractor<false>(curmat, false, start, len, in_use); 
             std::vector<double> buffer(wrk->index_length);
 
             for (int c = start, end = start + len; c < end; ++c) {
@@ -484,7 +484,7 @@ private:
             RankedVector<double, int> tmp_ranked;
             tmp_ranked.reserve(remapped_in_use.size());
             std::vector<double> buffer(remapped_in_use.size());
-            auto wrk = tatami::consecutive_extractor<false, false>(curmat, start, len, remapped_in_use);
+            auto wrk = tatami::consecutive_extractor<false>(curmat, false, start, len, remapped_in_use);
 
             for (size_t c = start, end = start + len; c < end; ++c) {
                 auto ptr = wrk->fetch(c, buffer.data());

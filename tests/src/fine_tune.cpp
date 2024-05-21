@@ -86,8 +86,9 @@ TEST(FineTuneTest, Basic) {
 
     // Check early exit conditions.
     {
-        auto vec = refs->dense_column()->fetch(0); // doesn't really matter what we pick here.
-        auto ranked = fill_ranks(vec.size(), vec.data());
+        std::vector<double> buffer(refs->ncol());
+        auto vec = refs->dense_column()->fetch(0, buffer.data()); // doesn't really matter what we pick here.
+        auto ranked = fill_ranks(refs->ncol(), vec);
 
         std::vector<double> scores { 0.2, 0.5, 0.1 };
         auto output = ft.run(ranked, references, markers, scores, 0.8, 0.05);

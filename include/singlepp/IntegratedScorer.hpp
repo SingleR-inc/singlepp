@@ -206,7 +206,7 @@ public:
         tatami::parallelize([&](int, int start, int len) -> void {
             // We perform an indexed extraction, so all subsequent indices
             // will refer to indices into this subset (i.e., 'built.universe').
-            auto wrk = tatami::consecutive_extractor<false, false>(mat, start, len, built.universe); 
+            auto wrk = tatami::consecutive_extractor<false>(mat, false, start, len, built.universe); 
             std::vector<double> buffer(wrk->index_length);
 
             RankedVector<double, int> data_ranked, data_ranked2;
