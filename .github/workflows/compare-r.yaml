@@ -1,4 +1,8 @@
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 name: Comparison to R 
 
@@ -8,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     container: rocker/rstudio:latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Get latest CMake
       uses: lukka/get-cmake@latest
@@ -21,7 +25,7 @@ jobs:
         echo "R_PKG_DIR=${R_HOME}/site-library" >> $GITHUB_ENV
 
     - name: Restore the package directory
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ${{ env.R_PKG_DIR }}
         key: preinstalled-packages
