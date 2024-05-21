@@ -26,13 +26,14 @@ TEST_P(ChooseClassicMarkersTest, Simple) {
     auto output = mrk.run(mat.get(), groupings.data());
     auto lwrk = mat->dense_column();
     auto rwrk = mat->dense_column();
+    std::vector<double> lbuffer(mat->nrow()), rbuffer(mat->nrow());
 
     // Comparing against a naive implementation.
     EXPECT_EQ(output.size(), nlabels);
     for (size_t l = 0; l < nlabels; ++l) {
         const auto& current = output[l];
         EXPECT_EQ(current.size(), nlabels);
-        auto left = lwrk->fetch(reverse ? nlabels - l - 1 : l);
+        auto left = lwrk->fetch(reverse ? nlabels - l - 1 : l, lbuffer.data());
 
         for (size_t l2 = 0; l2 < nlabels; ++l2) {
             const auto& markers = current[l2];
@@ -45,9 +46,9 @@ TEST_P(ChooseClassicMarkersTest, Simple) {
                 EXPECT_TRUE(nmarkers <= requested);
             }
 
-            auto right = rwrk->fetch(reverse ? nlabels - l2 - 1 : l2);
+            auto right = rwrk->fetch(reverse ? nlabels - l2 - 1 : l2, rbuffer.data());
             std::vector<std::pair<double, int> > sorted;
-            for (size_t i = 0; i < right.size(); ++i) {
+            for (size_t i = 0; i < ngenes; ++i) {
                 sorted.emplace_back(right[i] - left[i], i);
             }
 
@@ -101,10 +102,11 @@ TEST_P(ChooseClassicMarkersTest, Blocked) {
     auto wrk1 = mat1->dense_column();
     auto wrk2 = mat2->dense_column();
     auto cIt = combined.begin();
+    std::vector<double> buffer1(mat1->nrow()), buffer2(mat2->nrow());
 
     for (size_t l = 0; l < nlabels; ++l) {
-        auto col1 = wrk1->fetch(l);
-        auto col2 = wrk2->fetch(l);
+        auto col1 = wrk1->fetch(l, buffer1.data());
+        auto col2 = wrk2->fetch(l, buffer2.data());
         for (size_t g = 0; g < ngenes; ++g, ++cIt) {
             *cIt = col1[g] + col2[g];
         }
