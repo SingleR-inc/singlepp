@@ -125,7 +125,7 @@ TEST_P(IntegratedBuilderBasicTest, SimpleCombine) {
         // Checking the ranked values.
         std::vector<int> offsets(nlabels);
         auto wrk = matrices[r]->dense_column();
-        std::vector<double> buffer(matrices[r]->ncol());
+        std::vector<double> buffer(matrices[r]->nrow());
 
         for (size_t s = 0; s < nsamples; ++s) {
             int lab = labels[r][s]; 
@@ -289,7 +289,7 @@ TEST_P(IntegratedBuilderMoreTest, IntersectedCombine) {
         // Checking rankings for consistency with the availabilities.
         std::vector<int> offsets(nlabels);
         auto wrk = matrices[r]->dense_column();
-        std::vector<double> buffer(matrices[r]->ncol());
+        std::vector<double> buffer(matrices[r]->nrow());
 
         for (size_t s = 0; s < nsamples; ++s) {
             int lab = labels[r][s]; 
