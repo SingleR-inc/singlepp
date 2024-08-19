@@ -12,16 +12,15 @@ enable_testing()
 
 add_executable(
     libtest 
-    src/Classifier.cpp
+    #src/Classifier.cpp
     src/scaled_ranks.cpp
     src/compute_scores.cpp
-    src/process_features.cpp
-    src/fine_tune.cpp
-    src/IntegratedBuilder.cpp
-    src/IntegratedScorer.cpp
-    src/ChooseClassicMarkers.cpp
+    #src/process_features.cpp
+    #src/fine_tune.cpp
+    #src/IntegratedBuilder.cpp
+    #src/IntegratedScorer.cpp
+    #src/ChooseClassicMarkers.cpp
 )
-
 
 FetchContent_Declare(
   tatami_stats
