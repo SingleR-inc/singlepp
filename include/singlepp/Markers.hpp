@@ -35,8 +35,11 @@ namespace singlepp {
  * As mentioned previously, the diagonal innermost vectors are typically empty, given that it makes little sense to identify upregulated markers in a label compared to itself.
  * That said, any genes stored on the diagonal will be respected and used in all feature subsets for the corresponding label.
  * This can be exploited by advanced users to efficiently store "universal" markers for a label, i.e., markers that are applicable in all comparisons to other labels.
+ *
+ * @tparam Index_ Integer type for the feature indices.
  */
-typedef std::vector<std::vector<std::vector<int> > > Markers;
+template<typename Index_>
+using Markers = std::vector<std::vector<std::vector<Index_> > >;
 
 }
 

@@ -7,6 +7,7 @@
 #include <vector>
 #include <cmath>
 #include <limits>
+#include <uint8_t>
 
 namespace singlepp {
 
@@ -134,13 +135,52 @@ void scaled_ranks(const RankedVector<Stat_, Index_>& collected, Output_* outgoin
     return;
 }
 
+template<typename Index_>
+class SubsetMapping {
+private:
+    std::vector<uint8_t> my_present;
+    std::vector<Index_> my_position;
+
+public:
+    uint8_t& present(size_t i) {
+        return my_present[i];
+    } 
+
+    uint8_t present(size_t i) const {
+        return my_present[i];
+    } 
+
+    Index_& position(size_t i) {
+        return my_position[i];
+    } 
+
+    Index_ position(size_t i) const {
+        return my_position[i];
+    } 
+
+public:
+    void clear() {
+        std::fill(mapping.present.begin(), mapping.present.end(), 0);
+    }
+
+    void resize(size_t n) {
+        if (n > mapping.present.size()) {
+            std::fill(mapping.present.begin(), mapping.present.end(), 0);
+            mapping.present.resize(n);
+        } else {
+            mapping.present.resize(n);
+            std::fill(mapping.present.begin(), mapping.present.end(), 0);
+        }
+        mapping.position.resize(n);
+    }
+};
+
 template<typename Stat_, typename Index_>
-void subset_ranks(const RankedVector<Stat_, Index_>& x, RankedVector<Stat_, Index_>& output, const std::vector<Index_>& subset_p1) {
+void subset_ranks(const RankedVector<Stat_, Index_>& x, RankedVector<Stat_, Index_>& output, const SubsetMapping<Index_>& subset) {
     size_t N = x.size();
     for (size_t i = 0; i < N; ++i) {
-        auto replacement = subset_p1[x[i].second];
-        if (replacement > 0) { // zero value represents a missing value, non-zero values represent position on the subset vector plus 1 in 'subset_p1', 
-            output.emplace_back(x[i].first, replacement - 1);
+        if (subset.present(i)) {
+            output.emplace_back(x[i].first, subset.position(i));
         }
     }
     return;

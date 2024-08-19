@@ -7,82 +7,101 @@
 
 #include <vector>
 #include <algorithm>
-#include <unordered_map>
-#include <unordered_set>
+#include <cstdint>
 
 namespace singlepp {
 
-typedef std::vector<std::pair<int, int> > Intersection;
+namespace internal {
 
-template<typename Id>
-Intersection intersect_features(size_t mat_n, const Id* mat_id, size_t ref_n, const Id* ref_id) {
-    std::unordered_map<Id, std::pair<int, int> > intersection;
-    intersection.reserve(mat_n);
-    for (size_t i = 0; i < mat_n; ++i) {
-        if (intersection.find(mat_id[i]) == intersection.end()) { // only using the first occurrence of each ID in mat_id.
-            intersection[mat_id[i]] = std::make_pair<int, int>(i, -1);
+template<typename Index_>
+struct Intersection {
+    std::vector<std::pair<Index_, Index_> > pairs; // (index in target, index in reference)
+    Index_ test_n, ref_n;
+};
+
+template<typename Index_, typename Id_>
+Intersection<Index_> intersect_features(Index_ test_n, const Id_* test_id, Index_ ref_n, const Id_* ref_id) {
+    size_t max_num = 0; 
+    if (test_n) {
+        max_num = std::max(max_num, static_cast<size_t>(*std::max_element(test_id, test_id + test_n)) + 1);
+    }
+    if (ref_n) {
+        max_num = std::max(ref_id, static_cast<size_t>(*std::max_element(ref_id, ref_id + ref_n)) + 1);
+    }
+
+    std::vector<Index_> test_id_reordered(max_num);
+    std::vector<uint8_t> found(max_num);
+
+    for (Index_ i = 0; i < test_n; ++i) {
+        auto current = test_id[i];
+        auto& curfound = found[current];
+        if (!curfound) { // only using the first occurrence of each ID in test_id.
+            test_id_reordered[current] = i;
+            curfound = 1;
         }
     }
 
-    for (size_t i = 0; i < ref_n; ++i) {
-        auto it = intersection.find(ref_id[i]);
-        if (it != intersection.end()) { // only using the first occurrence of each ID in ref_id.
-            auto& target = (it->second).second;
-            if (target < 0) {
-                target = i;
-            }
+    Intersection<Index_> output;
+    output.test_n = test_n;
+    output.ref_n = ref_n;
+
+    for (Index_ i = 0; i < ref_n; ++i) {
+        auto current = ref_id[i];
+        if (found[current]) { // only using the first occurrence of each ID in ref_id.
+            output.pairs.emplace_back(test_id_reordered[current], i);
         }
     }
 
-    Intersection pairings;
-    pairings.reserve(intersection.size());
-    for (const auto& x : intersection) {
-        if (x.second.second >= 0) {
-            pairings.push_back(x.second);
-        }
-    }
-
-    return pairings;
+    std::sort(output.pairs.begin(), output.pairs.end());
+    return output;
 }
 
-inline void subset_markers(Intersection& intersection, Markers& markers, int top) {
-    std::unordered_set<int> available;
-    available.reserve(intersection.size());
-    for (const auto& in : intersection) {
-        available.insert(in.second);
+template<typename Index_>
+void subset_by_markers(Intersection<Index_>& intersection, Markers<Index_>& markers, int top) {
+    std::vector<uint8_t> available(intersection.ref_n);
+    for (const auto& in : intersection.pairs) {
+        available[in.second] = 1;
     }
 
     // Figuring out the top markers to retain, that are _also_ in the intersection.
-    std::unordered_set<int> all_markers;
-    all_markers.reserve(intersection.size());
+    std::vector<uint8_t> all_markers(intersection.ref_n);
+    {
+        size_t ngroups = markers.size();
+        for (size_t i = 0; i < ngroups; ++i) {
+            auto& inner_markers = markers[i];
+            size_t inner_ngroups = inner_markers.size(); // should be the same as ngroups, but we'll just do this to be safe.
 
-    for (size_t i = 0; i < markers.size(); ++i) {
-        for (size_t j = 0; j < markers[i].size(); ++j) {
-            auto& current = markers[i][j];
+            for (size_t j = 0; j < inner_ngroups; ++j) {
+                auto& current = inner_markers[j];
 
-            std::vector<int> replacement;
-            size_t upper_bound = static_cast<size_t>(top >= 0 ? top : -1); // in effect, no upper bound if top = -1.
-            replacement.reserve(top >= 0 ? static_cast<size_t>(top) : current.size());
+                std::vector<Index_> replacement;
+                size_t upper_bound = static_cast<size_t>(top >= 0 ? top : -1); // in effect, no upper bound if top = -1.
+                size_t output_size = std::min(current.size(), upper_bound);
+                replacement.reserve(output_size);
 
-            for (size_t k = 0; k < current.size() && replacement.size() < upper_bound; ++k) {
-                if (available.find(current[k]) != available.end()) {
-                    all_markers.insert(current[k]);
-                    replacement.push_back(current[k]);
+                for (size_t k = 0; k < output_size; ++k) {
+                    auto marker = current[k];
+                    if (available[marker]) {
+                        all_markers[marker] = 1;
+                        replacement.push_back(marker);
+                    }
                 }
+
+                current.swap(replacement);
             }
-            current.swap(replacement);
         }
     }
 
     // Subsetting the intersection down to the chosen set of markers.
-    std::unordered_map<int, int> mapping;
-    mapping.reserve(intersection.size());
+    std::vector<Index_> mapping(intersection.ref_n);
     {
         size_t counter = 0;
-        for (size_t i = 0; i < intersection.size(); ++i) {
-            if (all_markers.find(intersection[i].second) != all_markers.end()) {
-                intersection[counter] = intersection[i];
-                mapping[intersection[i].second] = counter;
+        size_t npairs = intersection.pairs.size();
+        for (size_t i = 0; i < npairs; ++i) {
+            const auto& in = intersection.pairs[i];
+            if (all_markers[in.second]) {
+                mapping[in.second] = counter;
+                intersection[counter] = in;
                 ++counter;
             }
         }
@@ -90,12 +109,15 @@ inline void subset_markers(Intersection& intersection, Markers& markers, int top
     }
 
     // Reindexing the markers.
-    for (size_t i = 0; i < markers.size(); ++i) {
-        for (size_t j = 0; j < markers[i].size(); ++j) {
-            auto& current = markers[i][j];
-            for (size_t k = 0; k < current.size(); ++k) {
-                auto it = mapping.find(current[k]);
-                current[k] = it->second;
+    {
+        size_t ngroups = markers.size();
+        for (size_t i = 0; i < ngroups; ++i) {
+            auto& inner_markers = markers[i];
+            size_t inner_ngroups = inner_markers.size();
+            for (size_t j = 0; j < inner_ngroups; ++j) {
+                for (auto& k : inner_markers[j]) {
+                    k = mapping[k];
+                }
             }
         }
     }
@@ -104,34 +126,56 @@ inline void subset_markers(Intersection& intersection, Markers& markers, int top
 }
 
 // Use this method when the feature spaces are already identical.
-inline std::vector<int> subset_markers(Markers& markers, int top) {
-    std::unordered_set<int> available;
-    for (size_t i = 0; i < markers.size(); ++i) {
-        for (size_t j = 0; j < markers[i].size(); ++j) {
-            auto& current = markers[i][j];
-            if (top >= 0) {
-                current.resize(std::min(current.size(), static_cast<size_t>(top)));
+template<typename Index_>
+std::vector<Index_> subset_markers(Markers<Index_>& markers, int top) {
+    std::vector<uint8_t> available;
+
+    {
+        size_t ngroups = markers.size();
+        for (size_t i = 0; i < ngroups; ++i) {
+            auto& inner_markers = markers[i];
+            size_t inner_ngroups = inner_markers.size();
+
+            for (size_t j = 0; j < inner_ngroups; ++j) {
+                auto& current = inner_markers[j];
+                if (top >= 0) {
+                    current.resize(std::min(current.size(), static_cast<size_t>(top)));
+                }
+
+                size_t biggest = static_cast<size_t>(std::max_element(current.begin(), current.end()));
+                if (biggest > available.size()) {
+                    available.resize(biggest + 1);
+                }
+                for (auto x : current) {
+                    available[x] = 1;
+                }
             }
-            available.insert(current.begin(), current.end());
         }
     }
 
-    std::vector<int> subset(available.begin(), available.end());
-    std::sort(subset.begin(), subset.end());
+    std::vector<Index_> subset, mapping;
+    {
+        size_t nmarkers = std::accmulate(available.begin(), available.end(), static_cast<size_t>(0));
+        subset.reserve(nmarkers);
+        mapping.reserve(available.size());
 
-    std::unordered_map<int, int> mapping;
-    mapping.reserve(subset.size());
-    for (size_t i = 0; i < subset.size(); ++i) {
-        mapping[subset[i]] = i;
+        for (Index_ i = 0, end = available.size(); i < end; ++i) {
+            if (available[i]) {
+                mapping[i] = subset.size();
+                subset.push_back(i);
+            }
+        }
     }
 
-    // Reindexing the markers.
-    for (size_t i = 0; i < markers.size(); ++i) {
-        for (size_t j = 0; j < markers[i].size(); ++j) {
-            auto& current = markers[i][j];
-            for (size_t k = 0; k < current.size(); ++k) {
-                auto it = mapping.find(current[k]);
-                current[k] = it->second;
+    {
+        size_t ngroups = markers.size();
+        for (size_t i = 0; i < ngroups; ++i) {
+            auto& inner_markers = markers[i];
+            size_t inner_ngroups = inner_markers.size();
+            for (size_t j = 0; j < inner_ngroups; ++j) {
+                for (auto& k : inner_markers[j]) {
+                    k = mapping[k];
+                }
             }
         }
     }
@@ -139,13 +183,17 @@ inline std::vector<int> subset_markers(Markers& markers, int top) {
     return subset;
 }
 
-inline std::pair<std::vector<int>, std::vector<int> > unzip(const Intersection& intersection) {
-    std::vector<int> left(intersection.size()), right(intersection.size());
-    for (size_t i = 0; i < intersection.size(); ++i) {
+template<typename Index_>
+std::pair<std::vector<Index_>, std::vector<Index_> > unzip(const Intersection<Index_>& intersection) {
+    size_t n = intersection.size();
+    std::vector<Index_> left(n), right(n);
+    for (size_t i = 0; i < n; ++i) {
         left[i] = intersection[i].first;
         right[i] = intersection[i].second;
     }
     return std::make_pair(std::move(left), std::move(right));
+}
+
 }
 
 }
