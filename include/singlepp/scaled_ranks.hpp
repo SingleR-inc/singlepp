@@ -7,7 +7,7 @@
 #include <vector>
 #include <cmath>
 #include <limits>
-#include <uint8_t>
+#include <cstdint>
 
 namespace singlepp {
 
@@ -160,23 +160,24 @@ public:
 
 public:
     void clear() {
-        std::fill(mapping.present.begin(), mapping.present.end(), 0);
+        std::fill(my_present.begin(), my_present.end(), 0);
     }
 
     void resize(size_t n) {
-        if (n > mapping.present.size()) {
-            std::fill(mapping.present.begin(), mapping.present.end(), 0);
-            mapping.present.resize(n);
+        if (n > my_present.size()) {
+            std::fill(my_present.begin(), my_present.end(), 0);
+            my_present.resize(n);
         } else {
-            mapping.present.resize(n);
-            std::fill(mapping.present.begin(), mapping.present.end(), 0);
+            my_present.resize(n);
+            std::fill(my_present.begin(), my_present.end(), 0);
         }
-        mapping.position.resize(n);
+        my_position.resize(n);
     }
 };
 
 template<typename Stat_, typename Index_>
 void subset_ranks(const RankedVector<Stat_, Index_>& x, RankedVector<Stat_, Index_>& output, const SubsetMapping<Index_>& subset) {
+    output.clear();
     size_t N = x.size();
     for (size_t i = 0; i < N; ++i) {
         if (subset.present(i)) {

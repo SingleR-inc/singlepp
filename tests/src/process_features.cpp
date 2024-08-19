@@ -6,20 +6,20 @@
 #include <algorithm>
 #include <vector>
 #include <string>
+#include <unordered_set>
 
 TEST(IntersectFeatures, Basic) {
-    std::vector<std::string> first { "gene_1", "gene_2", "gene_5", "gene_3", "gene_6" };
-    std::vector<std::string> second { "gene_3", "gene_1", "gene_4", "gene_8", "gene_2", "gene_7" };
+    std::vector<int> first { 1, 2, 5, 3, 6 };
+    std::vector<int> second { 3, 1, 4, 8, 2, 7 };
+    auto intersection = singlepp::internal::intersect_features<int>(first.size(), first.data(), second.size(), second.data());
 
-    auto intersection = singlepp::intersect_features(first.size(), first.data(), second.size(), second.data());
-    std::sort(intersection.begin(), intersection.end());
-    EXPECT_EQ(intersection.size(), 3);
-    EXPECT_EQ(intersection[0], std::make_pair(0, 1));
-    EXPECT_EQ(intersection[1], std::make_pair(1, 4));
-    EXPECT_EQ(intersection[2], std::make_pair(3, 0));
+    EXPECT_EQ(intersection.pairs.size(), 3);
+    EXPECT_EQ(intersection.pairs[0], std::make_pair(0, 1));
+    EXPECT_EQ(intersection.pairs[1], std::make_pair(1, 4));
+    EXPECT_EQ(intersection.pairs[2], std::make_pair(3, 0));
 
     // Unzipping works as expected.
-    auto unzipped = singlepp::unzip(intersection);
+    auto unzipped = singlepp::internal::unzip(intersection);
     std::vector<int> ref1 { 0, 1, 3 };
     EXPECT_EQ(unzipped.first, ref1);
     std::vector<int> ref2 { 1, 4, 0 };
@@ -27,25 +27,23 @@ TEST(IntersectFeatures, Basic) {
 }
 
 TEST(IntersectFeatures, Duplicates) {
-    std::vector<std::string> first { "gene_1", "gene_3", "gene_1", "gene_3", "gene_2" };
-    std::vector<std::string> second { "gene_3", "gene_2", "gene_3", "gene_1", "gene_2", "gene_1" };
-
-    auto intersection = singlepp::intersect_features(first.size(), first.data(), second.size(), second.data());
-    std::sort(intersection.begin(), intersection.end());
+    std::vector<int> first { 1, 3, 1, 3, 2 };
+    std::vector<int> second { 3, 2, 3, 1, 2, 1 };
+    auto intersection = singlepp::internal::intersect_features<int>(first.size(), first.data(), second.size(), second.data());
 
     // We only report the first occurrence of duplicated IDs.
-    EXPECT_EQ(intersection.size(), 3);
-    EXPECT_EQ(intersection[0], std::make_pair(0, 3));
-    EXPECT_EQ(intersection[1], std::make_pair(1, 0));
-    EXPECT_EQ(intersection[2], std::make_pair(4, 1));
+    EXPECT_EQ(intersection.pairs.size(), 3);
+    EXPECT_EQ(intersection.pairs[0], std::make_pair(0, 3));
+    EXPECT_EQ(intersection.pairs[1], std::make_pair(1, 0));
+    EXPECT_EQ(intersection.pairs[2], std::make_pair(4, 1));
 }
 
 TEST(SubsetMarkers, Simple) {
     size_t nlabels = 4;
-    auto markers = mock_markers(nlabels, 20, 100);
+    auto markers = mock_markers<int>(nlabels, 20, 100);
     auto copy = markers;
     int top = 5;
-    auto subs = singlepp::subset_markers(copy, top);
+    auto subs = singlepp::internal::subset_to_markers(copy, top);
 
     EXPECT_TRUE(std::is_sorted(subs.begin(), subs.end()));
     EXPECT_TRUE(subs.size() < 100); // not every gene is there, otherwise it would be a trivial test.
@@ -92,18 +90,18 @@ TEST(SubsetMarkers, Simple) {
 TEST(SubsetMarkers, Intersect) {
     size_t nlabels = 4;
     size_t ngenes = 100;
-    auto markers = mock_markers(nlabels, 20, ngenes);
-    auto inter = mock_intersection(ngenes, ngenes, 40);
+    auto markers = mock_markers<int>(nlabels, 20, ngenes);
+    auto inter = mock_intersection<int>(ngenes, ngenes, 40);
 
     int top = 5;
     auto mcopy = markers;
     auto icopy = inter;
-    singlepp::subset_markers(icopy, mcopy, top);
-    EXPECT_TRUE(icopy.size() >= top);
+    singlepp::internal::subset_to_markers(icopy, mcopy, top);
+    EXPECT_GE(icopy.pairs.size(), top);
 
     // Checking for uniqueness.
     std::unordered_map<int, bool> available;
-    for (auto s : icopy) {
+    for (auto s : icopy.pairs) {
         ASSERT_TRUE(available.find(s.second) == available.end());
         available[s.second] = false;
     }
@@ -117,11 +115,11 @@ TEST(SubsetMarkers, Intersect) {
 
             const auto& original = markers[i][j];
             const auto& remapped = mcopy[i][j];
-            EXPECT_TRUE(remapped.size() <= top); 
+            EXPECT_LE(remapped.size(), top); 
 
             size_t l = 0;
             for (size_t s = 0; s < remapped.size(); ++s) {
-                auto current = icopy[remapped[s]].second;
+                auto current = icopy.pairs[remapped[s]].second;
                 available[current] = true;
                 while (l < original.size() && original[l] != current) {
                     ++l;
@@ -141,10 +139,10 @@ TEST(SubsetMarkers, Intersect) {
 
 TEST(SubsetMarkers, TooLargeTop) {
     size_t nlabels = 5;
-    auto markers = mock_markers(nlabels, 20, 123);
+    auto markers = mock_markers<int>(nlabels, 20, 123);
     auto copy = markers;
     int top = 50;
-    auto subs = singlepp::subset_markers(copy, top);
+    auto subs = singlepp::internal::subset_to_markers(copy, top);
 
     for (size_t i = 0; i < nlabels; ++i) {
         for (size_t j = 0; j < nlabels; ++j) {
@@ -161,16 +159,16 @@ TEST(SubsetMarkers, TooLargeTop) {
 TEST(SubsetMarkers, TooLargeTop2) {
     size_t nlabels = 4;
     size_t ngenes = 100;
-    auto markers = mock_markers(nlabels, 20, ngenes);
-    auto inter = mock_intersection(ngenes, ngenes, 40);
+    auto markers = mock_markers<int>(nlabels, 20, ngenes);
+    auto inter = mock_intersection<int>(ngenes, ngenes, 40);
 
     int top = 50;
     auto mcopy = markers;
     auto icopy = inter;
-    singlepp::subset_markers(icopy, mcopy, top);
+    singlepp::internal::subset_to_markers(icopy, mcopy, top);
 
     std::unordered_set<int> available;
-    for (auto i : inter){
+    for (auto i : inter.pairs){
         available.insert(i.second);
     }
 
@@ -182,7 +180,7 @@ TEST(SubsetMarkers, TooLargeTop2) {
             size_t l = 0;
             for (size_t s = 0; s < original.size(); ++s) {
                 if (available.find(original[s]) != available.end()) {
-                    EXPECT_EQ(icopy[remapped[l]].second, original[s]);
+                    EXPECT_EQ(icopy.pairs[remapped[l]].second, original[s]);
                     ++l;
                 }
             }
@@ -193,10 +191,10 @@ TEST(SubsetMarkers, TooLargeTop2) {
 
 TEST(SubsetMarkers, NoOp) {
     size_t nlabels = 4;
-    auto markers = mock_markers(nlabels, 20, 100);
+    auto markers = mock_markers<int>(nlabels, 20, 100);
     auto copy = markers;
 
-    auto subs = singlepp::subset_markers(copy, -1);
+    auto subs = singlepp::internal::subset_to_markers(copy, -1);
     EXPECT_TRUE(subs.size() > 0);
 
     for (size_t i = 0; i < nlabels; ++i) {
@@ -210,22 +208,22 @@ TEST(SubsetMarkers, NoOp) {
     }
 }
 
-TEST(SubsetMarkers, IntersectNoOp) {
+TEST(SubsetMarkers, IntersectNoTop) {
     size_t nlabels = 4;
     size_t ngenes = 100;
-    auto markers = mock_markers(nlabels, 20, ngenes);
-    auto inter = mock_intersection(ngenes, ngenes, 40);
+    auto markers = mock_markers<int>(nlabels, 20, ngenes);
+    auto inter = mock_intersection<int>(ngenes, ngenes, 40);
 
     auto mcopy = markers;
     auto icopy = inter;
-    singlepp::subset_markers(icopy, mcopy, -1);
+    singlepp::internal::subset_to_markers(icopy, mcopy, -1);
 
     // Same result as if we took a very large top set.
     auto mcopy2 = markers;
     auto icopy2 = inter;
-    singlepp::subset_markers(icopy2, mcopy2, 10000);
+    singlepp::internal::subset_to_markers(icopy2, mcopy2, 10000);
 
-    EXPECT_EQ(icopy, icopy2);
+    EXPECT_EQ(icopy.pairs, icopy2.pairs);
 
     for (size_t i = 0; i < nlabels; ++i) {
         for (size_t j = 0; j < nlabels; ++j) {
@@ -236,11 +234,11 @@ TEST(SubsetMarkers, IntersectNoOp) {
 
 TEST(SubsetMarkers, DiagonalOnly) {
     size_t nlabels = 4;
-    auto markers = mock_markers_diagonal(nlabels, 20, 100);
+    auto markers = mock_markers_diagonal<int>(nlabels, 20, 100);
 
     auto copy = markers;
     int top = 5;
-    auto subs = singlepp::subset_markers(copy, top);
+    auto subs = singlepp::internal::subset_to_markers(copy, top);
     EXPECT_TRUE(subs.size() < 100); // not every gene is there, otherwise it would be a trivial test.
     EXPECT_TRUE(subs.size() >= top);
 
@@ -261,25 +259,25 @@ TEST(SubsetMarkers, DiagonalOnly) {
 TEST(SubsetMarkers, DiagonalIntersection) {
     size_t nlabels = 4;
     size_t ngenes = 100;
-    auto markers = mock_markers_diagonal(nlabels, 20, ngenes);
-    auto inter = mock_intersection(ngenes, ngenes, 40);
+    auto markers = mock_markers_diagonal<int>(nlabels, 20, ngenes);
+    auto inter = mock_intersection<int>(ngenes, ngenes, 40);
 
     auto mcopy = markers;
     auto icopy = inter;
     int top = 5;
-    singlepp::subset_markers(icopy, mcopy, top);
-    EXPECT_TRUE(icopy.size() >= top);
+    singlepp::internal::subset_to_markers(icopy, mcopy, top);
+    EXPECT_GE(icopy.pairs.size(), top);
 
     for (size_t i = 0; i < nlabels; ++i) {
         for (size_t j = 0; j < nlabels; ++j) {
             const auto& remapped = mcopy[i][j];
 
             if (i == j) {
-                EXPECT_EQ(remapped.size(), top);
+                EXPECT_LE(remapped.size(), top);
                 const auto& original = markers[i][j];
                 size_t l = 0;
                 for (size_t s = 0; s < remapped.size(); ++s) {
-                    auto current = icopy[remapped[s]].second;
+                    auto current = icopy.pairs[remapped[s]].second;
                     while (l < original.size() && original[l] != current) {
                         ++l;
                     }

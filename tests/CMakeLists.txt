@@ -15,7 +15,7 @@ add_executable(
     #src/Classifier.cpp
     src/scaled_ranks.cpp
     src/compute_scores.cpp
-    #src/process_features.cpp
+    src/process_features.cpp
     #src/fine_tune.cpp
     #src/IntegratedBuilder.cpp
     #src/IntegratedScorer.cpp
