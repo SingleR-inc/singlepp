@@ -68,14 +68,12 @@ public:
         if (my_use_sorted_subset) {
             size_t num = my_original_indices.size();
             for (size_t s = 0; s < num; ++s) {
-                vec[s].first = ptr[my_original_indices[s]];
-                vec[s].second = s;
+                vec.emplace_back(ptr[my_original_indices[s]], s);
             }
         } else {
             size_t num = my_original_subset.size();
-            for (size_t s = 0; s < num; ++s, ++ptr) {
-                vec[s].first = *ptr;
-                vec[s].second = s;
+            for (size_t s = 0; s < num; ++s) {
+                vec.emplace_back(ptr[s], s);
             }
         }
         std::sort(vec.begin(), vec.end());

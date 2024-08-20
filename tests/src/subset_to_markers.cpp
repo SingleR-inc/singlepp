@@ -10,13 +10,14 @@
 
 TEST(SubsetToMarkers, Simple) {
     size_t nlabels = 4;
-    auto markers = mock_markers<int>(nlabels, 20, 100);
+    size_t ngenes = 100;
+    auto markers = mock_markers<int>(nlabels, 20, ngenes);
     auto copy = markers;
     int top = 5;
-    auto subs = singlepp::internal::subset_to_markers(copy, top);
+    auto subs = singlepp::internal::subset_to_markers(ngenes, copy, top);
 
     EXPECT_TRUE(std::is_sorted(subs.begin(), subs.end()));
-    EXPECT_TRUE(subs.size() < 100); // not every gene is there, otherwise it would be a trivial test.
+    EXPECT_TRUE(subs.size() < ngenes); // not every gene is there, otherwise it would be a trivial test.
     EXPECT_TRUE(subs.size() >= top);
 
     std::unordered_map<int, bool> hits;
@@ -59,10 +60,11 @@ TEST(SubsetToMarkers, Simple) {
 
 TEST(SubsetToMarkers, TooLargeTop) {
     size_t nlabels = 5;
-    auto markers = mock_markers<int>(nlabels, 20, 123);
+    size_t ngenes = 123;
+    auto markers = mock_markers<int>(nlabels, 20, ngenes);
     auto copy = markers;
     int top = 50;
-    auto subs = singlepp::internal::subset_to_markers(copy, top);
+    auto subs = singlepp::internal::subset_to_markers(ngenes, copy, top);
 
     for (size_t i = 0; i < nlabels; ++i) {
         for (size_t j = 0; j < nlabels; ++j) {
@@ -78,10 +80,11 @@ TEST(SubsetToMarkers, TooLargeTop) {
 
 TEST(SubsetToMarkers, NoTop) {
     size_t nlabels = 4;
-    auto markers = mock_markers<int>(nlabels, 20, 100);
+    size_t ngenes = 100;
+    auto markers = mock_markers<int>(nlabels, 20, ngenes);
     auto copy = markers;
 
-    auto subs = singlepp::internal::subset_to_markers(copy, -1);
+    auto subs = singlepp::internal::subset_to_markers(ngenes, copy, -1);
     EXPECT_TRUE(subs.size() > 0);
 
     for (size_t i = 0; i < nlabels; ++i) {
@@ -97,12 +100,13 @@ TEST(SubsetToMarkers, NoTop) {
 
 TEST(SubsetToMarkers, DiagonalOnly) {
     size_t nlabels = 4;
-    auto markers = mock_markers_diagonal<int>(nlabels, 20, 100);
+    size_t ngenes = 100;
+    auto markers = mock_markers_diagonal<int>(nlabels, 20, ngenes);
 
     auto copy = markers;
     int top = 5;
-    auto subs = singlepp::internal::subset_to_markers(copy, top);
-    EXPECT_TRUE(subs.size() < 100); // not every gene is there, otherwise it would be a trivial test.
+    auto subs = singlepp::internal::subset_to_markers(ngenes, copy, top);
+    EXPECT_TRUE(subs.size() < ngenes); // not every gene is there, otherwise it would be a trivial test.
     EXPECT_TRUE(subs.size() >= top);
 
     for (size_t i = 0; i < nlabels; ++i) {

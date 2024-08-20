@@ -186,7 +186,7 @@ TEST_P(ChooseClassicMarkersTest, BlockedMissing) {
     }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ChooseClassicMarkers,
     ChooseClassicMarkersTest,
     ::testing::Combine(

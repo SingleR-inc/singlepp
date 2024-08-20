@@ -12,6 +12,7 @@ TEST(SubsetSanitizer, NoOp) {
     std::vector<double> stuff { 0.34817868, 0.24918308, 0.75879770, 0.71893282, 0.78199329, 0.09039928 };
     ss.fill_ranks(stuff.data(), vec);
 
+    EXPECT_EQ(vec.size(), foo.size());
     double prev = -100000;
     for (size_t i = 0; i < vec.size(); ++i) {
         EXPECT_TRUE(vec[i].first > prev);
@@ -42,6 +43,7 @@ TEST(SubsetSanitizer, Resort) {
         expanded[foocopy[s]] = stuff[s];
     }
 
+    EXPECT_EQ(vec.size(), foo.size());
     for (size_t i = 0; i < vec.size(); ++i) {
         auto s = foo[vec[i].second]; // check it was correctly reindexed back to foo.
         EXPECT_EQ(vec[i].first, expanded[s]);
@@ -69,6 +71,7 @@ TEST(SubsetSanitizer, Deduplicate) {
         expanded[foocopy[s]] = stuff[s];
     }
 
+    EXPECT_EQ(vec.size(), foo.size());
     for (size_t i = 0; i < vec.size(); ++i) {
         auto s = foo[vec[i].second]; // check it was correctly reindexed back to foo.
         EXPECT_EQ(vec[i].first, expanded[s]);

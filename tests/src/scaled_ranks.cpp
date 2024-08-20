@@ -151,7 +151,7 @@ TEST(ScaledRanks, CorrelationCheck) {
 
 TEST(RankRemapper, Subsets) {
     singlepp::internal::RankRemapper<int> remapper;
-    remapper.reset(10);
+    remapper.resize(10);
     remapper.set(1, 5);
     remapper.set(6, 11);
     remapper.set(8, 2);
@@ -159,7 +159,7 @@ TEST(RankRemapper, Subsets) {
     // All indices are retained.
     {
         singlepp::internal::RankedVector<double, int> input;
-        for (size_t i = 0; i < 20; ++i) {
+        for (size_t i = 0; i < 10; ++i) {
             input.emplace_back(static_cast<double>(i) / 10, i);
         }
 
@@ -191,6 +191,10 @@ TEST(RankRemapper, Subsets) {
         EXPECT_EQ(output[1].first, 0.8);
         EXPECT_EQ(output[1].second, 2);
     }
+
+    EXPECT_TRUE(remapper.present(1));
+    remapper.clear();
+    EXPECT_FALSE(remapper.present(1));
 }
 
 TEST(SimplifyRanks, NoTies) {

@@ -18,7 +18,7 @@ add_executable(
     src/intersect_features.cpp
     src/subset_to_markers.cpp
     src/SubsetSanitizer.cpp
-    #src/fine_tune.cpp
+    src/fine_tune.cpp
     #src/IntegratedBuilder.cpp
     #src/IntegratedScorer.cpp
     src/choose_classic_markers.cpp

@@ -69,23 +69,21 @@ private:
     std::vector<Index_> my_position;
 
 public:
+    uint8_t present(size_t i) const {
+        return my_present[i];
+    }
+
     void set(size_t i, Index_ position) {
         my_present[i] = 1;
         my_position[i] = position;
     }
 
-    void reset() {
+    void clear() {
         std::fill(my_present.begin(), my_present.end(), 0);
     }
 
-    void reset(size_t n) {
-        if (n > my_present.size()) {
-            std::fill(my_present.begin(), my_present.end(), 0);
-            my_present.resize(n);
-        } else {
-            my_present.resize(n);
-            std::fill(my_present.begin(), my_present.end(), 0);
-        }
+    void resize(size_t n) {
+        my_present.resize(n);
         my_position.resize(n);
     }
 

@@ -17,8 +17,8 @@ namespace internal {
 
 // Use this method when the feature spaces are already identical.
 template<typename Index_>
-std::vector<Index_> subset_to_markers(Markers<Index_>& markers, int top) {
-    std::vector<uint8_t> available;
+std::vector<Index_> subset_to_markers(size_t ref_n, Markers<Index_>& markers, int top) {
+    std::vector<uint8_t> available(ref_n);
 
     {
         size_t ngroups = markers.size();
@@ -31,14 +31,8 @@ std::vector<Index_> subset_to_markers(Markers<Index_>& markers, int top) {
                 if (top >= 0) {
                     current.resize(std::min(current.size(), static_cast<size_t>(top)));
                 }
-                if (current.size()) {
-                    size_t biggest = static_cast<size_t>(*std::max_element(current.begin(), current.end()));
-                    if (biggest >= available.size()) {
-                        available.resize(biggest + 1);
-                    }
-                    for (auto x : current) {
-                        available[x] = 1;
-                    }
+                for (auto x : current) {
+                    available[x] = 1;
                 }
             }
         }
@@ -48,7 +42,7 @@ std::vector<Index_> subset_to_markers(Markers<Index_>& markers, int top) {
     {
         size_t nmarkers = std::accumulate(available.begin(), available.end(), static_cast<size_t>(0));
         subset.reserve(nmarkers);
-        mapping.resize(available.size());
+        mapping.resize(ref_n);
 
         for (Index_ i = 0, end = available.size(); i < end; ++i) {
             if (available[i]) {

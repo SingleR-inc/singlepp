@@ -6,7 +6,7 @@
 #include "tatami/tatami.hpp"
 
 #include "scaled_ranks.hpp"
-#include "process_features.hpp"
+#include "SubsetSanitizer.hpp"
 #include "build_indices.hpp"
 #include "fine_tune.hpp"
 
@@ -16,19 +16,22 @@
 
 namespace singlepp {
 
-inline void annotate_cells_simple(
-    const tatami::Matrix<double, int>* mat,
+namespace internal {
+
+template<typename Value_, typename Index_, typename Float_>
+void annotate_cells_simple(
+    const tatami::Matrix<Value_, Index_>& mat,
     size_t num_subset,
-    const int* subset,
-    const std::vector<Reference>& ref,
-    const Markers& markers,
-    double quantile,
+    const Index_* subset,
+    const std::vector<PerLabelReference<Index_, Float_> >& ref,
+    const Markers<Index_>& markers,
+    Float_ quantile,
     bool fine_tune,
-    double threshold,
+    Float_ threshold,
     int* best, 
-    std::vector<double*>& scores,
-    double* delta,
-    int nthreads)
+    std::vector<Float_*>& scores,
+    Float_* delta,
+    int num_threads)
 {
     // Figuring out how many neighbors to keep and how to compute the quantiles.
     const size_t NL = ref.size();
@@ -109,6 +112,8 @@ inline void annotate_cells_simple(
     }, mat->ncol(), nthreads);
 
     return;
+}
+
 }
 
 }
