@@ -21,7 +21,7 @@ add_executable(
     #src/fine_tune.cpp
     #src/IntegratedBuilder.cpp
     #src/IntegratedScorer.cpp
-    #src/ChooseClassicMarkers.cpp
+    src/choose_classic_markers.cpp
 )
 
 FetchContent_Declare(
@@ -51,7 +51,7 @@ add_executable(
     src/Classifier.cpp
     src/IntegratedBuilder.cpp
     src/IntegratedScorer.cpp
-    src/ChooseClassicMarkers.cpp
+    #src/ChooseClassicMarkers.cpp
 )
 
 set_target_properties(custom_parallel PROPERTIES COMPILE_DEFINITIONS "TEST_SINGLEPP_CUSTOM_PARALLEL")
@@ -62,7 +62,7 @@ target_link_libraries(
     singlepp
 )
 
-set(CODE_COVERAGE "Enable coverage testing" OFF)
+option(CODE_COVERAGE "Enable coverage testing" OFF)
 if(CODE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(libtest PRIVATE -O0 -g --coverage)
     target_link_options(libtest PRIVATE --coverage)
