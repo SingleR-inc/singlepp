@@ -65,35 +65,56 @@ void scaled_ranks(const RankedVector<Stat_, Index_>& collected, Output_* outgoin
 template<typename Index_>
 class RankRemapper {
 private:
+    // Avoid the hassle of using an unordered_set when the indices have a
+    // well-defined bound at the maximum number of genes.
     std::vector<uint8_t> my_present;
     std::vector<Index_> my_position;
+    Index_ counter = 0;
 
 public:
-    uint8_t present(size_t i) const {
-        return my_present[i];
-    }
-
-    void set(size_t i, Index_ position) {
-        my_present[i] = 1;
-        my_position[i] = position;
+    void add(size_t i) {
+        if (i >= my_present.size()) {
+            my_present.resize(i + 1);
+            my_position.resize(i + 1);
+        }
+        if (!my_present[i]) {
+            my_present[i] = 1;
+            my_position[i] = counter;
+            ++counter;
+        }
     }
 
     void clear() {
+        counter = 0;
         std::fill(my_present.begin(), my_present.end(), 0);
     }
 
-    void resize(size_t n) {
+    void reserve(size_t n) {
         my_present.resize(n);
         my_position.resize(n);
     }
 
 public:
     template<typename Stat_>
-    void remap(const RankedVector<Stat_, Index_>& input, RankedVector<Stat_, Index_>& output) {
+    void remap(const RankedVector<Stat_, Index_>& input, RankedVector<Stat_, Index_>& output) const {
         output.clear();
-        for (const auto& x : input) {
-            if (my_present[x.second]) {
-                output.emplace_back(x.first, my_position[x.second]);
+
+        // We need to compare the second element of each entry of input to the
+        // current size before indexing into 'my_present', but we need to avoid
+        // cases where we accidentally overflow.
+        if (my_present.size() > static_cast<size_t>(std::numeric_limits<Index_>::max())) {
+            for (const auto& x : input) {
+                if (my_present[x.second]) {
+                    output.emplace_back(x.first, my_position[x.second]);
+                }
+            }
+
+        } else {
+            Index_ limit = my_present.size();
+            for (const auto& x : input) {
+                if (x.second < limit && my_present[x.second]) {
+                    output.emplace_back(x.first, my_position[x.second]);
+                }
             }
         }
     }

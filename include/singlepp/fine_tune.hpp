@@ -12,7 +12,6 @@
 
 #include <vector>
 #include <algorithm>
-#include <unordered_map>
 #include <type_traits>
 
 namespace singlepp {
@@ -97,7 +96,6 @@ private:
 public:
     template<bool test_ = false>
     std::pair<Label_, Float_> run(
-        size_t ngenes,
         const RankedVector<Value_, Index_>& input, 
         const std::vector<PerLabelReference<Index_, Float_> >& ref,
         const Markers<Index_>& markers,
@@ -125,19 +123,17 @@ public:
             }
         }
 
-        my_gene_subset.resize(ngenes);
+        // Use the input_size as a hint for the number of addressable genes.
+        // This should be exact if subset_to_markers() was used on the input,
+        // but the rest of the code is safe even if the hint isn't perfect.
+        my_gene_subset.reserve(input.size());
 
         while (my_labels_in_use.size() > 1) {
             my_gene_subset.clear();
-            Index_ counter = 0;
             for (auto l : my_labels_in_use) {
                 for (auto l2 : my_labels_in_use){ 
-                    const auto& current = markers[l][l2];
-                    for (auto c : current) {
-                        if (!my_gene_subset.present(c)) {
-                            my_gene_subset.set(c, counter);
-                            ++counter;
-                        }
+                    for (auto c : markers[l][l2]) {
+                        my_gene_subset.add(c);
                     }
                 }
             }

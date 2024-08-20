@@ -64,18 +64,18 @@ std::vector<PerLabelReference<Index_, Float_> > build_indices(
     SubsetSanitizer<Index_> subsorter(subset);
  
     tatami::parallelize([&](size_t, Index_ start, Index_ len) -> void {
-        RankedVector<Value_, Index_> ranked(NR);
         std::vector<Value_> buffer(NR);
         tatami::VectorPtr<Index_> mock_ptr(tatami::VectorPtr<Index_>{}, &(subsorter.extraction_subset()));
         auto wrk = tatami::consecutive_extractor<false>(&ref, false, start, len, std::move(mock_ptr));
+        RankedVector<Value_, Index_> ranked(NR);
 
-        for (int c = start, end = start + len; c < end; ++c) {
+        for (Index_ c = start, end = start + len; c < end; ++c) {
             auto ptr = wrk->fetch(buffer.data());
             subsorter.fill_ranks(ptr, ranked); 
 
             auto curlab = labels[c];
             auto curoff = label_offsets[c];
-            auto scaled = nndata[curlab].data() + curoff * NR;
+            auto scaled = nndata[curlab].data() + curoff * NR; // these are already size_t's, so no need to cast.
             scaled_ranks(ranked, scaled); 
 
             // Storing as a pair of ints to save space; as long

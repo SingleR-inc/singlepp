@@ -6,7 +6,6 @@
 #include "tatami/tatami.hpp"
 
 #include "annotate_cells.hpp"
-#include "process_features.hpp"
 #include "BasicBuilder.hpp"
 
 #include <vector> 

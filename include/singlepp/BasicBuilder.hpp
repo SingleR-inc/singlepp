@@ -7,7 +7,7 @@
 #include "tatami/tatami.hpp"
 
 #include "build_indices.hpp"
-#include "process_features.hpp"
+#include "subset_to_markers.hpp"
 
 #include <vector>
 
@@ -176,7 +176,7 @@ public:
      * @return A `Prebuilt` instance that can be used in `run()` for annotation of a test dataset.
      */
     Prebuilt run(const tatami::Matrix<double, int>* ref, const int* labels, Markers markers) const {
-        auto subset = subset_markers(markers, top);
+        auto subset = subset_to_markers(markers, top);
         auto subref = build_internal(ref, labels, subset);
         return Prebuilt(std::move(markers), std::move(subset), std::move(subref));
     }
@@ -271,7 +271,7 @@ public:
             }
         }
 
-        subset_markers(intersection, markers, top);
+        subset_to_markers(intersection, markers, top);
         auto pairs = unzip(intersection);
         auto subref = build_internal(ref, labels, pairs.second);
         return PrebuiltIntersection(std::move(markers), std::move(pairs.first), std::move(pairs.second), std::move(subref));
