@@ -1,7 +1,7 @@
 #ifndef MOCK_MARKERS_H
 #define MOCK_MARKERS_H
 
-#include "singlepp/process_features.hpp"
+#include "singlepp/subset_to_markers.hpp"
 #include <random>
 #include <algorithm>
 
