@@ -14,6 +14,65 @@ namespace singlepp {
 
 namespace internal {
 
+// Use this method when the feature spaces are already identical.
+template<typename Index_>
+std::vector<Index_> subset_to_markers(Markers<Index_>& markers, int top) {
+    std::vector<uint8_t> available;
+
+    {
+        size_t ngroups = markers.size();
+        for (size_t i = 0; i < ngroups; ++i) {
+            auto& inner_markers = markers[i];
+            size_t inner_ngroups = inner_markers.size();
+
+            for (size_t j = 0; j < inner_ngroups; ++j) {
+                auto& current = inner_markers[j];
+                if (top >= 0) {
+                    current.resize(std::min(current.size(), static_cast<size_t>(top)));
+                }
+                if (current.size()) {
+                    size_t biggest = static_cast<size_t>(*std::max_element(current.begin(), current.end()));
+                    if (biggest >= available.size()) {
+                        available.resize(biggest + 1);
+                    }
+                    for (auto x : current) {
+                        available[x] = 1;
+                    }
+                }
+            }
+        }
+    }
+
+    std::vector<Index_> subset, mapping;
+    {
+        size_t nmarkers = std::accumulate(available.begin(), available.end(), static_cast<size_t>(0));
+        subset.reserve(nmarkers);
+        mapping.resize(available.size());
+
+        for (Index_ i = 0, end = available.size(); i < end; ++i) {
+            if (available[i]) {
+                mapping[i] = subset.size();
+                subset.push_back(i);
+            }
+        }
+    }
+
+    {
+        size_t ngroups = markers.size();
+        for (size_t i = 0; i < ngroups; ++i) {
+            auto& inner_markers = markers[i];
+            size_t inner_ngroups = inner_markers.size();
+            for (size_t j = 0; j < inner_ngroups; ++j) {
+                for (auto& k : inner_markers[j]) {
+                    k = mapping[k];
+                }
+            }
+        }
+    }
+
+    return subset;
+}
+
 template<typename Index_>
 struct Intersection {
     std::vector<std::pair<Index_, Index_> > pairs; // (index in target, index in reference)
@@ -130,65 +189,6 @@ void subset_to_markers(Intersection<Index_>& intersection, Markers<Index_>& mark
     }
 
     return;
-}
-
-// Use this method when the feature spaces are already identical.
-template<typename Index_>
-std::vector<Index_> subset_to_markers(Markers<Index_>& markers, int top) {
-    std::vector<uint8_t> available;
-
-    {
-        size_t ngroups = markers.size();
-        for (size_t i = 0; i < ngroups; ++i) {
-            auto& inner_markers = markers[i];
-            size_t inner_ngroups = inner_markers.size();
-
-            for (size_t j = 0; j < inner_ngroups; ++j) {
-                auto& current = inner_markers[j];
-                if (top >= 0) {
-                    current.resize(std::min(current.size(), static_cast<size_t>(top)));
-                }
-                if (current.size()) {
-                    size_t biggest = static_cast<size_t>(*std::max_element(current.begin(), current.end()));
-                    if (biggest >= available.size()) {
-                        available.resize(biggest + 1);
-                    }
-                    for (auto x : current) {
-                        available[x] = 1;
-                    }
-                }
-            }
-        }
-    }
-
-    std::vector<Index_> subset, mapping;
-    {
-        size_t nmarkers = std::accumulate(available.begin(), available.end(), static_cast<size_t>(0));
-        subset.reserve(nmarkers);
-        mapping.resize(available.size());
-
-        for (Index_ i = 0, end = available.size(); i < end; ++i) {
-            if (available[i]) {
-                mapping[i] = subset.size();
-                subset.push_back(i);
-            }
-        }
-    }
-
-    {
-        size_t ngroups = markers.size();
-        for (size_t i = 0; i < ngroups; ++i) {
-            auto& inner_markers = markers[i];
-            size_t inner_ngroups = inner_markers.size();
-            for (size_t j = 0; j < inner_ngroups; ++j) {
-                for (auto& k : inner_markers[j]) {
-                    k = mapping[k];
-                }
-            }
-        }
-    }
-
-    return subset;
 }
 
 template<typename Index_>

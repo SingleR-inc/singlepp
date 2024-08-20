@@ -38,7 +38,7 @@ TEST(IntersectFeatures, Duplicates) {
     EXPECT_EQ(intersection.pairs[2], std::make_pair(4, 1));
 }
 
-TEST(SubsetMarkers, Simple) {
+TEST(SubsetToMarkers, Simple) {
     size_t nlabels = 4;
     auto markers = mock_markers<int>(nlabels, 20, 100);
     auto copy = markers;
@@ -87,7 +87,69 @@ TEST(SubsetMarkers, Simple) {
     }
 }
 
-TEST(SubsetMarkers, Intersect) {
+TEST(SubsetToMarkers, TooLargeTop) {
+    size_t nlabels = 5;
+    auto markers = mock_markers<int>(nlabels, 20, 123);
+    auto copy = markers;
+    int top = 50;
+    auto subs = singlepp::internal::subset_to_markers(copy, top);
+
+    for (size_t i = 0; i < nlabels; ++i) {
+        for (size_t j = 0; j < nlabels; ++j) {
+            const auto& original = markers[i][j];
+            const auto& remapped = copy[i][j];
+            ASSERT_EQ(original.size(), remapped.size());
+            for (size_t s = 0; s < original.size(); ++s) {
+                EXPECT_EQ(subs[remapped[s]], original[s]);
+            }
+        }
+    }
+}
+
+TEST(SubsetToMarkers, NoTop) {
+    size_t nlabels = 4;
+    auto markers = mock_markers<int>(nlabels, 20, 100);
+    auto copy = markers;
+
+    auto subs = singlepp::internal::subset_to_markers(copy, -1);
+    EXPECT_TRUE(subs.size() > 0);
+
+    for (size_t i = 0; i < nlabels; ++i) {
+        for (size_t j = 0; j < nlabels; ++j) {
+            auto reset = copy[i][j];
+            for (auto& r : reset) {
+                r = subs[r];
+            }
+            EXPECT_EQ(reset, markers[i][j]);
+        }
+    }
+}
+
+TEST(SubsetToMarkers, DiagonalOnly) {
+    size_t nlabels = 4;
+    auto markers = mock_markers_diagonal<int>(nlabels, 20, 100);
+
+    auto copy = markers;
+    int top = 5;
+    auto subs = singlepp::internal::subset_to_markers(copy, top);
+    EXPECT_TRUE(subs.size() < 100); // not every gene is there, otherwise it would be a trivial test.
+    EXPECT_TRUE(subs.size() >= top);
+
+    for (size_t i = 0; i < nlabels; ++i) {
+        for (size_t j = 0; j < nlabels; ++j) {
+            if (i == j) {
+                EXPECT_EQ(copy[i][j].size(), top);
+                for (size_t k = 0; k < copy[i][j].size(); ++k) {
+                    EXPECT_EQ(subs[copy[i][j][k]], markers[i][j][k]);
+                }
+            } else {
+                EXPECT_EQ(copy[i][j].size(), 0);
+            }
+        }
+    }
+}
+
+TEST(SubsetToMarkers, Intersect) {
     size_t nlabels = 4;
     size_t ngenes = 100;
     auto markers = mock_markers<int>(nlabels, 20, ngenes);
@@ -132,31 +194,12 @@ TEST(SubsetMarkers, Intersect) {
     // Check that everyone was used.
     bool all_used = true;
     for (auto a : available) {
-        all_used &= a.second;
+        all_used = all_used && a.second;
     }
     EXPECT_TRUE(all_used);
 }
 
-TEST(SubsetMarkers, TooLargeTop) {
-    size_t nlabels = 5;
-    auto markers = mock_markers<int>(nlabels, 20, 123);
-    auto copy = markers;
-    int top = 50;
-    auto subs = singlepp::internal::subset_to_markers(copy, top);
-
-    for (size_t i = 0; i < nlabels; ++i) {
-        for (size_t j = 0; j < nlabels; ++j) {
-            const auto& original = markers[i][j];
-            const auto& remapped = copy[i][j];
-            ASSERT_EQ(original.size(), remapped.size());
-            for (size_t s = 0; s < original.size(); ++s) {
-                EXPECT_EQ(subs[remapped[s]], original[s]);
-            }
-        }
-    }
-}
-
-TEST(SubsetMarkers, TooLargeTop2) {
+TEST(SubsetToMarkers, IntersectTooLargeTop) {
     size_t nlabels = 4;
     size_t ngenes = 100;
     auto markers = mock_markers<int>(nlabels, 20, ngenes);
@@ -189,26 +232,7 @@ TEST(SubsetMarkers, TooLargeTop2) {
     }
 }
 
-TEST(SubsetMarkers, NoOp) {
-    size_t nlabels = 4;
-    auto markers = mock_markers<int>(nlabels, 20, 100);
-    auto copy = markers;
-
-    auto subs = singlepp::internal::subset_to_markers(copy, -1);
-    EXPECT_TRUE(subs.size() > 0);
-
-    for (size_t i = 0; i < nlabels; ++i) {
-        for (size_t j = 0; j < nlabels; ++j) {
-            auto reset = copy[i][j];
-            for (auto& r : reset) {
-                r = subs[r];
-            }
-            EXPECT_EQ(reset, markers[i][j]);
-        }
-    }
-}
-
-TEST(SubsetMarkers, IntersectNoTop) {
+TEST(SubsetToMarkers, IntersectNoTop) {
     size_t nlabels = 4;
     size_t ngenes = 100;
     auto markers = mock_markers<int>(nlabels, 20, ngenes);
@@ -232,31 +256,52 @@ TEST(SubsetMarkers, IntersectNoTop) {
     }
 }
 
-TEST(SubsetMarkers, DiagonalOnly) {
+TEST(SubsetToMarkers, IntersectShuffle) {
     size_t nlabels = 4;
-    auto markers = mock_markers_diagonal<int>(nlabels, 20, 100);
+    size_t ngenes = 100;
+    auto markers = mock_markers<int>(nlabels, 20, ngenes);
+    auto inter = mock_intersection<int>(ngenes, ngenes, ngenes); // all genes are used.
 
-    auto copy = markers;
     int top = 5;
-    auto subs = singlepp::internal::subset_to_markers(copy, top);
-    EXPECT_TRUE(subs.size() < 100); // not every gene is there, otherwise it would be a trivial test.
-    EXPECT_TRUE(subs.size() >= top);
+    auto mcopy = markers;
+    auto icopy = inter;
+    singlepp::internal::subset_to_markers(icopy, mcopy, top);
+    EXPECT_GE(icopy.pairs.size(), top);
 
+    // Checking for uniqueness.
+    std::unordered_map<int, bool> available;
+    for (auto s : icopy.pairs) {
+        ASSERT_TRUE(available.find(s.second) == available.end());
+        available[s.second] = false;
+    }
+
+    // Check for consistency.
     for (size_t i = 0; i < nlabels; ++i) {
         for (size_t j = 0; j < nlabels; ++j) {
             if (i == j) {
-                EXPECT_EQ(copy[i][j].size(), top);
-                for (size_t k = 0; k < copy[i][j].size(); ++k) {
-                    EXPECT_EQ(subs[copy[i][j][k]], markers[i][j][k]);
-                }
-            } else {
-                EXPECT_EQ(copy[i][j].size(), 0);
+                continue;
+            }
+
+            const auto& original = markers[i][j];
+            const auto& remapped = mcopy[i][j];
+            EXPECT_EQ(remapped.size(), top); // exactly 'top' genes should be retained.
+
+            for (size_t s = 0; s < remapped.size(); ++s) {
+                auto current = icopy.pairs[remapped[s]].second;
+                available[current] = true;
             }
         }
     }
+
+    // Check that everyone was used.
+    bool all_used = true;
+    for (auto a : available) {
+        all_used = all_used && a.second;
+    }
+    EXPECT_TRUE(all_used);
 }
 
-TEST(SubsetMarkers, DiagonalIntersection) {
+TEST(SubsetToMarkers, IntersectDiagonal) {
     size_t nlabels = 4;
     size_t ngenes = 100;
     auto markers = mock_markers_diagonal<int>(nlabels, 20, ngenes);
