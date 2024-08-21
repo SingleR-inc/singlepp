@@ -29,7 +29,7 @@ void annotate_cells_simple(
     bool fine_tune,
     Float_ threshold,
     Label_* best, 
-    std::vector<Float_*>& scores,
+    const std::vector<Float_*>& scores,
     Float_* delta,
     int num_threads)
 {
@@ -59,7 +59,7 @@ void annotate_cells_simple(
     tatami::parallelize([&](size_t, Index_ start, Index_ length) -> void {
         std::vector<Value_> buffer(num_subset);
         tatami::VectorPtr<Index_> mock_ptr(tatami::VectorPtr<Index_>{}, &(subsorted.extraction_subset()));
-        auto wrk = tatami::consecutive_extractor<false>(mat, false, start, length, std::move(mock_ptr));
+        auto wrk = tatami::consecutive_extractor<false>(&mat, false, start, length, std::move(mock_ptr));
 
         std::vector<std::unique_ptr<knncolle::Searcher<Index_, Float_> > > searchers(num_labels);
         for (size_t r = 0; r < num_labels; ++r) {
@@ -80,7 +80,7 @@ void annotate_cells_simple(
             curscores.resize(num_labels);
             for (size_t r = 0; r < num_labels; ++r) {
                 size_t k = search_k[r];
-                auto current = searchers[r]->search(buffer.data(), k, NULL, &distances);
+                searchers[r]->search(buffer.data(), k, NULL, &distances);
 
                 Float_ last = distances[k - 1];
                 last = 1 - 2 * last * last;
@@ -110,7 +110,7 @@ void annotate_cells_simple(
                     }
                 }
             } else {
-                auto tuned = ft.run(num_subset, vec, ref, markers, curscores, quantile, threshold);
+                auto tuned = ft.run(vec, ref, markers, curscores, quantile, threshold);
                 best[c] = tuned.first;
                 if (delta) {
                     delta[c] = tuned.second;
@@ -118,7 +118,7 @@ void annotate_cells_simple(
             }
         }
 
-    }, mat->ncol(), num_threads);
+    }, mat.ncol(), num_threads);
 
     return;
 }

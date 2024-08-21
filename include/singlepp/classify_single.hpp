@@ -12,15 +12,14 @@
 #include <stdexcept>
 
 /**
- * @file BasicScorer.hpp
- *
- * @brief Defines the `BasicScorer` class.
+ * @file classify_single.hpp
+ * @brief Classify cells in a test dataset based a single reference.
  */
 
 namespace singlepp {
 
 /**
- * @brief Options for `classify_single()`.
+ * @brief Options for `classify_single()` and friends.
  * @tparam Float_ Floating-point type for the correlations and scores.
  */
 template<typename Float_>
@@ -85,31 +84,60 @@ struct ClassifySingleBuffers {
 };
 
 /**
- * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
- * This should have the same order and identity of genes as the reference matrix used to create `built`.
- * @param built An object produced by `BasicBuilder::build()`.
- * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
- * On output, this is filled with the index of the assigned label for each cell.
- * @param[out] scores Vector of pointers to arrays of length equal to the number of columns in `mat`.
- * On output, this is filled with the (non-fine-tuned) score for each label for each cell.
- * Any pointer may be `NULL` in which case the scores for that label will not be reported.
- * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
- * On output, this is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
- * This may also be `NULL` in which case the deltas are not reported.
+ * Implements the [**SingleR**](https://bioconductor.org/packages/SingleR) algorithm for automated annotation of single-cell RNA-seq data.
+ *
+ * For each cell, we compute the Spearman rank correlation between that cell and the reference expression profiles.
+ * This is done using only the subset of genes that are label-specific markers,
+ * most typically the top genes from pairwise comparisons between each label's expression profiles.
+ * For each label, we take the correlations involving that label's reference profiles and convert it into a score.
+ * The label with the highest score is used as an initial label for that cell.
+ *
+ * For each cell, we apply fine-tuning iterations to improve the label accuracy by refining the feature space.
+ * At each iteration, we find the subset of labels with scores that are close to the maximum score according to some threshold.
+ * We recompute the scores based on the markers for this label subset, and we repeat the process until only one label is left in the subset or the subset is unchanged.
+ * At the end of the iterations, the label with the highest score (or the only label, if just one is left) is used as the label for the cell.
+ * This process aims to remove noise by eliminating irrelevant genes when attempting to distinguish closely related labels.
+ * 
+ * Each label's score is defined as a user-specified quantile of the distribution of correlations across all reference profiles assigned to that label.
+ * (We typically consider a large quantile, e.g., the 80% percentile of the correlations.)
+ * The use of a quantile avoids problems with differences in the number of reference profiles per label;
+ * in contrast, just using the "top X correlations" would implicitly favor labels with more reference profiles.
+ *
+ * The choice of Spearman's correlation provides some robustness against batch effects when comparing reference and test datasets.
+ * Only the relative expression _within_ each cell needs to be comparable, not their relative expression across cells.
+ * As a result, it does not matter whether raw counts are supplied or log-transformed expression values, as the latter is a monotonic transformation of the latter (within each cell).
+ * The algorithm is also robust to differences in technologies between reference and test profiles, though it is preferable to have like-for-like comparisons. 
+ *
+ * @see
+ * Aran D et al. (2019). 
+ * Reference-based analysis of lung single-cell sequencing reveals a transitional profibrotic macrophage.
+ * _Nat. Immunol._ 20, 163-172
+ * 
+ * @tparam Value_ Numeric type for the matrix values.
+ * @tparam Index_ Integer type for the row/column indices.
+ * @tparam Label_ Integer type for the reference labels.
+ * @tparam Float_ Floating-point type for the correlations and scores.
+ *
+ * @param test Expression matrix of the test dataset, where rows are genes and columns are cells.
+ * This should have the same order and identity of genes as the reference matrix used to create `trained`.
+ * @param trained Classifier returned by `train_single()`.
+ * @param[out] buffers Buffers in which to store the classification output.
+ * Each non-`NULL` pointer should refer to an array of length equal to the number of columns in `test`.
+ * @param options Further options.
  */
 template<typename Value_, typename Index_, typename Float_, typename Label_>
 void classify_single(
     const tatami::Matrix<Value_, Index_>& test, 
-    const TrainedSingle<Index_, Float_>& built,
+    const TrainedSingle<Index_, Float_>& trained,
     const ClassifySingleBuffers<Label_, Float_>& buffers,
     const ClassifySingleOptions<Float_>& options) 
 {
-    annotate_cells_simple(
+    internal::annotate_cells_simple(
         test, 
-        built.get_subset().size(), 
-        built.get_subset().data(), 
-        built.get_references(), 
-        built.get_markers(), 
+        trained.get_subset().size(), 
+        trained.get_subset().data(), 
+        trained.get_references(), 
+        trained.get_markers(), 
         options.quantile, 
         options.fine_tune, 
         options.fine_tune_threshold, 
@@ -121,73 +149,33 @@ void classify_single(
 }
 
 /**
- * @brief Classify cells from a single pre-built reference dataset.
+ * Variant of `classify_single()` that should be used when the test and reference datasets do not have the same number/order of genes.
+ * This is done by limiting the classification to the intersection of genes between the two datasets.
  *
- * This class uses the pre-built reference from `BasicBuilder` to classify each cell in a test dataset.
- * The algorithm and parameters are the same as described for the `Classifier` class;
- * in fact, `Classifier` just calls `BasicBuilder::run()` and then `BasicScorer::run()`.
+ * @tparam Value_ Numeric type for the matrix values.
+ * @tparam Index_ Integer type for the row/column indices.
+ * @tparam Label_ Integer type for the reference labels.
+ * @tparam Float_ Floating-point type for the correlations and scores.
  *
- * It is occasionally useful to call these two functions separately if the same reference dataset is to be used multiple times,
- * e.g., on different test datasets or with different parameters.
- * In such cases, we can save time by avoiding redundant builds;
- * we just have to call `BasicScorer::run()` in all subsequent uses of the pre-built reference.
- *
- * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
- * This may have a different ordering of genes compared to the reference matrix used to create `built`,
- * provided that all genes corresponding to `built.subset` are present.
- * @param built An object produced by `BasicBuilder::build()`.
- * @param[in] mat_subset Pointer to an array of length equal to that of `built.subset`,
- * containing the index of the row of `mat` corresponding to each gene in `built.subset`.
- * That is, row `mat_subset[i]` in `mat` should be the same gene as row `built.subset[i]` in the reference matrix.
+ * @param test Expression matrix of the test dataset, where rows are genes and columns are cells.
+ * This should have the same order and identity of genes as the reference matrix used to create `trained`.
+ * @param trained Classifier returned by `train_single_intersect()`.
+ * @param[out] buffers Buffers in which to store the classification output.
+ * Each non-`NULL` pointer should refer to an array of length equal to the number of columns in `test`.
+ * @param options Further options.
  */
 template<typename Value_, typename Index_, typename Float_, typename Label_>
-void classify_single(
-    const tatami::Matrix<Value_, Index_>& test,
-    const Index_* test_subset,
-    const TrainedSingle<Index_, Float_>& built,
-    const ClassifySingleBuffers<Label_, Float_>& buffers,
-    const ClassifySingleOptions<Float_>& options) 
-{
-    annotate_cells_simple(
-        test, 
-        built.get_subset().size(), 
-        test_subset, 
-        built.get_references(), 
-        built.get_markers(), 
-        options.quantile, 
-        options.fine_tune, 
-        options.fine_tune_threshold, 
-        buffers.best, 
-        buffers.scores, 
-        buffers.delta,
-        options.num_threads
-    );
-}
-
-/**
- * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
- * @param built An object produced by `build()` with intersections.
- * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
- * On output, this is filled with the index of the assigned label for each cell.
- * @param[out] scores Vector of pointers to arrays of length equal to the number of columns in `mat`.
- * On output, this is filled with the (non-fine-tuned) score for each label for each cell.
- * Any pointer may be `NULL` in which case the scores for that label will not be reported.
- * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
- * On output, tkkhis is filled with the difference between the highest and second-highest scores, possibly after fine-tuning.
- * This may also be `NULL` in which case the deltas are not reported.
- */
-template<typename Value_, typename Index_, typename Float_, typename Label_>
-void classify_single(
+void classify_single_intersect(
     const tatami::Matrix<Value_, Index_>* mat, 
-    const TrainedSingleIntersect<Index_, Float_>& built,
+    const TrainedSingleIntersect<Index_, Float_>& trained,
     const ClassifySingleBuffers<Label_, Float_>& buffers,
     const ClassifySingleOptions<Float_>& options) 
 {
-    annotate_cells_simple(mat, 
-        built.get_test_subset().size(), 
-        built.get_test_subset().data(), 
-        built.get_references(), 
-        built.get_markers(), 
+    internal::annotate_cells_simple(mat, 
+        trained.get_test_subset().size(), 
+        trained.get_test_subset().data(), 
+        trained.get_references(), 
+        trained.get_markers(), 
         options.quantile, 
         options.fine_tune, 
         options.fine_tune_threshold, 
@@ -196,7 +184,6 @@ void classify_single(
         buffers.delta,
         options.num_threads
     );
-    return;
 }
 
 /**
@@ -262,11 +249,19 @@ ClassifySingleBuffers<Label_, Float_> results_to_buffers(ClassifySingleResults<L
  */
 
 /**
- * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
- * Each row should correspond to an element of `Prebuilt::subset`.
- * @param built An object produced by `BasicBuilder::build()`.
+ * Overload of `classify_single()` that allocates space for the output statistics.
  *
- * @return A `Results` object containing the assigned labels and scores.
+ * @tparam Label_ Integer type for the reference labels.
+ * @tparam Value_ Numeric type for the matrix values.
+ * @tparam Index_ Integer type for the row/column indices.
+ * @tparam Float_ Floating-point type for the correlations and scores.
+ *
+ * @param test Expression matrix of the test dataset, where rows are genes and columns are cells.
+ * This should have the same order and identity of genes as the reference matrix used to create `trained`.
+ * @param trained Classifier returned by `train_single()`.
+ * @param options Further options.
+ *
+ * @return Results of the classification for each cell in the test dataset.
  */
 template<typename Label_, typename Value_, typename Index_, typename Float_>
 ClassifySingleResults<Label_, Float_> classify_single(
@@ -281,43 +276,29 @@ ClassifySingleResults<Label_, Float_> classify_single(
 }
 
 /**
- * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
- * This may have a different ordering of genes compared to the reference matrix used in `build()`,
- * provided that all genes corresponding to `Prebuilt::subset` are present.
- * @param built An object produced by `BasicBuilder::build()`.
- * @param[in] mat_subset Pointer to an array of length equal to that of `Prebuilt::subset`,
- * containing the index of the row of `mat` corresponding to each gene in `Prebuilt::subset`.
+ * Overload of `classify_single_intersect()` that allocates space for the output statistics.
  *
- * @return A `Results` object containing the assigned labels and scores.
- */
-template<typename Label_, typename Value_, typename Index_, typename Float_>
-ClassifySingleResults<Label_, Float_> classify_single(
-    const tatami::Matrix<Value_, Index_>& test,
-    const Index_* test_subset,
-    const TrainedSingle<Index_, Float_>& built,
-    const ClassifySingleOptions<Float_>& options) 
-{
-    ClassifySingleResults<Label_, Float_> output(test.ncol(), built.get_references().size());
-    auto buffers = internal::results_to_buffers(output);
-    classify_single(test, test_subset, built, buffers, options);
-    return output;
-}
-
-/**
- * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
- * @param built An object produced by `build()` with intersections.
+ * @tparam Label_ Integer type for the reference labels.
+ * @tparam Value_ Numeric type for the matrix values.
+ * @tparam Index_ Integer type for the row/column indices.
+ * @tparam Float_ Floating-point type for the correlations and scores.
  *
- * @return A `Results` object containing the assigned labels and scores.
+ * @param test Expression matrix of the test dataset, where rows are genes and columns are cells.
+ * This should have the same order and identity of genes as the reference matrix used to create `trained`.
+ * @param trained Classifier returned by `train_single_intersect()`.
+ * @param options Further options.
+ *
+ * @return Results of the classification for each cell in the test dataset.
  */ 
 template<typename Label_, typename Value_, typename Index_, typename Float_>
-ClassifySingleResults<Label_, Float_> classify_single(
+ClassifySingleResults<Label_, Float_> classify_single_intersect(
     const tatami::Matrix<Value_, Index_>& test,
     const TrainedSingleIntersect<Index_, Float_>& built,
     const ClassifySingleOptions<Float_>& options) 
 {
     ClassifySingleResults<Label_, Float_> output(test.ncol(), built.get_references().size());
     auto buffers = internal::results_to_buffers(output);
-    classify_single(test, built, buffers, options);
+    classify_single_intersect(test, built, buffers, options);
     return output;
 }
 

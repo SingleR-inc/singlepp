@@ -20,7 +20,7 @@
 namespace singlepp {
 
 /**
- * @brief Options for `train_single()`.
+ * @brief Options for `train_single()` and friends.
  * @tparam Index_ Integer type for the row/column indices of the matrix.
  * @tparam Float_ Floating-point type for the correlations and scores.
  */
@@ -54,7 +54,7 @@ struct TrainSingleOptions {
 namespace internal {
 
 template<typename Value_, typename Index_, typename Label_, typename Float_>
-std::vector<PerLabelReference<Index_, Float_> > train_references(
+std::vector<PerLabelReference<Index_, Float_> > build_references(
     const tatami::Matrix<Value_, Index_>& ref,
     const Label_* labels,
     const std::vector<Index_>& subset,
@@ -63,7 +63,8 @@ std::vector<PerLabelReference<Index_, Float_> > train_references(
     if (options.trainer) {
         return build_indices(ref, labels, subset, *(options.trainer), options.num_threads);
     } else {
-        return build_indices(ref, labels, subset, knncolle::VptreeBuilder<knncolle::SimpleMatrix<Index_, Index_, Float_>, Float_>(), options.num_threads);
+        typedef knncolle::VptreeBuilder<knncolle::EuclideanDistance, knncolle::SimpleMatrix<Index_, Index_, Float_>, Float_> DefaultBuilder;
+        return build_indices(ref, labels, subset, DefaultBuilder(), options.num_threads);
     }
 }
 
@@ -83,6 +84,7 @@ std::vector<PerLabelReference<Index_, Float_> > train_references(
  */
 template<typename Index_, typename Float_>
 class TrainedSingle {
+public:
     /**
      * @cond
      */
@@ -180,9 +182,9 @@ TrainedSingle<Index_, Float_> train_single(
     Markers<Index_> markers,
     const TrainSingleOptions<Index_, Float_>& options)
 {
-    auto subset = subset_to_markers(markers, options.top);
-    auto subref = internal::train_references(ref, labels, subset);
-    return TrainedSingle<Index_, Float_>(std::move(markers), std::move(subset), std::move(subref), options);
+    auto subset = internal::subset_to_markers(ref.nrow(), markers, options.top);
+    auto subref = internal::build_references(ref, labels, subset, options);
+    return TrainedSingle<Index_, Float_>(std::move(markers), std::move(subset), std::move(subref));
 }
 
 /**
@@ -190,13 +192,14 @@ TrainedSingle<Index_, Float_> train_single(
  *
  * Instances of this class should not be directly constructed, but instead returned by calling `train_single_intersect()`.
  * This uses the intersection of genes between the test dataset and those of the reference dataset.
- * Each instance can be used in `classify_single()` with a test dataset that has the specified genes.
+ * Each instance can be used in `classify_single_intersect()` with a test dataset that has the specified genes.
  * 
  * @tparam Index_ Integer type for the row/column indices of the matrix.
  * @tparam Float_ Floating-point type for the correlations and scores.
  */
 template<typename Index_, typename Float_>
-struct TrainedSingleIntersect {
+class TrainedSingleIntersect {
+public:
     /**
      * @cond
      */
@@ -280,9 +283,9 @@ std::vector<PerLabelReference<Index_, Float_> > train_intersection(
     Markers<Index_> markers,
     const TrainSingleOptions<Index_, Float_>& options) 
 {
-    subset_to_markers(intersection, markers, options.top);
+    internal::subset_to_markers(intersection, markers, options.top);
     auto pairs = unzip(intersection);
-    auto subref = internal::train_references(ref, labels, pairs.second, options);
+    auto subref = internal::build_references(ref, labels, pairs.second, options);
     return TrainedSingleIntersect<Index_, Float_>(std::move(markers), std::move(pairs.first), std::move(pairs.second), std::move(subref));
 }
 
@@ -295,7 +298,7 @@ std::vector<PerLabelReference<Index_, Float_> > train_intersection(
  * Variant of `train_single()` that uses a pre-computed intersection of genes between the reference dataset and an as-yet-unspecified test dataset.
  * Most users will prefer to use the other `train_single_intersect()` overload that accepts `test_id` and `ref_id` and computes the intersection automatically.
  *
- * The classifier returned by this function should only be used in `classify_single()` with a test dataset that is compatible with the mappings in `intersection`.
+ * The classifier returned by this function should only be used in `classify_single_intersect()` with a test dataset that is compatible with the mappings in `intersection`.
  * That is, the gene in the `intersection[i].first`-th row of the test dataset should correspond to the `intersection[i].second`-th row of the reference dataset.
  *
  * @tparam Index_ Integer type for the row/column indices of the matrix.
@@ -315,7 +318,7 @@ std::vector<PerLabelReference<Index_, Float_> > train_intersection(
  * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
  * @param options Further options.
  *
- * @return A pre-built classifier that can be used in `classify_single()`. 
+ * @return A pre-built classifier that can be used in `classify_single_intersect()`. 
  */
 template<typename Index_, typename Value_, typename Label_, typename Float_>
 TrainedSingleIntersect<Index_, Float_> train_single_intersect(
@@ -343,7 +346,7 @@ TrainedSingleIntersect<Index_, Float_> train_single_intersect(
  * Variant of `train_single()` that uses the intersection of genes between the reference dataset and a (future) test dataset.
  * This is useful when the genes are not in the same order and number across the test and reference datasets.
  *
- * The classifier returned by this function should only be used in `classify_single()` with a test dataset
+ * The classifier returned by this function should only be used in `classify_single_intersect()` with a test dataset
  * that has `test_ngenes` rows with the same order and identity of genes as in `test_id`.
  *
  * @tparam Index_ Integer type for the row/column indices of the matrix.
@@ -365,7 +368,7 @@ TrainedSingleIntersect<Index_, Float_> train_single_intersect(
  * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
  * @param options Further options.
  *
- * @return A pre-built classifier that can be used in `classify_single()`.
+ * @return A pre-built classifier that can be used in `classify_single_intersect()`.
  */
 template<typename Index_, typename Id_, typename Value_, typename Label_, typename Float_>
 TrainedSingleIntersect<Index_, Float_> run(
