@@ -79,179 +79,176 @@ INSTANTIATE_TEST_SUITE_P(
     )
 );
 
-//class ClassifierIntersectTest : public ::testing::TestWithParam<std::tuple<int, double, double> > {};
-//
-//TEST_P(ClassifierIntersectTest, Intersect) {
-//    auto param = GetParam();
-//    int top = std::get<0>(param);
-//    double quantile = std::get<1>(param);
-//    double prop = std::get<2>(param);
-//
-//    // Creating overlapping ID vectors.
-//    size_t ngenes = 200;
-//    std::mt19937_64 rng(top * quantile * prop);
-//    std::vector<int> left, right;
-//    for (size_t x = 0; x < ngenes; ++x) {
-//        if (rng() % 100 < 100 * prop) { 
-//            left.push_back(x);
-//        }
-//        if (rng() % 100 < 100 * prop) { 
-//            right.push_back(x);
-//        }
-//    }
-//    std::shuffle(left.begin(), left.end(), rng);
-//    std::shuffle(right.begin(), right.end(), rng);
-//
-//    // Mocking up the test and references.
-//    auto mat = spawn_matrix(left.size(), 5, 42);
-//
-//    size_t nlabels = 3;
-//    size_t nrefs = 50;
-//    auto refs = spawn_matrix(right.size(), nrefs, 100);
-//    auto labels = spawn_labels(nrefs, nlabels, 1000);
-//    auto markers = mock_markers(nlabels, 50, right.size()); 
-//
-//    // Computing the observed result.
-//    singlepp::Classifier runner;
-//    runner.set_fine_tune(false).set_top(top).set_quantile(quantile);
-//    auto result = runner.run(mat.get(), left.data(), refs.get(), right.data(), labels.data(), markers);
-//
-//    // Computing the result via the build method.
-//    singlepp::BasicBuilder builder;
-//    builder.set_top(top);
-//    auto build0 = builder.run(mat->nrow(), left.data(), refs.get(), right.data(), labels.data(), markers);
-//    EXPECT_EQ(build0.num_labels(), nlabels);
-//    EXPECT_EQ(build0.num_profiles(), nrefs);
-//
-//    singlepp::BasicScorer scorer;
-//    scorer.set_fine_tune(false).set_quantile(quantile);
-//    auto result0 = scorer.run(mat.get(), build0);
-//
-//    EXPECT_EQ(result0.best, result.best);
-//    EXPECT_EQ(result0.delta, result.delta);
-//    EXPECT_EQ(build0.num_labels(), nlabels);
-//
-//    // Computing the reference result using the other run() method,
-//    // after effectively subsetting the input matrices and reindexing the markers.
-//    auto intersection = singlepp::intersect_features(left.size(), left.data(), right.size(), right.data());
-//    std::sort(intersection.begin(), intersection.end());
-//    auto pairs = singlepp::unzip(intersection);
-//    auto submat = tatami::make_DelayedSubset<0>(mat, pairs.first);
-//    auto subrefs = tatami::make_DelayedSubset<0>(refs, pairs.second);
-//
-//    std::unordered_map<int, int> locations;
-//    for (size_t i = 0; i < pairs.second.size(); ++i) {
-//        locations[pairs.second[i]] = i;
-//    }
-//
-//    auto markers2 = markers;
-//    for (size_t i = 0; i < nlabels; ++i) {
-//        for (size_t j = 0; j < nlabels; ++j) {
-//            if (i == j) {
-//                continue;
-//            }
-//
-//            std::vector<int> current;
-//            for (auto s : markers[i][j]) {
-//                auto it = locations.find(s);
-//                if (it != locations.end()) {
-//                    current.push_back(it->second);
-//                }
-//            }
-//            markers2[i][j] = current;
-//        }
-//    }
-//
-//    auto result2 = runner.run(submat.get(), subrefs.get(), labels.data(), markers2);
-//    EXPECT_EQ(result2.scores[0], result.scores[0]);
-//    EXPECT_EQ(result2.best, result.best);
-//    EXPECT_EQ(result2.delta, result.delta);
-//}
-//
-//INSTANTIATE_TEST_CASE_P(
-//    Classifier,
-//    ClassifierIntersectTest,
-//    ::testing::Combine(
-//        ::testing::Values(5, 10, 20), // nuber of top genes.
-//        ::testing::Values(1, 0.8, 0.66), // quantile
-//        ::testing::Values(0.5, 0.9) // proportion subset
-//    )
-//);
-//
-//TEST(ClassifierTest, Simple) {
-//    // Mocking up the references.
-//    size_t ngenes = 200;
-// 
-//    size_t nlabels = 3;
-//    size_t nrefs = 50;
-//    auto refs = spawn_matrix(ngenes, nrefs, 100);
-//    auto labels = spawn_labels(nrefs, nlabels, 1000);
-//
-//    auto markers = mock_markers(nlabels, 50, ngenes); 
-//
-//    // Checking that we get an exact match when we use the references
-//    // directly for annotation. We set quantile = 1 so that a perfect
-//    // correlation to any reference profile guarantees a match.
-//    singlepp::Classifier runner;
-//    runner.set_quantile(1);
-//
-//    auto output = runner.run(refs.get(), refs.get(), labels.data(), markers);
-//    for (size_t r = 0; r < nrefs; ++r) {
-//        EXPECT_EQ(labels[r], output.best[r]);
-//        EXPECT_TRUE(output.delta[r] > 0);
-//    }
-//}
-//
-//TEST(ClassifierTest, NoShared) {
-//    size_t ngenes = 100;
-//    size_t nlabels = 3;
-//    size_t nrefs = 50;
-//
-//    auto mat = spawn_matrix(ngenes, 10, 100);
-//    auto refs = spawn_matrix(ngenes, nrefs, 100);
-//    auto labels = spawn_labels(nrefs, nlabels, 1000);
-//    auto markers = mock_markers(nlabels, 50, ngenes); 
-//
-//    std::vector<int> left(ngenes), right(ngenes);
-//    std::iota(left.begin(), left.end(), 0);
-//    std::iota(right.begin(), right.end(), ngenes);
-//
-//    singlepp::BasicBuilder builder;
-//    builder.set_top(20);
-//    auto built = builder.run(ngenes, left.data(), refs.get(), right.data(), labels.data(), markers);
-//    EXPECT_EQ(built.mat_subset.size(), 0);
-//    EXPECT_EQ(built.ref_subset.size(), 0);
-//
-//    singlepp::BasicScorer scorer;
-//    auto output = scorer.run(mat.get(), built);
-//    for (const auto& curscore : output.scores) {
-//        for (auto s : curscore) {
-//            EXPECT_EQ(s, 1); // distance of zero when there are no genes ==> correlation of 1.
-//        }
-//    }
-//
-//    EXPECT_EQ(output.delta, std::vector<double>(mat->ncol())); // all-zeros, no differences between first and second.
-//}
-//
-//TEST(ClassifierTest, Nulls) {
-//    // Mocking up the test and references.
-//    size_t ngenes = 200;
-//    auto mat = spawn_matrix(ngenes, 5, 42);
-// 
-//    size_t nlabels = 3;
-//    size_t nrefs = 50;
-//    auto refs = spawn_matrix(ngenes, nrefs, 100);
-//    auto labels = spawn_labels(nrefs, nlabels, 1000);
-//
-//    auto markers = mock_markers(nlabels, 50, ngenes); 
-//
-//    // Checking that nulls are respected.
-//    singlepp::Classifier runner;
-//
-//    std::vector<int> best(nrefs);
-//    std::vector<double*> nulls(nlabels, NULL);
-//    runner.run(refs.get(), refs.get(), labels.data(), markers, best.data(), nulls, NULL);
-//    
-//    auto manual = runner.run(refs.get(), refs.get(), labels.data(), markers);
-//    EXPECT_EQ(best, manual.best);
-//}
+class ClassifySingleIntersectTest : public ::testing::TestWithParam<std::tuple<int, double, double> > {};
+
+TEST_P(ClassifySingleIntersectTest, Intersect) {
+    auto param = GetParam();
+    int top = std::get<0>(param);
+    double quantile = std::get<1>(param);
+    double prop = std::get<2>(param);
+
+    // Creating overlapping ID vectors.
+    size_t ngenes = 200;
+    std::mt19937_64 rng(top * quantile * prop);
+    std::vector<int> left, right;
+    for (size_t x = 0; x < ngenes; ++x) {
+        if (rng() % 100 < 100 * prop) { 
+            left.push_back(x);
+        }
+        if (rng() % 100 < 100 * prop) { 
+            right.push_back(x);
+        }
+    }
+    std::shuffle(left.begin(), left.end(), rng);
+    std::shuffle(right.begin(), right.end(), rng);
+
+    // Mocking up the test and references.
+    auto mat = spawn_matrix(left.size(), 5, 42);
+
+    size_t nlabels = 3;
+    size_t nrefs = 50;
+    auto refs = spawn_matrix(right.size(), nrefs, 100);
+    auto labels = spawn_labels(nrefs, nlabels, 1000);
+    auto markers = mock_markers<int>(nlabels, 50, right.size()); 
+
+    // Computing the observed result.
+    singlepp::TrainSingleOptions<int, double> bopt;
+    bopt.top = top;
+    auto trained = singlepp::train_single_intersect<int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, bopt);
+
+    singlepp::ClassifySingleOptions<double> copt;
+    copt.fine_tune = false;
+    copt.quantile = quantile;
+    auto result = singlepp::classify_single_intersect<int>(*mat, trained, copt);
+
+    // Computing the reference result using the other run() method,
+    // after effectively subsetting the input matrices and reindexing the markers.
+    auto intersection = singlepp::internal::intersect_features(left.size(), left.data(), right.size(), right.data());
+    auto pairs = singlepp::internal::unzip(intersection);
+    auto submat = tatami::make_DelayedSubset<0>(mat, pairs.first);
+    auto subrefs = tatami::make_DelayedSubset<0>(refs, pairs.second);
+
+    std::unordered_map<int, int> locations;
+    for (size_t i = 0; i < pairs.second.size(); ++i) {
+        locations[pairs.second[i]] = i;
+    }
+
+    auto markers2 = markers;
+    for (size_t i = 0; i < nlabels; ++i) {
+        for (size_t j = 0; j < nlabels; ++j) {
+            if (i == j) {
+                continue;
+            }
+
+            std::vector<int> current;
+            for (auto s : markers[i][j]) {
+                auto it = locations.find(s);
+                if (it != locations.end()) {
+                    current.push_back(it->second);
+                }
+            }
+            markers2[i][j] = current;
+        }
+    }
+
+    auto trained2 = singlepp::train_single(*subrefs, labels.data(), markers2, bopt);
+    auto result2 = singlepp::classify_single<int>(*submat, trained2, copt);
+    EXPECT_EQ(result2.scores[0], result.scores[0]);
+    EXPECT_EQ(result2.best, result.best);
+    EXPECT_EQ(result2.delta, result.delta);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    ClassifySingle,
+    ClassifySingleIntersectTest,
+    ::testing::Combine(
+        ::testing::Values(5, 10, 20), // nuber of top genes.
+        ::testing::Values(1, 0.8, 0.66), // quantile
+        ::testing::Values(0.5, 0.9) // proportion subset
+    )
+);
+
+TEST(ClassifySingleTest, Simple) {
+    // Mocking up the references.
+    size_t ngenes = 200;
+ 
+    size_t nlabels = 3;
+    size_t nrefs = 50;
+    auto refs = spawn_matrix(ngenes, nrefs, 100);
+    auto labels = spawn_labels(nrefs, nlabels, 1000);
+
+    auto markers = mock_markers<int>(nlabels, 50, ngenes); 
+
+    // Checking that we get an exact match when we use the references
+    // directly for annotation. We set quantile = 1 so that a perfect
+    // correlation to any reference profile guarantees a match.
+    singlepp::TrainSingleOptions<int, double> bopt;
+    auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
+    singlepp::ClassifySingleOptions<double> copt;
+    copt.quantile = 1;
+    auto output = singlepp::classify_single<int>(*refs, trained, copt);
+
+    for (size_t r = 0; r < nrefs; ++r) {
+        EXPECT_EQ(labels[r], output.best[r]);
+        EXPECT_TRUE(output.delta[r] > 0);
+    }
+}
+
+TEST(ClassifySingleTest, NoShared) {
+    size_t ngenes = 100;
+    size_t nlabels = 3;
+    size_t nrefs = 50;
+
+    auto mat = spawn_matrix(ngenes, 10, 100);
+    auto refs = spawn_matrix(ngenes, nrefs, 100);
+    auto labels = spawn_labels(nrefs, nlabels, 1000);
+    auto markers = mock_markers<int>(nlabels, 50, ngenes); 
+
+    std::vector<int> left(ngenes), right(ngenes);
+    std::iota(left.begin(), left.end(), 0);
+    std::iota(right.begin(), right.end(), ngenes);
+
+    singlepp::TrainSingleOptions<int, double> bopt;
+    bopt.top = 20;
+    auto trained = singlepp::train_single_intersect<int>(ngenes, left.data(), *refs, right.data(), labels.data(), markers, bopt);
+    EXPECT_EQ(trained.get_test_subset().size(), 0);
+    EXPECT_EQ(trained.get_ref_subset().size(), 0);
+
+    singlepp::ClassifySingleOptions<double> copt;
+    auto output = singlepp::classify_single_intersect<int>(*mat, trained, copt);
+    for (const auto& curscore : output.scores) {
+        for (auto s : curscore) {
+            EXPECT_EQ(s, 1); // distance of zero when there are no genes ==> correlation of 1.
+        }
+    }
+
+    EXPECT_EQ(output.delta, std::vector<double>(mat->ncol())); // all-zeros, no differences between first and second.
+}
+
+TEST(ClassifySingleTest, Nulls) {
+    // Mocking up the test and references.
+    size_t ngenes = 200;
+    auto mat = spawn_matrix(ngenes, 5, 42);
+ 
+    size_t nlabels = 3;
+    size_t nrefs = 50;
+    auto refs = spawn_matrix(ngenes, nrefs, 100);
+    auto labels = spawn_labels(nrefs, nlabels, 1000);
+
+    auto markers = mock_markers<int>(nlabels, 50, ngenes); 
+
+    singlepp::TrainSingleOptions<int, double> bopt;
+    auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
+    singlepp::ClassifySingleOptions<double> copt;
+    auto full = singlepp::classify_single<int>(*mat, trained, copt);
+
+    // Checking that nulls are respected.
+    std::vector<int> best(mat->ncol());
+    singlepp::ClassifySingleBuffers<int, double> buffers;
+    buffers.best = best.data();
+    buffers.delta = NULL;
+    buffers.scores.resize(nlabels, NULL);
+    singlepp::classify_single(*mat, trained, buffers, copt);
+
+    EXPECT_EQ(best, full.best);
+}

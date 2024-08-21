@@ -166,7 +166,7 @@ void classify_single(
  */
 template<typename Value_, typename Index_, typename Float_, typename Label_>
 void classify_single_intersect(
-    const tatami::Matrix<Value_, Index_>* mat, 
+    const tatami::Matrix<Value_, Index_>& mat, 
     const TrainedSingleIntersect<Index_, Float_>& trained,
     const ClassifySingleBuffers<Label_, Float_>& buffers,
     const ClassifySingleOptions<Float_>& options) 
@@ -266,12 +266,12 @@ ClassifySingleBuffers<Label_, Float_> results_to_buffers(ClassifySingleResults<L
 template<typename Label_, typename Value_, typename Index_, typename Float_>
 ClassifySingleResults<Label_, Float_> classify_single(
     const tatami::Matrix<Value_, Index_>& test,
-    const TrainedSingle<Index_, Float_>& built,
+    const TrainedSingle<Index_, Float_>& trained,
     const ClassifySingleOptions<Float_>& options) 
 {
-    ClassifySingleResults<Label_, Float_> output(test.ncol(), built.get_references().size());
+    ClassifySingleResults<Label_, Float_> output(test.ncol(), trained.get_references().size());
     auto buffers = internal::results_to_buffers(output);
-    classify_single(test, built, buffers, options);
+    classify_single(test, trained, buffers, options);
     return output;
 }
 
@@ -293,12 +293,12 @@ ClassifySingleResults<Label_, Float_> classify_single(
 template<typename Label_, typename Value_, typename Index_, typename Float_>
 ClassifySingleResults<Label_, Float_> classify_single_intersect(
     const tatami::Matrix<Value_, Index_>& test,
-    const TrainedSingleIntersect<Index_, Float_>& built,
+    const TrainedSingleIntersect<Index_, Float_>& trained,
     const ClassifySingleOptions<Float_>& options) 
 {
-    ClassifySingleResults<Label_, Float_> output(test.ncol(), built.get_references().size());
+    ClassifySingleResults<Label_, Float_> output(test.ncol(), trained.get_references().size());
     auto buffers = internal::results_to_buffers(output);
-    classify_single_intersect(test, built, buffers, options);
+    classify_single_intersect(test, trained, buffers, options);
     return output;
 }
 

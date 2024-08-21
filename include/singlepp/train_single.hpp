@@ -268,6 +268,16 @@ public:
         }
         return n;
     }
+
+    /**
+     * @cond
+     */
+    const auto& get_references() const {
+        return my_references;
+    }
+    /**
+     * @endcond
+     */
 };
 
 /**
@@ -276,7 +286,7 @@ public:
 namespace internal {
 
 template<typename Value_, typename Index_, typename Label_, typename Float_>
-std::vector<PerLabelReference<Index_, Float_> > train_intersection(
+TrainedSingleIntersect<Index_, Float_> train_intersection(
     internal::Intersection<Index_> intersection,
     const tatami::Matrix<Value_, Index_>& ref,
     const Label_* labels,
@@ -371,7 +381,7 @@ TrainedSingleIntersect<Index_, Float_> train_single_intersect(
  * @return A pre-built classifier that can be used in `classify_single_intersect()`.
  */
 template<typename Index_, typename Id_, typename Value_, typename Label_, typename Float_>
-TrainedSingleIntersect<Index_, Float_> run(
+TrainedSingleIntersect<Index_, Float_> train_single_intersect(
     Index_ test_nrow,
     const Id_* test_id, 
     const tatami::Matrix<Value_, Index_>& ref, 
@@ -380,7 +390,7 @@ TrainedSingleIntersect<Index_, Float_> run(
     Markers<Index_> markers,
     const TrainSingleOptions<Index_, Float_>& options)
 {
-    auto intersection = internal::intersect_features(test_nrow, test_id, ref->nrow(), ref_id);
+    auto intersection = internal::intersect_features(test_nrow, test_id, ref.nrow(), ref_id);
     return internal::train_intersection(std::move(intersection), ref, labels, std::move(markers), options);
 }
 
