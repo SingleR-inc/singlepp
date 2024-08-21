@@ -3,7 +3,7 @@
 #include "mock_markers.h"
 #include "spawn_matrix.h"
 #include "fill_ranks.h"
-//#include "naive_method.h"
+#include "naive_method.h"
 
 TEST(FineTune, FillLabelsInUse) {
     std::vector<double> scores { 0.5, 0.2, 0.46 };
@@ -132,55 +132,54 @@ TEST(FineTuner, EdgeCases) {
     }
 }
 
-//TEST(FineTuner, Reference) {
-//    // Mocking up the test and references.
-//    size_t ngenes = 200;
-//    size_t nlabels = 3;
-//    size_t nrefs = 50;
-//    auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 200);
-//    auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 2000);
-//
-//    auto markers = mock_markers<int>(nlabels, 10, ngenes); 
-//    size_t ncells = 11;
-//    auto mat = spawn_matrix(ngenes, ncells, /* seed = */ 12345);
-//    
-//    // Naive calculation.
-//    size_t top = 5;
-//    auto subset = singlepp::internal::subset_to_markers(ngenes, markers, top);
-//    double quantile = 0.75;
-//    auto naive = naive_method(nlabels, labels, refs, mat, subset, quantile);
-//
-//    // Recalculation inside the fine-tuner should give the same conclusion.
-//    singlepp::internal::FineTuner<int, int, double, double> ft;
-//    auto references = singlepp::internal::build_indices(*refs, labels.data(), subset, knncolle::VptreeBuilder(), 1);
-//
-//    auto wrk = mat->dense_column(subset);
-//    std::vector<double> buffer(subset.size());
-//    for (size_t c = 0; c < mat->ncol(); ++c) {
-//        auto vec = wrk->fetch(c, buffer.data()); 
-//        auto ranked = fill_ranks<int>(refs->ncol(), vec);
-//
-//        std::vector<double> scores;
-//        for (size_t l = 0; l < nlabels; ++l) {
-//            scores.push_back(naive.scores[l][c]);
-//        }
-//
-//        // We use a huge threhold to ensure that everyone is in range. 
-//        // In this case, fine-tuning quits early and 'scores' is not mutated.
-//        auto output2 = ft.run(ranked, references, markers, scores, quantile, 100); 
-//        EXPECT_EQ(output2.first, naive.best[c]);
-//        EXPECT_EQ(output2.second, naive.delta[c]);
-//
-//        // Everyone is still in range, but this time we set test = true to
-//        // force the calculations to be performed.  As all markers are still
-//        // used, we can cross-check the fine-tuning score calculations against
-//        // the naive method.
-//        auto output = ft.run<true>(ranked, references, markers, scores, quantile, 100); 
-//        EXPECT_EQ(output.first, naive.best[c]);
-//        EXPECT_TRUE(std::abs(naive.delta[c] - output.second) < 1e-6);
-//
-//    }
-//}
+TEST(FineTuner, Reference) {
+    // Mocking up the test and references.
+    size_t ngenes = 200;
+    size_t nlabels = 3;
+    size_t nrefs = 50;
+    auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 200);
+    auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 2000);
+
+    auto markers = mock_markers<int>(nlabels, 10, ngenes); 
+    size_t ncells = 11;
+    auto mat = spawn_matrix(ngenes, ncells, /* seed = */ 12345);
+    
+    // Naive calculation.
+    size_t top = 5;
+    auto subset = singlepp::internal::subset_to_markers(ngenes, markers, top);
+    double quantile = 0.75;
+    auto naive = naive_method(nlabels, labels, refs, mat, subset, quantile);
+
+    // Recalculation inside the fine-tuner should give the same conclusion.
+    singlepp::internal::FineTuner<int, int, double, double> ft;
+    auto references = singlepp::internal::build_indices(*refs, labels.data(), subset, knncolle::VptreeBuilder(), 1);
+
+    auto wrk = mat->dense_column(subset);
+    std::vector<double> buffer(subset.size());
+    for (size_t c = 0; c < mat->ncol(); ++c) {
+        auto vec = wrk->fetch(c, buffer.data()); 
+        auto ranked = fill_ranks<int>(refs->ncol(), vec);
+
+        std::vector<double> scores;
+        for (size_t l = 0; l < nlabels; ++l) {
+            scores.push_back(naive.scores[l][c]);
+        }
+
+        // We use a huge threhold to ensure that everyone is in range. 
+        // In this case, fine-tuning quits early and 'scores' is not mutated.
+        auto output2 = ft.run(ranked, references, markers, scores, quantile, 100); 
+        EXPECT_EQ(output2.first, naive.best[c]);
+        EXPECT_EQ(output2.second, naive.delta[c]);
+
+        // Everyone is still in range, but this time we set test = true to
+        // force the calculations to be performed.  As all markers are still
+        // used, we can cross-check the fine-tuning score calculations against
+        // the naive method.
+        auto output = ft.run<true>(ranked, references, markers, scores, quantile, 100); 
+        EXPECT_EQ(output.first, naive.best[c]);
+        EXPECT_TRUE(std::abs(naive.delta[c] - output.second) < 1e-6);
+    }
+}
 
 TEST(FineTuner, Diagonal) {
     // Mocking up the test and references. This time, we make

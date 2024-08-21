@@ -1,5 +1,5 @@
-#ifndef SINGLEPP_BASIC_BUILDER_HPP
-#define SINGLEPP_BASIC_BUILDER_HPP
+#ifndef SINGLEPP_TRAIN_SINGLE_HPP
+#define SINGLEPP_TRAIN_SINGLE_HPP
 
 #include "macros.hpp"
 
@@ -13,25 +13,24 @@
 #include <memory>
 
 /**
- * @file BasicBuilder.hpp
- *
- * @brief Defines the `BasicBuilder` class.
+ * @file train_single.hpp
+ * @brief Train a classifier from a single reference.
  */
 
 namespace singlepp {
 
 /**
- * @brief Options for `build_single()`.
+ * @brief Options for `train_single()`.
  * @tparam Index_ Integer type for the row/column indices of the matrix.
- * @tparam Float_ Floating-point type for the correlation calculations.
+ * @tparam Float_ Floating-point type for the correlations and scores.
  */
 template<typename Index_, typename Float_>
-struct BuildSingleOptions {
+struct TrainSingleOptions {
     /**
      * Number of top markers to use from each pairwise comparison between labels.
      * Larger values improve the stability of the correlations at the cost of increasing noise and computational work.
      *
-     * Setting this to a negative value will instruct `build_single()` to use all supplied markers.
+     * Setting this to a negative value will instruct `train_single()` to use all supplied markers.
      * This is useful in situations where the supplied markers have already been curated.
      */
     int top = -1;
@@ -41,7 +40,7 @@ struct BuildSingleOptions {
      * This allows us to skip the explicit calculation of correlations between each test cell and every reference sample.
      * If NULL, this defaults to an exact search based on `knncolle::VptreeBuilder`.
      */
-    std::shared_ptr<knncolle::Builder<knncolle::SimpleMatrix<Index_, Index_, Float_>, Float_> builder;
+    std::shared_ptr<knncolle::Builder<knncolle::SimpleMatrix<Index_, Index_, Float_>, Float_> > trainer;
 
     /**
      * Number of threads to use.
@@ -55,16 +54,16 @@ struct BuildSingleOptions {
 namespace internal {
 
 template<typename Value_, typename Index_, typename Label_, typename Float_>
-std::vector<PerLabelReference<Index_, Float_> > build_references(
+std::vector<PerLabelReference<Index_, Float_> > train_references(
     const tatami::Matrix<Value_, Index_>& ref,
     const Label_* labels,
     const std::vector<Index_>& subset,
-    const BuildSingleOptions<Index_, Float_>& options) 
+    const TrainSingleOptions<Index_, Float_>& options) 
 {
-    if (options.builder) {
-        return build_indices(ref, labels, subset, *(options.builder), num_threads);
+    if (options.trainer) {
+        return build_indices(ref, labels, subset, *(options.trainer), options.num_threads);
     } else {
-        return build_indices(ref, labels, subset, knncolle::VptreeBuilder<knncolle::SimpleMatrix<Index_, Index_, Float_>, Float_>(), num_threads);
+        return build_indices(ref, labels, subset, knncolle::VptreeBuilder<knncolle::SimpleMatrix<Index_, Index_, Float_>, Float_>(), options.num_threads);
     }
 }
 
@@ -74,21 +73,27 @@ std::vector<PerLabelReference<Index_, Float_> > build_references(
  */
 
 /**
- * @brief Prebuilt classifier from a single reference.
+ * @brief Classifier trained from a single reference.
  *
- * Instances of this class should not be directly constructed, but instead returned by calling `build_single()` on a reference dataset.
+ * Instances of this class should not be directly constructed, but instead returned by calling `train_single()` on a reference dataset.
  * Each instance can be used in `classify_single()` with a test dataset that has the same number and order of genes as the reference dataset. 
  * 
  * @tparam Index_ Integer type for the row/column indices of the matrix.
- * @tparam Float_ Floating-point type for the correlation calculations.
+ * @tparam Float_ Floating-point type for the correlations and scores.
  */
 template<typename Index_, typename Float_>
-class PrebuiltSingle {
+class TrainedSingle {
     /**
      * @cond
      */
-    Prebuilt(Markers<Index_> markers, std::vector<Index_> subset, std::vector<PerLabelReference<Index_, Float_> > references) :
-        my_markers(std::move(markers)), my_subset(std::move(subset)), my_references(std::move(references)) {}
+    TrainedSingle(
+        Markers<Index_> markers,
+        std::vector<Index_> subset,
+        std::vector<internal::PerLabelReference<Index_, Float_> > references) :
+        my_markers(std::move(markers)),
+        my_subset(std::move(subset)),
+        my_references(std::move(references)) 
+    {}
     /**
      * @endcond
      */
@@ -96,13 +101,13 @@ class PrebuiltSingle {
 private:
     Markers<Index_> my_markers;
     std::vector<Index_> my_subset;
-    std::vector<PerLabelReference<Index_, Float_> > references;
+    std::vector<internal::PerLabelReference<Index_, Float_> > my_references;
 
 public:
     /**
      * @return A vector of vectors of ranked marker genes to be used in the classification.
      * Values are indices into the subset vector (see `get_subset()`).
-     * The set of marker genes is a subset of those in the input `markers` in `build_single()`.
+     * The set of marker genes is a subset of those in the input `markers` in `train_single()`.
      */
     const Markers<Index_>& get_markers() const {
         return my_markers;
@@ -133,6 +138,16 @@ public:
         }
         return n;
     }
+
+    /**
+     * @cond
+     */
+    const auto& get_references() const {
+        return my_references;
+    }
+    /**
+     * @endcond
+     */
 };
 
 /**
@@ -141,13 +156,13 @@ public:
  * so that the Spearman correlations can be computed without redundant sorting.
  * We also construct neighbor search indices for rapid calculation of the classification score.
  *
- * Note that the pre-built classifier should only be used with test datasets that have the same genes as the reference dataset.
- * If the test dataset has different genes, consider using `build_single_intersect()` instead.
+ * The classifier returned by this function should only be used in `classify_single()` with a test dataset that has the same genes as the reference dataset.
+ * If the test dataset has different genes, consider using `train_single_intersect()` instead.
  * 
  * @tparam Value_ Numeric type for the matrix values.
  * @tparam Index_ Integer type for the row/column indices of the matrix.
  * @tparam Label_ Integer type for the reference labels.
- * @tparam Float_ Floating-point type for the correlation calculations.
+ * @tparam Float_ Floating-point type for the correlations and scores.
  *
  * @param ref Matrix for the reference expression profiles.
  * Rows are genes while columns are samples.
@@ -156,37 +171,45 @@ public:
  * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
  * @param options Further options.
  *
- * @return A pre-built classifier that can be used in `classify_single()` with a test dataset that has the same genes as `ref`.
+ * @return A pre-built classifier that can be used in `classify_single()` with a test dataset.
  */
 template<typename Value_, typename Index_, typename Label_, typename Float_>
-PrebuiltSingle<Index_, Float_> build_single(
+TrainedSingle<Index_, Float_> train_single(
     const tatami::Matrix<Value_, Index_>& ref,
     const Label_* labels,
     Markers<Index_> markers,
-    const BuildSingleOptions<Index_, Float_>& options)
+    const TrainSingleOptions<Index_, Float_>& options)
 {
     auto subset = subset_to_markers(markers, options.top);
-    auto subref = internal::build_references(ref, labels, subset);
-    return PrebuiltSingle<Index_, Float_>(std::move(markers), std::move(subset), std::move(subref), options);
+    auto subref = internal::train_references(ref, labels, subset);
+    return TrainedSingle<Index_, Float_>(std::move(markers), std::move(subset), std::move(subref), options);
 }
 
 /**
- * @brief Prebuilt classifier from an intersection of genes.
+ * @brief Classifier built from an intersection of genes.
  *
- * Instances of this class should not be directly constructed, but instead returned by calling `build_single_intersect()`.
+ * Instances of this class should not be directly constructed, but instead returned by calling `train_single_intersect()`.
  * This uses the intersection of genes between the test dataset and those of the reference dataset.
  * Each instance can be used in `classify_single()` with a test dataset that has the specified genes.
  * 
  * @tparam Index_ Integer type for the row/column indices of the matrix.
- * @tparam Float_ Floating-point type for the correlation calculations.
+ * @tparam Float_ Floating-point type for the correlations and scores.
  */
 template<typename Index_, typename Float_>
-struct PrebuiltSingleIntersect {
+struct TrainedSingleIntersect {
     /**
      * @cond
      */
-    PrebuiltSingleIntersect(Markers<Index_> markers, std::vector<Index_> test_subset, std::vector<Index_> ref_subset, std::vector<PerLabelReference<Index_, Float_> > references) :
-        my_markers(std::move(markers)), my_test_subset(std::move(test_subset)), my_ref_subset(std::move(ref_subset)), my_references(std::move(references)) {}
+    TrainedSingleIntersect(
+        Markers<Index_> markers,
+        std::vector<Index_> test_subset,
+        std::vector<Index_> ref_subset,
+        std::vector<internal::PerLabelReference<Index_, Float_> > references) :
+        my_markers(std::move(markers)),
+        my_test_subset(std::move(test_subset)),
+        my_ref_subset(std::move(ref_subset)),
+        my_references(std::move(references)) 
+    {}
     /**
      * @endcond
      */
@@ -195,13 +218,13 @@ private:
     Markers<Index_> my_markers;
     std::vector<Index_> my_test_subset;
     std::vector<Index_> my_ref_subset;
-    std::vector<PerLabelReference<Index_, Float_> > my_references;
+    std::vector<internal::PerLabelReference<Index_, Float_> > my_references;
 
 public:
     /**
      * @return A vector of vectors of ranked marker genes to be used in the classification.
      * Values are indices into the subset vectors from `get_test_subset()` and `get_ref_subset()` for their respective matrices.
-     * The set of marker genes is typically a subset of those in the input `markers` in `build_single_intersect()`.
+     * The set of marker genes is typically a subset of those in the input `markers` in `train_single_intersect()`.
      */
     const Markers<Index_>& get_markers() const {
         return my_markers;
@@ -209,7 +232,7 @@ public:
 
     /**
      * @return Subset of genes in the intersection for the test dataset.
-     * These are sorted and unique indices into the `test_id` array supplied to `build_single_intersect()`.
+     * These are sorted and unique indices into the `test_id` array supplied to `train_single_intersect()`.
      * This has the same length as the subset vector returned by `get_ref_subset(0`, where corresponding entries refer to the same genes in the respective datasets.
      */
     const std::vector<Index_>& get_test_subset() const {
@@ -218,7 +241,7 @@ public:
 
     /**
      * @return Subset of genes in the intersection for the test dataset.
-     * These are unique (but not necessarily sorted!) indices into the `ref_id` matrix supplied to `build_single_intersect()`.
+     * These are unique (but not necessarily sorted!) indices into the `ref_id` matrix supplied to `train_single_intersect()`.
      * This has the same length as the subset vector returned by `get_test_subset()`, where corresponding entries refer to the same genes in the respective datasets.
      */
     const std::vector<Index_>& get_ref_subset() const {
@@ -250,17 +273,17 @@ public:
 namespace internal {
 
 template<typename Value_, typename Index_, typename Label_, typename Float_>
-std::vector<PerLabelReference<Index_, Float_> > build_intersection(
+std::vector<PerLabelReference<Index_, Float_> > train_intersection(
     internal::Intersection<Index_> intersection,
     const tatami::Matrix<Value_, Index_>& ref,
     const Label_* labels,
     Markers<Index_> markers,
-    const BuildSingleOptions<Index_, Float_>& options) 
+    const TrainSingleOptions<Index_, Float_>& options) 
 {
     subset_to_markers(intersection, markers, options.top);
     auto pairs = unzip(intersection);
-    auto subref = internal::build_references(ref, labels, pairs.second, options);
-    return PrebuiltSingleIntersect<Index_, Float_>(std::move(markers), std::move(pairs.first), std::move(pairs.second), std::move(subref));
+    auto subref = internal::train_references(ref, labels, pairs.second, options);
+    return TrainedSingleIntersect<Index_, Float_>(std::move(markers), std::move(pairs.first), std::move(pairs.second), std::move(subref));
 }
 
 }
@@ -269,16 +292,16 @@ std::vector<PerLabelReference<Index_, Float_> > build_intersection(
  */
 
 /**
- * Variant of `build_single()` that uses a pre-computed intersection of genes between the reference dataset and an as-yet-unspecified test dataset.
- * Most users will prefer to use the other `build_single_intersect()` overload that accepts `test_id` and `ref_id` and computes the intersection automatically;
+ * Variant of `train_single()` that uses a pre-computed intersection of genes between the reference dataset and an as-yet-unspecified test dataset.
+ * Most users will prefer to use the other `train_single_intersect()` overload that accepts `test_id` and `ref_id` and computes the intersection automatically.
  *
- * Note that the pre-built classifier should only be used with a test dataset that has all genes specified in `intersection`.
- * (Specifically, in the first entry of each element of `intersection`.)
+ * The classifier returned by this function should only be used in `classify_single()` with a test dataset that is compatible with the mappings in `intersection`.
+ * That is, the gene in the `intersection[i].first`-th row of the test dataset should correspond to the `intersection[i].second`-th row of the reference dataset.
  *
  * @tparam Index_ Integer type for the row/column indices of the matrix.
  * @tparam Value_ Numeric type for the matrix values.
  * @tparam Label_ Integer type for the reference labels.
- * @tparam Float_ Floating-point type for the correlation calculations.
+ * @tparam Float_ Floating-point type for the correlations and scores.
  *
  * @tparam test_ngenes Number of genes in the test dataset (i.e., rows of the test matrix).
  * @param intersection Vector defining the intersection of genes betweent the test and reference datasets.
@@ -292,20 +315,19 @@ std::vector<PerLabelReference<Index_, Float_> > build_intersection(
  * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
  * @param options Further options.
  *
- * @return A pre-built classifier that can be used in `classify_single()` with a test dataset that has all genes in `intersection`.
- *
+ * @return A pre-built classifier that can be used in `classify_single()`. 
  */
 template<typename Index_, typename Value_, typename Label_, typename Float_>
-PrebuiltSingleIntersect<Index_, Float_> build_single_intersect(
+TrainedSingleIntersect<Index_, Float_> train_single_intersect(
     Index_ test_ngenes,
     std::vector<std::pair<Index_, Index_> > intersection,
     const tatami::Matrix<Value_, Index_>& ref, 
     const Label_* labels,
     Markers<Index_> markers,
-    const BuildSingleOptions<Index_, Float_>& options)
+    const TrainSingleOptions<Index_, Float_>& options)
 {
     // Sorting it if it wasn't already.
-    if (std::is_unsorted(intersection.begin(), intersection.end())) {
+    if (!std::is_sorted(intersection.begin(), intersection.end())) {
         std::sort(intersection.begin(), intersection.end());
     }
 
@@ -314,47 +336,49 @@ PrebuiltSingleIntersect<Index_, Float_> build_single_intersect(
     temp.test_n = test_ngenes;
     temp.ref_n = ref.nrow();
 
-    return internal::build_intersection(std::move(temp), ref, labels, std::move(markers), options);
+    return internal::train_intersection(std::move(temp), ref, labels, std::move(markers), options);
 }
 
 /**
- * Variant of `build_single()` that uses the intersection of genes between the reference dataset and a (future) test dataset.
+ * Variant of `train_single()` that uses the intersection of genes between the reference dataset and a (future) test dataset.
  * This is useful when the genes are not in the same order and number across the test and reference datasets.
  *
+ * The classifier returned by this function should only be used in `classify_single()` with a test dataset
+ * that has `test_ngenes` rows with the same order and identity of genes as in `test_id`.
+ *
  * @tparam Index_ Integer type for the row/column indices of the matrix.
- * @tparam Id_ Integer type to use as the gene identifier for each row.
+ * @tparam Id_ Type of the gene identifier for each row, typically integer or string.
  * @tparam Value_ Numeric type for the matrix values.
  * @tparam Label_ Integer type for the reference labels.
- * @tparam Float_ Floating-point type for the correlation calculations.
+ * @tparam Float_ Floating-point type for the correlations and scores.
  *
  * @param test_nrow Number of rows (genes) in the test dataset.
- * @param[in] test_id Pointer to an array of identifiers of length equal to `test_nrow`.
- * This should contain a unique identifier for each row of `mat` (typically a gene name or index).
+ * @param[in] test_id Pointer to an array of length equal to `test_nrow`, containing a gene identifier for each row of the test dataset.
  * If any duplicate IDs are present, only the first occurrence is used.
  * @param ref An expression matrix for the reference expression profiles, where rows are genes and columns are cells.
  * This should have non-zero columns.
- * @param[in] ref_id Pointer to an array of identifiers of length equal to the number of rows of any `ref`.
- * This should contain a unique identifier for each row in `ref`, and should be comparable to `test_id`.
+ * @param[in] ref_id Pointer to an array of length equal to the number of rows of `ref`, containing a gene identifier for each row of the reference dataset.
+ * Identifiers should be comparable to those in `test_id`.
  * If any duplicate IDs are present, only the first occurrence is used.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
  * Labels should be integers in \f$[0, L)\f$ where \f$L\f$ is the total number of unique labels.
  * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
- *
- * @return A `PrebuiltIntersection` instance that can be used in `run()` for annotation of a test dataset with the same order of genes as specified in `test_id`.
  * @param options Further options.
+ *
+ * @return A pre-built classifier that can be used in `classify_single()`.
  */
 template<typename Index_, typename Id_, typename Value_, typename Label_, typename Float_>
-PrebuiltIntersection<Index_, Float_> run(
+TrainedSingleIntersect<Index_, Float_> run(
     Index_ test_nrow,
     const Id_* test_id, 
     const tatami::Matrix<Value_, Index_>& ref, 
     const Id_* ref_id, 
     const Label_* labels,
     Markers<Index_> markers,
-    const BuildSingleOptions<Index_, Float_>& options)
+    const TrainSingleOptions<Index_, Float_>& options)
 {
-    auto intersection = intersect_genes(test_nrow, test_id, ref->nrow(), ref_id);
-    return internal::build_intersection(std::move(intersection), ref, labels, std::move(markers), options);
+    auto intersection = internal::intersect_features(test_nrow, test_id, ref->nrow(), ref_id);
+    return internal::train_intersection(std::move(intersection), ref, labels, std::move(markers), options);
 }
 
 }

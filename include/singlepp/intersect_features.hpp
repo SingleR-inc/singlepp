@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <numeric>
+#include <unordered_map>
 
 namespace singlepp {
 
@@ -20,23 +21,12 @@ struct Intersection {
 
 template<typename Index_, typename Id_>
 Intersection<Index_> intersect_features(Index_ test_n, const Id_* test_id, Index_ ref_n, const Id_* ref_id) {
-    size_t max_num = 0; 
-    if (test_n) {
-        max_num = std::max(max_num, static_cast<size_t>(*std::max_element(test_id, test_id + test_n)) + 1);
-    }
-    if (ref_n) {
-        max_num = std::max(max_num, static_cast<size_t>(*std::max_element(ref_id, ref_id + ref_n)) + 1);
-    }
-
-    std::vector<Index_> test_id_reordered(max_num);
-    std::vector<uint8_t> found(max_num);
-
+    std::unordered_map<Id_, Index_> test_found;
     for (Index_ i = 0; i < test_n; ++i) {
         auto current = test_id[i];
-        auto& curfound = found[current];
-        if (!curfound) { // only using the first occurrence of each ID in test_id.
-            test_id_reordered[current] = i;
-            curfound = 1;
+        auto tfIt = test_found.find(current);
+        if (tfIt == test_found.end()) { // only using the first occurrence of each ID in test_id.
+            test_found[current] = i;
         }
     }
 
@@ -46,10 +36,10 @@ Intersection<Index_> intersect_features(Index_ test_n, const Id_* test_id, Index
 
     for (Index_ i = 0; i < ref_n; ++i) {
         auto current = ref_id[i];
-        auto& curfound = found[current];
-        if (curfound) {
-            output.pairs.emplace_back(test_id_reordered[current], i);
-            curfound = 0; // only using the first occurrence of each ID in ref_id.
+        auto tfIt = test_found.find(current);
+        if (tfIt != test_found.end()) {
+            output.pairs.emplace_back(tfIt->second, i);
+            test_found.erase(tfIt); // only using the first occurrence of each ID in ref_id; the next will not enter this clause.
         }
     }
 
