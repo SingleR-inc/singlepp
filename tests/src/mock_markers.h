@@ -42,7 +42,7 @@ singlepp::Markers<Index_> mock_markers_diagonal(size_t nlabels, size_t len, size
 }
 
 template<typename Index_>
-singlepp::internal::Intersection<Index_> mock_intersection(size_t n1, size_t n2, size_t shared, int seed = 999) {
+singlepp::Intersection<Index_> mock_intersection(size_t n1, size_t n2, size_t shared, int seed = 999) {
     std::mt19937_64 rng(seed);
 
     auto choose = [&](size_t n, size_t s) -> auto {
@@ -61,11 +61,9 @@ singlepp::internal::Intersection<Index_> mock_intersection(size_t n1, size_t n2,
     auto chosen2 = choose(n2, shared);
     std::shuffle(chosen2.begin(), chosen2.end(), rng);
 
-    singlepp::internal::Intersection<Index_> inter;
-    inter.test_n = n1;
-    inter.ref_n = n2;
+    singlepp::Intersection<Index_> inter;
     for (size_t i = 0; i < shared; ++i) {
-        inter.pairs.emplace_back(chosen1[i], chosen2[i]);
+        inter.emplace_back(chosen1[i], chosen2[i]);
     }
 
     return inter;

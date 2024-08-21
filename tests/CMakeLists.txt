@@ -15,7 +15,7 @@ add_executable(
     src/classify_single.cpp
     src/scaled_ranks.cpp
     src/compute_scores.cpp
-    src/intersect_features.cpp
+    src/Intersection.cpp
     src/subset_to_markers.cpp
     src/SubsetSanitizer.cpp
     src/fine_tune.cpp

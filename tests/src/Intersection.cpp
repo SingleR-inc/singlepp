@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "singlepp/intersect_features.hpp"
+#include "singlepp/Intersection.hpp"
 
 #include <vector>
 
@@ -9,13 +9,11 @@ TEST(IntersectFeatures, Basic) {
     std::vector<int> second { 3, 1, 4, 8, 2, 7 };
 
     auto intersection = singlepp::internal::intersect_features<int>(first.size(), first.data(), second.size(), second.data());
-    EXPECT_EQ(intersection.test_n, first.size());
-    EXPECT_EQ(intersection.ref_n, second.size());
 
-    EXPECT_EQ(intersection.pairs.size(), 3);
-    EXPECT_EQ(intersection.pairs[0], std::make_pair(0, 1));
-    EXPECT_EQ(intersection.pairs[1], std::make_pair(1, 4));
-    EXPECT_EQ(intersection.pairs[2], std::make_pair(3, 0));
+    EXPECT_EQ(intersection.size(), 3);
+    EXPECT_EQ(intersection[0], std::make_pair(0, 1));
+    EXPECT_EQ(intersection[1], std::make_pair(1, 4));
+    EXPECT_EQ(intersection[2], std::make_pair(3, 0));
 
     // Unzipping works as expected.
     auto unzipped = singlepp::internal::unzip(intersection);
@@ -31,8 +29,8 @@ TEST(IntersectFeatures, Duplicates) {
     auto intersection = singlepp::internal::intersect_features<int>(first.size(), first.data(), second.size(), second.data());
 
     // We only report the first occurrence of duplicated IDs.
-    EXPECT_EQ(intersection.pairs.size(), 3);
-    EXPECT_EQ(intersection.pairs[0], std::make_pair(0, 3));
-    EXPECT_EQ(intersection.pairs[1], std::make_pair(1, 0));
-    EXPECT_EQ(intersection.pairs[2], std::make_pair(4, 1));
+    EXPECT_EQ(intersection.size(), 3);
+    EXPECT_EQ(intersection[0], std::make_pair(0, 3));
+    EXPECT_EQ(intersection[1], std::make_pair(1, 0));
+    EXPECT_EQ(intersection[2], std::make_pair(4, 1));
 }

@@ -42,7 +42,7 @@ TEST_P(ClassifySingleSimpleTest, Simple) {
 
     // Implementing the reference score calculation.
     auto original_markers = markers;
-    auto subset = singlepp::internal::subset_to_markers(ngenes, markers, top);
+    auto subset = singlepp::internal::subset_to_markers(markers, top);
     auto naive = naive_method(nlabels, labels, refs, mat, subset, quantile);
 
     for (size_t c = 0; c < mat->ncol(); ++c) {

@@ -182,7 +182,7 @@ TrainedSingle<Index_, Float_> train_single(
     Markers<Index_> markers,
     const TrainSingleOptions<Index_, Float_>& options)
 {
-    auto subset = internal::subset_to_markers(ref.nrow(), markers, options.top);
+    auto subset = internal::subset_to_markers(markers, options.top);
     auto subref = internal::build_references(ref, labels, subset, options);
     return TrainedSingle<Index_, Float_>(std::move(markers), std::move(subset), std::move(subref));
 }
@@ -281,30 +281,6 @@ public:
 };
 
 /**
- * @cond
- */
-namespace internal {
-
-template<typename Value_, typename Index_, typename Label_, typename Float_>
-TrainedSingleIntersect<Index_, Float_> train_intersection(
-    internal::Intersection<Index_> intersection,
-    const tatami::Matrix<Value_, Index_>& ref,
-    const Label_* labels,
-    Markers<Index_> markers,
-    const TrainSingleOptions<Index_, Float_>& options) 
-{
-    internal::subset_to_markers(intersection, markers, options.top);
-    auto pairs = unzip(intersection);
-    auto subref = internal::build_references(ref, labels, pairs.second, options);
-    return TrainedSingleIntersect<Index_, Float_>(std::move(markers), std::move(pairs.first), std::move(pairs.second), std::move(subref));
-}
-
-}
-/**
- * @endcond
- */
-
-/**
  * Variant of `train_single()` that uses a pre-computed intersection of genes between the reference dataset and an as-yet-unspecified test dataset.
  * Most users will prefer to use the other `train_single_intersect()` overload that accepts `test_id` and `ref_id` and computes the intersection automatically.
  *
@@ -316,8 +292,7 @@ TrainedSingleIntersect<Index_, Float_> train_intersection(
  * @tparam Label_ Integer type for the reference labels.
  * @tparam Float_ Floating-point type for the correlations and scores.
  *
- * @tparam test_ngenes Number of genes in the test dataset (i.e., rows of the test matrix).
- * @param intersection Vector defining the intersection of genes betweent the test and reference datasets.
+ * @param intersection Vector defining the intersection of genes between the test and reference datasets.
  * Each entry is a pair where the first element is the row index in the test matrix,
  * and the second element is the row index for the corresponding feature in the reference matrix.
  * Each row index for either matrix should occur no more than once in `intersection`.
@@ -332,24 +307,16 @@ TrainedSingleIntersect<Index_, Float_> train_intersection(
  */
 template<typename Index_, typename Value_, typename Label_, typename Float_>
 TrainedSingleIntersect<Index_, Float_> train_single_intersect(
-    Index_ test_ngenes,
-    std::vector<std::pair<Index_, Index_> > intersection,
+    Intersection<Index_> intersection,
     const tatami::Matrix<Value_, Index_>& ref, 
     const Label_* labels,
     Markers<Index_> markers,
     const TrainSingleOptions<Index_, Float_>& options)
 {
-    // Sorting it if it wasn't already.
-    if (!std::is_sorted(intersection.begin(), intersection.end())) {
-        std::sort(intersection.begin(), intersection.end());
-    }
-
-    internal::Intersection<Index_> temp;
-    temp.pairs.swap(intersection);
-    temp.test_n = test_ngenes;
-    temp.ref_n = ref.nrow();
-
-    return internal::train_intersection(std::move(temp), ref, labels, std::move(markers), options);
+    internal::subset_to_markers(intersection, markers, options.top);
+    auto pairs = internal::unzip(intersection);
+    auto subref = internal::build_references(ref, labels, pairs.second, options);
+    return TrainedSingleIntersect<Index_, Float_>(std::move(markers), std::move(pairs.first), std::move(pairs.second), std::move(subref));
 }
 
 /**
@@ -391,7 +358,7 @@ TrainedSingleIntersect<Index_, Float_> train_single_intersect(
     const TrainSingleOptions<Index_, Float_>& options)
 {
     auto intersection = internal::intersect_features(test_nrow, test_id, ref.nrow(), ref_id);
-    return internal::train_intersection(std::move(intersection), ref, labels, std::move(markers), options);
+    return train_single_intersect(std::move(intersection), ref, labels, std::move(markers), options);
 }
 
 }

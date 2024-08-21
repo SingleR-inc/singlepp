@@ -146,7 +146,7 @@ TEST(FineTuner, Reference) {
     
     // Naive calculation.
     size_t top = 5;
-    auto subset = singlepp::internal::subset_to_markers(ngenes, markers, top);
+    auto subset = singlepp::internal::subset_to_markers(markers, top);
     double quantile = 0.75;
     auto naive = naive_method(nlabels, labels, refs, mat, subset, quantile);
 

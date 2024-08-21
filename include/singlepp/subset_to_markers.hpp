@@ -4,12 +4,14 @@
 #include "macros.hpp"
 
 #include "Markers.hpp"
-#include "intersect_features.hpp"
+#include "Intersection.hpp"
 
 #include <vector>
 #include <algorithm>
 #include <cstdint>
 #include <numeric>
+#include <unordered_set>
+#include <unordered_map>
 
 namespace singlepp {
 
@@ -17,50 +19,38 @@ namespace internal {
 
 // Use this method when the feature spaces are already identical.
 template<typename Index_>
-std::vector<Index_> subset_to_markers(size_t ref_n, Markers<Index_>& markers, int top) {
-    std::vector<uint8_t> available(ref_n);
+std::vector<Index_> subset_to_markers(Markers<Index_>& markers, int top) {
+    std::unordered_set<Index_> available;
 
-    {
-        size_t ngroups = markers.size();
-        for (size_t i = 0; i < ngroups; ++i) {
-            auto& inner_markers = markers[i];
-            size_t inner_ngroups = inner_markers.size();
+    size_t ngroups = markers.size();
+    for (size_t i = 0; i < ngroups; ++i) {
+        auto& inner_markers = markers[i];
+        size_t inner_ngroups = inner_markers.size();
 
-            for (size_t j = 0; j < inner_ngroups; ++j) {
-                auto& current = inner_markers[j];
-                if (top >= 0) {
-                    current.resize(std::min(current.size(), static_cast<size_t>(top)));
-                }
-                for (auto x : current) {
-                    available[x] = 1;
-                }
+        for (size_t j = 0; j < inner_ngroups; ++j) {
+            auto& current = inner_markers[j];
+            if (top >= 0) {
+                current.resize(std::min(current.size(), static_cast<size_t>(top)));
             }
+            available.insert(current.begin(), current.end());
         }
     }
 
-    std::vector<Index_> subset, mapping;
-    {
-        size_t nmarkers = std::accumulate(available.begin(), available.end(), static_cast<size_t>(0));
-        subset.reserve(nmarkers);
-        mapping.resize(ref_n);
+    std::vector<Index_> subset(available.begin(), available.end());
+    std::sort(subset.begin(), subset.end());
 
-        for (Index_ i = 0, end = available.size(); i < end; ++i) {
-            if (available[i]) {
-                mapping[i] = subset.size();
-                subset.push_back(i);
-            }
-        }
+    std::unordered_map<Index_, Index_> mapping;
+    mapping.reserve(subset.size());
+    for (Index_ i = 0, end = subset.size(); i < end; ++i) {
+        mapping[subset[i]] = i;
     }
 
-    {
-        size_t ngroups = markers.size();
-        for (size_t i = 0; i < ngroups; ++i) {
-            auto& inner_markers = markers[i];
-            size_t inner_ngroups = inner_markers.size();
-            for (size_t j = 0; j < inner_ngroups; ++j) {
-                for (auto& k : inner_markers[j]) {
-                    k = mapping[k];
-                }
+    for (size_t i = 0; i < ngroups; ++i) {
+        auto& inner_markers = markers[i];
+        size_t inner_ngroups = inner_markers.size();
+        for (size_t j = 0; j < inner_ngroups; ++j) {
+            for (auto& k : inner_markers[j]) {
+                k = mapping.find(k)->second;
             }
         }
     }
@@ -70,70 +60,64 @@ std::vector<Index_> subset_to_markers(size_t ref_n, Markers<Index_>& markers, in
 
 template<typename Index_>
 void subset_to_markers(Intersection<Index_>& intersection, Markers<Index_>& markers, int top) {
-    std::vector<uint8_t> available(intersection.ref_n);
-    for (const auto& in : intersection.pairs) {
-        available[in.second] = 1;
+    std::unordered_set<Index_> available;
+    for (const auto& in : intersection) {
+        available.insert(in.second);
     }
 
     // Figuring out the top markers to retain, that are _also_ in the intersection.
-    std::vector<uint8_t> all_markers(intersection.ref_n);
-    {
-        size_t ngroups = markers.size();
-        for (size_t i = 0; i < ngroups; ++i) {
-            auto& inner_markers = markers[i];
-            size_t inner_ngroups = inner_markers.size(); // should be the same as ngroups, but we'll just do this to be safe.
+    std::unordered_set<Index_> all_markers;
+    size_t ngroups = markers.size();
+    for (size_t i = 0; i < ngroups; ++i) {
+        auto& inner_markers = markers[i];
+        size_t inner_ngroups = inner_markers.size(); // should be the same as ngroups, but we'll just do this to be safe.
 
-            for (size_t j = 0; j < inner_ngroups; ++j) {
-                auto& current = inner_markers[j];
+        for (size_t j = 0; j < inner_ngroups; ++j) {
+            auto& current = inner_markers[j];
+            std::vector<Index_> replacement;
+            size_t upper_bound = static_cast<size_t>(top >= 0 ? top : -1); // in effect, no upper bound if top = -1.
+            size_t output_size = std::min(current.size(), upper_bound);
 
-                std::vector<Index_> replacement;
-                size_t upper_bound = static_cast<size_t>(top >= 0 ? top : -1); // in effect, no upper bound if top = -1.
-                size_t output_size = std::min(current.size(), upper_bound);
-
-                if (output_size) {
-                    replacement.reserve(output_size);
-                    for (auto marker : current) {
-                        if (available[marker]) {
-                            all_markers[marker] = 1;
-                            replacement.push_back(marker);
-                            if (replacement.size() == output_size) {
-                                break;
-                            }
+            if (output_size) {
+                replacement.reserve(output_size);
+                for (auto marker : current) {
+                    if (available.find(marker) != available.end()) {
+                        all_markers.insert(marker);
+                        replacement.push_back(marker);
+                        if (replacement.size() == output_size) {
+                            break;
                         }
                     }
                 }
-
-                current.swap(replacement);
             }
+
+            current.swap(replacement);
         }
     }
 
     // Subsetting the intersection down to the chosen set of markers.
-    std::vector<Index_> mapping(intersection.ref_n);
-    {
-        size_t counter = 0;
-        size_t npairs = intersection.pairs.size();
-        for (size_t i = 0; i < npairs; ++i) {
-            const auto& in = intersection.pairs[i];
-            if (all_markers[in.second]) {
-                mapping[in.second] = counter;
-                intersection.pairs[counter] = in;
-                ++counter;
-            }
+    std::unordered_map<Index_, Index_> mapping;
+    size_t npairs = intersection.size();
+    mapping.reserve(npairs);
+
+    size_t counter = 0;
+    for (size_t i = 0; i < npairs; ++i) {
+        const auto& in = intersection[i];
+        if (all_markers.find(in.second) != all_markers.end()) {
+            mapping[in.second] = counter;
+            intersection[counter] = in;
+            ++counter;
         }
-        intersection.pairs.resize(counter);
     }
+    intersection.resize(counter);
 
     // Reindexing the markers.
-    {
-        size_t ngroups = markers.size();
-        for (size_t i = 0; i < ngroups; ++i) {
-            auto& inner_markers = markers[i];
-            size_t inner_ngroups = inner_markers.size();
-            for (size_t j = 0; j < inner_ngroups; ++j) {
-                for (auto& k : inner_markers[j]) {
-                    k = mapping[k];
-                }
+    for (size_t i = 0; i < ngroups; ++i) {
+        auto& inner_markers = markers[i];
+        size_t inner_ngroups = inner_markers.size();
+        for (size_t j = 0; j < inner_ngroups; ++j) {
+            for (auto& k : inner_markers[j]) {
+                k = mapping.find(k)->second;
             }
         }
     }
