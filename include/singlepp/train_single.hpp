@@ -235,7 +235,7 @@ public:
 
     /**
      * @return Subset of genes in the intersection for the test dataset.
-     * These are sorted and unique indices into the `test_id` array supplied to `train_single_intersect()`.
+     * These are unique indices into the `test_id` array supplied to `train_single_intersect()`.
      * This has the same length as the subset vector returned by `get_ref_subset(0`, where corresponding entries refer to the same genes in the respective datasets.
      */
     const std::vector<Index_>& get_test_subset() const {
@@ -244,7 +244,7 @@ public:
 
     /**
      * @return Subset of genes in the intersection for the test dataset.
-     * These are unique (but not necessarily sorted!) indices into the `ref_id` matrix supplied to `train_single_intersect()`.
+     * These are unique indices into the `ref_id` matrix supplied to `train_single_intersect()`.
      * This has the same length as the subset vector returned by `get_test_subset()`, where corresponding entries refer to the same genes in the respective datasets.
      */
     const std::vector<Index_>& get_ref_subset() const {
@@ -307,14 +307,13 @@ public:
  */
 template<typename Index_, typename Value_, typename Label_, typename Float_>
 TrainedSingleIntersect<Index_, Float_> train_single_intersect(
-    Intersection<Index_> intersection,
+    const Intersection<Index_>& intersection,
     const tatami::Matrix<Value_, Index_>& ref, 
     const Label_* labels,
     Markers<Index_> markers,
     const TrainSingleOptions<Index_, Float_>& options)
 {
-    internal::subset_to_markers(intersection, markers, options.top);
-    auto pairs = internal::unzip(intersection);
+    auto pairs = internal::subset_to_markers(intersection, markers, options.top);
     auto subref = internal::build_references(ref, labels, pairs.second, options);
     return TrainedSingleIntersect<Index_, Float_>(std::move(markers), std::move(pairs.first), std::move(pairs.second), std::move(subref));
 }
@@ -357,8 +356,8 @@ TrainedSingleIntersect<Index_, Float_> train_single_intersect(
     Markers<Index_> markers,
     const TrainSingleOptions<Index_, Float_>& options)
 {
-    auto intersection = internal::intersect_features(test_nrow, test_id, ref.nrow(), ref_id);
-    return train_single_intersect(std::move(intersection), ref, labels, std::move(markers), options);
+    auto intersection = intersect_genes(test_nrow, test_id, ref.nrow(), ref_id);
+    return train_single_intersect(intersection, ref, labels, std::move(markers), options);
 }
 
 }

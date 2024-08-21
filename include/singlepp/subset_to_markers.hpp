@@ -59,8 +59,9 @@ std::vector<Index_> subset_to_markers(Markers<Index_>& markers, int top) {
 }
 
 template<typename Index_>
-void subset_to_markers(Intersection<Index_>& intersection, Markers<Index_>& markers, int top) {
+std::pair<std::vector<Index_>, std::vector<Index_> > subset_to_markers(const Intersection<Index_>& intersection, Markers<Index_>& markers, int top) {
     std::unordered_set<Index_> available;
+    available.reserve(intersection.size());
     for (const auto& in : intersection) {
         available.insert(in.second);
     }
@@ -97,19 +98,17 @@ void subset_to_markers(Intersection<Index_>& intersection, Markers<Index_>& mark
 
     // Subsetting the intersection down to the chosen set of markers.
     std::unordered_map<Index_, Index_> mapping;
-    size_t npairs = intersection.size();
-    mapping.reserve(npairs);
-
+    mapping.reserve(all_markers.size());
+    std::pair<std::vector<Index_>, std::vector<Index_> > output;
     size_t counter = 0;
-    for (size_t i = 0; i < npairs; ++i) {
-        const auto& in = intersection[i];
+    for (const auto& in : intersection) {
         if (all_markers.find(in.second) != all_markers.end()) {
             mapping[in.second] = counter;
-            intersection[counter] = in;
+            output.first.push_back(in.first);
+            output.second.push_back(in.second);
             ++counter;
         }
     }
-    intersection.resize(counter);
 
     // Reindexing the markers.
     for (size_t i = 0; i < ngroups; ++i) {
@@ -122,7 +121,7 @@ void subset_to_markers(Intersection<Index_>& intersection, Markers<Index_>& mark
         }
     }
 
-    return;
+    return output;
 }
 
 }

@@ -123,8 +123,12 @@ TEST_P(ClassifySingleIntersectTest, Intersect) {
 
     // Computing the reference result using the other run() method,
     // after effectively subsetting the input matrices and reindexing the markers.
-    auto intersection = singlepp::internal::intersect_features(left.size(), left.data(), right.size(), right.data());
-    auto pairs = singlepp::internal::unzip(intersection);
+    auto intersection = singlepp::intersect_genes(left.size(), left.data(), right.size(), right.data());
+    std::pair<std::vector<int>, std::vector<int> > pairs;
+    for (const auto& in : intersection) {
+        pairs.first.push_back(in.first);
+        pairs.second.push_back(in.second);
+    }
     auto submat = tatami::make_DelayedSubset<0>(mat, pairs.first);
     auto subrefs = tatami::make_DelayedSubset<0>(refs, pairs.second);
 

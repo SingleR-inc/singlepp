@@ -24,14 +24,24 @@ template<typename Index_>
 using Intersection = std::vector<std::pair<Index_, Index_> >;
 
 /**
- * @cond
+ * Compute the intersection of genes in the test and reference datasets.
+ *
+ * @tparam Index_ Integer type for the row indices of genes in each dataaset.
+ * Also used as the type for the number of genes.
+ * @tparam Id_ Type of the gene identifier, typically an integer or string.
+ *
+ * @param test_ngenes Number of genes (i.e., rows) in the test dataset.
+ * @param[in] test_id Pointer to an array of length `test_ngenes`, containing the gene identifiers for each row in the test dataset.
+ * @param ref_ngenes Number of genes (i.e., rows) in the reference dataset.
+ * @param[in] ref_id Pointer to an array of length `ref_ngenes`, containing the gene identifiers for each row in the reference dataset.
+ * 
+ * @return Intersection of features between the two datasets.
+ * If duplicated identifiers are present in either of `test_id` or `ref_id`, only the first occurrence is used.
  */
-namespace internal {
-
 template<typename Index_, typename Id_>
-Intersection<Index_> intersect_features(Index_ test_n, const Id_* test_id, Index_ ref_n, const Id_* ref_id) {
+Intersection<Index_> intersect_genes(Index_ test_ngenes, const Id_* test_id, Index_ ref_ngenes, const Id_* ref_id) {
     std::unordered_map<Id_, Index_> ref_found;
-    for (Index_ i = 0; i < ref_n; ++i) {
+    for (Index_ i = 0; i < ref_ngenes; ++i) {
         auto current = ref_id[i];
         auto tfIt = ref_found.find(current);
         if (tfIt == ref_found.end()) { // only using the first occurrence of each ID in ref_id.
@@ -40,7 +50,7 @@ Intersection<Index_> intersect_features(Index_ test_n, const Id_* test_id, Index
     }
 
     Intersection<Index_> output;
-    for (Index_ i = 0; i < test_n; ++i) {
+    for (Index_ i = 0; i < test_ngenes; ++i) {
         auto current = test_id[i];
         auto tfIt = ref_found.find(current);
         if (tfIt != ref_found.end()) {
@@ -53,22 +63,6 @@ Intersection<Index_> intersect_features(Index_ test_n, const Id_* test_id, Index
     // matters, as subset_to_markers() doesn't care that it's unsorted.
     return output;
 }
-
-template<typename Index_>
-std::pair<std::vector<Index_>, std::vector<Index_> > unzip(const Intersection<Index_>& intersection) {
-    size_t n = intersection.size();
-    std::vector<Index_> left(n), right(n);
-    for (size_t i = 0; i < n; ++i) {
-        left[i] = intersection[i].first;
-        right[i] = intersection[i].second;
-    }
-    return std::make_pair(std::move(left), std::move(right));
-}
-
-}
-/**
- * @endcond
- */
 
 }
 

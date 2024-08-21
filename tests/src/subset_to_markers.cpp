@@ -131,15 +131,14 @@ TEST(SubsetToMarkers, Intersect) {
 
     int top = 5;
     auto mcopy = markers;
-    auto icopy = inter;
-    singlepp::internal::subset_to_markers(icopy, mcopy, top);
-    EXPECT_GE(icopy.size(), top);
+    auto unzipped = singlepp::internal::subset_to_markers(inter, mcopy, top);
+    EXPECT_GE(unzipped.first.size(), top);
 
     // Checking for uniqueness.
     std::unordered_map<int, bool> available;
-    for (auto s : icopy) {
-        ASSERT_TRUE(available.find(s.second) == available.end());
-        available[s.second] = false;
+    for (auto s : unzipped.second) {
+        ASSERT_TRUE(available.find(s) == available.end());
+        available[s] = false;
     }
 
     // Check for consistency.
@@ -155,7 +154,7 @@ TEST(SubsetToMarkers, Intersect) {
 
             size_t l = 0;
             for (size_t s = 0; s < remapped.size(); ++s) {
-                auto current = icopy[remapped[s]].second;
+                auto current = unzipped.second[remapped[s]];
                 available[current] = true;
                 while (l < original.size() && original[l] != current) {
                     ++l;
@@ -181,8 +180,7 @@ TEST(SubsetToMarkers, IntersectTooLargeTop) {
 
     int top = 50;
     auto mcopy = markers;
-    auto icopy = inter;
-    singlepp::internal::subset_to_markers(icopy, mcopy, top);
+    auto unzipped = singlepp::internal::subset_to_markers(inter, mcopy, top);
 
     std::unordered_set<int> available;
     for (auto i : inter){
@@ -197,7 +195,7 @@ TEST(SubsetToMarkers, IntersectTooLargeTop) {
             size_t l = 0;
             for (size_t s = 0; s < original.size(); ++s) {
                 if (available.find(original[s]) != available.end()) {
-                    EXPECT_EQ(icopy[remapped[l]].second, original[s]);
+                    EXPECT_EQ(unzipped.second[remapped[l]], original[s]);
                     ++l;
                 }
             }
@@ -213,15 +211,13 @@ TEST(SubsetToMarkers, IntersectNoTop) {
     auto inter = mock_intersection<int>(ngenes, ngenes, 40);
 
     auto mcopy = markers;
-    auto icopy = inter;
-    singlepp::internal::subset_to_markers(icopy, mcopy, -1);
+    auto unzipped = singlepp::internal::subset_to_markers(inter, mcopy, -1);
 
     // Same result as if we took a very large top set.
     auto mcopy2 = markers;
-    auto icopy2 = inter;
-    singlepp::internal::subset_to_markers(icopy2, mcopy2, 10000);
+    auto unzipped2 = singlepp::internal::subset_to_markers(inter, mcopy2, 10000);
 
-    EXPECT_EQ(icopy, icopy2);
+    EXPECT_EQ(unzipped, unzipped2);
 
     for (size_t i = 0; i < nlabels; ++i) {
         for (size_t j = 0; j < nlabels; ++j) {
@@ -238,15 +234,14 @@ TEST(SubsetToMarkers, IntersectShuffle) {
 
     int top = 5;
     auto mcopy = markers;
-    auto icopy = inter;
-    singlepp::internal::subset_to_markers(icopy, mcopy, top);
-    EXPECT_GE(icopy.size(), top);
+    auto unzipped = singlepp::internal::subset_to_markers(inter, mcopy, top);
+    EXPECT_GE(unzipped.first.size(), top);
 
     // Checking for uniqueness.
     std::unordered_map<int, bool> available;
-    for (auto s : icopy) {
-        ASSERT_TRUE(available.find(s.second) == available.end());
-        available[s.second] = false;
+    for (auto s : unzipped.second) {
+        ASSERT_TRUE(available.find(s) == available.end());
+        available[s] = false;
     }
 
     // Check for consistency.
@@ -261,7 +256,7 @@ TEST(SubsetToMarkers, IntersectShuffle) {
             EXPECT_EQ(remapped.size(), top); // exactly 'top' genes should be retained.
 
             for (size_t s = 0; s < remapped.size(); ++s) {
-                auto current = icopy[remapped[s]].second;
+                auto current = unzipped.second[remapped[s]];
                 available[current] = true;
             }
         }
@@ -282,10 +277,9 @@ TEST(SubsetToMarkers, IntersectDiagonal) {
     auto inter = mock_intersection<int>(ngenes, ngenes, 40);
 
     auto mcopy = markers;
-    auto icopy = inter;
     int top = 5;
-    singlepp::internal::subset_to_markers(icopy, mcopy, top);
-    EXPECT_GE(icopy.size(), top);
+    auto unzipped = singlepp::internal::subset_to_markers(inter, mcopy, top);
+    EXPECT_GE(unzipped.first.size(), top);
 
     for (size_t i = 0; i < nlabels; ++i) {
         for (size_t j = 0; j < nlabels; ++j) {
@@ -296,7 +290,7 @@ TEST(SubsetToMarkers, IntersectDiagonal) {
                 const auto& original = markers[i][j];
                 size_t l = 0;
                 for (size_t s = 0; s < remapped.size(); ++s) {
-                    auto current = icopy[remapped[s]].second;
+                    auto current = unzipped.second[remapped[s]];
                     while (l < original.size() && original[l] != current) {
                         ++l;
                     }
