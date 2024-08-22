@@ -7,12 +7,13 @@
  * @brief Umbrella header for all includes.
  */
 
-#include "Classifier.hpp"
 #include "Markers.hpp"
-#include "IntegratedScorer.hpp"
-#include "IntegratedBuilder.hpp"
-#include "ChooseClassicMarkers.hpp"
-#include "load_references.hpp"
+#include "Intersection.hpp"
+#include "choose_classic_markers.hpp"
+#include "train_single.hpp"
+#include "train_integrated.hpp"
+#include "classify_single.hpp"
+#include "classify_integrated.hpp"
 
 /**
  * @namespace singlepp

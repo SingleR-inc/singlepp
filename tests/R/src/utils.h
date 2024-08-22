@@ -7,6 +7,8 @@
 
 std::vector<int> setup_labels(Rcpp::IntegerVector);
 
-singlepp::Markers setup_markers(Rcpp::List);
+singlepp::Markers<int> setup_markers(Rcpp::List);
+
+typedef Rcpp::XPtr<singlepp::TrainedSingle<int, double> > TrainedPtr;
 
 #endif
