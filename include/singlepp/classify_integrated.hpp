@@ -44,7 +44,7 @@ struct ClassifyIntegratedOptions {
  * @tparam Float_ Floating-point type for the correlations and scores.
  */
 template<typename RefLabel_, typename Float_>
-struct ClassifySingleBuffers {
+struct ClassifyIntegratedBuffers {
     /** 
      * Pointer to an array of length equal to the number of test cells.
      * On output, this is filled with the index of the assigned label for each cell.
@@ -132,10 +132,10 @@ void classify_integrated(
         std::vector<Index_> miniverse;
         internal::RankRemapper<Index_> intersect_mapping, direct_mapping;
 
-        RankedVector<Value_, Index_> test_ranked_all, test_ranked;
-        test_ranked_all.reserve(NR);
+        internal::RankedVector<Value_, Index_> test_ranked_full, test_ranked;
+        test_ranked_full.reserve(NR);
         test_ranked.reserve(NR);
-        RankedVector<Index_, Index_> ref_ranked;
+        internal::RankedVector<Index_, Index_> ref_ranked;
         ref_ranked.reserve(NR);
 
         std::vector<Value_> test_scaled(NR);
@@ -143,7 +143,7 @@ void classify_integrated(
         std::vector<Value_> all_correlations;
 
         for (Index_ i = start, end = start + len; i < end; ++i) {
-            // Pulling out the markers that we'll be using for this cell.
+            // Extracting only the markers of the best labels for this cell.
             miniverse_tmp.clear();
             for (size_t r = 0; r < nref; ++r) {
                 auto best = assigned[r][i];
@@ -155,12 +155,12 @@ void classify_integrated(
             miniverse.insert(miniverse.end(), miniverse_tmp.begin(), miniverse_tmp.end());
             std::sort(miniverse.begin(), miniverse.end());
 
-            test_ranked_all.clear();
+            test_ranked_full.clear();
             auto ptr = wrk->fetch(buffer.data());
             for (auto u : miniverse) {
-                test_ranked_all.emplace_back(ptr[u], u);
+                test_ranked_full.emplace_back(ptr[u], u);
             }
-            std::sort(test_ranked_all.begin(), test_ranked_all.end());
+            std::sort(test_ranked_full.begin(), test_ranked_full.end());
 
             // Scanning through each reference and computing the score for the best group.
             Value_ best_score = -1000, next_best = -1000;
@@ -169,7 +169,7 @@ void classify_integrated(
 
             for (size_t r = 0; r < nref; ++r) {
                 // Further subsetting to the intersection of markers that are
-                // present in each reference.
+                // actual present in this particular reference.
                 const internal::RankRemapper<Index_>* mapping;
                 if (trained.check_availability[r]) {
                     const auto& cur_available = trained.available[r];
@@ -194,16 +194,16 @@ void classify_integrated(
                     mapping = &direct_mapping;
                 } 
 
-                mapping->remap(test_ranked_all, test_ranked);
+                mapping->remap(test_ranked_full, test_ranked);
                 test_scaled.resize(test_ranked.size());
                 internal::scaled_ranks(test_ranked, test_scaled.data());
 
                 // Now actually calculating the score for the best group for
-                // this cell in this reference. This assumes that 'ref.ranked'
-                // already contains sorted pairs where the indices refer to the
-                // rows of the original data matrix.
+                // this cell in this reference. This assumes that
+                // 'trained.ranked' already contains sorted pairs where the
+                // indices refer to the rows of the original data matrix.
                 auto best = assigned[r][i];
-                const auto& best_ranked = built.ranked[r][best];
+                const auto& best_ranked = trained.ranked[r][best];
                 all_correlations.clear();
                 ref_scaled.resize(test_scaled.size());
 
@@ -251,7 +251,12 @@ struct ClassifyIntegratedResults {
     /**
      * @cond
      */
-    Results(size_t ncells, size_t nrefs) : best(ncells), scores(nrefs, std::vector<double>(ncells)), delta(ncells) {}
+    ClassifyIntegratedResults(size_t ncells, size_t nrefs) : best(ncells), delta(ncells) {
+        scores.reserve(nrefs);
+        for (size_t r = 0; r < nrefs; ++r) {
+            scores.emplace_back(ncells);
+        }
+    }
     /**
      * @endcond
      */
@@ -293,8 +298,8 @@ ClassifyIntegratedResults<RefLabel_, Float_> classify_integrated(
     const TrainedIntegrated<Index_>& trained,
     const ClassifyIntegratedOptions<Float_>& options)
 {
-    ClassifySingleResults<RefLabel_, Float_> results(test.ncol(), trained.num_references());
-    ClassifySingleBuffers<RefLabel_, Float_> buffers;
+    ClassifyIntegratedResults<RefLabel_, Float_> results(test.ncol(), trained.num_references());
+    ClassifyIntegratedBuffers<RefLabel_, Float_> buffers;
     buffers.best = results.best.data();
     buffers.delta = results.delta.data();
     buffers.scores.reserve(results.scores.size());
@@ -302,7 +307,7 @@ ClassifyIntegratedResults<RefLabel_, Float_> classify_integrated(
         buffers.scores.emplace_back(s.data());
     }
     classify_integrated(test, assigned, trained, buffers);
-    return output;
+    return results;
 }
 
 }
