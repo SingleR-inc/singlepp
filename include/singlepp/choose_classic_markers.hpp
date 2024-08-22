@@ -157,7 +157,7 @@ Markers<Index_> choose_classic_markers(
 
 #ifndef SINGLEPP_CUSTOM_PARALLEL
 #ifdef _OPENMP
-    #pragma omp parallel num_threads(nthreads)
+    #pragma omp parallel num_threads(options.num_threads)
 #endif
     {
 #else
@@ -248,7 +248,7 @@ Markers<Index_> choose_classic_markers(
     }
 #else    
         }
-    }, npairs, nthreads);
+    }, npairs, options.num_threads);
 #endif        
     /**
      * @endcond

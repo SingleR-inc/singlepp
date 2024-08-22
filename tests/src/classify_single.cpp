@@ -45,7 +45,8 @@ TEST_P(ClassifySingleSimpleTest, Simple) {
     auto subset = singlepp::internal::subset_to_markers(markers, top);
     auto naive = naive_method(nlabels, labels, refs, mat, subset, quantile);
 
-    for (size_t c = 0; c < mat->ncol(); ++c) {
+    int NC = mat->ncol();
+    for (int c = 0; c < NC; ++c) {
         EXPECT_EQ(naive.best[c], output.best[c]);
         EXPECT_TRUE(std::abs(naive.delta[c] - output.delta[c]) < 1e-6);
         EXPECT_TRUE(output.delta[c] > 0);

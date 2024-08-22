@@ -156,7 +156,8 @@ TEST(FineTuner, Reference) {
 
     auto wrk = mat->dense_column(subset);
     std::vector<double> buffer(subset.size());
-    for (size_t c = 0; c < mat->ncol(); ++c) {
+    int NC = mat->ncol();
+    for (int c = 0; c < NC; ++c) {
         auto vec = wrk->fetch(c, buffer.data()); 
         auto ranked = fill_ranks<int>(refs->ncol(), vec);
 

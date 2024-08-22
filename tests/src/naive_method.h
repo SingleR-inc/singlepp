@@ -39,7 +39,9 @@ auto naive_method(size_t nlabels, const Labels& labels, const RefMatrix& refs, c
     auto wrk = mat->dense_column(subset);
     std::vector<double> buffer(subset.size());
 
-    for (size_t c = 0; c < mat->ncol(); ++c) {
+    typedef typename Matrix::element_type::index_type Index;
+    Index NC = mat->ncol();
+    for (Index c = 0; c < NC; ++c) {
         auto col = wrk->fetch(c, buffer.data());
         tatami::copy_n(col, buffer.size(), buffer.data());
         auto scaled = quick_scaled_ranks(buffer);

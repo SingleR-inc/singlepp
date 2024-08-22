@@ -17,8 +17,8 @@ TEST(SubsetToMarkers, Simple) {
     auto subs = singlepp::internal::subset_to_markers(copy, top);
 
     EXPECT_TRUE(std::is_sorted(subs.begin(), subs.end()));
-    EXPECT_TRUE(subs.size() < ngenes); // not every gene is there, otherwise it would be a trivial test.
-    EXPECT_TRUE(subs.size() >= top);
+    EXPECT_LT(subs.size(), ngenes); // not every gene is there, otherwise it would be a trivial test.
+    EXPECT_GE(subs.size(), top);
 
     std::unordered_map<int, bool> hits;
     for (auto s : subs) {
@@ -38,8 +38,8 @@ TEST(SubsetToMarkers, Simple) {
 
             for (int s = 0; s < top; ++s) {
                 auto r = remapped[s];
-                EXPECT_TRUE(r >= 0);
-                EXPECT_TRUE(r < subs.size());
+                EXPECT_GE(r, 0);
+                EXPECT_LT(r, subs.size());
 
                 auto o = original[s];
                 EXPECT_EQ(subs[r], o);
@@ -106,8 +106,8 @@ TEST(SubsetToMarkers, DiagonalOnly) {
     auto copy = markers;
     int top = 5;
     auto subs = singlepp::internal::subset_to_markers(copy, top);
-    EXPECT_TRUE(subs.size() < ngenes); // not every gene is there, otherwise it would be a trivial test.
-    EXPECT_TRUE(subs.size() >= top);
+    EXPECT_LT(subs.size(), ngenes); // not every gene is there, otherwise it would be a trivial test.
+    EXPECT_GE(subs.size(), top);
 
     for (size_t i = 0; i < nlabels; ++i) {
         for (size_t j = 0; j < nlabels; ++j) {
@@ -251,7 +251,6 @@ TEST(SubsetToMarkers, IntersectShuffle) {
                 continue;
             }
 
-            const auto& original = markers[i][j];
             const auto& remapped = mcopy[i][j];
             EXPECT_EQ(remapped.size(), top); // exactly 'top' genes should be retained.
 

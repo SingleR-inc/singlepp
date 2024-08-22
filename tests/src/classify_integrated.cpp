@@ -142,7 +142,6 @@ TEST_P(TrainIntegratedTest, Simple) {
             const auto& target = output.ranked[r][lab][offsets[lab]];
             ++offsets[lab];
 
-            double last_original = -100000000;
             auto col = wrk->fetch(s, buffer.data());
             std::vector<int> test_in_use;
             test_in_use.push_back(universe[target[0].second]);
@@ -258,7 +257,6 @@ TEST_P(TrainIntegratedTest, Intersect) {
             const auto& target = output.ranked[r][lab][offsets[lab]];
             ++offsets[lab];
 
-            double last_original = -100000000;
             auto col = wrk->fetch(s, buffer.data());
             std::vector<int> test_in_use;
             test_in_use.push_back(universe[target[0].second]);
@@ -363,9 +361,6 @@ TEST_P(ClassifyIntegratedTest, Basic) {
     size_t ngenes = 2000;
     auto test = spawn_matrix(ngenes, ntest, base_seed * 10);
 
-    size_t nsamples = 50;
-    size_t nrefs = 3;
-
     singlepp::TrainSingleOptions<int, double> bopt;
     bopt.top = ntop;
     std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
@@ -441,9 +436,6 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
     size_t ngenes = 2000;
     auto test = spawn_matrix(ngenes, ntest, base_seed * 10);
     auto test_ids = simulate_test_ids(ngenes, base_seed * 20);
-
-    size_t nsamples = 50;
-    size_t nrefs = 3;
 
     singlepp::TrainSingleOptions<int, double> bopt;
     bopt.top = ntop;

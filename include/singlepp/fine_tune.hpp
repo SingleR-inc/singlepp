@@ -32,8 +32,8 @@ std::pair<Label_, Stat_> fill_labels_in_use(const std::vector<Stat_>& scores, St
     Stat_ next_score = DUMMY;
     const Stat_ bound = max_score - threshold;
 
-    size_t nscores = scores.size();
-    for (size_t i = 0; i < nscores; ++i) {
+    Label_  nscores = scores.size();
+    for (Label_ i = 0; i < nscores; ++i) {
         auto val = scores[i];
         if (val >= bound) {
             in_use.push_back(i);
@@ -150,7 +150,6 @@ public:
 
                 my_all_correlations.clear();
                 const auto& curref = ref[curlab];
-                size_t NR = curref.index->num_dimensions();
                 size_t NC = curref.index->num_observations();
 
                 for (size_t c = 0; c < NC; ++c) {
