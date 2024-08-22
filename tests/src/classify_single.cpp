@@ -30,7 +30,7 @@ TEST_P(ClassifySingleSimpleTest, Simple) {
 
     auto markers = mock_markers<int>(nlabels, 50, ngenes); 
 
-    // Running the implementation.
+    // Performing classification without fine-tuning for a reference comparison.
     singlepp::TrainSingleOptions<int, double> bopt;
     bopt.top = top;
     auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
@@ -118,7 +118,6 @@ TEST_P(ClassifySingleIntersectTest, Intersect) {
     auto trained = singlepp::train_single_intersect<int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, bopt);
 
     singlepp::ClassifySingleOptions<double> copt;
-    copt.fine_tune = false;
     copt.quantile = quantile;
     auto result = singlepp::classify_single_intersect<int>(*mat, trained, copt);
 

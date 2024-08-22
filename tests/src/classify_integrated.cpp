@@ -291,8 +291,13 @@ class ClassifyIntegratedTest : public ::testing::TestWithParam<std::tuple<int, d
 protected:
     static void SetUpTestSuite() {
         assemble();
+        test = spawn_matrix(ngenes, ntest, 69);
     }
 
+    inline static size_t ntest = 20;
+    inline static std::shared_ptr<tatami::Matrix<double, int> > test;
+
+protected:
     template<class Prebuilt_>
     static std::vector<std::vector<int> > mock_best_choices(size_t ntest, const std::vector<Prebuilt_>& prebuilts, size_t seed) {
         size_t nrefs = prebuilts.size();
@@ -352,15 +357,9 @@ TEST_P(ClassifyIntegratedTest, Basic) {
     auto param = GetParam();
     int ntop = std::get<0>(param);
     double quantile = std::get<1>(param);
+    int base_seed = ntop + quantile * 50;
 
-    int base_seed = ntop + 1000 * quantile;
-
-    // Mocking up the test and individual references, and creating the
-    // integrated set of references with IntegratedBuilder.
-    size_t ntest = 20;
-    size_t ngenes = 2000;
-    auto test = spawn_matrix(ngenes, ntest, base_seed * 10);
-
+    // Creating the integrated set of references.
     singlepp::TrainSingleOptions<int, double> bopt;
     bopt.top = ntop;
     std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
@@ -376,7 +375,7 @@ TEST_P(ClassifyIntegratedTest, Basic) {
     auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
 
     // Mocking up some of the best choices.
-    auto chosen = mock_best_choices(ntest, prebuilts, base_seed * 30);
+    auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ base_seed);
     std::vector<const int*> chosen_ptrs(nrefs);
     for (size_t r = 0; r < nrefs; ++r) {
         chosen_ptrs[r] = chosen[r].data();
@@ -428,13 +427,9 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
     auto param = GetParam();
     int ntop = std::get<0>(param);
     double quantile = std::get<1>(param);
-    int base_seed = ntop + quantile * 100;
+    int base_seed = ntop + quantile * 50;
 
-    // Mocking up the test and individual references, and creating the
-    // integrated set of references with IntegratedBuilder.
-    size_t ntest = 20;
-    size_t ngenes = 2000;
-    auto test = spawn_matrix(ngenes, ntest, base_seed * 10);
+    // Creating the integrated set of references.
     auto test_ids = simulate_test_ids(ngenes, base_seed * 20);
 
     singlepp::TrainSingleOptions<int, double> bopt;
