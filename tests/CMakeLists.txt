@@ -19,7 +19,7 @@ add_executable(
     src/subset_to_markers.cpp
     src/SubsetSanitizer.cpp
     src/fine_tune.cpp
-    #src/IntegratedBuilder.cpp
+    src/classify_integrated.cpp
     #src/IntegratedScorer.cpp
     src/choose_classic_markers.cpp
 )
@@ -49,9 +49,8 @@ endif()
 add_executable(
     custom_parallel
     src/classify_single.cpp
-    src/IntegratedBuilder.cpp
-    src/IntegratedScorer.cpp
-    #src/ChooseClassicMarkers.cpp
+    src/classify_integrated.cpp
+    src/choose_classic_markers.cpp
 )
 
 set_target_properties(custom_parallel PROPERTIES COMPILE_DEFINITIONS "TEST_SINGLEPP_CUSTOM_PARALLEL")

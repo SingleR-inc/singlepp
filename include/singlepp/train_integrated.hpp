@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include <cstdint>
+#include <memory>
 
 /**
  * @file IntegratedBuilder.hpp
@@ -32,9 +33,11 @@ struct TrainIntegratedInput {
 
     std::vector<std::vector<Index_> > markers;
 
-    bool check_availability = false;
+    bool uses_intersection = false;
 
-    std::unordered_map<Index_, Index_> gene_mapping;
+    const Intersection<Index_>* user_intersection = NULL;
+
+    Intersection<Index_> auto_intersection;
     /**
      * @endcond
      */
@@ -110,28 +113,14 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
     const Intersection<Index_>& intersection,
     const tatami::Matrix<Value_, Index_>* ref, 
     const Label_* labels, 
-    const BasicBuilder::PrebuiltIntersection<Index_, Float_>& trained) 
+    const TrainedSingleIntersect<Index_, Float_>& trained) 
 {
     TrainIntegratedInput<Value_, Index_, Label_> output;
     output.ref = &ref;
     output.labels = labels;
 
-    // Manually constructing the markers. This involves (i) pruning out the
-    // markers that aren't present in the intersection, and (ii) updating 
-    // their indices so that they point to rows of 'mat', not 'ref'.
-    auto& mapping = output.gene_mapping;
-    for (const auto& i : intersection) {
-        reverse_map[i.second] = i.first;
-    }
-
-    auto subindex = [&](int i) -> int {
-        if constexpr(!std::is_same<Subset, bool>::value) {
-            return ref_subset[i];
-        } else {
-            return i;
-        }
-    };
-
+    // Updating the markers so that they point to rows of the test matrix.
+    const auto& test_subset = trained.get_ref_subset();
     auto& new_markers = output.markers;
     size_t nlabels = old_markers.size();
     new_markers.resize(nlabels);
@@ -143,24 +132,16 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
         for (const auto& x : cur_old_markers) {
             unified.insert(x.begin(), x.end());
         }
+
         auto& cur_new_markers = new_markers[i];
         cur_new_markers.reserve(unified.size());
-
         for (auto y : unified) {
-            auto it = reverse_map.find(subindex(y));
-            if (it != reverse_map.end()) {
-                cur_new_markers.push_back(it->second);
-            }
+            cur_new_markers.push_back(test_subset[y]);
         }
     }
 
-    // Constructing the mapping of mat's rows to the reference rows.
     output.check_availability = true;
-    mapping.clear();
-    for (const auto& i : intersection) {
-        mapping[i.first] = i.second;
-    }
-
+    output.user_intersection = &intersection;
     return output;
 }
 
@@ -193,10 +174,13 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
     const tatami::Matrix<Value_, Index_>& ref, 
     const Id_* ref_id, 
     const Label_* labels,
-    const BasicBuilder::PrebuiltIntersection<Index_, Float_>& trained) 
+    const TrainedSingleIntersect<Index_, Float_>& trained) 
 {
     auto intersection = intersect_genes(mat_nrow, mat_id, ref->nrow(), ref_id);
-    return prepare_integrated_input_intersect(intersection, ref, labels, built);
+    auto output = prepare_integrated_input_intersect(intersection, ref, labels, built);
+    output.user_intersection = NULL;
+    output.auto_intersection.swap(intersection);
+    return output;
 }
 
 /**
@@ -266,100 +250,6 @@ struct TrainIntegratedOptions {
  */
 namespace internal {
 
-template<typename Value_, typename Index_, typename Label_>
-void fill_ranks(
-    const tatami::Matrix<Value_, Index_>& ref,
-    const Label_* curlab, 
-    const std::vector<Index_>& subset, 
-    const std::vector<Index_>& positions, 
-    std::vector<std::vector<RankedVector<Index_, Index_> > >& cur_ranked,
-    int num_threads) 
-{
-    tatami::parallelize([&](size_t, Index_ start, Index_ len) -> void {
-        RankedVector<Value_, Index_> tmp_ranked;
-        tmp_ranked.reserve(subset.size());
-
-        // 'subset' is guaranteed to be sorted and unique, see its derivation in finish().
-        // This means we can directly use it for indexed extraction.
-        tatami::VectorPtr<Index_> subset_ptr(tatami::Vector<Index_>{}, &subset);
-        auto wrk = tatami::consecutive_extractor<false>(&ref, false, start, len, std::move(subset_ptr)); 
-        std::vector<Value_> buffer(subset.size());
-
-        for (Index_ c = start, end = start + len; c < end; ++c) {
-            auto ptr = wrk->fetch(buffer.data());
-
-            tmp_ranked.clear();
-            for (int i = 0, end = subset.size(); i < end; ++i, ++ptr) {
-                tmp_ranked.emplace_back(*ptr, i);
-            }
-            std::sort(tmp_ranked.begin(), tmp_ranked.end());
-
-            auto& final_ranked = cur_ranked[curlab[c]][positions[c]];
-            simplify_ranks(tmp_ranked, final_ranked);
-        }
-    }, ref->ncol(), num_threads);
-}
-
-template<typename Value_, typename Index_, typename Label_>
-void fill_ranks_intersect(
-    const tatami::Matrix<Value_, Index_>& ref, 
-    const Label_* curlab, 
-    const std::vector<Index_>& subset, 
-    const std::vector<Index_>& positions,
-    const std::unordered_map<Index_, Index_>& cur_mapping,
-    std::unordered_set<Index_>& cur_available,
-    std::vector<std::vector<RankedVector<Index_, Index_> > >& cur_ranked,
-    int num_threads)
-{
-    // If we need to check availability, then we need to check
-    // the mapping of test genes to row indices of the reference.
-    std::vector<std::pair<Index_, Index_> > remapping; 
-    remapping.reserve(subset.size());
-
-    for (Index_ i = 0, end = subset.size(); i < end; ++i) {
-        auto it = cur_mapping.find(subset[i]);
-        if (it != cur_mapping.end()) {
-            remapping.emplace_back(it->second, i); // using 'i' instead of 'subset[i]', as we want to work with indices into 'subset', not the values of 'subset' themselves.
-            cur_available.insert(i);
-        }
-    }
-
-    std::sort(remapping.begin(), remapping.end());
-
-    // This section is just to enable indexed extraction by tatami.
-    // There's no need to consider duplicates among the
-    // 'remapping[i].first', 'cur_mapping->second' is guaranteed to be
-    // unique as a consequence of how intersect_genes() works.
-    std::vector<Index_> remapped_subset; 
-    remapped_subset.reserve(remapping.size());
-    for (const auto& p : remapping) {
-        remapped_subset.push_back(p.first);
-    }
-
-    tatami::parallelize([&](size_t, Index_ start, Index_ len) -> void {
-        RankedVector<Value_, Index_> tmp_ranked;
-        tmp_ranked.reserve(remapped_subset.size());
-
-        std::vector<Value_> buffer(remapped_subset.size());
-        tatami::VectorPtr<Index_> remapped_subset_ptr(tatami::VectorPtr<Index_>{}, &remapped_subset);
-        auto wrk = tatami::consecutive_extractor<false>(&ref, false, start, len, std::move(remapped_subset_ptr));
-
-        for (size_t c = start, end = start + len; c < end; ++c) {
-            auto ptr = wrk->fetch(c, buffer.data());
-
-            tmp_ranked.clear();
-            for (const auto& p : remapping) {
-                tmp_ranked.emplace_back(*ptr, p.second); // remember, 'p.second' corresponds to indices Index_o 'subset'.
-                ++ptr;
-            }
-            std::sort(tmp_ranked.begin(), tmp_ranked.end());
-
-            auto& final_ranked = cur_ranked[curlab[c]][positions[c]];
-            simplify_ranks(tmp_ranked, final_ranked);
-        }
-    }, ref.ncol(), num_threads);
-}
-
 template<typename Index_, typename Inputs_>
 TrainedIntegrated<Index_> train_integrated(Inputs_& input, const TrainIntegratedOptions& options) {
     TrainedIntegrated<Index_> output;
@@ -370,9 +260,9 @@ TrainedIntegrated<Index_> train_integrated(Inputs_& input, const TrainIntegrated
     output.ranked.resize(nrefs);
 
     // Identify the union of all marker genes.
-    auto& subset = output.universe;
     std::unordered_map<Index_, Index_> remap_to_universe;
     {
+        auto& subset = output.universe;
         std::unordered_set<Index_> subset_tmp;
         for (const auto& in : inputs) {
             for (const auto& mrk : in.markers) {
@@ -382,7 +272,7 @@ TrainedIntegrated<Index_> train_integrated(Inputs_& input, const TrainIntegrated
 
         subset.insert(subset.end(), subset_tmp.begin(), subset_tmp.end());
         std::sort(subset.begin(), subset.end());
-        remap_to_universe.resize(subset.size());
+        remap_to_universe.reserve(subset.size());
         for (Index_ i = 0, end = subset.size(); i < end; ++i) {
             remap_to_universe[subset[i]] = i;
         }
@@ -393,8 +283,8 @@ TrainedIntegrated<Index_> train_integrated(Inputs_& input, const TrainIntegrated
         auto curlab = curinput.labels;
         const auto& ref = *(curinput.ref);
 
-        // Reindexing the markers to point to the universe.
-        auto& curmarkers = references.markers[r];
+        // Reindexing the markers so that they contain indices into to the universe.
+        auto& curmarkers = output.markers[r];
         if constexpr(std::is_const<Input_>::value) {
             curmarkers.swap(curinput.markers);
         } else {
@@ -406,8 +296,8 @@ TrainedIntegrated<Index_> train_integrated(Inputs_& input, const TrainIntegrated
             }
         }
 
-        // Preparing the vectors of pre-ranked expression..
-        auto& cur_ranked = references.ranked[r];
+        // Pre-allocating the vectors of pre-ranked expression.
+        auto& cur_ranked = output.ranked[r];
         std::vector<Index_> positions;
         {
             size_t nlabels = curmarkers.size();
@@ -427,16 +317,90 @@ TrainedIntegrated<Index_> train_integrated(Inputs_& input, const TrainIntegrated
             }
         }
 
-        // Finally filling the rankings.
-        if (!curinput.check_availability) {
-            fill_ranks(ref, curlab, subset, positions, cur_ranked, options.num_threads);
+        if (!curinput.uses_intersection) {
+            tatami::parallelize([&](size_t, Index_ start, Index_ len) -> void {
+                RankedVector<Value_, Index_> tmp_ranked;
+                tmp_ranked.reserve(output.universe.size());
+
+                // The universe is guaranteed to be sorted and unique, see its derivation above.
+                // This means we can directly use it for indexed extraction.
+                tatami::VectorPtr<Index_> subset_ptr(tatami::Vector<Index_>{}, &(output.universe));
+                auto wrk = tatami::consecutive_extractor<false>(&ref, false, start, len, std::move(subset_ptr)); 
+                std::vector<Value_> buffer(subset.size());
+
+                for (Index_ c = start, end = start + len; c < end; ++c) {
+                    auto ptr = wrk->fetch(buffer.data());
+
+                    tmp_ranked.clear();
+                    for (int i = 0, end = subset.size(); i < end; ++i, ++ptr) {
+                        tmp_ranked.emplace_back(*ptr, i);
+                    }
+                    std::sort(tmp_ranked.begin(), tmp_ranked.end());
+
+                    auto& final_ranked = cur_ranked[curlab[c]][positions[c]];
+                    simplify_ranks(tmp_ranked, final_ranked);
+                }
+            }, ref->ncol(), options.num_threads);
+
         } else {
-            references.check_availability[r] = 1;
-            fill_ranks_intersect(ref, curlab, subset, positions, curinput.gene_mapping, references.available[r], cur_ranked, options.num_threads);
+            output.check_availability[r] = 1;
+
+            // Need to remap from indices on the test matrix to those in the current reference matrix
+            // so that we can form an appropriate vector for indexed tatami extraction. 
+            const auto& intersection = (curinput.user_intersection == NULL ? curinput.auto_intersection : *(curinput.user_intersection));
+            std::unordered_map<Index_, Index_> intersection_map;
+            intersection_map.reserve(intersection.size());
+            for (const auto& in : intersection) {
+                intersection_map[in.first] = in.second;
+            }
+
+            std::vector<std::pair<Index_, Index_> > intersection_in_universe;
+            intersection_in_universe.reserve(in_universe.size());
+            auto& cur_available = output.available[r];
+            cur_available.reserve(in_universe.size());
+
+            for (Index_ i = 0, end = output.universe.size(); i < end; ++i) {
+                auto it = gene_mapping.find(output.universe[i]);
+                if (it != gene_mapping.end()) {
+                    intersection_in_universe.emplace_back(it->second, i); // using 'i' as we want to work with indices into 'universe', not the indices of the universe itself.
+                    cur_available.insert(i);
+                }
+            }
+
+            std::sort(intersection_in_universe.begin(), intersection_in_universe.end());
+
+            std::vector<Index_> to_extract; 
+            to_extract.reserve(intersection_in_universe.size());
+            for (const auto& p : intersection_in_universe) {
+                to_extract.push_back(p.first);
+            }
+
+            tatami::parallelize([&](size_t, Index_ start, Index_ len) -> void {
+                RankedVector<Value_, Index_> tmp_ranked;
+                tmp_ranked.reserve(to_extract.size());
+
+                std::vector<Value_> buffer(to_extract.size());
+                tatami::VectorPtr<Index_> to_extract_ptr(tatami::VectorPtr<Index_>{}, &to_extract);
+                auto wrk = tatami::consecutive_extractor<false>(&ref, false, start, len, std::move(to_extract_ptr));
+
+                for (size_t c = start, end = start + len; c < end; ++c) {
+                    auto ptr = wrk->fetch(buffer.data());
+
+                    tmp_ranked.clear();
+                    for (const auto& p : intersection_in_universe) {
+                        tmp_ranked.emplace_back(*ptr, p.second); // remember, 'p.second' corresponds to indices into the universe.
+                        ++ptr;
+                    }
+                    std::sort(tmp_ranked.begin(), tmp_ranked.end());
+
+                    auto& final_ranked = cur_ranked[curlab[c]][positions[c]];
+                    simplify_ranks(tmp_ranked, final_ranked);
+                }
+            }, ref->ncol(), options.num_threads);
         }
     }
 
-    return references;
+    return output;
 }
 
 }
