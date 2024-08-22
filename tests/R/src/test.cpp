@@ -56,7 +56,6 @@ Rcpp::List run_singlepp(
     return Rcpp::List::create(
         Rcpp::Named("best") = output_best,
         Rcpp::Named("scores") = output_scores, 
-        Rcpp::Named("delta") = output_delta,
-        Rcpp::Named("trained") = TrainedPtr(new singlepp::TrainedSingle<int, double>(std::move(trained)), true)
+        Rcpp::Named("delta") = output_delta
     ); 
 }

@@ -12,7 +12,7 @@ Rcpp::List integrate_singlepp(
     Rcpp::List results,
     Rcpp::List refs, 
     Rcpp::List labels,
-    Rcpp::List prebuilt,
+    Rcpp::List markers,
     double quantile = 0.8)
 {
     size_t nrefs = refs.size();
@@ -22,8 +22,8 @@ Rcpp::List integrate_singlepp(
     if (nrefs != labels.size()) {
         throw std::runtime_error("'refs' and 'labels' should have the same length");
     }
-    if (nrefs != prebuilt.size()) {
-        throw std::runtime_error("'refs' and 'prebuilt' should have the same length");
+    if (nrefs != markers.size()) {
+        throw std::runtime_error("'refs' and 'markers' should have the same length");
     }
 
     // Building the integrated classifier.
@@ -38,9 +38,11 @@ Rcpp::List integrate_singlepp(
         reresults.emplace_back(setup_labels(results[r]));
     }
 
+    singlepp::TrainSingleOptions<int, double> bopt;
+    bopt.top = -1; // use all markers.
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > inputs; 
     for (size_t r = 0; r < nrefs; ++r) {
-        const auto& built = *(TrainedPtr(prebuilt[r]));
+        auto built = singlepp::train_single(*(rematrices[r]), relabels[r].data(), setup_markers(markers[r]), bopt);
         inputs.push_back(singlepp::prepare_integrated_input(*(rematrices[r]), relabels[r].data(), built));
     }
     singlepp::TrainIntegratedOptions iopt;
