@@ -6,8 +6,9 @@
 
 #include "spawn_matrix.h"
 #include "mock_markers.h"
+#include "naive_method.h"
 
-class TrainIntegratedTestCore {
+class IntegratedTestCore {
 protected:
     inline static std::vector<std::shared_ptr<tatami::Matrix<double, int> > > references;
     inline static std::vector<std::vector<int> > labels;
@@ -32,7 +33,7 @@ protected:
     }
 
 protected:
-    static std::vector<int> simulate_ids(size_t ngenes, int seed) {
+    static std::vector<int> simulate_ids(size_t ngenes, int seed, int placeholder) {
         std::vector<int> keep;
         keep.reserve(ngenes);
         std::mt19937_64 rng(seed);
@@ -40,10 +41,19 @@ protected:
             if (rng() % 100 < 90) {
                 keep.push_back(s);
             } else {
-                keep.push_back(-1); // i.e., unique to the reference.
+                keep.push_back(placeholder);
             }
         }
         return keep;
+    }
+
+    static std::vector<int> simulate_test_ids(size_t ngenes, int seed) {
+        return simulate_ids(ngenes, seed, -2); // -2 => unique to the test dataset.
+    }
+
+    static constexpr int MISSING_REF_ID = -1;
+    static std::vector<int> simulate_ref_ids(size_t ngenes, int seed) {
+        return simulate_ids(ngenes, seed, MISSING_REF_ID); // -1 => unique to the reference.
     }
 
     static singlepp::Markers<int> truncate_markers(singlepp::Markers<int> remarkers, int ntop) {
@@ -60,7 +70,7 @@ protected:
 
 /********************************************/
 
-class TrainIntegratedTest : public ::testing::TestWithParam<std::tuple<int, int> >, public TrainIntegratedTestCore {
+class TrainIntegratedTest : public ::testing::TestWithParam<std::tuple<int, int> >, public IntegratedTestCore {
 protected:
     static void SetUpTestSuite() {
         assemble();
@@ -140,8 +150,8 @@ TEST_P(TrainIntegratedTest, Simple) {
             for (size_t i = 1; i < target.size(); ++i) {
                 const auto& prev = target[i-1];
                 const auto& x = target[i];
-                EXPECT_TRUE(prev.first < x.first); // no ties in this simulation.
-                EXPECT_TRUE(col[universe[prev.second]] < col[universe[x.second]]);
+                EXPECT_LT(prev.first, x.first); // no ties in this simulation.
+                EXPECT_LT(col[universe[prev.second]], col[universe[x.second]]);
                 test_in_use.push_back(universe[x.second]);
             }
 
@@ -157,11 +167,12 @@ TEST_P(TrainIntegratedTest, Intersect) {
     int ntop = std::get<0>(param);
     int nthreads = std::get<1>(param);
 
-    auto test_ids = simulate_ids(ngenes, ntop + nthreads);
+    int base_seed = (ntop + nthreads) * 100;
+    auto test_ids = simulate_test_ids(ngenes, base_seed * 10);
+
     std::vector<std::vector<int> > ref_ids;
     for (size_t r = 0; r < nrefs; ++r) {
-        size_t seed = (ntop + nthreads) * 10;
-        ref_ids.push_back(simulate_ids(ngenes, seed));
+        ref_ids.push_back(simulate_ref_ids(ngenes, base_seed * 20 + r));
     }
 
     // Adding each reference to the list. We store the single prebuilts for testing later.
@@ -194,7 +205,7 @@ TEST_P(TrainIntegratedTest, Intersect) {
         std::unordered_map<int, int> mapping;
         const auto& keep = ref_ids[r];
         for (size_t g = 0; g < keep.size(); ++g) {
-            if (keep[g] != -1) {
+            if (keep[g] != MISSING_REF_ID) {
                 mapping[keep[g]] = g;
             }
         }
@@ -255,8 +266,8 @@ TEST_P(TrainIntegratedTest, Intersect) {
             for (size_t i = 1; i < target.size(); ++i) {
                 const auto& prev = target[i-1];
                 const auto& x = target[i];
-                EXPECT_TRUE(prev.first < x.first); // no ties in this simulation.
-                EXPECT_TRUE(col[mapping[universe[prev.second]]] < col[mapping[universe[x.second]]]);
+                EXPECT_LT(prev.first, x.first); // no ties in this simulation.
+                EXPECT_LT(col[mapping[universe[prev.second]]], col[mapping[universe[x.second]]]);
                 test_in_use.push_back(universe[x.second]);
             }
 
@@ -273,5 +284,256 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(
         ::testing::Values(5, 10, 20), // number of top genes.
         ::testing::Values(1, 3) // number of threads
+    )
+);
+
+/********************************************/
+
+class ClassifyIntegratedTest : public ::testing::TestWithParam<std::tuple<int, double> >, public IntegratedTestCore {
+protected:
+    static void SetUpTestSuite() {
+        assemble();
+    }
+
+    template<class Prebuilt_>
+    static std::vector<std::vector<int> > mock_best_choices(size_t ntest, const std::vector<Prebuilt_>& prebuilts, size_t seed) {
+        size_t nrefs = prebuilts.size();
+        std::vector<std::vector<int> > chosen(nrefs);
+
+        std::mt19937_64 rng(seed);
+        for (size_t r = 0; r < nrefs; ++r) {
+            size_t nlabels = prebuilts[r].get_markers().size();
+            for (size_t t = 0; t < ntest; ++t) {
+                chosen[r].push_back(rng() % nlabels);
+            }
+        }
+
+        return chosen;
+    }
+
+    static auto split_by_labels(const std::vector<std::vector<int> >& labels) {
+        std::vector<std::vector<std::vector<int> > > by_labels(labels.size());
+        for (size_t r = 0, nrefs = labels.size(); r < nrefs; ++r) {
+            const auto& current = labels[r];
+            size_t nlabels = *std::max_element(current.begin(), current.end()) + 1;
+            by_labels[r] = split_by_label(nlabels, current);
+        }
+        return by_labels;
+    }
+
+    template<class Prebuilt_>
+    static std::unordered_set<int> create_universe(size_t cell, const std::vector<Prebuilt_>& prebuilts, const std::vector<std::vector<int> >& chosen) {
+        std::unordered_set<int> tmp;
+        for (size_t r = 0; r < prebuilts.size(); ++r) {
+            const auto& pre = prebuilts[r];
+            const auto& best_markers = pre.get_markers()[chosen[r][cell]];
+            for (const auto& x : best_markers) {
+                for (auto y : x) {
+                    if constexpr(std::is_same<Prebuilt_, singlepp::TrainedSingle<int, double> >::value) {
+                        tmp.insert(pre.get_subset()[y]);
+                    } else {
+                        tmp.insert(pre.get_test_subset()[y]);
+                    }
+                }
+            }
+        }
+        return tmp;
+    }
+
+    static std::vector<double> quick_scaled_ranks(const std::vector<double>& col, const std::vector<int>& universe) {
+        std::vector<double> copy;
+        copy.reserve(universe.size());
+        for (auto u : universe) {
+            copy.push_back(col[u]);
+        }
+        return ::quick_scaled_ranks(copy);
+    }
+};
+
+TEST_P(ClassifyIntegratedTest, Basic) {
+    auto param = GetParam();
+    int ntop = std::get<0>(param);
+    double quantile = std::get<1>(param);
+
+    int base_seed = ntop + 1000 * quantile;
+
+    // Mocking up the test and individual references, and creating the
+    // integrated set of references with IntegratedBuilder.
+    size_t ntest = 20;
+    size_t ngenes = 2000;
+    auto test = spawn_matrix(ngenes, ntest, base_seed * 10);
+
+    size_t nsamples = 50;
+    size_t nrefs = 3;
+
+    singlepp::TrainSingleOptions<int, double> bopt;
+    bopt.top = ntop;
+    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
+
+    for (size_t r = 0; r < nrefs; ++r) {
+        auto pre = singlepp::train_single(*(references[r]), labels[r].data(), markers[r], bopt);
+        prebuilts.push_back(std::move(pre));
+        integrated_inputs.push_back(singlepp::prepare_integrated_input(*(references[r]), labels[r].data(), prebuilts.back()));
+    }
+
+    singlepp::TrainIntegratedOptions iopt;
+    auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
+
+    // Mocking up some of the best choices.
+    auto chosen = mock_best_choices(ntest, prebuilts, base_seed * 30);
+    std::vector<const int*> chosen_ptrs(nrefs);
+    for (size_t r = 0; r < nrefs; ++r) {
+        chosen_ptrs[r] = chosen[r].data();
+    }
+
+    // Comparing the classify_integrated output to a reference calculation.
+    singlepp::ClassifyIntegratedOptions<double> copt;
+    copt.quantile = quantile;
+    auto output = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated, copt);
+    auto by_labels = split_by_labels(labels);
+    auto wrk = test->dense_column();
+    std::vector<double> buffer(test->nrow());
+
+    for (size_t t = 0; t < ntest; ++t) {
+        auto my_universe = create_universe(t, prebuilts, chosen);
+        std::vector<int> universe(my_universe.begin(), my_universe.end());
+        std::sort(universe.begin(), universe.end());
+
+        auto col = wrk->fetch(t, buffer.data());
+        tatami::copy_n(col, test->nrow(), buffer.data());
+        auto scaled = quick_scaled_ranks(buffer, universe);
+
+        std::vector<double> all_scores;
+        for (size_t r = 0; r < nrefs; ++r) {
+            double score = naive_score(scaled, by_labels[r][chosen[r][t]], references[r].get(), universe, quantile);
+            EXPECT_FLOAT_EQ(score, output.scores[r][t]);
+            all_scores.push_back(score);
+        }
+
+        auto best = std::max_element(all_scores.begin(), all_scores.end());
+        EXPECT_EQ(output.best[t], best - all_scores.begin());
+
+        double best_score = *best;
+        *best = -100000;
+        EXPECT_FLOAT_EQ(output.delta[t], best_score - *std::max_element(all_scores.begin(), all_scores.end()));
+    }
+
+    // Same results in parallel.
+    copt.num_threads = 3;
+    auto poutput = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated, copt);
+    EXPECT_EQ(output.best, poutput.best);
+    EXPECT_EQ(output.delta, poutput.delta);
+    for (size_t r = 0; r < nrefs; ++r) {
+        EXPECT_EQ(output.scores[r], poutput.scores[r]);
+    }
+}
+
+TEST_P(ClassifyIntegratedTest, Intersected) {
+    auto param = GetParam();
+    int ntop = std::get<0>(param);
+    double quantile = std::get<1>(param);
+    int base_seed = ntop + quantile * 100;
+
+    // Mocking up the test and individual references, and creating the
+    // integrated set of references with IntegratedBuilder.
+    size_t ntest = 20;
+    size_t ngenes = 2000;
+    auto test = spawn_matrix(ngenes, ntest, base_seed * 10);
+    auto test_ids = simulate_test_ids(ngenes, base_seed * 20);
+
+    size_t nsamples = 50;
+    size_t nrefs = 3;
+
+    singlepp::TrainSingleOptions<int, double> bopt;
+    bopt.top = ntop;
+    std::vector<std::vector<int> > ref_ids;
+    std::vector<singlepp::TrainedSingleIntersect<int, double> > prebuilts;
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
+
+    for (size_t r = 0; r < nrefs; ++r) {
+        size_t seed = base_seed * 20 + r * 321;
+        ref_ids.push_back(simulate_ref_ids(ngenes, seed + 3));
+        const auto& ref_id = ref_ids.back();
+        auto pre = singlepp::train_single_intersect<int>(ngenes, test_ids.data(), *(references[r]), ref_id.data(), labels[r].data(), markers[r], bopt);
+        prebuilts.push_back(std::move(pre));
+        integrated_inputs.push_back(singlepp::prepare_integrated_input_intersect<int>(ngenes, test_ids.data(), *(references[r]), ref_id.data(), labels[r].data(), prebuilts.back()));
+    }
+
+    singlepp::TrainIntegratedOptions iopt;
+    auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
+
+    // Mocking up some of the best choices.
+    auto chosen = mock_best_choices(ntest, prebuilts, base_seed + 2468);
+    std::vector<const int*> chosen_ptrs(nrefs);
+    for (size_t r = 0; r < nrefs; ++r) {
+        chosen_ptrs[r] = chosen[r].data();
+    }
+
+    // Comparing the ClassifyIntegrated to a reference calculation.
+    singlepp::ClassifyIntegratedOptions<double> copt;
+    copt.quantile = quantile;
+    auto output = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated, copt);
+    auto by_labels = split_by_labels(labels);
+
+    std::vector<std::unordered_map<int, int> > reverser(nrefs);
+    for (size_t r = 0; r < nrefs; ++r) {
+        const auto& ref_id = ref_ids[r];
+        for (size_t i = 0; i < ref_id.size(); ++i) {
+            if (ref_id[i] != MISSING_REF_ID) {
+                reverser[r][ref_id[i]] = i;
+            }
+        }
+    }
+
+    auto wrk = test->dense_column();
+    std::vector<double> buffer(test->nrow());
+    for (size_t t = 0; t < ntest; ++t) {
+        auto my_universe = create_universe(t, prebuilts, chosen);
+
+        std::vector<double> all_scores;
+        for (size_t r = 0; r < nrefs; ++r) {
+            std::vector<int> universe_test, universe_ref;
+            for (auto s : my_universe) {
+                auto it = reverser[r].find(s);
+                if (it != reverser[r].end()) {
+                    universe_test.push_back(s);
+                    universe_ref.push_back(it->second);
+                }
+            }
+
+            auto col = wrk->fetch(t, buffer.data());
+            tatami::copy_n(col, buffer.size(), buffer.data());
+            auto scaled = quick_scaled_ranks(buffer, universe_test);
+
+            double score = naive_score(scaled, by_labels[r][chosen[r][t]], references[r].get(), universe_ref, quantile);
+            EXPECT_FLOAT_EQ(score, output.scores[r][t]);
+            all_scores.push_back(score);
+        }
+
+        auto best = std::max_element(all_scores.begin(), all_scores.end());
+        EXPECT_EQ(output.best[t], best - all_scores.begin());
+
+        double best_score = *best;
+        *best = -100000;
+        EXPECT_FLOAT_EQ(output.delta[t], best_score - *std::max_element(all_scores.begin(), all_scores.end()));
+    }
+
+    // Same results in parallel.
+    copt.num_threads = 3;
+    auto poutput = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated, copt);
+    EXPECT_EQ(output.best, poutput.best);
+    EXPECT_EQ(output.delta, poutput.delta);
+    for (size_t r = 0; r < nrefs; ++r) {
+        EXPECT_EQ(output.scores[r], poutput.scores[r]);
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    ClassifyIntegrated,
+    ClassifyIntegratedTest,
+    ::testing::Combine(
+        ::testing::Values(5, 10, 20), // number of top genes.
+        ::testing::Values(0.5, 0.8, 0.9) // number of quantiles.
     )
 );

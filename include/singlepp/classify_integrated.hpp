@@ -138,9 +138,9 @@ void classify_integrated(
         internal::RankedVector<Index_, Index_> ref_ranked;
         ref_ranked.reserve(NR);
 
-        std::vector<Value_> test_scaled(NR);
-        std::vector<Value_> ref_scaled(NR);
-        std::vector<Value_> all_correlations;
+        std::vector<Float_> test_scaled(NR);
+        std::vector<Float_> ref_scaled(NR);
+        std::vector<Float_> all_correlations;
 
         for (Index_ i = start, end = start + len; i < end; ++i) {
             // Extracting only the markers of the best labels for this cell.
@@ -163,7 +163,7 @@ void classify_integrated(
             std::sort(test_ranked_full.begin(), test_ranked_full.end());
 
             // Scanning through each reference and computing the score for the best group.
-            Value_ best_score = -1000, next_best = -1000;
+            Float_ best_score = -1000, next_best = -1000;
             Index_ best_ref = 0;
             bool direct_mapping_filled = false;
 
@@ -211,11 +211,11 @@ void classify_integrated(
                     ref_ranked.clear();
                     mapping->remap(best_ranked[s], ref_ranked);
                     internal::scaled_ranks(ref_ranked, ref_scaled.data());
-                    Value_ cor = internal::distance_to_correlation(ref_scaled.size(), test_scaled, ref_scaled);
+                    Float_ cor = internal::distance_to_correlation<Float_>(test_scaled, ref_scaled);
                     all_correlations.push_back(cor);
                 }
 
-                Value_ score = correlations_to_scores(all_correlations, options.quantile);
+                Float_ score = internal::correlations_to_scores(all_correlations, options.quantile);
                 if (buffers.scores[r]) {
                     buffers.scores[r][i] = score;
                 }
@@ -306,7 +306,7 @@ ClassifyIntegratedResults<RefLabel_, Float_> classify_integrated(
     for (auto& s : results.scores) {
         buffers.scores.emplace_back(s.data());
     }
-    classify_integrated(test, assigned, trained, buffers);
+    classify_integrated(test, assigned, trained, buffers, options);
     return results;
 }
 
