@@ -14,8 +14,7 @@
 #include <unordered_set>
 
 /**
- * @file IntegratedScorer.hpp
- *
+ * @file classify_integrated.hpp
  * @brief Integrate classifications from multiple references.
  */
 
@@ -23,6 +22,7 @@ namespace singlepp {
 
 /**
  * @brief Options for `classify_integrated()`.
+ * @tparam Float_ Floating-point type for the correlations and scores.
  */
 template<typename Float_>
 struct ClassifyIntegratedOptions {
@@ -40,7 +40,7 @@ struct ClassifyIntegratedOptions {
 
 /**
  * @brief Output buffers for `classify_single()`.
- * @tparam Label_ Integer type for the reference labels.
+ * @tparam RefLabel_ Integer type for the label to represent each reference.
  * @tparam Float_ Floating-point type for the correlations and scores.
  */
 template<typename RefLabel_, typename Float_>
@@ -94,21 +94,21 @@ struct ClassifyIntegratedBuffers {
  * Similarly, we defer responsibility on solving the issue of label heterogeneity,
  * by just passing along the existing labels and leaving it to the user's interpretation.
  * 
- * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
- * The identity of the rows should be consistent with the arguments used in `IntegratedBuilder::add()`.
+ * @tparam Value_ Numeric type for the matrix values.
+ * @tparam Index_ Integer type for the row/column indices.
+ * @tparam Label_ Integer type for the labels within each reference.
+ * @tparam RefLabel_ Integer type for the label to represent each reference.
+ * @tparam Float_ Floating-point type for the correlations and scores.
+ * 
+ * @param test Expression matrix of the test dataset, where rows are genes and columns are cells.
+ * The identity of the rows should be consistent with the reference datasets used to construct `trained`,
+ * see `prepare_integrated_input()` and `prepare_integrated_input_intersect()` for details.
  * @param[in] assigned Vector of pointers of length equal to the number of references.
- * Each pointer should point to an array of length equal to the number of columns in `mat`,
+ * Each pointer should point to an array of length equal to the number of columns in `test`,
  * containing the assigned label for each column in each reference.
- * @param built Set of integrated references produced by `IntegratedBuilder::finish()`.
- * @param[out] best Pointer to an array of length equal to the number of columns in `mat`.
- * On output, this is filled with the index of the reference with the best label for each cell.
- * @param[out] scores Vector of pointers of length equal to the number of references.
- * Each pointer should point to an array of length equal to the number of columns in `mat`.
- * On output, this is filled with the (non-fine-tuned) score for the best label of that reference for each cell.
- * Any pointer may be `NULL` in which case the scores for that label will not be reported.
- * @param[out] delta Pointer to an array of length equal to the number of columns in `mat`.
- * On output, this is filled with the difference between the highest and second-highest scores.
- * This may also be `NULL` in which case the deltas are not reported.
+ * @param trained Set of integrated references produced by `IntegratedBuilder::finish()`.
+ * @param[out] buffers Buffers in which to store the classification output.
+ * @param options Further options.
  */
 template<typename Value_, typename Index_, typename Label_, typename RefLabel_, typename Float_>
 void classify_integrated(
@@ -245,6 +245,8 @@ void classify_integrated(
 
 /**
  * @brief Results of `classify_integrated()`.
+ * @tparam RefLabel_ Integer type for the label to represent each reference.
+ * @tparam Float_ Floating-point type for the correlations and scores.
  */
 template<typename RefLabel_, typename Float_>
 struct ClassifyIntegratedResults {
@@ -282,14 +284,18 @@ struct ClassifyIntegratedResults {
 };
 
 /**
- * @param mat Expression matrix of the test dataset, where rows are genes and columns are cells.
- * The identity of the rows should be consistent with the arguments used in `IntegratedBuilder::add()`.
+ * Overload of `classify_integrated()` that allocates space for the results.
+ *
+ * @param test Expression matrix of the test dataset, where rows are genes and columns are cells.
+ * The identity of the rows should be consistent with the reference datasets used to construct `trained`,
+ * see `prepare_integrated_input()` and `prepare_integrated_input_intersect()` for details.
  * @param[in] assigned Vector of pointers of length equal to the number of references.
  * Each pointer should point to an array of length equal to the number of columns in `mat`,
  * containing the assigned label for each column in each reference.
- * @param built Set of integrated references produced by `IntegratedBuilder::finish()`.
+ * @param trained A pre-built classifier produced by `train_integrated()`.
+ * @param options Further options.
  *
- * @return A `Results` object containing the assigned labels and scores.
+ * @return Object containing the best reference and associated scores for each cell in `test`.
  */
 template<typename RefLabel_, typename Value_, typename Index_, typename Label_, typename Float_>
 ClassifyIntegratedResults<RefLabel_, Float_> classify_integrated(

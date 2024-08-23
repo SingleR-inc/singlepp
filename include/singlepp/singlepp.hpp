@@ -4,7 +4,7 @@
 /**
  * @file singlepp.hpp
  *
- * @brief Umbrella header for all includes.
+ * @brief Umbrella header for the **singlepp** library.
  */
 
 #include "Markers.hpp"
@@ -17,7 +17,8 @@
 
 /**
  * @namespace singlepp
- * Cell type classification using the SingleR algorithm in C++.
+ * @brief Cell type classification using the SingleR algorithm in C++.
  */
+namespace singlepp {}
 
 #endif

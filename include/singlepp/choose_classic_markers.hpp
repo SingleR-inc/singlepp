@@ -14,8 +14,7 @@
 #include <set>
 
 /**
- * @file ChooseClassicMarkers.hpp
- *
+ * @file choose_classic_markers.hpp
  * @brief Classic method for choosing markers.
  */
 
@@ -23,11 +22,11 @@ namespace singlepp {
 
 /**
  * Choose the number of markers in `choose_classic_markers()`.
- * The exact expression is defined as \f$500 (\frac{2}{3})^{\log_2{N}}\f$ for \f$N\f$ labels,
+ * The exact expression is defined as \f$500 (\frac{2}{3})^{\log_2{L}}\f$ for \f$L\f$ labels,
  * which steadily decreases the markers per comparison as the number of labels increases.
  * This aims to avoid an excessive number of features when dealing with references with many labels.
  *
- * @param nlabels Number of labels in the reference(s).
+ * @param num_labels Number of labels in the reference(s).
  *
  * @return An appropriate number of markers for each pairwise comparison.
  */
@@ -52,9 +51,10 @@ struct ChooseClassicMarkersOptions {
 };
 
 /**
- * Overload of `choose_classic_markers()` that handles multiple references are present.
- * When choosing markers for label A against B, we compute the sum of the log-fold changes across all references with both labels A and B.
- * The ordering of the top genes is then performed using this sum.
+ * Overload of `choose_classic_markers()` that handles multiple references. 
+ * When choosing markers for label \f$A\f$ against \f$B\f$, we only consider those references with both labels \f$A\f$ and \f$B\f$.
+ * For each gene, we compute the log-fold change within each reference, and then sum the log-fold changes across references;
+ * the ordering of the top genes is then performed using this sum.
  * It is assumed that all references have the same number and ordering of features in their rows.
  *
  * @tparam Value_ Numeric type of matrix values.
@@ -62,12 +62,14 @@ struct ChooseClassicMarkersOptions {
  * @tparam Label_ Integer type for the label identity.
  *
  * @param representatives Vector of pointers to representative **tatami** matrices.
- * Each matrix should contain one column per label; each column should have a representative log-expression profile for that label.
+ * Each matrix should contain no more than one column per label.
+ * Each column should contain a "representative" log-expression profile for that label,
+ * e.g., using the per-gene median expression across all samples assigned to that label.
  * All matrices should have the same number of rows, corresponding to the same features.
  * @param labels Vector of pointers of length equal to `representatives`.
  * Each array should be of length equal to the number of columns of the corresponding entry of `representatives`.
  * Each value of the array should specify the label for the corresponding column in its matrix.
- * Values should lie in \f$[0, N)\f$ for \f$N\f$ unique labels across all entries of `labels`.
+ * Values should lie in \f$[0, L)\f$ for \f$L\f$ unique labels across all entries of `labels`.
  * @param options Further options.
  *
  * @return Top markers for each pairwise comparison between labels.
@@ -275,9 +277,10 @@ Markers<Index_> choose_classic_markers(
  */
 
 /**
- * Implements the classic **SingleR** method for choosing markers from (typically bulk) reference dataasets.
+ * Implements the classic **SingleR** method for choosing markers from (typically bulk) reference datasets.
  * We assume that we have a matrix of representative log-expression profiles for each label, typically computed by taking some average across all reference profiles for that label.
- * For the comparison between labels A and B, we define the marker set as the top genes with the largest positive differences in A's profile over B (i.e., the log-fold change).
+ * For the comparison between labels \f$A\f$ and \f$B\f$, we define the marker set as the top genes with the largest positive differences in \f$A\f$'s profile over \f$B\f$
+ * (i.e., the log-fold change, for a matrix containing log-expression values).
  * The number of top genes can either be explicitly specified or it can be automatically determined from the number of labels.
  *
  * @tparam Value_ Numeric type of matrix values.
@@ -288,7 +291,7 @@ Markers<Index_> choose_classic_markers(
  * Each column should have a representative log-expression profile for that label.
  * @param labels Pointer to an array of length equal to the number of columns in `representative`.
  * Each value of the array should specify the label for the corresponding column. 
- * Values should lie in \f$[0, N)\f$ for \f$N\f$ unique labels. 
+ * Values should lie in \f$[0, L)\f$ for \f$L\f$ unique labels. 
  * @param options Further options.
  *
  * @return Top markers for each pairwise comparison between labels.

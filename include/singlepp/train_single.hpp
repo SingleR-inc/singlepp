@@ -107,9 +107,10 @@ private:
 
 public:
     /**
-     * @return A vector of vectors of ranked marker genes to be used in the classification.
-     * Values are indices into the subset vector (see `get_subset()`).
-     * The set of marker genes is a subset of those in the input `markers` in `train_single()`.
+     * @return A vector of vectors of vectors of ranked marker genes to be used in the classification.
+     * In the innermost vectors, each value is an index into the subset vector (see `get_subset()`),
+     * e.g., `get_subset()[get_markers()[2][1].front()]` is the row index of the first marker of the third label over the first label.
+     * The set of marker genes is a subset of the input `markers` used in `train_single()`.
      */
     const Markers<Index_>& get_markers() const {
         return my_markers;
@@ -117,7 +118,7 @@ public:
 
     /**
      * @return The subset of genes in the test/reference datasets that were used in the classification.
-     * Values are row indices into each matrix.
+     * Each value is a row index into either matrix.
      */
     const std::vector<Index_>& get_subset() const {
         return my_subset;
@@ -154,8 +155,8 @@ public:
 
 /**
  * Prepare a single labelled reference dataset for use in `classify_single()`.
- * This involves pre-ranking the markers based on the expression in each sample of the reference dataset,
- * so that the Spearman correlations can be computed without redundant sorting.
+ * This involves pre-ranking the markers based on their expression in each reference profile,
+ * so that the Spearman correlations can be computed without repeated sorting. 
  * We also construct neighbor search indices for rapid calculation of the classification score.
  *
  * The classifier returned by this function should only be used in `classify_single()` with a test dataset that has the same genes as the reference dataset.
@@ -167,8 +168,8 @@ public:
  * @tparam Float_ Floating-point type for the correlations and scores.
  *
  * @param ref Matrix for the reference expression profiles.
- * Rows are genes while columns are samples.
- * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
+ * Rows are genes while columns are profiles.
+ * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each reference profile.
  * Labels should be integers in \f$[0, L)\f$ where \f$L\f$ is the total number of unique labels.
  * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
  * @param options Further options.
@@ -226,8 +227,9 @@ private:
 public:
     /**
      * @return A vector of vectors of ranked marker genes to be used in the classification.
-     * Values are indices into the subset vectors from `get_test_subset()` and `get_ref_subset()` for their respective matrices.
-     * The set of marker genes is typically a subset of those in the input `markers` in `train_single_intersect()`.
+     * In the innermost vectors, each value is an index into the subset vectors (see `get_test_subset()` and `get_ref_subset()`).
+     * e.g., `get_test_subset()[get_markers()[2][1].front()]` is the test matrix row index of the first marker of the third label over the first label.
+     * The set of marker genes is a subset of those in the input `markers` in `train_single_intersect()`.
      */
     const Markers<Index_>& get_markers() const {
         return my_markers;
@@ -235,8 +237,8 @@ public:
 
     /**
      * @return Subset of genes in the intersection for the test dataset.
-     * These are unique indices into the `test_id` array supplied to `train_single_intersect()`.
-     * This has the same length as the subset vector returned by `get_ref_subset(0`, where corresponding entries refer to the same genes in the respective datasets.
+     * These are unique indices into the `test_id` array supplied to `train_single_intersect()`, and can be assumed to represent row indices into the test matrix.
+     * This has the same length as the subset vector returned by `get_ref_subset()`, where corresponding entries refer to the same genes in the respective datasets.
      */
     const std::vector<Index_>& get_test_subset() const {
         return my_test_subset;
@@ -244,7 +246,7 @@ public:
 
     /**
      * @return Subset of genes in the intersection for the test dataset.
-     * These are unique indices into the `ref_id` matrix supplied to `train_single_intersect()`.
+     * These are unique indices into the `ref_id` matrix supplied to `train_single_intersect()`, and can be assumed to represent row indices into the reference matrix.
      * This has the same length as the subset vector returned by `get_test_subset()`, where corresponding entries refer to the same genes in the respective datasets.
      */
     const std::vector<Index_>& get_ref_subset() const {
@@ -292,13 +294,10 @@ public:
  * @tparam Label_ Integer type for the reference labels.
  * @tparam Float_ Floating-point type for the correlations and scores.
  *
- * @param intersection Vector defining the intersection of genes between the test and reference datasets.
- * Each entry is a pair where the first element is the row index in the test matrix,
- * and the second element is the row index for the corresponding feature in the reference matrix.
- * Each row index for either matrix should occur no more than once in `intersection`.
+ * @param intersection Vector defining the intersection of genes between the test and reference datasets, see `intersect_genes()` for more details.
  * @param ref An expression matrix for the reference expression profiles, where rows are genes and columns are cells.
  * This should have non-zero columns.
- * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
+ * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each reference profile.
  * Labels should be integers in \f$[0, L)\f$ where \f$L\f$ is the total number of unique labels.
  * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
  * @param options Further options.
@@ -323,7 +322,7 @@ TrainedSingleIntersect<Index_, Float_> train_single_intersect(
  * This is useful when the genes are not in the same order and number across the test and reference datasets.
  *
  * The classifier returned by this function should only be used in `classify_single_intersect()` with a test dataset
- * that has `test_ngenes` rows with the same order and identity of genes as in `test_id`.
+ * that has `test_nrow` rows with the same order and identity of genes as in `test_id`.
  *
  * @tparam Index_ Integer type for the row/column indices of the matrix.
  * @tparam Id_ Type of the gene identifier for each row, typically integer or string.
@@ -339,7 +338,7 @@ TrainedSingleIntersect<Index_, Float_> train_single_intersect(
  * @param[in] ref_id Pointer to an array of length equal to the number of rows of `ref`, containing a gene identifier for each row of the reference dataset.
  * Identifiers should be comparable to those in `test_id`.
  * If any duplicate IDs are present, only the first occurrence is used.
- * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
+ * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each reference profile.
  * Labels should be integers in \f$[0, L)\f$ where \f$L\f$ is the total number of unique labels.
  * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
  * @param options Further options.

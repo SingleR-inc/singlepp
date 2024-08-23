@@ -84,24 +84,25 @@ struct ClassifySingleBuffers {
 };
 
 /**
- * Implements the [**SingleR**](https://bioconductor.org/packages/SingleR) algorithm for automated annotation of single-cell RNA-seq data.
+ * @brief Implements the [**SingleR**](https://bioconductor.org/packages/SingleR) algorithm for automated annotation of single-cell RNA-seq data.
  *
  * For each cell, we compute the Spearman rank correlation between that cell and the reference expression profiles.
  * This is done using only the subset of genes that are label-specific markers,
- * most typically the top genes from pairwise comparisons between each label's expression profiles.
+ * most typically the top genes from pairwise comparisons between each label's expression profiles (see `choose_classic_markers()` for an example).
  * For each label, we take the correlations involving that label's reference profiles and convert it into a score.
  * The label with the highest score is used as an initial label for that cell.
  *
- * For each cell, we apply fine-tuning iterations to improve the label accuracy by refining the feature space.
- * At each iteration, we find the subset of labels with scores that are close to the maximum score according to some threshold.
- * We recompute the scores based on the markers for this label subset, and we repeat the process until only one label is left in the subset or the subset is unchanged.
+ * Next, we apply fine-tuning iterations to improve the label accuracy for each cell by refining the feature space.
+ * We find the subset of labels with scores that are "close enough" to the maximum score according to some threshold.
+ * We recompute the scores using only the markers for this subset of labels, and we repeat the process until only one label is left or the subset of labels no longer changes.
  * At the end of the iterations, the label with the highest score (or the only label, if just one is left) is used as the label for the cell.
  * This process aims to remove noise by eliminating irrelevant genes when attempting to distinguish closely related labels.
  * 
  * Each label's score is defined as a user-specified quantile of the distribution of correlations across all reference profiles assigned to that label.
- * (We typically consider a large quantile, e.g., the 80% percentile of the correlations.)
- * The use of a quantile avoids problems with differences in the number of reference profiles per label;
- * in contrast, just using the "top X correlations" would implicitly favor labels with more reference profiles.
+ * Larger quantiles focus on similarity between the test cell and the closest profiles for a label, which is useful for broad labels with heterogeneous profiles.
+ * Smaller quantiles require the test cell to be similar to the majority of profiles for a label.
+ * The use of a quantile ensures that the score adjusts to the number of reference profiles per label;
+ * otherwise, just using the "top X correlations" would implicitly favor labels with more reference profiles.
  *
  * The choice of Spearman's correlation provides some robustness against batch effects when comparing reference and test datasets.
  * Only the relative expression _within_ each cell needs to be comparable, not their relative expression across cells.
@@ -115,8 +116,8 @@ struct ClassifySingleBuffers {
  * 
  * @tparam Value_ Numeric type for the matrix values.
  * @tparam Index_ Integer type for the row/column indices.
- * @tparam Label_ Integer type for the reference labels.
  * @tparam Float_ Floating-point type for the correlations and scores.
+ * @tparam Label_ Integer type for the reference labels.
  *
  * @param test Expression matrix of the test dataset, where rows are genes and columns are cells.
  * This should have the same order and identity of genes as the reference matrix used to create `trained`.
@@ -158,7 +159,7 @@ void classify_single(
  * @tparam Float_ Floating-point type for the correlations and scores.
  *
  * @param test Expression matrix of the test dataset, where rows are genes and columns are cells.
- * This should have the same order and identity of genes as the reference matrix used to create `trained`.
+ * This should have the same order and identity of genes as the `test_nrow` and `test_id` used to create `trained`.
  * @param trained Classifier returned by `train_single_intersect()`.
  * @param[out] buffers Buffers in which to store the classification output.
  * Each non-`NULL` pointer should refer to an array of length equal to the number of columns in `test`.
@@ -166,12 +167,13 @@ void classify_single(
  */
 template<typename Value_, typename Index_, typename Float_, typename Label_>
 void classify_single_intersect(
-    const tatami::Matrix<Value_, Index_>& mat, 
+    const tatami::Matrix<Value_, Index_>& test, 
     const TrainedSingleIntersect<Index_, Float_>& trained,
     const ClassifySingleBuffers<Label_, Float_>& buffers,
     const ClassifySingleOptions<Float_>& options) 
 {
-    internal::annotate_cells_simple(mat, 
+    internal::annotate_cells_simple(
+        test, 
         trained.get_test_subset().size(), 
         trained.get_test_subset().data(), 
         trained.get_references(), 
@@ -187,7 +189,7 @@ void classify_single_intersect(
 }
 
 /**
- * @brief Results of `classify_single()`.
+ * @brief Results of `classify_single()` and `classify_single_intersect()`.
  * @tparam Label_ Integer type for the reference labels.
  * @tparam Float_ Floating-point type for the correlations and scores.
  */
@@ -284,7 +286,7 @@ ClassifySingleResults<Label_, Float_> classify_single(
  * @tparam Float_ Floating-point type for the correlations and scores.
  *
  * @param test Expression matrix of the test dataset, where rows are genes and columns are cells.
- * This should have the same order and identity of genes as the reference matrix used to create `trained`.
+ * This should have the same order and identity of genes as the `test_nrow` and `test_ids` used to create `trained`.
  * @param trained Classifier returned by `train_single_intersect()`.
  * @param options Further options.
  *

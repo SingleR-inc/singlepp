@@ -11,14 +11,21 @@
 
 /**
  * @file Intersection.hpp
- * @brief Intersection of features.
+ * @brief Create an intersection of genes.
  */
 
 namespace singlepp {
 
 /**
- * Intersection of features between two datasets (typically test and reference).
- * Each element corresponds to a pair of matching features and contains the row indices of those features in the test (`first`) or reference (`second`) dataset.
+ * Intersection of genes between two datasets.
+ * Each element is a pair of matching genes and contains the row indices of those genes in each dataset.
+ * A row index for either matrix should occur no more than once in this object.
+ *
+ * Typically, the first element of the pair contains the row index of a gene in the test dataset,
+ * while the second element of the pair contains the row index of the same gene in the reference dataset.
+ * This convention is used by `intersect_genes()`, `train_single_intersect()` and `prepare_integrated_input_intersect()`.
+ *
+ * @tparam Index_ Integer type for the gene (row) indices.
  */
 template<typename Index_>
 using Intersection = std::vector<std::pair<Index_, Index_> >;
@@ -26,22 +33,23 @@ using Intersection = std::vector<std::pair<Index_, Index_> >;
 /**
  * Compute the intersection of genes in the test and reference datasets.
  *
- * @tparam Index_ Integer type for the row indices of genes in each dataaset.
+ * @tparam Index_ Integer type for the row indices of genes in each dataset.
  * Also used as the type for the number of genes.
  * @tparam Id_ Type of the gene identifier, typically an integer or string.
  *
- * @param test_ngenes Number of genes (i.e., rows) in the test dataset.
- * @param[in] test_id Pointer to an array of length `test_ngenes`, containing the gene identifiers for each row in the test dataset.
- * @param ref_ngenes Number of genes (i.e., rows) in the reference dataset.
- * @param[in] ref_id Pointer to an array of length `ref_ngenes`, containing the gene identifiers for each row in the reference dataset.
+ * @param test_nrow Number of genes (i.e., rows) in the test dataset.
+ * @param[in] test_id Pointer to an array of length `test_nrow`, containing the gene identifiers for each row in the test dataset.
+ * @param ref_nrow Number of genes (i.e., rows) in the reference dataset.
+ * @param[in] ref_id Pointer to an array of length `ref_nrow`, containing the gene identifiers for each row in the reference dataset.
  * 
- * @return Intersection of features between the two datasets.
- * If duplicated identifiers are present in either of `test_id` or `ref_id`, only the first occurrence is used.
+ * @return Intersection of genes between the two datasets.
+ * The first entry of each pair contains the row index in the test dataset while the second entry contains the row index in the reference.
+ * If duplicated identifiers are present in either of `test_id` or `ref_id`, only the first occurrence is considered in the intersection.
  */
 template<typename Index_, typename Id_>
-Intersection<Index_> intersect_genes(Index_ test_ngenes, const Id_* test_id, Index_ ref_ngenes, const Id_* ref_id) {
+Intersection<Index_> intersect_genes(Index_ test_nrow, const Id_* test_id, Index_ ref_nrow, const Id_* ref_id) {
     std::unordered_map<Id_, Index_> ref_found;
-    for (Index_ i = 0; i < ref_ngenes; ++i) {
+    for (Index_ i = 0; i < ref_nrow; ++i) {
         auto current = ref_id[i];
         auto tfIt = ref_found.find(current);
         if (tfIt == ref_found.end()) { // only using the first occurrence of each ID in ref_id.
@@ -50,7 +58,7 @@ Intersection<Index_> intersect_genes(Index_ test_ngenes, const Id_* test_id, Ind
     }
 
     Intersection<Index_> output;
-    for (Index_ i = 0; i < test_ngenes; ++i) {
+    for (Index_ i = 0; i < test_nrow; ++i) {
         auto current = test_id[i];
         auto tfIt = ref_found.find(current);
         if (tfIt != ref_found.end()) {

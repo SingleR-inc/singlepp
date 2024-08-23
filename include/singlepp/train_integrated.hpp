@@ -15,13 +15,21 @@
 #include <memory>
 
 /**
- * @file IntegratedBuilder.hpp
- *
+ * @file train_integrated.hpp
  * @brief Prepare for integrated classification across references.
  */
 
 namespace singlepp {
 
+/**
+ * @brief Input to `train_integrated()`.
+ *
+ * Instances of this class should not be manually created, but instead returned by `prepare_integrated_input()` and `prepare_integrated_input_intersect()`.
+ *
+ * @tparam Value_ Numeric type for the matrix values.
+ * @tparam Index_ Integer type for the row/column indices of the matrix.
+ * @tparam Label_ Integer type for the reference labels.
+ */
 template<typename Value_, typename Index_, typename Label_>
 struct TrainIntegratedInput {
     /**
@@ -44,17 +52,22 @@ struct TrainIntegratedInput {
 };
 
 /**
- * Add a reference dataset to this object for later use in `finish()`.
- * This overload assumes that the reference and test datasets have the same features,
- * and that the reference dataset has already been processed through `BasicBuilder::run()`.
- * `ref` and `labels` are expected to remain valid until `finish()` is called.
+ * Prepare a reference dataset for `train_integrated()`.
+ * This overload assumes that the reference and test datasets have the same genes.
+ * `ref` and `labels` are expected to remain valid until `train_integrated()` is called.
  *
- * @param ref Matrix containing the reference expression values.
- * Rows are features and columns are reference samples.
- * The number and identity of features should be identical to the test dataset to be classified in `IntegratedScorer`.
+ * @tparam Value_ Numeric type for the matrix values.
+ * @tparam Index_ Integer type for the row/column indices of the matrix.
+ * @tparam Label_ Integer type for the reference labels.
+ * @tparam Float_ Floating-point type for the correlations and scores.
+ *
+ * @param ref Matrix containing the reference expression values, where rows are genes and columns are reference profiles.
+ * The number and identity of genes should be identical to the test dataset to be classified in `classify_integrated()`.
  * @param[in] labels Pointer to an array of label assignments.
- * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
- * @param built The built reference created by running `BasicBuilder::run()` on `ref` and `labels`.
+ * Values should be integers in \f$[0, L)\f$ where \f$L\f$ is the number of unique labels.
+ * @param trained Classifier created by calling `train_single()` on `ref` and `labels`.
+ *
+ * @return An opaque input object for `train_integrated()`.
  */
 template<typename Value_, typename Index_, typename Label_, typename Float_>
 TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input(
@@ -93,20 +106,23 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input(
 }
 
 /**
- * Add a reference dataset to this object for later use in `finish()`.
- * This overload requires an existing intersection between the test and reference datasets,
- * and assumes that the reference dataset has already been processed through `BasicBuilder::run()`.
- * `ref` and `labels` are expected to remain valid until `finish()` is called.
+ * Prepare a reference dataset for `train_integrated()`.
+ * This overload requires an existing intersection between the test and reference datasets. 
+ * `intersection`, `ref` and `labels` are expected to remain valid until `train_integrated()` is called.
  *
- * @param intersection Vector defining the intersection of features between the test and reference datasets.
- * Each entry is a pair where the first element is the row index in the test matrix,
- * and the second element is the row index for the corresponding feature in the reference matrix.
- * Each row index for either matrix should occur no more than once in `intersection`.
- * @param ref An expression matrix for the reference expression profiles, where rows are genes and columns are cells.
- * This should have non-zero columns.
+ * @tparam Index_ Integer type for the row/column indices of the matrix.
+ * @tparam Value_ Numeric type for the matrix values.
+ * @tparam Label_ Integer type for the reference labels.
+ * @tparam Float_ Floating-point type for the correlations and scores.
+ *
+ * @param intersection Vector defining the intersection of genes between the test and reference datasets, see `intersect_genes()` for details.
+ * @param ref Matrix containing the reference expression values, where rows are genes and columns are reference profiles.
+ * The number and identity of genes should be consistent with `intersection`.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
- * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
- * @param built The built reference created by running `BasicBuilder::run()` on all preceding arguments.
+ * Values should be integers in \f$[0, L)\f$ where \f$L\f$ is the number of unique labels.
+ * @param trained Classifier created by calling `train_single_intersect()` on `intersection`, `ref` and `labels`.
+ *
+ * @return An opaque input object for `train_integrated()`.
  */
 template<typename Index_, typename Value_, typename Label_, typename Float_>
 TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
@@ -149,26 +165,30 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
 }
 
 /**
- * Add a reference dataset to this object for later use in `finish()`.
- * This overload automatically identifies the intersection of features between the test and reference datasets,
- * and assumes that the reference dataset has already been processed through `BasicBuilder::run()`.
- * `ref` and `labels` are expected to remain valid until `finish()` is called.
- * `mat_id` and `mat_nrow` should also be constant for all invocations to `add()`.
+ * Prepare a reference dataset for `train_integrated()`.
+ * This overload automatically identifies the intersection of genes between the test and reference datasets.
+ * `ref` and `labels` are expected to remain valid until `train_integrated()` is called.
  *
- * @tparam Id Type of the gene identifier for each row.
+ * @tparam Index_ Integer type for the row/column indices of the matrix.
+ * @tparam Id_ Type of the gene identifier. 
+ * @tparam Value_ Numeric type for the matrix values.
+ * @tparam Label_ Integer type for the reference labels.
+ * @tparam Float_ Floating-point type for the correlations and scores.
  *
- * @param mat_nrow Number of rows (genes) in the test dataset.
- * @param[in] mat_id Pointer to an array of identifiers of length equal to `mat_nrow`.
- * This should contain a unique identifier for each row of `mat` (typically a gene name or index).
+ * @param test_nrow Number of rows (i.e., genes) in the test dataset.
+ * @param[in] test_id Pointer to an array of length equal to `test_nrow`.
+ * This should contain a unique identifier for each row of `mat`, typically a gene name or index.
  * If any duplicate IDs are present, only the first occurrence is used.
  * @param ref An expression matrix for the reference expression profiles, where rows are genes and columns are cells.
  * This should have non-zero columns.
- * @param[in] ref_id Pointer to an array of identifiers of length equal to the number of rows of any `ref`.
- * This should contain a unique identifier for each row in `ref`, and should be comparable to `mat_id`.
+ * @param[in] ref_id Pointer to an array equal to the number of rows of `ref`.
+ * This should contain a unique identifier for each row in `ref`, comparable to those in `test_id`.
  * If any duplicate IDs are present, only the first occurrence is used.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
- * The smallest label should be 0 and the largest label should be equal to the total number of unique labels minus 1.
- * @param built The built reference created by running `BasicBuilder::run()` on all preceding arguments.
+ * Values should be integers in \f$[0, L)\f$ where \f$L\f$ is the number of unique labels.
+ * @param trained Classifier created by calling `train_single_intersect()` on `test_nrow`, `test_id`, `ref`, `ref_id` and `labels`.
+ *
+ * @return An opaque input object for `train_integrated()`.
  */
 template<typename Index_, typename Id_, typename Value_, typename Label_, typename Float_>
 TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
@@ -188,13 +208,13 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
 
 /**
  * @brief Classifier that integrates multiple reference datasets.
+ * @tparam Index_ Integer type for the row/column indices of the matrix.
  */
 template<typename Index_>
 class TrainedIntegrated {
 public:
     /**
      * @return Number of reference datasets.
-     * Each object corresponds to the reference used in an `IntegratedBuilder::add()` call, in the same order.
      */
     size_t num_references() const {
         return markers.size();
@@ -238,7 +258,7 @@ public:
 };
 
 /**
- * @brief Options for `train_integrated()` and friends.
+ * @brief Options for `train_integrated()`. 
  */
 struct TrainIntegratedOptions {
     /**
@@ -246,7 +266,6 @@ struct TrainIntegratedOptions {
      */
     int num_threads = 1;
 };
-
 
 /**
  * @cond
@@ -417,11 +436,31 @@ TrainedIntegrated<Index_> train_integrated(Inputs_& inputs, const TrainIntegrate
  * @endcond
  */
 
+/**
+ * @tparam Value_ Numeric type for the matrix values.
+ * @tparam Index_ Integer type for the row/column indices of the matrix.
+ * @tparam Label_ Integer type for the reference labels.
+ *
+ * @param inputs Vector of references, typically constructed with `prepare_integrated_input()` or `prepare_integrated_input_intersect()`.
+ * @param options Further options.
+ *
+ * @return A pre-built classifier that integrates multiple references.
+ */
 template<typename Value_, typename Index_, typename Label_>
 TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInput<Value_, Index_, Label_> >& inputs, const TrainIntegratedOptions& options) {
     return internal::train_integrated<Value_, Index_>(inputs, options);
 }
 
+/**
+ * @tparam Value_ Numeric type for the matrix values.
+ * @tparam Index_ Integer type for the row/column indices of the matrix.
+ * @tparam Label_ Integer type for the reference labels.
+ *
+ * @param inputs Vector of references, typically constructed with `prepare_integrated_input()` or `prepare_integrated_input_intersect()`.
+ * @param options Further options.
+ *
+ * @return A pre-built classifier that integrates multiple references.
+ */
 template<typename Value_, typename Index_, typename Label_>
 TrainedIntegrated<Index_> train_integrated(std::vector<TrainIntegratedInput<Value_, Index_, Label_> >&& inputs, const TrainIntegratedOptions& options) {
     return internal::train_integrated<Value_, Index_>(inputs, options);
