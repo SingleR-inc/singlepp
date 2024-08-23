@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "custom_parallel.h"
 
-#include "singlepp/ChooseClassicMarkers.hpp"
+#include "singlepp/choose_classic_markers.hpp"
 #include "tatami/tatami.hpp"
 #include "spawn_matrix.h"
 
@@ -21,9 +21,9 @@ TEST_P(ChooseClassicMarkersTest, Simple) {
         std::reverse(groupings.begin(), groupings.end());
     }
 
-    singlepp::ChooseClassicMarkers mrk;
-    mrk.set_number(requested);
-    auto output = mrk.run(mat.get(), groupings.data());
+    singlepp::ChooseClassicMarkersOptions mopt;
+    mopt.number = requested;
+    auto output = singlepp::choose_classic_markers(*mat, groupings.data(), mopt);
     auto lwrk = mat->dense_column();
     auto rwrk = mat->dense_column();
     std::vector<double> lbuffer(mat->nrow()), rbuffer(mat->nrow());
@@ -65,8 +65,8 @@ TEST_P(ChooseClassicMarkersTest, Simple) {
     }
 
     // Same result when parallelized.
-    mrk.set_num_threads(3);
-    auto outputp = mrk.run(mat.get(), groupings.data());
+    mopt.num_threads = 3;
+    auto outputp = singlepp::choose_classic_markers(*mat, groupings.data(), mopt);
     for (size_t l = 0; l < nlabels; ++l) {
         const auto& serial = output[l];
         const auto& parallel = outputp[l];
@@ -92,10 +92,13 @@ TEST_P(ChooseClassicMarkersTest, Blocked) {
         std::reverse(groupings.begin(), groupings.end());
     }
 
-    singlepp::ChooseClassicMarkers mrk;
-    mrk.set_number(requested);
-    auto output = mrk.run(std::vector<const tatami::Matrix<double, int>*>{ mat1.get(), mat2.get() },
-                          std::vector<const int*>{ groupings.data(), groupings.data() });
+    singlepp::ChooseClassicMarkersOptions mopt;
+    mopt.number = requested;
+    auto output = singlepp::choose_classic_markers(
+        std::vector<const tatami::Matrix<double, int>*>{ mat1.get(), mat2.get() },
+        std::vector<const int*>{ groupings.data(), groupings.data() },
+        mopt
+    );
 
     // Summing the two matrices together.
     std::vector<double> combined(ngenes * nlabels);
@@ -112,7 +115,7 @@ TEST_P(ChooseClassicMarkersTest, Blocked) {
         }
     }
     tatami::DenseColumnMatrix<double, int> comb_mat(ngenes, nlabels, std::move(combined));
-    auto ref = mrk.run(&comb_mat, groupings.data());
+    auto ref = choose_classic_markers(comb_mat, groupings.data(), mopt);
 
     ASSERT_EQ(output.size(), ref.size());
     ASSERT_EQ(output.size(), nlabels);
@@ -133,8 +136,8 @@ TEST_P(ChooseClassicMarkersTest, BlockedMissing) {
     int requested = std::get<0>(params);
     bool reverse = std::get<1>(params);
 
-    singlepp::ChooseClassicMarkers mrk;
-    mrk.set_number(requested);
+    singlepp::ChooseClassicMarkersOptions mopt;
+    mopt.number = requested;
 
     // Label 0 is missing from the first matrix.
     auto mat1 = spawn_matrix(ngenes, nlabels - 1, 1234 * requested);
@@ -152,14 +155,20 @@ TEST_P(ChooseClassicMarkersTest, BlockedMissing) {
     // Creating the two references. We remove label 0 (i.e., the first column) from mat2 to 
     // match the groups available in mat1; we also just compute markers from mat2 alone.
     auto sub = tatami::make_DelayedSubsetBlock(mat2, 1, static_cast<int>(nlabels) - 1, false);
-    auto ref_comb = mrk.run(std::vector<const tatami::Matrix<double, int>*>{ mat1.get(), sub.get() },
-                            std::vector<const int*>{ groupings1.data(), groupings2.data() + 1 });               
+    auto ref_comb = singlepp::choose_classic_markers(
+        std::vector<tatami::Matrix<double, int>*>{ mat1.get(), sub.get() }, // non-const, to test the overload.
+        std::vector<const int*>{ groupings1.data(), groupings2.data() + 1 },
+        mopt
+    );               
     
-    auto ref_solo = mrk.run(mat2.get(), groupings2.data());
+    auto ref_solo = singlepp::choose_classic_markers(*mat2, groupings2.data(), mopt);
 
     // Comparing them.
-    auto output = mrk.run(std::vector<const tatami::Matrix<double, int>*>{ mat1.get(), mat2.get() },
-                          std::vector<const int*>{ groupings1.data(), groupings2.data() });
+    auto output = singlepp::choose_classic_markers(
+        std::vector<const tatami::Matrix<double, int>*>{ mat1.get(), mat2.get() },
+        std::vector<const int*>{ groupings1.data(), groupings2.data() },
+        mopt
+    );
 
     ASSERT_EQ(ref_comb.size(), output.size());
     ASSERT_EQ(ref_solo.size(), output.size()); 
@@ -177,7 +186,7 @@ TEST_P(ChooseClassicMarkersTest, BlockedMissing) {
     }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ChooseClassicMarkers,
     ChooseClassicMarkersTest,
     ::testing::Combine(

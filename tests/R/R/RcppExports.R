@@ -2,14 +2,24 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #' @export
-integrate_singlepp <- function(mat, results, refs, labels, markers, quantile = 0.8) {
-    .Call('_singlepp_tests_integrate_singlepp', PACKAGE = 'singlepp.tests', mat, results, refs, labels, markers, quantile)
+classify_integrate <- function(test, results, refs, labels, markers, quantile = 0.8) {
+    .Call('_singlepp_tests_classify_integrate', PACKAGE = 'singlepp.tests', test, results, refs, labels, markers, quantile)
 }
 
 #' @useDynLib singlepp.tests
 #' @importFrom Rcpp sourceCpp
 #' @export
-run_singlepp <- function(mat, ref, labels, markers, quantile = 0.8, fine_tune = TRUE, tune_thresh = 0.05, top = 20L) {
-    .Call('_singlepp_tests_run_singlepp', PACKAGE = 'singlepp.tests', mat, ref, labels, markers, quantile, fine_tune, tune_thresh, top)
+classify_single <- function(test, ref, labels, markers, quantile = 0.8, fine_tune = TRUE, tune_thresh = 0.05, top = 20L) {
+    .Call('_singlepp_tests_classify_single', PACKAGE = 'singlepp.tests', test, ref, labels, markers, quantile, fine_tune, tune_thresh, top)
+}
+
+#' @export
+intersect_integrate <- function(test, test_ids, results, refs, ref_ids, labels, markers, quantile = 0.8) {
+    .Call('_singlepp_tests_intersect_integrate', PACKAGE = 'singlepp.tests', test, test_ids, results, refs, ref_ids, labels, markers, quantile)
+}
+
+#' @export
+intersect_single <- function(test, test_ids, ref, ref_ids, labels, markers, quantile = 0.8, fine_tune = TRUE, tune_thresh = 0.05, top = 20L) {
+    .Call('_singlepp_tests_intersect_single', PACKAGE = 'singlepp.tests', test, test_ids, ref, ref_ids, labels, markers, quantile, fine_tune, tune_thresh, top)
 }
 

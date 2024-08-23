@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <algorithm>
-#include "singlepp/BasicScorer.hpp"
+#include "singlepp/classify_single.hpp"
 #include "fill_ranks.h"
 
 template<class Labels>
@@ -25,21 +25,23 @@ double naive_score(const std::vector<double>& scaled_test, const std::vector<int
         auto col = wrk->fetch(l, buffer.data());
         tatami::copy_n(col, buffer.size(), buffer.data());
         const auto scaled_ref = quick_scaled_ranks(buffer);
-        correlations.push_back(singlepp::distance_to_correlation(scaled_test.size(), scaled_test.data(), scaled_ref.data()));
+        correlations.push_back(singlepp::internal::distance_to_correlation<double>(scaled_test, scaled_ref));
     }
 
-    return singlepp::correlations_to_scores(correlations, quantile);
+    return singlepp::internal::correlations_to_scores(correlations, quantile);
 }
 
 template<class Labels, class Matrix, class RefMatrix>
 auto naive_method(size_t nlabels, const Labels& labels, const RefMatrix& refs, const Matrix& mat, const std::vector<int>& subset, double quantile) {
-    singlepp::BasicScorer::Results output(mat->ncol(), nlabels);
+    singlepp::ClassifySingleResults<int, double> output(mat->ncol(), nlabels);
 
     auto by_labels = split_by_label(nlabels, labels);
     auto wrk = mat->dense_column(subset);
     std::vector<double> buffer(subset.size());
 
-    for (size_t c = 0; c < mat->ncol(); ++c) {
+    typedef typename Matrix::element_type::index_type Index;
+    Index NC = mat->ncol();
+    for (Index c = 0; c < NC; ++c) {
         auto col = wrk->fetch(c, buffer.data());
         tatami::copy_n(col, buffer.size(), buffer.data());
         auto scaled = quick_scaled_ranks(buffer);

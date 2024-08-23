@@ -1,40 +1,47 @@
 #' @export
-integrate <- function(test, results, refs, labels, markers, quantile = 0.8) {
+naive_integrate <- function(test, results, refs, labels, markers, quantile = 0.8) {
     scores <- matrix(0, ncol(test), length(results))
     best <- integer(ncol(test))
     delta <- numeric(ncol(test))
 
     for (i in seq_len(ncol(test))) {
-        res <- lapply(results, function(r) r[i])
-        cur.markers <- mapply(markers, res, FUN=function(m, l) m[[l]], SIMPLIFY=FALSE)
-
-        keep <- mapply(labels, res, FUN=function(l, r) l==r, SIMPLIFY=FALSE) 
-        origins <- rep(seq_along(keep), vapply(keep, sum, 0L))
-        all.refs <- mapply(refs, keep, FUN=function(R, k) R[,k,drop=FALSE], SIMPLIFY=FALSE)
-        new.ref <- do.call(cbind, all.refs)
-
-        remarkers <- vector("list", length(cur.markers))
-        for (j1 in seq_along(remarkers)) {
-            remarkers[[j1]] <- vector("list", length(cur.markers))
-            for (j2 in seq_along(remarkers[[j1]])) {
-                if (j1 == j2) {
-                    remarkers[[j1]][[j2]] <- sort(unique(unlist(cur.markers[[j1]])))
-                } else {
-                    remarkers[[j1]][[j2]] <- integer(0)
-                }
-            }
+        cur.markers <- vector("list", length(refs))
+        for (r in seq_along(refs)) {
+            curbest <- results[[r]][i]
+            cur.markers[[r]] <- sort(unique(unlist(markers[[r]][[curbest]])))
         }
 
-        # Turning off fine-tuning so that we get a straightforward calculation of correlations.
-        # Also setting top = -1 to avoid truncating the marker list - we want to use the union here.
-        out <- run_singlepp(test[,i,drop=FALSE], new.ref, markers=remarkers, labels=origins, fine_tune=FALSE, quantile = quantile, top = -1) 
+        common <- sort(unique(unlist(cur.markers)))
+        curtest <- superslice(test, common, i, drop=TRUE)
+        collected <- numeric(length(refs))
 
-        scores[i,] <- out$scores
-        best[i] <- out$best
-        delta[i] <- out$delta
+        for (r in seq_along(refs)) {
+            curbest <- results[[r]][i]
+            keep <- labels[[r]] == curbest
+            curref <- superslice(refs[[r]], common, keep, drop=FALSE)
+            corrs <- missing.cor(curref, curtest)
+            collected[r] <- stats::quantile(corrs, prob=quantile)
+        }
+
+        scores[i,] <- collected
+        best[i] <- which.max(collected)
+        delta[i] <- diff(sort(-collected)[1:2])
     }
 
     list(scores = scores, best = best, delta = delta)
 }
 
+missing.cor <- function(x, y) {
+    output <- numeric(ncol(x))
+    for (i in seq_len(ncol(x))) {
+        curx <- x[,i]
+        keep <- !is.na(curx) & !is.na(y)
+        output[i] <- stats::cor(curx[keep], y[keep], method="spearman")
+    }
+    output
+}
 
+superslice <- function(x, i, j, drop=FALSE) {
+    i0 <- if (is.character(i)) match(i, rownames(x)) else i
+    x[i0,j,drop=drop]
+}

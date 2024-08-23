@@ -1,12 +1,12 @@
 #ifndef MOCK_MARKERS_H
 #define MOCK_MARKERS_H
 
-#include "singlepp/process_features.hpp"
+#include "singlepp/subset_to_markers.hpp"
 #include <random>
 #include <algorithm>
 
-template<class Engine>
-void fill_markers(std::vector<int>& source, size_t len, size_t universe, Engine& rng) {
+template<typename Index_, class Engine_>
+void fill_markers(std::vector<Index_>& source, size_t len, size_t universe, Engine_& rng) {
     source.resize(universe);
     std::iota(source.begin(), source.end(), 0);
     std::shuffle(source.begin(), source.end(), rng);
@@ -15,8 +15,9 @@ void fill_markers(std::vector<int>& source, size_t len, size_t universe, Engine&
     }
 }
 
-inline singlepp::Markers mock_markers(size_t nlabels, size_t len, size_t universe, int seed = 42) {
-    singlepp::Markers output(nlabels);    
+template<typename Index_>
+singlepp::Markers<Index_> mock_markers(size_t nlabels, size_t len, size_t universe, int seed = 42) {
+    singlepp::Markers<Index_> output(nlabels);    
     std::mt19937_64 rng(seed);
     for (size_t i = 0; i < nlabels; ++i) {
         output[i].resize(nlabels);
@@ -29,8 +30,9 @@ inline singlepp::Markers mock_markers(size_t nlabels, size_t len, size_t univers
     return output;
 }
 
-inline singlepp::Markers mock_markers_diagonal(size_t nlabels, size_t len, size_t universe, int seed = 42) {
-    singlepp::Markers output(nlabels);    
+template<typename Index_>
+singlepp::Markers<Index_> mock_markers_diagonal(size_t nlabels, size_t len, size_t universe, int seed = 42) {
+    singlepp::Markers<Index_> output(nlabels);    
     std::mt19937_64 rng(seed);
     for (size_t i = 0; i < nlabels; ++i) {
         output[i].resize(nlabels);
@@ -39,7 +41,8 @@ inline singlepp::Markers mock_markers_diagonal(size_t nlabels, size_t len, size_
     return output;
 }
 
-inline singlepp::Intersection mock_intersection(size_t n1, size_t n2, size_t shared, int seed = 999) {
+template<typename Index_>
+singlepp::Intersection<Index_> mock_intersection(size_t n1, size_t n2, size_t shared, int seed = 999) {
     std::mt19937_64 rng(seed);
 
     auto choose = [&](size_t n, size_t s) -> auto {
@@ -58,10 +61,11 @@ inline singlepp::Intersection mock_intersection(size_t n1, size_t n2, size_t sha
     auto chosen2 = choose(n2, shared);
     std::shuffle(chosen2.begin(), chosen2.end(), rng);
 
-    singlepp::Intersection inter;
+    singlepp::Intersection<Index_> inter;
     for (size_t i = 0; i < shared; ++i) {
         inter.emplace_back(chosen1[i], chosen2[i]);
     }
+
     return inter;
 }
 

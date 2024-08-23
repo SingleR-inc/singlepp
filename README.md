@@ -24,56 +24,16 @@ ref_labels;
 // Prepare a vector of vectors of markers for pairwise comparisons between labels.
 ref_markers;
 
-// Running the classification on a test matrix.
-singlepp::Classifier runner;
-auto res = runner.run(test_mat.get(), ref_mat.get(), ref_labels.data(), ref_markers);
+// Building the classifier.
+singlepp::TrainSingleOptions<int, double> train_opt;
+auto trained = singlepp::train_single(ref_mat, ref_labels.data(), train_opt);
+
+// Running the classification on the test matrix.
+singlepp::ClassifySingleOptions<double> class_opt;
+auto res = singlepp::classify_single<int>(test_mat, trained, class_opt);
 ```
 
-This returns an object containing the scores and predicted label for each cell in the test matrix.
-Users can also supply their own arrays to be filled with the results:
-
-```cpp
-std::vector<int> assignments(ncells);
-std::vector<std::vector<double> > scores(nlabels, std::vector<double>(ncells));
-std::vector<const double*> score_ptrs(nlabels);
-for (size_t l = 0; l < nlabels; ++l) {
-    score_ptrs[l] = scores[l].data();
-}
-std::vector<double> delta(ncells);
-
-runner.run(
-    test_mat.get(),
-    ref_mat.get(), 
-    ref_labels.data(), 
-    ref_markers,
-    assignments.data(),
-    score_ptrs,
-    delta.data()
-);
-```
-
-See the [reference documentation](https://ltla.github.io/singlepp) for more details.
-
-## Preparing references
-
-A reference dataset should have at least three components:
-
-- The "expression" matrix, where rows are features and columns are reference profiles.
-  Only the rank of the expression values are used by **singlepp**, so one could apply any transformation that preserves the ranks.
-- A vector of length equal to the number of columns of the matrix, containing the label for each reference profile.
-  These labels should be integers from `[0, N)` where `N` is the number of unique labels.
-- A vector of vector of integer vectors, containing the chosen marker genes from pairwise comparisons between labels.
-  Say that `y` is this object, then `y[i][j][k]` should contain the `k`-th best marker gene that is upregulated in label `i` compared to label `j`. 
-  Marker genes should be reported as row indices of the expression matrix.
-
-In practical usage, they will also contain:
-
-- Feature names for each row of the expression matrix.
-  This can be used by **singlepp** to match to the features of the test matrix, if the feature sets are not the same.
-- Label names, to map the integer labels to something that is meaningful to the user.
-  This is not used by **singlepp** itself, which only deals with the integers.
-
-See [here](https://github.com/clusterfork/singlepp-references) for some references that have been formatted in this manner.
+See the [reference documentation](https://singler-inc.github.io/singlepp) for more details.
 
 ## Identifying markers
 
@@ -81,102 +41,99 @@ Given a reference dataset, **singlepp** implements a simple method of identifyin
 This is based on ranking the differences in median log-expression values between labels and is the "classic" method provided in the original **SingleR** package.
 
 ```cpp
-singlepp::ChooseClassicMarkers mrk;
-auto markers = mrk.run(ref_mat.get(), ref_labels.data());
+singlepp::ChooseClassicMarkersOptions mrk;
+auto classic_markers = singlepp::choose_classic_markers<int>(
+    ref_mat.get(),
+    ref_labels.data(),
+    m_opt
+);
 ```
 
-`markers` can then be directly used in `Classifier::run()`.
-Of course, other marker detection schemes can be used depending on the type of reference dataset;
-for single-cell references, users may be interested in some of the differential analysis methods in the [**libscran**](https://github.com/LTLA/libscran) package.
+The `classic_markers` can then be directly used in `train_single()`.
+Of course, other marker detection schemes can be used, depending on the type of reference dataset.
+For single-cell references, users may be interested in some of the differential analysis methods in the [**libscran**](https://github.com/libscran/scran_markers) library.
 
-By default, it is expected that the `markers` supplied to `Classifier::run()` has already been filtered to only the top markers for each pairwise comparison.
+By default, it is expected that the `markers` supplied to `train_single()` has already been filtered to only the top markers for each pairwise comparison.
 However, in some cases, it might be more convenient for `markers` to contain a ranking of all genes such that the desired subset of top markers can be chosen later.
-This is achieved by calling `Classifier::set_top()` to the desired number of markers per comparison, e.g., for 20 markers:
+This is achieved by setting `TrainSingleOptions::top` to the desired number of markers per comparison, e.g., for 20 markers:
 
 ```cpp
-runner.set_top(20);
-auto res20 = mrk.run(ref_mat.get(), ref_labels.data());
+train_opt.top = 20;
+auto trained20 = singlepp::train_single(
+    ref_mat,
+    ref_labels.data(),
+    train_opt
+);
 ```
 
-Doing so is roughly equivalent to slicing each vector in `markers` to the top 20 entries before calling `Classifier::run()`.
+Doing so is roughly equivalent to slicing each vector in `markers` to the top 20 entries before calling `train_single()`.
 In fact, calling `set_top()` is the better approach when intersecting feature spaces - see below -
 as the top set will not be contaminated by genes that are not present in the test dataset.
 
 ## Intersecting feature sets
 
-Often the reference dataset will not have the same features as the test dataset.
-To handle this case, users can provide identifiers for the rows of the reference and test matrices.
-**singlepp** will then perform classification using the intersection of features.
+Often the reference dataset will not have the same genes as the test dataset.
+To handle this case, users should use `train_single_intersect()` with identifiers for the rows of the reference and test matrices.
 
 ```cpp
-test_names; // vector of feature names of the test data
-ref_names; // vector of feature names of the reference data
+test_names; // vector of feature IDs for the test data
+ref_names; // vector of feature IDs for the reference data
 
-auto res = runner.run(
-    test_mat.get(),
+auto trained_intersect = singlepp::train_single_intersect(
+    test_mat.nrow(),
     test_names.data(),
-    ref_mat.get(), 
+    ref_mat,
     ref_names.data(),
     ref_labels.data(), 
-    ref_markers
+    ref_markers,
+    train_opt
 );
 ```
 
-The identifiers can be anything that can be hashed and compared.
-These are most commonly `std::string`s.
-
-## Prebuilding the references
-
-For repeated classification with the same reference, advanced users can call `build()` before `run()`.
-This ensures that the reference set-up cost is only paid once.
+Then, `classify_single_intersect()` will perform classification using only the intersection of genes:
 
 ```cpp
-auto pre = runner.build(ref_mat.get(), ref_labels.data(), ref_markers);
-auto res = runner.run(test_mat.get(), pre);
-```
-
-The same approach works when considering an intersection of features,
-assuming that all test matrices have the same order of features as in the `test_names`.
-
-```cpp
-auto pre2 = runner.build(
-    test_names.size(), 
-    test_names.data(),
-    ref_mat.get(), 
-    ref_names.data(),
-    ref_labels.data(), 
-    ref_markers
+auto res_intersect = singlepp::classify_single_intersect<int>(
+    test_mat,
+    trained_intersect,
+    class_opt
 );
-auto res2 = runner.run(test_mat.get(), pre);
 ```
+
+The gene identifiers can be anything that can be hashed and compared.
+These are most commonly `std::string`s but can also be integers (e.g., for Entrez IDs).
 
 ## Integrating results across references
 
-To combine results from multiple references, we first need to perform classification within each reference using the `build()` + `run()` approach.
+To combine results from multiple references, we first need to perform classification within each reference. 
 Let's say we have two references A and B:
 
 ```cpp
-auto preA = runner.build(refA_mat.get(), refA_labels.data(), refA_markers);
-auto resA = runner.run(test_mat.get(), preA);
+auto trainA = singlepp::train_single(refA_mat, refA_labels.data(), refA_markers, train_opt);
+auto resA = singlepp::classify_single<int>(test_mat, trainA, class_opt);
 
-auto preB = runner.build(refB_mat.get(), refB_labels.data(), refB_markers);
-auto resB = runner.run(test_mat.get(), preB);
+auto trainB = singlepp::train_single(refB_mat, refB_labels.data(), refB_markers, train_opt);
+auto resB = singlepp::classify_single<int>(test_mat, trainB, class_opt);
 ```
 
-We build the integrated references:
+We build the integrated classifier:
 
 ```cpp
-singlepp::IntegratedBuilder ibuilder;
-ibuilder.add(refA_mat.get(), refA_labels.data(), preA);
-ibuilder.add(refB_mat.get(), refB_labels.data(), preB);
-auto irefs = ibuilder.finish();
+std::vector<singlepp::TrainIntegratedInput<double, int, int> > inputs;
+inputs.push_back(singlepp::prepare_integrated_input(refA_mat, refA_labels.data(), preA));
+inputs.push_back(singlepp::prepare_integrated_input(refB_mat, refB_labels.data(), preB));
+
+singlepp::TrainIntegratedOptions ti_opt;
+auto train_integrated = singlepp::train_integrated(inputs, ti_opt);
 ```
 
-And then we can finally run the scoring:
+And then we can finally run the scoring.
+For each cell in the test dataset, `classify_integrated()` picks the best label among the assignments from each individual reference.
 
 ```cpp
-singlepp::IntegratedScorer iscorer;
-auto ires = iscorer.run(test_mat.get(), irefs);
+singlepp::ClassifyIntegratedOptions<double> ci_opt;
+auto ires = single.run(test_mat, train_integrated, ci_opt);
+ires.best; // index of the best reference.
 ```
 
 ## Building projects 

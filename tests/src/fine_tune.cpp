@@ -5,12 +5,12 @@
 #include "fill_ranks.h"
 #include "naive_method.h"
 
-TEST(FillLabelsInUseTest, Basic) {
+TEST(FineTune, FillLabelsInUse) {
     std::vector<double> scores { 0.5, 0.2, 0.46 };
     std::vector<int> in_use;
 
     {
-        auto output = singlepp::fill_labels_in_use(scores, 0.05, in_use);
+        auto output = singlepp::internal::fill_labels_in_use(scores, 0.05, in_use);
         std::vector<int> expected { 0, 2 };
         EXPECT_EQ(in_use, expected);
         EXPECT_EQ(output.first, 0);
@@ -18,7 +18,7 @@ TEST(FillLabelsInUseTest, Basic) {
     }
 
     {
-        auto output = singlepp::fill_labels_in_use(scores, 0.01, in_use);
+        auto output = singlepp::internal::fill_labels_in_use(scores, 0.01, in_use);
         std::vector<int> expected { 0 };
         EXPECT_EQ(in_use, expected);
         EXPECT_EQ(output.first, 0);
@@ -28,7 +28,7 @@ TEST(FillLabelsInUseTest, Basic) {
     scores = std::vector<double>{ 0.48, 0.5, 0.2, 0.46 };
     in_use = std::vector<int>{ 5, 10, 100 }; // checking that these are cleared out.
     {
-        auto output = singlepp::fill_labels_in_use(scores, 0.05, in_use);
+        auto output = singlepp::internal::fill_labels_in_use(scores, 0.05, in_use);
         std::vector<int> expected { 0, 1, 3 };
         EXPECT_EQ(in_use, expected);
         EXPECT_EQ(output.first, 1);
@@ -36,12 +36,12 @@ TEST(FillLabelsInUseTest, Basic) {
     }
 }
 
-TEST(ReplaceLabelsInUseTest, Basic) {
+TEST(FineTune, ReplaceLabelsInUse) {
     {
         std::vector<double> scores { 0.48, 0.2, 0.5 };
         std::vector<int> in_use { 4, 5, 6 };
 
-        auto output = singlepp::replace_labels_in_use(scores, 0.05, in_use);
+        auto output = singlepp::internal::replace_labels_in_use(scores, 0.05, in_use);
         std::vector<int> expected { 4, 6 };
         EXPECT_EQ(in_use, expected);
         EXPECT_EQ(output.first, 6);
@@ -52,7 +52,7 @@ TEST(ReplaceLabelsInUseTest, Basic) {
         std::vector<double> scores { 0.2, 0.48, 0.51, 0.5 };
         std::vector<int> in_use { 0, 7, 3, 8 };
 
-        auto output = singlepp::replace_labels_in_use(scores, 0.05, in_use);
+        auto output = singlepp::internal::replace_labels_in_use(scores, 0.05, in_use);
         std::vector<int> expected { 7, 3, 8 };
         EXPECT_EQ(in_use, expected);
         EXPECT_EQ(output.first, 3);
@@ -60,35 +60,29 @@ TEST(ReplaceLabelsInUseTest, Basic) {
     }
 }
 
-TEST(FineTuneTest, Basic) {
+TEST(FineTuner, EdgeCases) {
     // Mocking up the test and references.
     size_t ngenes = 200;
- 
     size_t nlabels = 3;
     size_t nrefs = 50;
-    auto refs = spawn_matrix(ngenes, nrefs, 200);
-    auto labels = spawn_labels(nrefs, nlabels, 2000);
+    auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 200);
+    auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 2000);
 
-    auto markers = mock_markers(nlabels, 10, ngenes); 
+    auto markers = mock_markers<int>(nlabels, 10, ngenes); 
 
     // Mocking up the reference indices.
     std::vector<int> subset(ngenes);
     std::iota(subset.begin(), subset.end(), 0);
-    auto references = singlepp::build_indices(refs.get(), labels.data(), subset,
-        [](size_t nr, size_t nc, const double* ptr) { 
-            return std::shared_ptr<knncolle::Base<int, double> >(new knncolle::KmknnEuclidean<int, double>(nr, nc, ptr)); 
-        },
-        1
-    );
+    auto references = singlepp::internal::build_indices(*refs, labels.data(), subset, knncolle::VptreeBuilder(), 1);
 
     // Running the fine-tuning edge cases.
-    singlepp::FineTuner ft;
+    singlepp::internal::FineTuner<int, int, double, double> ft;
 
     // Check early exit conditions.
     {
         std::vector<double> buffer(ngenes);
         auto vec = refs->dense_column()->fetch(0, buffer.data()); // doesn't really matter what we pick here.
-        auto ranked = fill_ranks(ngenes, vec);
+        auto ranked = fill_ranks<int>(ngenes, vec);
 
         std::vector<double> scores { 0.2, 0.5, 0.1 };
         auto output = ft.run(ranked, references, markers, scores, 0.8, 0.05);
@@ -107,7 +101,7 @@ TEST(FineTuneTest, Basic) {
     {
         std::vector<double> buffer(ngenes);
         auto vec = refs->dense_column()->fetch(1, buffer.data()); // doesn't really matter which one we pick.
-        auto ranked = fill_ranks(ngenes, vec);
+        auto ranked = fill_ranks<int>(ngenes, vec);
 
         std::vector<double> scores { 0.5 };
         auto output = ft.run(ranked, references, markers, scores, 0.8, 0.05);
@@ -122,7 +116,7 @@ TEST(FineTuneTest, Basic) {
     std::vector<double> buffer(ngenes);
     for (size_t r = 0; r < nrefs; ++r) {
         auto vec = wrk->fetch(r, buffer.data());
-        auto ranked = fill_ranks(ngenes, vec);
+        auto ranked = fill_ranks<int>(ngenes, vec);
 
         // Setting the template parameter test = true to force it to do
         // calculations; otherwise it would exit early with the top score.
@@ -138,40 +132,34 @@ TEST(FineTuneTest, Basic) {
     }
 }
 
-TEST(FineTuneTest, Comparison) {
+TEST(FineTuner, Reference) {
     // Mocking up the test and references.
     size_t ngenes = 200;
- 
     size_t nlabels = 3;
     size_t nrefs = 50;
-    auto refs = spawn_matrix(ngenes, nrefs, 200);
-    auto labels = spawn_labels(nrefs, nlabels, 2000);
+    auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 200);
+    auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 2000);
 
-    auto markers = mock_markers(nlabels, 10, ngenes); 
+    auto markers = mock_markers<int>(nlabels, 10, ngenes); 
     size_t ncells = 11;
-    size_t seed = 12345;
-    auto mat = spawn_matrix(ngenes, ncells, seed);
+    auto mat = spawn_matrix(ngenes, ncells, /* seed = */ 12345);
     
     // Naive calculation.
     size_t top = 5;
-    auto subset = singlepp::subset_markers(markers, top);
+    auto subset = singlepp::internal::subset_to_markers(markers, top);
     double quantile = 0.75;
     auto naive = naive_method(nlabels, labels, refs, mat, subset, quantile);
 
     // Recalculation inside the fine-tuner should give the same conclusion.
-    singlepp::FineTuner ft;
-    auto references = singlepp::build_indices(refs.get(), labels.data(), subset,
-        [](size_t nr, size_t nc, const double* ptr) { 
-            return std::shared_ptr<knncolle::Base<int, double> >(new knncolle::KmknnEuclidean<int, double>(nr, nc, ptr)); 
-        },
-        1
-    );
+    singlepp::internal::FineTuner<int, int, double, double> ft;
+    auto references = singlepp::internal::build_indices(*refs, labels.data(), subset, knncolle::VptreeBuilder(), 1);
 
     auto wrk = mat->dense_column(subset);
     std::vector<double> buffer(subset.size());
-    for (size_t c = 0; c < mat->ncol(); ++c) {
+    int NC = mat->ncol();
+    for (int c = 0; c < NC; ++c) {
         auto vec = wrk->fetch(c, buffer.data()); 
-        auto ranked = fill_ranks(refs->ncol(), vec);
+        auto ranked = fill_ranks<int>(refs->ncol(), vec);
 
         std::vector<double> scores;
         for (size_t l = 0; l < nlabels; ++l) {
@@ -191,11 +179,10 @@ TEST(FineTuneTest, Comparison) {
         auto output = ft.run<true>(ranked, references, markers, scores, quantile, 100); 
         EXPECT_EQ(output.first, naive.best[c]);
         EXPECT_TRUE(std::abs(naive.delta[c] - output.second) < 1e-6);
-
     }
 }
 
-TEST(FineTuneTest, Diagonal) {
+TEST(FineTuner, Diagonal) {
     // Mocking up the test and references. This time, we make
     // sure that there are only markers on the diagonals.
     size_t ngenes = 200;
@@ -205,29 +192,24 @@ TEST(FineTuneTest, Diagonal) {
     auto refs = spawn_matrix(ngenes, nrefs, 200);
     auto labels = spawn_labels(nrefs, nlabels, 2000);
 
-    auto markers = mock_markers_diagonal(nlabels, 10, ngenes); 
+    auto markers = mock_markers_diagonal<int>(nlabels, 10, ngenes); 
 
     // Mocking up the reference indices.
     std::vector<int> subset(ngenes);
     std::iota(subset.begin(), subset.end(), 0);
-    auto references = singlepp::build_indices(refs.get(), labels.data(), subset,
-        [](size_t nr, size_t nc, const double* ptr) { 
-            return std::shared_ptr<knncolle::Base<int, double> >(new knncolle::KmknnEuclidean<int, double>(nr, nc, ptr)); 
-        },
-        1
-    );
+    auto references = singlepp::internal::build_indices(*refs, labels.data(), subset, knncolle::VptreeBuilder(), 1);
 
     // Running the fine-tuner, making sure we pick up the reference label.
     // To do so, we set the quantile to 1 to guarantee a score of 1 from a
     // correlation of 1. Again, this requires setting test = true to force
     // it to do calculations, otherwise it just quits early.
-    singlepp::FineTuner ft;
+    singlepp::internal::FineTuner<int, int, double, double> ft;
 
     auto wrk = refs->dense_column();
     std::vector<double> buffer(ngenes);
     for (size_t r = 0; r < nrefs; ++r) {
         auto vec = wrk->fetch(r, buffer.data()); 
-        auto ranked = fill_ranks(ngenes, vec);
+        auto ranked = fill_ranks<int>(ngenes, vec);
         std::vector<double> scores { 0.49, 0.5, 0.48 };
         auto output = ft.run<true>(ranked, references, markers, scores, 1, 0.05);
 

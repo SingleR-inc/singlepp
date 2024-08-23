@@ -4,19 +4,21 @@
 /**
  * @file singlepp.hpp
  *
- * @brief Umbrella header for all includes.
+ * @brief Umbrella header for the **singlepp** library.
  */
 
-#include "Classifier.hpp"
 #include "Markers.hpp"
-#include "IntegratedScorer.hpp"
-#include "IntegratedBuilder.hpp"
-#include "ChooseClassicMarkers.hpp"
-#include "load_references.hpp"
+#include "Intersection.hpp"
+#include "choose_classic_markers.hpp"
+#include "train_single.hpp"
+#include "train_integrated.hpp"
+#include "classify_single.hpp"
+#include "classify_integrated.hpp"
 
 /**
  * @namespace singlepp
- * Cell type classification using the SingleR algorithm in C++.
+ * @brief Cell type classification using the SingleR algorithm in C++.
  */
+namespace singlepp {}
 
 #endif

@@ -6,7 +6,7 @@
 #include "tatami/tatami.hpp"
 
 #include "scaled_ranks.hpp"
-#include "process_features.hpp"
+#include "SubsetSanitizer.hpp"
 #include "build_indices.hpp"
 #include "fine_tune.hpp"
 
@@ -16,27 +16,31 @@
 
 namespace singlepp {
 
-inline void annotate_cells_simple(
-    const tatami::Matrix<double, int>* mat,
+namespace internal {
+
+template<typename Value_, typename Index_, typename Float_, typename Label_>
+void annotate_cells_simple(
+    const tatami::Matrix<Value_, Index_>& mat,
     size_t num_subset,
-    const int* subset,
-    const std::vector<Reference>& ref,
-    const Markers& markers,
-    double quantile,
+    const Index_* subset,
+    const std::vector<PerLabelReference<Index_, Float_> >& ref,
+    const Markers<Index_>& markers,
+    Float_ quantile,
     bool fine_tune,
-    double threshold,
-    int* best, 
-    std::vector<double*>& scores,
-    double* delta,
-    int nthreads)
+    Float_ threshold,
+    Label_* best, 
+    const std::vector<Float_*>& scores,
+    Float_* delta,
+    int num_threads)
 {
     // Figuring out how many neighbors to keep and how to compute the quantiles.
-    const size_t NL = ref.size();
-    std::vector<int> search_k(NL);
-    std::vector<std::pair<double, double> > coeffs(NL);
-    for (size_t r = 0; r < NL; ++r) {
-        double denom = ref[r].index->nobs() - 1;
-        double prod = denom * (1 - quantile);
+    const size_t num_labels = ref.size();
+    std::vector<Index_> search_k(num_labels);
+    std::vector<std::pair<Float_, Float_> > coeffs(num_labels);
+
+    for (size_t r = 0; r < num_labels; ++r) {
+        Float_ denom = static_cast<Float_>(ref[r].index->num_observations()) - 1;
+        Float_  prod = denom * (1 - quantile);
         auto k = std::ceil(prod) + 1;
         search_k[r] = k;
 
@@ -45,37 +49,45 @@ inline void annotate_cells_simple(
         // The size of the gap is used as the weight for the _other_ quantile, i.e., 
         // the closer you are to a quantile, the higher the weight.
         // We convert these into proportions by dividing by their sum, i.e., `1/denom`.
-        coeffs[r].first = static_cast<double>(k - 1) - prod;
-        coeffs[r].second = prod - static_cast<double>(k - 2);
+        coeffs[r].first = static_cast<Float_>(k - 1) - prod;
+        coeffs[r].second = prod - static_cast<Float_>(k - 2);
     }
 
-    std::vector<int> subcopy(subset, subset + num_subset);
-    SubsetSorter subsorted(subcopy);
+    std::vector<Index_> subcopy(subset, subset + num_subset);
+    SubsetSanitizer<Index_> subsorted(subcopy);
 
-    tatami::parallelize([&](int, int start, int length) -> void {
-        auto wrk = tatami::consecutive_extractor<false>(mat, false, start, length, subsorted.extraction_subset());
-        RankedVector<double, int> vec(num_subset);
-        std::vector<double> buffer(num_subset);
+    tatami::parallelize([&](size_t, Index_ start, Index_ length) -> void {
+        std::vector<Value_> buffer(num_subset);
+        tatami::VectorPtr<Index_> mock_ptr(tatami::VectorPtr<Index_>{}, &(subsorted.extraction_subset()));
+        auto wrk = tatami::consecutive_extractor<false>(&mat, false, start, length, std::move(mock_ptr));
 
-        FineTuner ft;
-        std::vector<double> curscores(NL);
+        std::vector<std::unique_ptr<knncolle::Searcher<Index_, Float_> > > searchers(num_labels);
+        for (size_t r = 0; r < num_labels; ++r) {
+            searchers[r] = ref[r].index->initialize();
+        }
+        std::vector<Float_> distances;
 
-        for (int c = start, end = start + length; c < end; ++c) {
-            auto ptr = wrk->fetch(c, buffer.data());
+        RankedVector<Value_, Index_> vec;
+        vec.reserve(num_subset);
+        FineTuner<Label_, Index_, Float_, Value_> ft;
+        std::vector<Float_> curscores(num_labels);
+
+        for (Index_ c = start, end = start + length; c < end; ++c) {
+            auto ptr = wrk->fetch(buffer.data());
             subsorted.fill_ranks(ptr, vec);
-            scaled_ranks(vec, buffer.data()); // 'buffer' can be written to, as all data is extracted to 'vec'.
+            scaled_ranks(vec, buffer.data()); // 'buffer' can be re-used for output here, as all data is already extracted to 'vec'.
 
-            curscores.resize(NL);
-            for (size_t r = 0; r < NL; ++r) {
+            curscores.resize(num_labels);
+            for (size_t r = 0; r < num_labels; ++r) {
                 size_t k = search_k[r];
-                auto current = ref[r].index->find_nearest_neighbors(buffer.data(), k);
+                searchers[r]->search(buffer.data(), k, NULL, &distances);
 
-                double last = current[k - 1].second;
+                Float_ last = distances[k - 1];
                 last = 1 - 2 * last * last;
                 if (k == 1) {
                     curscores[r] = last;
                 } else {
-                    double next = current[k - 2].second;
+                    Float_ next = distances[k - 2];
                     next = 1 - 2 * next * next;
                     curscores[r] = coeffs[r].first * next + coeffs[r].second * last;
                 }
@@ -90,11 +102,11 @@ inline void annotate_cells_simple(
                 best[c] = top - curscores.begin();
                 if (delta) {
                     if (curscores.size() > 1) {
-                        double topscore = *top;
-                        *top = -100;
+                        Float_ topscore = *top;
+                        *top = -100; // replace max value with a negative value to find the second-max value easily.
                         delta[c] = topscore - *std::max_element(curscores.begin(), curscores.end());
                     } else {
-                        delta[c] = std::numeric_limits<double>::quiet_NaN();
+                        delta[c] = std::numeric_limits<Float_>::quiet_NaN();
                     }
                 }
             } else {
@@ -106,9 +118,11 @@ inline void annotate_cells_simple(
             }
         }
 
-    }, mat->ncol(), nthreads);
+    }, mat.ncol(), num_threads);
 
     return;
+}
+
 }
 
 }

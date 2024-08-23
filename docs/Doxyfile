@@ -790,14 +790,13 @@ WARN_LOGFILE           =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = ../include/singlepp/Classifier.hpp \
-                         ../include/singlepp/BasicBuilder.hpp \
-                         ../include/singlepp/BasicScorer.hpp \
+INPUT                  = ../include/singlepp/classify_single.hpp \
+                         ../include/singlepp/train_single.hpp \
+                         ../include/singlepp/classify_integrated.hpp \
+                         ../include/singlepp/train_integrated.hpp \
                          ../include/singlepp/Markers.hpp \
-                         ../include/singlepp/IntegratedBuilder.hpp \
-                         ../include/singlepp/IntegratedScorer.hpp \
-                         ../include/singlepp/load_references.hpp \
-                         ../include/singlepp/ChooseClassicMarkers.hpp \
+                         ../include/singlepp/Intersection.hpp \
+                         ../include/singlepp/choose_classic_markers.hpp \
                          ../include/singlepp/singlepp.hpp \
                          ../README.md
 

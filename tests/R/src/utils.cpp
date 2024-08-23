@@ -9,9 +9,9 @@ std::vector<int> setup_labels(Rcpp::IntegerVector labels) {
     return labels2;
 }
 
-singlepp::Markers setup_markers(Rcpp::List markers) {
+singlepp::Markers<int> setup_markers(Rcpp::List markers) {
     size_t nlabels = markers.size();
-    singlepp::Markers markers2(nlabels);
+    singlepp::Markers<int> markers2(nlabels);
 
     for (size_t l = 0; l < nlabels; ++l) {
         Rcpp::List inner = markers[l];
