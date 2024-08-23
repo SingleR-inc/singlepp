@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['rankmatrix_0',['RankMatrix',['../namespacesinglepp.html#a3b6460d8cbafda27b6b4a9f5eb969760',1,'singlepp']]]
+  ['markers_0',['Markers',['../namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c',1,'singlepp']]]
 ];

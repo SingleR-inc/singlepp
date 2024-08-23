@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['fine_5ftune_0',['fine_tune',['../structsinglepp_1_1Classifier_1_1Defaults.html#aa1690105051ae24ec10dc0b78c62bed3',1,'singlepp::Classifier::Defaults::fine_tune'],['../structsinglepp_1_1BasicScorer_1_1Defaults.html#ac9c5fe9a72649b3b3c01010c1b8367b2',1,'singlepp::BasicScorer::Defaults::fine_tune']]],
-  ['fine_5ftune_5fthreshold_1',['fine_tune_threshold',['../structsinglepp_1_1Classifier_1_1Defaults.html#a6aa039661082457df6b283e38e696d67',1,'singlepp::Classifier::Defaults::fine_tune_threshold'],['../structsinglepp_1_1BasicScorer_1_1Defaults.html#a6427234a728e0d54f8d5547bb95377ca',1,'singlepp::BasicScorer::Defaults::fine_tune_threshold']]]
+  ['num_5fthreads_0',['num_threads',['../structsinglepp_1_1ClassifySingleOptions.html#ad8d08a1478387fce71cf319c234aba8c',1,'singlepp::ClassifySingleOptions::num_threads'],['../structsinglepp_1_1TrainSingleOptions.html#a23ecc04e6d269ad1ede160c7838b8a63',1,'singlepp::TrainSingleOptions::num_threads'],['../structsinglepp_1_1ClassifyIntegratedOptions.html#a5562f346d14d824da25e56e367194c7c',1,'singlepp::ClassifyIntegratedOptions::num_threads'],['../structsinglepp_1_1TrainIntegratedOptions.html#ae500e9838e046e9f191057e6eb7f6803',1,'singlepp::TrainIntegratedOptions::num_threads'],['../structsinglepp_1_1ChooseClassicMarkersOptions.html#a7c694f5f2e2cf5d8610aa3028bce4055',1,'singlepp::ChooseClassicMarkersOptions::num_threads']]],
+  ['number_1',['number',['../structsinglepp_1_1ChooseClassicMarkersOptions.html#a9d44e81aaf6d22c6d32264281e548ffd',1,'singlepp::ChooseClassicMarkersOptions']]]
 ];

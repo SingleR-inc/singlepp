@@ -86,20 +86,25 @@ $(document).ready(function() { init_codefold(0); });
 <a href="singlepp_8hpp.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef SINGLEPP_UMBRELLA_HPP</span></div>
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define SINGLEPP_UMBRELLA_HPP</span></div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &quot;<a class="code" href="Classifier_8hpp.html">Classifier.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &quot;<a class="code" href="Markers_8hpp.html">Markers.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &quot;<a class="code" href="IntegratedScorer_8hpp.html">IntegratedScorer.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &quot;<a class="code" href="IntegratedBuilder_8hpp.html">IntegratedBuilder.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &quot;<a class="code" href="ChooseClassicMarkers_8hpp.html">ChooseClassicMarkers.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &quot;<a class="code" href="load__references_8hpp.html">load_references.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="preprocessor">#endif</span></div>
-<div class="ttc" id="aChooseClassicMarkers_8hpp_html"><div class="ttname"><a href="ChooseClassicMarkers_8hpp.html">ChooseClassicMarkers.hpp</a></div><div class="ttdoc">Classic method for choosing markers.</div></div>
-<div class="ttc" id="aClassifier_8hpp_html"><div class="ttname"><a href="Classifier_8hpp.html">Classifier.hpp</a></div><div class="ttdoc">Defines the Classifier class.</div></div>
-<div class="ttc" id="aIntegratedBuilder_8hpp_html"><div class="ttname"><a href="IntegratedBuilder_8hpp.html">IntegratedBuilder.hpp</a></div><div class="ttdoc">Prepare for integrated classification across references.</div></div>
-<div class="ttc" id="aIntegratedScorer_8hpp_html"><div class="ttname"><a href="IntegratedScorer_8hpp.html">IntegratedScorer.hpp</a></div><div class="ttdoc">Integrate classifications from multiple references.</div></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &quot;<a class="code" href="Markers_8hpp.html">Markers.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &quot;<a class="code" href="Intersection_8hpp.html">Intersection.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &quot;<a class="code" href="choose__classic__markers_8hpp.html">choose_classic_markers.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &quot;<a class="code" href="train__single_8hpp.html">train_single.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &quot;<a class="code" href="train__integrated_8hpp.html">train_integrated.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &quot;<a class="code" href="classify__single_8hpp.html">classify_single.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &quot;<a class="code" href="classify__integrated_8hpp.html">classify_integrated.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesinglepp.html">singlepp</a> {}</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span> </div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="preprocessor">#endif</span></div>
+<div class="ttc" id="aIntersection_8hpp_html"><div class="ttname"><a href="Intersection_8hpp.html">Intersection.hpp</a></div><div class="ttdoc">Create an intersection of genes.</div></div>
 <div class="ttc" id="aMarkers_8hpp_html"><div class="ttname"><a href="Markers_8hpp.html">Markers.hpp</a></div><div class="ttdoc">Define the Markers typedef.</div></div>
-<div class="ttc" id="aload__references_8hpp_html"><div class="ttname"><a href="load__references_8hpp.html">load_references.hpp</a></div><div class="ttdoc">Load reference datasets from a few expected formats.</div></div>
+<div class="ttc" id="achoose__classic__markers_8hpp_html"><div class="ttname"><a href="choose__classic__markers_8hpp.html">choose_classic_markers.hpp</a></div><div class="ttdoc">Classic method for choosing markers.</div></div>
+<div class="ttc" id="aclassify__integrated_8hpp_html"><div class="ttname"><a href="classify__integrated_8hpp.html">classify_integrated.hpp</a></div><div class="ttdoc">Integrate classifications from multiple references.</div></div>
+<div class="ttc" id="aclassify__single_8hpp_html"><div class="ttname"><a href="classify__single_8hpp.html">classify_single.hpp</a></div><div class="ttdoc">Classify cells in a test dataset based a single reference.</div></div>
+<div class="ttc" id="anamespacesinglepp_html"><div class="ttname"><a href="namespacesinglepp.html">singlepp</a></div><div class="ttdoc">Cell type classification using the SingleR algorithm in C++.</div><div class="ttdef"><b>Definition</b> classify_single.hpp:19</div></div>
+<div class="ttc" id="atrain__integrated_8hpp_html"><div class="ttname"><a href="train__integrated_8hpp.html">train_integrated.hpp</a></div><div class="ttdoc">Prepare for integrated classification across references.</div></div>
+<div class="ttc" id="atrain__single_8hpp_html"><div class="ttname"><a href="train__single_8hpp.html">train_single.hpp</a></div><div class="ttdoc">Train a classifier from a single reference.</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

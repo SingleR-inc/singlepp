@@ -1,4 +1,7 @@
 var searchData=
 [
-  ['quantile_0',['quantile',['../structsinglepp_1_1Classifier_1_1Defaults.html#aa2b02289250da4ff08f1106a23850e14',1,'singlepp::Classifier::Defaults::quantile'],['../structsinglepp_1_1BasicScorer_1_1Defaults.html#a3b4a0f29885d3ec090c3a104a33a9aac',1,'singlepp::BasicScorer::Defaults::quantile'],['../structsinglepp_1_1IntegratedScorer_1_1Defaults.html#a1058e4961997fdeb6726f064261248e6',1,'singlepp::IntegratedScorer::Defaults::quantile']]]
+  ['scores_0',['scores',['../structsinglepp_1_1ClassifySingleBuffers.html#a77d83e65579276b44bf9b513c6a7e0e8',1,'singlepp::ClassifySingleBuffers::scores'],['../structsinglepp_1_1ClassifySingleResults.html#a9d75ebe7e597aa2048c2ebc4cc3e4a29',1,'singlepp::ClassifySingleResults::scores'],['../structsinglepp_1_1ClassifyIntegratedBuffers.html#a947caf925fb5a04bbfe67de950549c6e',1,'singlepp::ClassifyIntegratedBuffers::scores'],['../structsinglepp_1_1ClassifyIntegratedResults.html#a104a0cf9a54e105f9e400f7b21306c81',1,'singlepp::ClassifyIntegratedResults::scores']]],
+  ['singlepp_1',['singlepp',['../namespacesinglepp.html',1,'']]],
+  ['singlepp_2ehpp_2',['singlepp.hpp',['../singlepp_8hpp.html',1,'']]],
+  ['singler_3',['C++ port of SingleR',['../index.html',1,'']]]
 ];

@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['markers_0',['markers',['../structsinglepp_1_1BasicBuilder_1_1Prebuilt.html#ae3820340bdf05a2cb9e0c527d7f99a09',1,'singlepp::BasicBuilder::Prebuilt::markers'],['../structsinglepp_1_1BasicBuilder_1_1PrebuiltIntersection.html#aca8a4813b78bf5f00c578b8af94f6c75',1,'singlepp::BasicBuilder::PrebuiltIntersection::markers']]],
-  ['mat_5fsubset_1',['mat_subset',['../structsinglepp_1_1BasicBuilder_1_1PrebuiltIntersection.html#a261890e939bd6b9ace6a98cc89290ac6',1,'singlepp::BasicBuilder::PrebuiltIntersection']]]
+  ['quantile_0',['quantile',['../structsinglepp_1_1ClassifySingleOptions.html#aebeadb5d5c853a7e2d0c6d9d7f611656',1,'singlepp::ClassifySingleOptions::quantile'],['../structsinglepp_1_1ClassifyIntegratedOptions.html#a6d4d11059b19ca5066ceed0d9e36bf19',1,'singlepp::ClassifyIntegratedOptions::quantile']]]
 ];

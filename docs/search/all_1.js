@@ -1,8 +1,18 @@
 var searchData=
 [
-  ['basicbuilder_0',['BasicBuilder',['../classsinglepp_1_1BasicBuilder.html',1,'singlepp']]],
-  ['basicbuilder_2ehpp_1',['BasicBuilder.hpp',['../BasicBuilder_8hpp.html',1,'']]],
-  ['basicscorer_2',['BasicScorer',['../classsinglepp_1_1BasicScorer.html',1,'singlepp']]],
-  ['basicscorer_2ehpp_3',['BasicScorer.hpp',['../BasicScorer_8hpp.html',1,'']]],
-  ['best_4',['best',['../structsinglepp_1_1BasicScorer_1_1Results.html#ad7203ebf38cf9dc1b42a57641c8427e3',1,'singlepp::BasicScorer::Results::best'],['../structsinglepp_1_1IntegratedScorer_1_1Results.html#ae849163062f5af249b2096736384cef1',1,'singlepp::IntegratedScorer::Results::best']]]
+  ['c_20port_20of_20singler_0',['C++ port of SingleR',['../index.html',1,'']]],
+  ['choose_5fclassic_5fmarkers_1',['choose_classic_markers',['../namespacesinglepp.html#ae6b37c9c0ac535f7c85771fbeb98e4df',1,'singlepp::choose_classic_markers(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;representative, const Label_ *labels, const ChooseClassicMarkersOptions &amp;options)'],['../namespacesinglepp.html#ae888912441a04acf856e74a9f4a0452b',1,'singlepp::choose_classic_markers(const std::vector&lt; const tatami::Matrix&lt; Value_, Index_ &gt; * &gt; &amp;representatives, const std::vector&lt; const Label_ * &gt; &amp;labels, const ChooseClassicMarkersOptions &amp;options)']]],
+  ['choose_5fclassic_5fmarkers_2ehpp_2',['choose_classic_markers.hpp',['../choose__classic__markers_8hpp.html',1,'']]],
+  ['chooseclassicmarkersoptions_3',['ChooseClassicMarkersOptions',['../structsinglepp_1_1ChooseClassicMarkersOptions.html',1,'singlepp']]],
+  ['classify_5fintegrated_4',['classify_integrated',['../namespacesinglepp.html#aca35f5c98162213d14d4ce801b6376b0',1,'singlepp::classify_integrated(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;test, const std::vector&lt; const Label_ * &gt; &amp;assigned, const TrainedIntegrated&lt; Index_ &gt; &amp;trained, const ClassifyIntegratedOptions&lt; Float_ &gt; &amp;options)'],['../namespacesinglepp.html#a60f705dc3fdc122139e2102713e7ec41',1,'singlepp::classify_integrated(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;test, const std::vector&lt; const Label_ * &gt; &amp;assigned, const TrainedIntegrated&lt; Index_ &gt; &amp;trained, ClassifyIntegratedBuffers&lt; RefLabel_, Float_ &gt; &amp;buffers, const ClassifyIntegratedOptions&lt; Float_ &gt; &amp;options)']]],
+  ['classify_5fintegrated_2ehpp_5',['classify_integrated.hpp',['../classify__integrated_8hpp.html',1,'']]],
+  ['classify_5fsingle_6',['classify_single',['../namespacesinglepp.html#af23220206f86fe833bad096526d58db0',1,'singlepp::classify_single(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;test, const TrainedSingle&lt; Index_, Float_ &gt; &amp;trained, const ClassifySingleOptions&lt; Float_ &gt; &amp;options)'],['../namespacesinglepp.html#ae8772734badf4a09d6c285b9b98295ec',1,'singlepp::classify_single(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;test, const TrainedSingle&lt; Index_, Float_ &gt; &amp;trained, const ClassifySingleBuffers&lt; Label_, Float_ &gt; &amp;buffers, const ClassifySingleOptions&lt; Float_ &gt; &amp;options)']]],
+  ['classify_5fsingle_2ehpp_7',['classify_single.hpp',['../classify__single_8hpp.html',1,'']]],
+  ['classify_5fsingle_5fintersect_8',['classify_single_intersect',['../namespacesinglepp.html#ad7d214a5da53597d24dec5cec59e3beb',1,'singlepp::classify_single_intersect(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;test, const TrainedSingleIntersect&lt; Index_, Float_ &gt; &amp;trained, const ClassifySingleBuffers&lt; Label_, Float_ &gt; &amp;buffers, const ClassifySingleOptions&lt; Float_ &gt; &amp;options)'],['../namespacesinglepp.html#aaf9de543e62eb0ff85b7e5b701406e72',1,'singlepp::classify_single_intersect(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;test, const TrainedSingleIntersect&lt; Index_, Float_ &gt; &amp;trained, const ClassifySingleOptions&lt; Float_ &gt; &amp;options)']]],
+  ['classifyintegratedbuffers_9',['ClassifyIntegratedBuffers',['../structsinglepp_1_1ClassifyIntegratedBuffers.html',1,'singlepp']]],
+  ['classifyintegratedoptions_10',['ClassifyIntegratedOptions',['../structsinglepp_1_1ClassifyIntegratedOptions.html',1,'singlepp']]],
+  ['classifyintegratedresults_11',['ClassifyIntegratedResults',['../structsinglepp_1_1ClassifyIntegratedResults.html',1,'singlepp']]],
+  ['classifysinglebuffers_12',['ClassifySingleBuffers',['../structsinglepp_1_1ClassifySingleBuffers.html',1,'singlepp']]],
+  ['classifysingleoptions_13',['ClassifySingleOptions',['../structsinglepp_1_1ClassifySingleOptions.html',1,'singlepp']]],
+  ['classifysingleresults_14',['ClassifySingleResults',['../structsinglepp_1_1ClassifySingleResults.html',1,'singlepp']]]
 ];
