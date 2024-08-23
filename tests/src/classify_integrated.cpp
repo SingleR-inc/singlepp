@@ -383,6 +383,7 @@ TEST_P(ClassifyIntegratedTest, Basic) {
 
     // Comparing the classify_integrated output to a reference calculation.
     singlepp::ClassifyIntegratedOptions<double> copt;
+    copt.fine_tune = false;
     copt.quantile = quantile;
     auto output = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated, copt);
     auto by_labels = split_by_labels(labels);
@@ -459,6 +460,7 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
 
     // Comparing the ClassifyIntegrated to a reference calculation.
     singlepp::ClassifyIntegratedOptions<double> copt;
+    copt.fine_tune = false;
     copt.quantile = quantile;
     auto output = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated, copt);
     auto by_labels = split_by_labels(labels);

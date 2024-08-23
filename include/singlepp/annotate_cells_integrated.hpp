@@ -40,7 +40,7 @@ Float_ compute_single_reference_score_integrated(
     Label_ best,
     const std::vector<uint8_t>& check_availability,
     const std::vector<std::unordered_set<Index_> >& available,
-    const std::vector<std::vector<RankedVector<Index_, Index_> > >& ranked,
+    const std::vector<std::vector<std::vector<RankedVector<Index_, Index_> > > >& ranked,
     const std::vector<Index_>& miniverse,
     PerReferenceIntegratedWorkspace<Index_, Value_, Float_>& workspace,
     Float_ quantile)
@@ -89,7 +89,7 @@ Float_ compute_single_reference_score_integrated(
 
     for (size_t s = 0; s < nranked; ++s) {
         workspace.ref_ranked.clear();
-        mapping->remap(workspace.best_ranked[s], workspace.ref_ranked);
+        mapping->remap(best_ranked[s], workspace.ref_ranked);
         scaled_ranks(workspace.ref_ranked, workspace.ref_scaled.data());
         Float_ cor = distance_to_correlation<Float_>(workspace.test_scaled, workspace.ref_scaled);
         workspace.all_correlations.push_back(cor);
@@ -105,7 +105,7 @@ void annotate_cells_integrated(
     const std::vector<uint8_t>& check_availability,
     const std::vector<std::unordered_set<Index_> >& available,
     const std::vector<std::vector<std::vector<Index_> > >& markers,
-    const std::vector<std::vector<RankedVector<Index_, Index_> > >& ranked,
+    const std::vector<std::vector<std::vector<RankedVector<Index_, Index_> > > >& ranked,
     const std::vector<const Label_*>& assigned,
     Float_ quantile,
     bool fine_tune,
@@ -159,7 +159,7 @@ void annotate_cells_integrated(
             curscores.clear();
             workspace.direct_mapping_filled = false;
             for (size_t r = 0; r < nref; ++r) {
-                auto score = compute_single_reference_score_integrated(r, assigned[r][i], check_availability, available, markers, ranked, workspace, quantile);
+                auto score = compute_single_reference_score_integrated(r, assigned[r][i], check_availability, available, ranked, miniverse, workspace, quantile);
                 curscores.push_back(score);
                 if (scores[r]) {
                     scores[r][i] = score;
@@ -187,7 +187,7 @@ void annotate_cells_integrated(
                     curscores.clear();
                     workspace.direct_mapping_filled = false;
                     for (auto r : reflabels_in_use) {
-                        auto score = compute_single_reference_score_integrated(r, assigned[r][i], check_availability, available, markers, ranked, workspace, quantile);
+                        auto score = compute_single_reference_score_integrated(r, assigned[r][i], check_availability, available, ranked, miniverse, workspace, quantile);
                         curscores.push_back(score);
                     }
 
