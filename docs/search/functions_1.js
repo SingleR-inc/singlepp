@@ -1,7 +1,8 @@
 var searchData=
 [
-  ['get_5fmarkers_0',['get_markers',['../classsinglepp_1_1TrainedSingle.html#af950945f130f3d957fc06bf029117a9e',1,'singlepp::TrainedSingle::get_markers()'],['../classsinglepp_1_1TrainedSingleIntersect.html#a6b8e1e521a826f67858f0c97c99c047e',1,'singlepp::TrainedSingleIntersect::get_markers() const']]],
-  ['get_5fref_5fsubset_1',['get_ref_subset',['../classsinglepp_1_1TrainedSingleIntersect.html#ac2ec2b035a62da9b175f84a37486d1bf',1,'singlepp::TrainedSingleIntersect']]],
-  ['get_5fsubset_2',['get_subset',['../classsinglepp_1_1TrainedSingle.html#a2054db73c1dfa8cff3024b9a89d8c304',1,'singlepp::TrainedSingle']]],
-  ['get_5ftest_5fsubset_3',['get_test_subset',['../classsinglepp_1_1TrainedSingleIntersect.html#a82b8ce08c57b8dc6bbb2acd0a10ea9d7',1,'singlepp::TrainedSingleIntersect']]]
+  ['begin_0',['begin',['https://tatami-inc.github.io/tatami/classtatami_1_1ArrayView.html#a476ff30f6f88958e34401d254a2ff77d',1,'tatami::ArrayView::begin()'],['https://tatami-inc.github.io/tatami/classtatami_1_1SomeNumericArray.html#ae4964abc1bb340edb08b3bb4bede8d92',1,'tatami::SomeNumericArray::begin()']]],
+  ['blocksparsifiedwrapper_1',['BlockSparsifiedWrapper',['https://tatami-inc.github.io/tatami/classtatami_1_1BlockSparsifiedWrapper.html#a5799ec9ad8f5a55d306cbefac5e1138d',1,'tatami::BlockSparsifiedWrapper']]],
+  ['build_5fraw_2',['build_raw',['https://knncolle.github.io/knncolle/classknncolle_1_1BruteforceBuilder.html#a491f8b75d24452615248da7c236b7759',1,'knncolle::BruteforceBuilder::build_raw()'],['https://knncolle.github.io/knncolle/classknncolle_1_1Builder.html#aa1c84ac7bd4120f5539be1320b74f5f4',1,'knncolle::Builder::build_raw()'],['https://knncolle.github.io/knncolle/classknncolle_1_1KmknnBuilder.html#aafe27a514becc203a33ec54584bf6562',1,'knncolle::KmknnBuilder::build_raw()'],['https://knncolle.github.io/knncolle/classknncolle_1_1L2NormalizedBuilder.html#a9747f9c49d62c8d0c47c017586e0b297',1,'knncolle::L2NormalizedBuilder::build_raw()'],['https://knncolle.github.io/knncolle/classknncolle_1_1VptreeBuilder.html#a0c25ca5b2d7a812032d7cf1d42e3ad3a',1,'knncolle::VptreeBuilder::build_raw()']]],
+  ['build_5fshared_3',['build_shared',['https://knncolle.github.io/knncolle/classknncolle_1_1Builder.html#afe899198735bd5f9d1921283fa65ff3a',1,'knncolle::Builder']]],
+  ['build_5funique_4',['build_unique',['https://knncolle.github.io/knncolle/classknncolle_1_1Builder.html#afeda432debae999f988f32f147055251',1,'knncolle::Builder']]]
 ];

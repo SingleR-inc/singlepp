@@ -1,7 +1,8 @@
 var searchData=
 [
-  ['get_5fmarkers_0',['get_markers',['../classsinglepp_1_1TrainedSingle.html#af950945f130f3d957fc06bf029117a9e',1,'singlepp::TrainedSingle::get_markers()'],['../classsinglepp_1_1TrainedSingleIntersect.html#a6b8e1e521a826f67858f0c97c99c047e',1,'singlepp::TrainedSingleIntersect::get_markers() const']]],
-  ['get_5fref_5fsubset_1',['get_ref_subset',['../classsinglepp_1_1TrainedSingleIntersect.html#ac2ec2b035a62da9b175f84a37486d1bf',1,'singlepp::TrainedSingleIntersect']]],
-  ['get_5fsubset_2',['get_subset',['../classsinglepp_1_1TrainedSingle.html#a2054db73c1dfa8cff3024b9a89d8c304',1,'singlepp::TrainedSingle']]],
-  ['get_5ftest_5fsubset_3',['get_test_subset',['../classsinglepp_1_1TrainedSingleIntersect.html#a82b8ce08c57b8dc6bbb2acd0a10ea9d7',1,'singlepp::TrainedSingleIntersect']]]
+  ['elementtype_0',['ElementType',['https://tatami-inc.github.io/tatami/namespacetatami.html#a58a028d23a7be58854b2e60dfae1b04b',1,'tatami']]],
+  ['elementtype_2ehpp_1',['ElementType.hpp',['https://tatami-inc.github.io/tatami/ElementType_8hpp.html',1,'']]],
+  ['end_2',['end',['https://tatami-inc.github.io/tatami/classtatami_1_1ArrayView.html#a904e6d03b59a20f2cc7831fbb318cf33',1,'tatami::ArrayView::end()'],['https://tatami-inc.github.io/tatami/classtatami_1_1SomeNumericArray.html#add771080790c65d2943c54a0615ee136',1,'tatami::SomeNumericArray::end()']]],
+  ['euclideandistance_3',['EuclideanDistance',['https://knncolle.github.io/knncolle/structknncolle_1_1EuclideanDistance.html',1,'knncolle']]],
+  ['extractor_2ehpp_4',['Extractor.hpp',['https://tatami-inc.github.io/tatami/Extractor_8hpp.html',1,'']]]
 ];

@@ -1,9 +1,8 @@
 var searchData=
 [
-  ['trainedintegrated_0',['TrainedIntegrated',['../classsinglepp_1_1TrainedIntegrated.html',1,'singlepp']]],
-  ['trainedsingle_1',['TrainedSingle',['../classsinglepp_1_1TrainedSingle.html',1,'singlepp']]],
-  ['trainedsingleintersect_2',['TrainedSingleIntersect',['../classsinglepp_1_1TrainedSingleIntersect.html',1,'singlepp']]],
-  ['trainintegratedinput_3',['TrainIntegratedInput',['../structsinglepp_1_1TrainIntegratedInput.html',1,'singlepp']]],
-  ['trainintegratedoptions_4',['TrainIntegratedOptions',['../structsinglepp_1_1TrainIntegratedOptions.html',1,'singlepp']]],
-  ['trainsingleoptions_5',['TrainSingleOptions',['../structsinglepp_1_1TrainSingleOptions.html',1,'singlepp']]]
+  ['blocksparsifiedwrapper_0',['BlockSparsifiedWrapper',['https://tatami-inc.github.io/tatami/classtatami_1_1BlockSparsifiedWrapper.html',1,'tatami']]],
+  ['bruteforcebuilder_1',['BruteforceBuilder',['https://knncolle.github.io/knncolle/classknncolle_1_1BruteforceBuilder.html',1,'knncolle']]],
+  ['bruteforceprebuilt_2',['BruteforcePrebuilt',['https://knncolle.github.io/knncolle/classknncolle_1_1BruteforcePrebuilt.html',1,'knncolle']]],
+  ['bruteforcesearcher_3',['BruteforceSearcher',['https://knncolle.github.io/knncolle/classknncolle_1_1BruteforceSearcher.html',1,'knncolle']]],
+  ['builder_4',['Builder',['https://knncolle.github.io/knncolle/classknncolle_1_1Builder.html',1,'knncolle']]]
 ];

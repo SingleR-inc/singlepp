@@ -1,4 +1,8 @@
 var searchData=
 [
-  ['best_0',['best',['../structsinglepp_1_1ClassifySingleBuffers.html#a051c296c60087f2bfa9c46240c885487',1,'singlepp::ClassifySingleBuffers::best'],['../structsinglepp_1_1ClassifySingleResults.html#a85a0c24158c546a629455dabd24d5cb8',1,'singlepp::ClassifySingleResults::best'],['../structsinglepp_1_1ClassifyIntegratedBuffers.html#a51dd05dee04d9d73f1ad6d62655ca1e1',1,'singlepp::ClassifyIntegratedBuffers::best'],['../structsinglepp_1_1ClassifyIntegratedResults.html#a2b2ab0c6b6cbefb29acbd685801f1e34',1,'singlepp::ClassifyIntegratedResults::best']]]
+  ['arithmetic_5fhelpers_2ehpp_0',['arithmetic_helpers.hpp',['https://tatami-inc.github.io/tatami/binary_2arithmetic__helpers_8hpp.html',1,'(Global Namespace)'],['https://tatami-inc.github.io/tatami/unary_2arithmetic__helpers_8hpp.html',1,'(Global Namespace)']]],
+  ['arithmetic_5futils_2ehpp_1',['arithmetic_utils.hpp',['https://tatami-inc.github.io/tatami/arithmetic__utils_8hpp.html',1,'']]],
+  ['arithmeticoperation_2',['ArithmeticOperation',['https://tatami-inc.github.io/tatami/namespacetatami.html#a9050a4b119e027638175c38cc9bbede8',1,'tatami']]],
+  ['arrayview_3',['arrayview',['https://tatami-inc.github.io/tatami/classtatami_1_1ArrayView.html',1,'tatami::ArrayView&lt; typename T &gt;'],['https://tatami-inc.github.io/tatami/classtatami_1_1ArrayView.html#a98f383e531be5aac446242d62febf4e9',1,'tatami::ArrayView::ArrayView()']]],
+  ['arrayview_2ehpp_4',['ArrayView.hpp',['https://tatami-inc.github.io/tatami/ArrayView_8hpp.html',1,'']]]
 ];

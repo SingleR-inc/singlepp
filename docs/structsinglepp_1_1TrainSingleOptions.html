@@ -12,6 +12,13 @@
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  extensions: ["tex2jax.js"],
+  jax: ["input/TeX","output/HTML-CSS"],
+});
+</script>
+<script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -91,7 +98,7 @@ $(function() {
 Public Attributes</h2></td></tr>
 <tr class="memitem:aa72f73c9937301bd90c2fec19f523479" id="r_aa72f73c9937301bd90c2fec19f523479"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">int</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1TrainSingleOptions.html#aa72f73c9937301bd90c2fec19f523479">top</a> = -1</td></tr>
 <tr class="separator:aa72f73c9937301bd90c2fec19f523479"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a36a62c8abfc04a46be71e2ba9e179a60" id="r_a36a62c8abfc04a46be71e2ba9e179a60"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; knncolle::Builder&lt; knncolle::SimpleMatrix&lt; <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Index_</a>, <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Index_</a>, <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a> &gt;, <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1TrainSingleOptions.html#a36a62c8abfc04a46be71e2ba9e179a60">trainer</a></td></tr>
+<tr class="memitem:a36a62c8abfc04a46be71e2ba9e179a60" id="r_a36a62c8abfc04a46be71e2ba9e179a60"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; <a class="elRef" href="https://knncolle.github.io/knncolle/classknncolle_1_1Builder.html">knncolle::Builder</a>&lt; <a class="elRef" href="https://knncolle.github.io/knncolle/classknncolle_1_1SimpleMatrix.html">knncolle::SimpleMatrix</a>&lt; <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Index_</a>, <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Index_</a>, <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a> &gt;, <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1TrainSingleOptions.html#a36a62c8abfc04a46be71e2ba9e179a60">trainer</a></td></tr>
 <tr class="separator:a36a62c8abfc04a46be71e2ba9e179a60"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a23ecc04e6d269ad1ede160c7838b8a63" id="r_a23ecc04e6d269ad1ede160c7838b8a63"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">int</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1TrainSingleOptions.html#a23ecc04e6d269ad1ede160c7838b8a63">num_threads</a> = 1</td></tr>
 <tr class="separator:a23ecc04e6d269ad1ede160c7838b8a63"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -151,11 +158,11 @@ template&lt;<a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944
 template&lt;<a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">typename</a> <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Index_</a> , <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">typename</a> <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a> &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">std::shared_ptr&lt;knncolle::Builder&lt;knncolle::SimpleMatrix&lt;<a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Index_</a>, <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Index_</a>, <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a>&gt;, <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a>&gt; &gt; <a class="el" href="structsinglepp_1_1TrainSingleOptions.html">singlepp::TrainSingleOptions</a>&lt; <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Index_</a>, <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a> &gt;::trainer</td>
+          <td class="memname">std::shared_ptr&lt;<a class="elRef" href="https://knncolle.github.io/knncolle/classknncolle_1_1Builder.html">knncolle::Builder</a>&lt;<a class="elRef" href="https://knncolle.github.io/knncolle/classknncolle_1_1SimpleMatrix.html">knncolle::SimpleMatrix</a>&lt;<a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Index_</a>, <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Index_</a>, <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a>&gt;, <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a>&gt; &gt; <a class="el" href="structsinglepp_1_1TrainSingleOptions.html">singlepp::TrainSingleOptions</a>&lt; <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Index_</a>, <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a> &gt;::trainer</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Algorithm for the nearest-neighbor search. This allows us to skip the explicit calculation of correlations between each test cell and every reference sample. If NULL, this defaults to an exact search based on <code>knncolle::VptreeBuilder</code>. </p>
+<p>Algorithm for the nearest-neighbor search. This allows us to skip the explicit calculation of correlations between each test cell and every reference sample. If NULL, this defaults to an exact search based on <code><a class="elRef" href="https://knncolle.github.io/knncolle/classknncolle_1_1VptreeBuilder.html">knncolle::VptreeBuilder</a></code>. </p>
 
 </div>
 </div>

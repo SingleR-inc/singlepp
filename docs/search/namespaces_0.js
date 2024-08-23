@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['singlepp_0',['singlepp',['../namespacesinglepp.html',1,'']]]
+  ['knncolle_0',['knncolle',['https://knncolle.github.io/knncolle/namespaceknncolle.html',1,'']]]
 ];
