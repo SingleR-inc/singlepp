@@ -1,7 +1,21 @@
 #' @export
 #' @importFrom stats cor quantile
 #' @importFrom utils head
-reference <- function(test, ref, labels, markers, top=20, quantile = 0.8, fine.tune = TRUE, tune.thresh = 0.05) {
+naive_single <- function(test, ref, labels, markers, top=20, quantile = 0.8, fine.tune = TRUE, tune.thresh = 0.05) {
+    if (!is.null(rownames(test))) {
+        # Intersecting ahead of everything else, so that 'top' has the intended effect.
+        common <- intersect(rownames(ref), rownames(test))
+        test <- test[common,,drop=FALSE]
+        ref <- ref[common,,drop=FALSE]
+
+        for (i in seq_along(markers)) {
+            for (j in seq_along(markers[[i]])) {
+                m <- match(markers[[i]][[j]], common)
+                markers[[i]][[j]] <- m[!is.na(m)]
+            }
+        }
+    }
+
     y <- split(seq_along(labels), labels)
     names(y) <- NULL
 
@@ -15,8 +29,8 @@ reference <- function(test, ref, labels, markers, top=20, quantile = 0.8, fine.t
     genes <- sort(unique(unlist(markers)))
 
     for (x in seq_along(y)) {
-        refexpr <- cor(ref[genes,y[[x]]], test[genes,], method="spearman")
-        collected[,x] <- apply(refexpr, 2, FUN=stats::quantile, prob=quantile)
+        corrs <- stats::cor(ref[genes,y[[x]]], test[genes,], method="spearman")
+        collected[,x] <- apply(corrs, 2, FUN=stats::quantile, prob=quantile)
     }
 
     if (fine.tune) {
