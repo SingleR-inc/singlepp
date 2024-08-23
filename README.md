@@ -1,11 +1,17 @@
 # C++ port of SingleR 
 
+![Unit tests](https://github.com/singler-inc/singlepp/actions/workflows/run-tests.yaml/badge.svg)
+![Documentation](https://github.com/singler-inc/singlepp/actions/workflows/doxygenate.yaml/badge.svg)
+![R comparison](https://github.com/singler-inc/singlepp/actions/workflows/compare-r.yaml/badge.svg)
+[![codecov](https://codecov.io/gh/singler-inc/singlepp/branch/master/graph/badge.svg?token=OYTGM9IRSE)](https://codecov.io/gh/singler-inc/singlepp)
+
 ## Overview
 
 This repository contains a C++ port of the [**SingleR**](https://bioconductor.org/packages/SingleR) R package for automated cell type annotation.
-It primarily focuses on the prediction step given a set of references; the preparation of the references themselves is left to the user (see below).
-The library contains methods for simple and multi-reference predictions, returning scores and labels for each cell in the test dataset.
-Each cell is treated independently so the entire process is trivially parallelizable.
+Given a test matrix of single-cell (expression) values, it compares each cell to a reference dataset with known cell type labels.
+Scoring is based on Spearman's rank correlation across the marker genes for each labels, with additional fine-tuning to distinguish between closely related labels.
+**singlepp** returns these scores along with the best label for each cell in the test dataset.
+We provide methods for annotation based on a single reference as well as integration of labels across multiple references.
 
 ## Quick start
 
