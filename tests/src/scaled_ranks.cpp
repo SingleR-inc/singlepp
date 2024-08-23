@@ -174,6 +174,12 @@ TEST(RankRemapper, Subsets) {
         EXPECT_EQ(output[1].second, 1);
         EXPECT_EQ(output[2].first, 0.8);
         EXPECT_EQ(output[2].second, 2);
+
+        // Checking that the clear() method works as expected.
+        auto copy = remapper;
+        copy.clear();
+        copy.remap(input, output);
+        EXPECT_TRUE(output.empty());
     }
 
     // Only even indices are retained.
@@ -209,13 +215,14 @@ TEST(RankRemapper, Subsets) {
 
 TEST(RankRemapper, SubsetSmallType) {
     // Check that the remapper behaves correctly when the index type is smaller
-    // than the reserved size.
+    // than the mapping size.
     singlepp::internal::RankRemapper<uint8_t> remapper;
     remapper.reserve(300);
     remapper.add(200);
     remapper.add(100); 
     remapper.add(10); 
     remapper.add(100); // ignoring duplicates again!
+    remapper.add(255); // need this to force the mapping to exceed the max index size.
 
     singlepp::internal::RankedVector<double, uint8_t> input;
     for (size_t i = 0; i < 250; i += 10) {
