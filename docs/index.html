@@ -163,12 +163,13 @@ $(function() {
 <div class="line"><span class="keyword">auto</span> ires = single.run(test_mat, train_integrated, ci_opt);</div>
 <div class="line">ires.best; <span class="comment">// index of the best reference.</span></div>
 </div><!-- fragment --><h1>Building projects</h1>
+<h2>CMake with <code>FetchContent</code></h2>
 <p>If you're using CMake, you just need to add something like this to your <code>CMakeLists.txt</code>:</p>
 <div class="fragment"><div class="line">include(FetchContent)</div>
 <div class="line"> </div>
 <div class="line">FetchContent_Declare(</div>
-<div class="line">  kmeans </div>
-<div class="line">  GIT_REPOSITORY https://github.com/LTLA/singlepp</div>
+<div class="line">  singlepp</div>
+<div class="line">  GIT_REPOSITORY https://github.com/singler-inc/singlepp</div>
 <div class="line">  GIT_TAG master # or any version of interest</div>
 <div class="line">)</div>
 <div class="line"> </div>
@@ -179,7 +180,17 @@ $(function() {
 <div class="line"> </div>
 <div class="line"># For libaries</div>
 <div class="line">target_link_libraries(mylib INTERFACE singlepp)</div>
-</div><!-- fragment --><h1>References</h1>
+</div><!-- fragment --><h2>CMake with <code>find_package()</code></h2>
+<div class="fragment"><div class="line">find_package(singler_singlepp CONFIG REQUIRED)</div>
+<div class="line">target_link_libraries(mylib INTERFACE singler::singlepp)</div>
+</div><!-- fragment --><p>To install the library, use:</p>
+<div class="fragment"><div class="line">mkdir build &amp;&amp; cd build</div>
+<div class="line">cmake .. -DSINGLEPP_TESTS=OFF</div>
+<div class="line">cmake --build . --target install</div>
+</div><!-- fragment --><p>By default, this will use <code>FetchContent</code> to fetch all external dependencies. If you want to install them manually, use <code>-DSINGLEPP_FETCH_EXTERN=OFF</code>. See the tags in <a href="extern/CMakeLists.txt"><code>extern/CMakeLists.txt</code></a> to find compatible versions of each dependency.</p>
+<h2>Manual</h2>
+<p>If you're not using CMake, the simple approach is to just copy the files in <code>include/</code> - either directly or with Git submodules - and include their path during compilation with, e.g., GCC's <code>-I</code>. This requires the external dependencies listed in <a href="extern/CMakeLists.txt"><code>extern/CMakeLists.txt</code></a>, which also need to be made available during compilation.</p>
+<h1>References</h1>
 <p>Aran D et al. (2019). Reference-based analysis of lung single-cell sequencing reveals a transitional profibrotic macrophage. <em>Nat. Immunol.</em> 20, 163-172 </p>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
