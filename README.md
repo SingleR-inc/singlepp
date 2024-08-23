@@ -138,14 +138,16 @@ ires.best; // index of the best reference.
 
 ## Building projects 
 
+### CMake with `FetchContent`
+
 If you're using CMake, you just need to add something like this to your `CMakeLists.txt`:
 
-```
+```cmake
 include(FetchContent)
 
 FetchContent_Declare(
-  kmeans 
-  GIT_REPOSITORY https://github.com/LTLA/singlepp
+  singlepp
+  GIT_REPOSITORY https://github.com/singler-inc/singlepp
   GIT_TAG master # or any version of interest
 )
 
@@ -154,13 +156,37 @@ FetchContent_MakeAvailable(singlepp)
 
 Then you can link to **singlepp** to make the headers available during compilation:
 
-```
+```cmake
 # For executables:
 target_link_libraries(myexe singlepp)
 
 # For libaries
 target_link_libraries(mylib INTERFACE singlepp)
 ```
+
+### CMake with `find_package()`
+
+```cmake
+find_package(singler_singlepp CONFIG REQUIRED)
+target_link_libraries(mylib INTERFACE singler::singlepp)
+```
+
+To install the library, use:
+
+```sh
+mkdir build && cd build
+cmake .. -DSINGLEPP_TESTS=OFF
+cmake --build . --target install
+```
+
+By default, this will use `FetchContent` to fetch all external dependencies.
+If you want to install them manually, use `-DSINGLEPP_FETCH_EXTERN=OFF`.
+See the tags in [`extern/CMakeLists.txt`](extern/CMakeLists.txt) to find compatible versions of each dependency.
+
+### Manual
+
+If you're not using CMake, the simple approach is to just copy the files in `include/` - either directly or with Git submodules - and include their path during compilation with, e.g., GCC's `-I`.
+This requires the external dependencies listed in [`extern/CMakeLists.txt`](extern/CMakeLists.txt), which also need to be made available during compilation.
 
 ## References
 
