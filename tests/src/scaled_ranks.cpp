@@ -2,7 +2,7 @@
 
 #include "singlepp/scaled_ranks.hpp"
 #include "tatami_stats/tatami_stats.hpp"
-#include "singlepp/compute_scores.hpp"
+#include "singlepp/correlations_to_score.hpp"
 
 #include <algorithm>
 #include <vector>

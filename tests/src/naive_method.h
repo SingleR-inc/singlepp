@@ -28,7 +28,7 @@ double naive_score(const std::vector<double>& scaled_test, const std::vector<int
         correlations.push_back(singlepp::internal::distance_to_correlation<double>(scaled_test, scaled_ref));
     }
 
-    return singlepp::internal::correlations_to_scores(correlations, quantile);
+    return singlepp::internal::correlations_to_score(correlations, quantile);
 }
 
 template<class Labels, class Matrix, class RefMatrix>

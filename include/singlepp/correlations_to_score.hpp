@@ -1,5 +1,5 @@
-#ifndef SINGLEPP_COMPUTE_SCORES_HPP
-#define SINGLEPP_COMPUTE_SCORES_HPP
+#ifndef SINGLEPP_CORRELATIONS_TO_SCORE_HPP
+#define SINGLEPP_CORRELATIONS_TO_SCORE_HPP
 
 #include "macros.hpp"
 
@@ -13,7 +13,7 @@ namespace singlepp {
 namespace internal {
 
 template<typename Float_>
-Float_ correlations_to_scores (std::vector<Float_>& correlations, Float_ quantile) {
+Float_ correlations_to_score(std::vector<Float_>& correlations, Float_ quantile) {
     static_assert(std::is_floating_point<Float_>::value);
 
     const size_t ncells=correlations.size();

@@ -5,8 +5,7 @@
 
 #include "tatami/tatami.hpp"
 
-#include "compute_scores.hpp"
-#include "scaled_ranks.hpp"
+#include "annotate_cells_integrated.hpp"
 #include "train_integrated.hpp"
 
 #include <vector>
@@ -27,10 +26,22 @@ namespace singlepp {
 template<typename Float_>
 struct ClassifyIntegratedOptions {
     /**
-     * Quantile to use to compute a per-label score from the correlations.
+     * Quantile to use to compute a per-reference score from the correlations.
      * This has the same interpretation as `ClassifySingleOptions::quantile`.
      */
     Float_ quantile = 0.8;
+
+    /**
+     * Score threshold to use to select the top-scoring subset of references during fine-tuning,
+     * see `ClassifySingleOptions::fine_tune` for more details.
+     */
+    Float_ fine_tune_threshold = 0.05;
+
+    /**
+     * Whether to perform fine-tuning.
+     * This can be disabled to improve speed at the cost of accuracy.
+     */
+    bool fine_tune = true;
 
     /**
      * Number of threads to use.
@@ -118,129 +129,22 @@ void classify_integrated(
     ClassifyIntegratedBuffers<RefLabel_, Float_>& buffers,
     const ClassifyIntegratedOptions<Float_>& options)
 {
-    auto NR = test.nrow();
-    auto nref = trained.num_references();
-
-    tatami::parallelize([&](size_t, Index_ start, Index_ len) -> void {
-        // We perform an indexed extraction, so all subsequent indices
-        // will refer to indices into this subset (i.e., 'trained.universe').
-        tatami::VectorPtr<Index_> universe_ptr(tatami::VectorPtr<Index_>{}, &(trained.universe));
-        auto wrk = tatami::consecutive_extractor<false>(&test, false, start, len, std::move(universe_ptr));
-        std::vector<Value_> buffer(trained.universe.size());
-
-        std::unordered_set<Index_> miniverse_tmp;
-        std::vector<Index_> miniverse;
-        internal::RankRemapper<Index_> intersect_mapping, direct_mapping;
-
-        internal::RankedVector<Value_, Index_> test_ranked_full, test_ranked;
-        test_ranked_full.reserve(NR);
-        test_ranked.reserve(NR);
-        internal::RankedVector<Index_, Index_> ref_ranked;
-        ref_ranked.reserve(NR);
-
-        std::vector<Float_> test_scaled(NR);
-        std::vector<Float_> ref_scaled(NR);
-        std::vector<Float_> all_correlations;
-
-        for (Index_ i = start, end = start + len; i < end; ++i) {
-            // Extracting only the markers of the best labels for this cell.
-            miniverse_tmp.clear();
-            for (size_t r = 0; r < nref; ++r) {
-                auto best = assigned[r][i];
-                const auto& markers = trained.markers[r][best];
-                miniverse_tmp.insert(markers.begin(), markers.end());
-            }
-
-            miniverse.clear();
-            miniverse.insert(miniverse.end(), miniverse_tmp.begin(), miniverse_tmp.end());
-            std::sort(miniverse.begin(), miniverse.end());
-
-            test_ranked_full.clear();
-            auto ptr = wrk->fetch(buffer.data());
-            for (auto u : miniverse) {
-                test_ranked_full.emplace_back(ptr[u], u);
-            }
-            std::sort(test_ranked_full.begin(), test_ranked_full.end());
-
-            // Scanning through each reference and computing the score for the best group.
-            Float_ best_score = -1000, next_best = -1000;
-            Index_ best_ref = 0;
-            bool direct_mapping_filled = false;
-
-            for (size_t r = 0; r < nref; ++r) {
-                // Further subsetting to the intersection of markers that are
-                // actual present in this particular reference.
-                const internal::RankRemapper<Index_>* mapping;
-                if (trained.check_availability[r]) {
-                    const auto& cur_available = trained.available[r];
-                    intersect_mapping.clear();
-                    intersect_mapping.reserve(miniverse.size());
-                    for (auto c : miniverse) {
-                        if (cur_available.find(c) != cur_available.end()) {
-                            intersect_mapping.add(c);
-                        }
-                    }
-                    mapping = &intersect_mapping;
-
-                } else {
-                    if (!direct_mapping_filled) {
-                        direct_mapping.clear();
-                        direct_mapping.reserve(miniverse.size());
-                        for (auto c : miniverse) {
-                            direct_mapping.add(c);
-                        }
-                        direct_mapping_filled = true;
-                    }
-                    mapping = &direct_mapping;
-                } 
-
-                mapping->remap(test_ranked_full, test_ranked);
-                test_scaled.resize(test_ranked.size());
-                internal::scaled_ranks(test_ranked, test_scaled.data());
-
-                // Now actually calculating the score for the best group for
-                // this cell in this reference. This assumes that
-                // 'trained.ranked' already contains sorted pairs where the
-                // indices refer to the rows of the original data matrix.
-                auto best = assigned[r][i];
-                const auto& best_ranked = trained.ranked[r][best];
-                all_correlations.clear();
-                ref_scaled.resize(test_scaled.size());
-
-                for (size_t s = 0; s < best_ranked.size(); ++s) {
-                    ref_ranked.clear();
-                    mapping->remap(best_ranked[s], ref_ranked);
-                    internal::scaled_ranks(ref_ranked, ref_scaled.data());
-                    Float_ cor = internal::distance_to_correlation<Float_>(test_scaled, ref_scaled);
-                    all_correlations.push_back(cor);
-                }
-
-                Float_ score = internal::correlations_to_scores(all_correlations, options.quantile);
-                if (buffers.scores[r]) {
-                    buffers.scores[r][i] = score;
-                }
-                if (score > best_score) {
-                    next_best = best_score;
-                    best_score = score;
-                    best_ref = r;
-                } else if (score > next_best) {
-                    next_best = score;
-                }
-            }
-
-            if (buffers.best) {
-                buffers.best[i] = best_ref;
-            }
-            if (buffers.delta) {
-                if (nref > 1) {
-                    buffers.delta[i] = best_score - next_best;
-                } else {
-                    buffers.delta[i] = std::numeric_limits<Float_>::quiet_NaN();
-                }
-            }
-        }
-
-    }, test.ncol(), options.num_threads);
+    internal::annotate_cells_integrated(
+        test,
+        trained.universe,
+        trained.check_availability,
+        trained.available,
+        trained.markers,
+        trained.ranked,
+        assigned,
+        options.quantile,
+        options.fine_tune,
+        options.fine_tune_threshold,
+        buffers.best,
+        buffers.scores,
+        buffers.delta,
+        options.num_threads
+    );
 }
 
 /**

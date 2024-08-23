@@ -1,66 +1,11 @@
 #include <gtest/gtest.h>
-#include "singlepp/fine_tune.hpp"
+#include "singlepp/annotate_cells_single.hpp"
 #include "mock_markers.h"
 #include "spawn_matrix.h"
 #include "fill_ranks.h"
 #include "naive_method.h"
 
-TEST(FineTune, FillLabelsInUse) {
-    std::vector<double> scores { 0.5, 0.2, 0.46 };
-    std::vector<int> in_use;
-
-    {
-        auto output = singlepp::internal::fill_labels_in_use(scores, 0.05, in_use);
-        std::vector<int> expected { 0, 2 };
-        EXPECT_EQ(in_use, expected);
-        EXPECT_EQ(output.first, 0);
-        EXPECT_FLOAT_EQ(output.second, 0.04);
-    }
-
-    {
-        auto output = singlepp::internal::fill_labels_in_use(scores, 0.01, in_use);
-        std::vector<int> expected { 0 };
-        EXPECT_EQ(in_use, expected);
-        EXPECT_EQ(output.first, 0);
-        EXPECT_FLOAT_EQ(output.second, 0.04);
-    }
-
-    scores = std::vector<double>{ 0.48, 0.5, 0.2, 0.46 };
-    in_use = std::vector<int>{ 5, 10, 100 }; // checking that these are cleared out.
-    {
-        auto output = singlepp::internal::fill_labels_in_use(scores, 0.05, in_use);
-        std::vector<int> expected { 0, 1, 3 };
-        EXPECT_EQ(in_use, expected);
-        EXPECT_EQ(output.first, 1);
-        EXPECT_FLOAT_EQ(output.second, 0.02);
-    }
-}
-
-TEST(FineTune, ReplaceLabelsInUse) {
-    {
-        std::vector<double> scores { 0.48, 0.2, 0.5 };
-        std::vector<int> in_use { 4, 5, 6 };
-
-        auto output = singlepp::internal::replace_labels_in_use(scores, 0.05, in_use);
-        std::vector<int> expected { 4, 6 };
-        EXPECT_EQ(in_use, expected);
-        EXPECT_EQ(output.first, 6);
-        EXPECT_FLOAT_EQ(output.second, 0.02);
-    }
-
-    {
-        std::vector<double> scores { 0.2, 0.48, 0.51, 0.5 };
-        std::vector<int> in_use { 0, 7, 3, 8 };
-
-        auto output = singlepp::internal::replace_labels_in_use(scores, 0.05, in_use);
-        std::vector<int> expected { 7, 3, 8 };
-        EXPECT_EQ(in_use, expected);
-        EXPECT_EQ(output.first, 3);
-        EXPECT_FLOAT_EQ(output.second, 0.01);
-    }
-}
-
-TEST(FineTuner, EdgeCases) {
+TEST(FineTuneSingle, EdgeCases) {
     // Mocking up the test and references.
     size_t ngenes = 200;
     size_t nlabels = 3;
@@ -76,7 +21,7 @@ TEST(FineTuner, EdgeCases) {
     auto references = singlepp::internal::build_indices(*refs, labels.data(), subset, knncolle::VptreeBuilder(), 1);
 
     // Running the fine-tuning edge cases.
-    singlepp::internal::FineTuner<int, int, double, double> ft;
+    singlepp::internal::FineTuneSingle<int, int, double, double> ft;
 
     // Check early exit conditions.
     {
@@ -132,7 +77,7 @@ TEST(FineTuner, EdgeCases) {
     }
 }
 
-TEST(FineTuner, Reference) {
+TEST(FineTuneSingle, Reference) {
     // Mocking up the test and references.
     size_t ngenes = 200;
     size_t nlabels = 3;
@@ -151,7 +96,7 @@ TEST(FineTuner, Reference) {
     auto naive = naive_method(nlabels, labels, refs, mat, subset, quantile);
 
     // Recalculation inside the fine-tuner should give the same conclusion.
-    singlepp::internal::FineTuner<int, int, double, double> ft;
+    singlepp::internal::FineTuneSingle<int, int, double, double> ft;
     auto references = singlepp::internal::build_indices(*refs, labels.data(), subset, knncolle::VptreeBuilder(), 1);
 
     auto wrk = mat->dense_column(subset);
@@ -182,7 +127,7 @@ TEST(FineTuner, Reference) {
     }
 }
 
-TEST(FineTuner, Diagonal) {
+TEST(FineTuneSingle, Diagonal) {
     // Mocking up the test and references. This time, we make
     // sure that there are only markers on the diagonals.
     size_t ngenes = 200;
@@ -203,7 +148,7 @@ TEST(FineTuner, Diagonal) {
     // To do so, we set the quantile to 1 to guarantee a score of 1 from a
     // correlation of 1. Again, this requires setting test = true to force
     // it to do calculations, otherwise it just quits early.
-    singlepp::internal::FineTuner<int, int, double, double> ft;
+    singlepp::internal::FineTuneSingle<int, int, double, double> ft;
 
     auto wrk = refs->dense_column();
     std::vector<double> buffer(ngenes);
