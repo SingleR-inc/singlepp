@@ -13,7 +13,7 @@ protected:
     inline static singlepp::TrainedIntegrated<int> trained;
 
     inline static size_t ngenes = 2000;
-    inline static size_t nsamples = 50;
+    inline static size_t nprofiles = 50;
     inline static size_t nrefs = 3;
 
     static void SetUpTestSuite() {
@@ -28,8 +28,8 @@ protected:
         for (size_t r = 0; r < nrefs; ++r) {
             size_t seed = r * 1000;
             size_t nlabels = 3 + r;
-            references.push_back(spawn_matrix(ngenes, nsamples, seed));
-            labels.push_back(spawn_labels(nsamples, nlabels, seed * 2));
+            references.push_back(spawn_matrix(ngenes, nprofiles, seed));
+            labels.push_back(spawn_labels(nprofiles, nlabels, seed * 2));
             auto current = mock_markers<int>(nlabels, 10, ngenes, seed * 3);
 
             singlepp::TrainSingleOptions<int, double> topt;
@@ -86,12 +86,12 @@ TEST_F(FineTuneIntegratedTest, EdgeCases) {
 
 TEST_F(FineTuneIntegratedTest, ExactRecovery) {
     // Checking that we eventually pick up the correct reference, if the input
-    // profile is identical to one of the samples in one of the references. We
+    // profile is identical to one of the profiles in one of the references. We
     // set the quantile to 1 to guarantee a score of 1 from a correlation of 1.
     std::vector<double> buffer(ngenes);
     for (size_t r = 0; r < nrefs; ++r) {
         auto wrk = references[r]->dense_column(trained.universe);
-        for (size_t c = 0; c < nsamples; ++c) {
+        for (size_t c = 0; c < nprofiles; ++c) {
             auto vec = wrk->fetch(c, buffer.data());
             auto ranked = fill_ranks<int>(trained.universe.size(), vec);
 
@@ -123,7 +123,7 @@ TEST_F(FineTuneIntegratedTest, ExactRecoveryIntersected) {
     std::vector<double> buffer(ngenes);
     for (size_t r = 0; r < nrefs; ++r) {
         auto wrk = references[r]->dense_column(trained.universe);
-        for (size_t c = 0; c < nsamples; ++c) {
+        for (size_t c = 0; c < nprofiles; ++c) {
             auto vec = wrk->fetch(c, buffer.data());
             auto ranked = fill_ranks<int>(trained.universe.size(), vec);
 
