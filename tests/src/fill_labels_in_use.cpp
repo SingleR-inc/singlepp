@@ -34,6 +34,22 @@ TEST(FillLabelsInUse, Basic) {
         EXPECT_EQ(output.first, 1);
         EXPECT_FLOAT_EQ(output.second, 0.02);
     }
+
+    // Checking the support for no-op cases.
+    {
+        auto output = singlepp::internal::fill_labels_in_use<double, int>({ 0.1 }, 0, in_use);
+        std::vector<int> expected { 0 };
+        EXPECT_EQ(in_use, expected);
+        EXPECT_EQ(output.first, 0);
+        EXPECT_TRUE(std::isnan(output.second));
+    }
+
+    {
+        auto output = singlepp::internal::fill_labels_in_use<double, int>({}, 0, in_use);
+        EXPECT_TRUE(in_use.empty());
+        EXPECT_EQ(output.first, 0);
+        EXPECT_TRUE(std::isnan(output.second));
+    }
 }
 
 TEST(UpdateLabelsInUse, Basic) {

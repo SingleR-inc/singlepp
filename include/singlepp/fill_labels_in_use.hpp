@@ -16,12 +16,19 @@ std::pair<Label_, Stat_> fill_labels_in_use(const std::vector<Stat_>& scores, St
     static_assert(std::is_floating_point<Stat_>::value);
     static_assert(std::is_integral<Label_>::value);
 
+    in_use.clear();
+    if (scores.size() <= 1) {
+        if (!scores.empty()) {
+            in_use.push_back(0);
+        }
+        return std::pair<Label_, Stat_>(0, std::numeric_limits<Stat_>::quiet_NaN());
+    } 
+
     auto it = std::max_element(scores.begin(), scores.end());
     Label_ best_label = it - scores.begin();
     Stat_ max_score = *it;
 
-    in_use.clear();
-    constexpr Stat_ DUMMY = -1000;
+    constexpr Stat_ DUMMY = -1000; // should be lower than any conceivable correlation.
     Stat_ next_score = DUMMY;
     const Stat_ bound = max_score - threshold;
 

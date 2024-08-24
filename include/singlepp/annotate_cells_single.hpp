@@ -37,7 +37,6 @@ private:
     RankedVector<Index_, Index_> my_ref_sub;
 
 public:
-    template<bool test_ = false>
     std::pair<Label_, Float_> run(
         const RankedVector<Value_, Index_>& input, 
         const std::vector<PerLabelReference<Index_, Float_> >& ref,
@@ -46,32 +45,18 @@ public:
         Float_ quantile,
         Float_ threshold)
     {
-        if (scores.size() <= 1) {
-            return std::pair<Label_, Float_>(0, std::numeric_limits<Float_>::quiet_NaN());
-        } 
-
         auto candidate = fill_labels_in_use(scores, threshold, my_labels_in_use);
 
-        // If there's only one top label, we don't need to do anything else.
-        if (my_labels_in_use.size() == 1) {
-            return candidate;
-        } 
-
-        // We also give up if every label is in range, because any subsequent
-        // calculations would use all markers and just give the same result.
-        // The 'test' parameter allows us to skip this bypass for testing.
-        if constexpr(!test_) {
-            if (my_labels_in_use.size() == ref.size()) {
-                return candidate;
-            }
-        }
 
         // Use the input_size as a hint for the number of addressable genes.
         // This should be exact if subset_to_markers() was used on the input,
         // but the rest of the code is safe even if the hint isn't perfect.
         my_gene_subset.reserve(input.size());
 
-        while (my_labels_in_use.size() > 1) {
+        // If there's only one top label, we don't need to do anything else.
+        // We also give up if every label is in range, because any subsequent
+        // calculations would use all markers and just give the same result.
+        while (my_labels_in_use.size() > 1 && my_labels_in_use.size() < scores.size()) {
             my_gene_subset.clear();
             for (auto l : my_labels_in_use) {
                 for (auto l2 : my_labels_in_use){ 
@@ -112,9 +97,6 @@ public:
             }
 
             candidate = update_labels_in_use(scores, threshold, my_labels_in_use); 
-            if (my_labels_in_use.size() == scores.size()) { // i.e., unchanged.
-                break;
-            }
         }
 
         return candidate;

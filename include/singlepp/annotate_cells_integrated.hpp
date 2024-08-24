@@ -98,6 +98,52 @@ Float_ compute_single_reference_score_integrated(
     return correlations_to_score(workspace.all_correlations, quantile);
 }
 
+template<typename Index_, typename Label_, typename Float_, typename RefLabel_, typename Value_>
+std::pair<RefLabel_, Float_> fine_tune_integrated(
+    Index_ i,
+    const std::vector<uint8_t>& check_availability,
+    const std::vector<std::unordered_set<Index_> >& available,
+    const std::vector<std::vector<std::vector<Index_> > >& markers,
+    const std::vector<std::vector<std::vector<RankedVector<Index_, Index_> > > >& ranked,
+    const std::vector<const Label_*>& assigned,
+    std::vector<Float_>& all_scores,
+    std::vector<RefLabel_>& reflabels_in_use,
+    std::unordered_set<Index_>& miniverse_tmp,
+    std::vector<Index_>& miniverse,
+    PerReferenceIntegratedWorkspace<Index_, Value_, Float_>& workspace,
+    Float_ quantile,
+    Float_ threshold)
+{
+    auto candidate = fill_labels_in_use(all_scores, threshold, reflabels_in_use);
+
+    // We skip fine-tuning if all or only one labels are selected. If all
+    // labels are chosen, there is no contraction of the marker space, and the
+    // scores will not change; if only one label is chosen, then that's that.
+    while (reflabels_in_use.size() > 1 && reflabels_in_use.size() != all_scores.size()) {
+        miniverse_tmp.clear();
+        for (auto r : reflabels_in_use) {
+            auto curassigned = assigned[r][i];
+            const auto& curmarkers = markers[r][curassigned];
+            miniverse_tmp.insert(curmarkers.begin(), curmarkers.end());
+        }
+
+        miniverse.clear();
+        miniverse.insert(miniverse.end(), miniverse_tmp.begin(), miniverse_tmp.end());
+        std::sort(miniverse.begin(), miniverse.end()); // sorting for consistency in floating-point summation within scaled_ranks().
+
+        all_scores.clear();
+        workspace.direct_mapping_filled = false;
+        for (auto r : reflabels_in_use) {
+            auto score = compute_single_reference_score_integrated(r, assigned[r][i], check_availability, available, ranked, miniverse, workspace, quantile);
+            all_scores.push_back(score);
+        }
+
+        candidate = update_labels_in_use(all_scores, threshold, reflabels_in_use); 
+    }
+
+    return candidate;
+}
+
 template<typename Value_, typename Index_, typename Label_, typename Float_, typename RefLabel_>
 void annotate_cells_integrated(
     const tatami::Matrix<Value_, Index_>& test,
@@ -132,7 +178,7 @@ void annotate_cells_integrated(
 
         std::unordered_set<Index_> miniverse_tmp;
         std::vector<Index_> miniverse;
-        std::vector<Float_> curscores;
+        std::vector<Float_> all_scores;
         std::vector<RefLabel_> reflabels_in_use;
 
         for (Index_ i = start, end = start + len; i < end; ++i) {
@@ -156,11 +202,11 @@ void annotate_cells_integrated(
             std::sort(workspace.test_ranked_full.begin(), workspace.test_ranked_full.end());
 
             // Scanning through each reference and computing the score for the best group.
-            curscores.clear();
+            all_scores.clear();
             workspace.direct_mapping_filled = false;
             for (size_t r = 0; r < nref; ++r) {
                 auto score = compute_single_reference_score_integrated(r, assigned[r][i], check_availability, available, ranked, miniverse, workspace, quantile);
-                curscores.push_back(score);
+                all_scores.push_back(score);
                 if (scores[r]) {
                     scores[r][i] = score;
                 }
@@ -168,34 +214,23 @@ void annotate_cells_integrated(
 
             std::pair<Label_, Float_> candidate;
             if (!fine_tune) {
-                candidate = find_best_and_delta<Label_>(curscores);
-
+                candidate = find_best_and_delta<Label_>(all_scores);
             } else {
-                candidate = fill_labels_in_use(curscores, threshold, reflabels_in_use);
-                while (reflabels_in_use.size() > 1) {
-                    miniverse_tmp.clear();
-                    for (auto r : reflabels_in_use) {
-                        auto curassigned = assigned[r][i];
-                        const auto& curmarkers = markers[r][curassigned];
-                        miniverse_tmp.insert(curmarkers.begin(), curmarkers.end());
-                    }
-
-                    miniverse.clear();
-                    miniverse.insert(miniverse.end(), miniverse_tmp.begin(), miniverse_tmp.end());
-                    std::sort(miniverse.begin(), miniverse.end()); // sorting for consistency in floating-point summation within scaled_ranks().
-
-                    curscores.clear();
-                    workspace.direct_mapping_filled = false;
-                    for (auto r : reflabels_in_use) {
-                        auto score = compute_single_reference_score_integrated(r, assigned[r][i], check_availability, available, ranked, miniverse, workspace, quantile);
-                        curscores.push_back(score);
-                    }
-
-                    candidate = update_labels_in_use(curscores, threshold, reflabels_in_use); 
-                    if (reflabels_in_use.size() == curscores.size()) { // i.e., unchanged.
-                        break;
-                    } 
-                }
+                candidate = fine_tune_integrated(
+                    i,
+                    check_availability,
+                    available,
+                    markers,
+                    ranked,
+                    assigned,
+                    all_scores,
+                    reflabels_in_use,
+                    miniverse_tmp,
+                    miniverse,
+                    workspace,
+                    quantile,
+                    threshold
+                );
             }
 
             best[i] = candidate.first;

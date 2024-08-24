@@ -63,16 +63,15 @@ TEST(FineTuneSingle, EdgeCases) {
         auto vec = wrk->fetch(r, buffer.data());
         auto ranked = fill_ranks<int>(ngenes, vec);
 
-        // Setting the template parameter test = true to force it to do
-        // calculations; otherwise it would exit early with the top score.
         std::vector<double> scores { 0.5, 0.49, 0.48 };
-        auto output = ft.run<true>(ranked, references, markers, scores, 1, 0.05);
+        scores[(labels[r] + 1) % nlabels] = 0; // forcing another label to be zero so that it actually does the fine-tuning.
+        auto output = ft.run(ranked, references, markers, scores, 1, 0.05);
         EXPECT_EQ(output.first, labels[r]);
 
         // Forcing it to match to some other label. 
         scores = std::vector<double>{ 0.5, 0.5, 0.5 };
         scores[labels[r]] = 0;
-        auto output2 = ft.run<true>(ranked, references, markers, scores, 1, 0.05);
+        auto output2 = ft.run(ranked, references, markers, scores, 1, 0.05);
         EXPECT_NE(output2.first, labels[r]);
     }
 }
@@ -121,7 +120,7 @@ TEST(FineTuneSingle, Reference) {
         // force the calculations to be performed.  As all markers are still
         // used, we can cross-check the fine-tuning score calculations against
         // the naive method.
-        auto output = ft.run<true>(ranked, references, markers, scores, quantile, 100); 
+        auto output = ft.run(ranked, references, markers, scores, quantile, 100); 
         EXPECT_EQ(output.first, naive.best[c]);
         EXPECT_TRUE(std::abs(naive.delta[c] - output.second) < 1e-6);
     }
@@ -155,8 +154,10 @@ TEST(FineTuneSingle, Diagonal) {
     for (size_t r = 0; r < nrefs; ++r) {
         auto vec = wrk->fetch(r, buffer.data()); 
         auto ranked = fill_ranks<int>(ngenes, vec);
+
         std::vector<double> scores { 0.49, 0.5, 0.48 };
-        auto output = ft.run<true>(ranked, references, markers, scores, 1, 0.05);
+        scores[(labels[r] + 1) % nlabels] = 0; // forcing another label to be zero so that it actually does the fine-tuning.
+        auto output = ft.run(ranked, references, markers, scores, 1, 0.05);
 
         // The key point here is that the diagonals are actually used,
         // so we don't end up with an empty ranking vector and NaN scores.
