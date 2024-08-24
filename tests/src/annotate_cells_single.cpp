@@ -41,8 +41,7 @@ TEST(FineTuneSingle, EdgeCases) {
         EXPECT_FLOAT_EQ(output.second, 0.01);
     }
 
-    // Check edge case when there is only a single label, 
-    // based on the length of 'scores'.
+    // Check edge case when there is only a single label, based on the length of 'scores'.
     {
         std::vector<double> buffer(ngenes);
         auto vec = refs->dense_column()->fetch(1, buffer.data()); // doesn't really matter which one we pick.
@@ -112,17 +111,9 @@ TEST(FineTuneSingle, Reference) {
 
         // We use a huge threhold to ensure that everyone is in range. 
         // In this case, fine-tuning quits early and 'scores' is not mutated.
-        auto output2 = ft.run(ranked, references, markers, scores, quantile, 100); 
-        EXPECT_EQ(output2.first, naive.best[c]);
-        EXPECT_EQ(output2.second, naive.delta[c]);
-
-        // Everyone is still in range, but this time we set test = true to
-        // force the calculations to be performed.  As all markers are still
-        // used, we can cross-check the fine-tuning score calculations against
-        // the naive method.
         auto output = ft.run(ranked, references, markers, scores, quantile, 100); 
         EXPECT_EQ(output.first, naive.best[c]);
-        EXPECT_TRUE(std::abs(naive.delta[c] - output.second) < 1e-6);
+        EXPECT_EQ(output.second, naive.delta[c]);
     }
 }
 

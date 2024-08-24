@@ -6,6 +6,7 @@
 #include "tatami/tatami.hpp"
 
 #include "scaled_ranks.hpp"
+#include "train_integrated.hpp"
 #include "find_best_and_delta.hpp"
 #include "fill_labels_in_use.hpp"
 #include "correlations_to_score.hpp"
@@ -19,17 +20,16 @@ namespace singlepp {
 
 namespace internal {
 
-// All data structures in the Workspace can contain anything as they are
-// cleared and filled by compute_single_reference_score_integrated(). They are
-// only persisted to reduce the number of new allocations when looping across
-// cells and references.
+// All data structures in the Workspace can contain anything on input, as they
+// are cleared and filled by compute_single_reference_score_integrated(). They
+// are only persisted to reduce the number of new allocations when looping
+// across cells and references.
 template<typename Index_, typename Value_, typename Float_>
 struct PerReferenceIntegratedWorkspace {
     RankRemapper<Index_> intersect_mapping;
     bool direct_mapping_filled;
     RankRemapper<Index_> direct_mapping;
 
-    RankedVector<Value_, Index_> test_ranked_full;
     RankedVector<Value_, Index_> test_ranked;
     RankedVector<Index_, Index_> ref_ranked;
 
@@ -42,9 +42,8 @@ template<typename Label_, typename Index_, typename Value_, typename Float_>
 Float_ compute_single_reference_score_integrated(
     size_t ref_i,
     Label_ best,
-    const std::vector<uint8_t>& check_availability,
-    const std::vector<std::unordered_set<Index_> >& available,
-    const std::vector<std::vector<std::vector<RankedVector<Index_, Index_> > > >& ranked,
+    RankedVector<Value_, Index_> test_ranked_full,
+    const TrainedIntegrated<Index_>& trained,
     const std::vector<Index_>& miniverse,
     PerReferenceIntegratedWorkspace<Index_, Value_, Float_>& workspace,
     Float_ quantile)
@@ -52,8 +51,8 @@ Float_ compute_single_reference_score_integrated(
     // Further subsetting to the intersection of markers that are
     // actual present in this particular reference.
     const RankRemapper<Index_>* mapping;
-    if (check_availability[ref_i]) {
-        const auto& cur_available = available[ref_i];
+    if (trained.check_availability[ref_i]) {
+        const auto& cur_available = trained.available[ref_i];
         workspace.intersect_mapping.clear();
         workspace.intersect_mapping.reserve(miniverse.size());
         for (auto c : miniverse) {
@@ -78,7 +77,7 @@ Float_ compute_single_reference_score_integrated(
         mapping = &(workspace.direct_mapping);
     } 
 
-    mapping->remap(workspace.test_ranked_full, workspace.test_ranked);
+    mapping->remap(test_ranked_full, workspace.test_ranked);
     workspace.test_scaled.resize(workspace.test_ranked.size());
     scaled_ranks(workspace.test_ranked, workspace.test_scaled.data());
 
@@ -86,7 +85,7 @@ Float_ compute_single_reference_score_integrated(
     // this cell in this reference. This assumes that
     // 'ranked' already contains sorted pairs where the
     // indices refer to the rows of the original data matrix.
-    const auto& best_ranked = ranked[ref_i][best];
+    const auto& best_ranked = trained.ranked[ref_i][best];
     size_t nranked = best_ranked.size();
     workspace.all_correlations.clear();
     workspace.ref_scaled.resize(workspace.test_scaled.size());
@@ -105,11 +104,9 @@ Float_ compute_single_reference_score_integrated(
 template<typename Index_, typename Label_, typename Float_, typename RefLabel_, typename Value_>
 std::pair<RefLabel_, Float_> fine_tune_integrated(
     Index_ i,
+    RankedVector<Value_, Index_> test_ranked_full,
     std::vector<Float_>& all_scores,
-    const std::vector<uint8_t>& check_availability,
-    const std::vector<std::unordered_set<Index_> >& available,
-    const std::vector<std::vector<std::vector<Index_> > >& markers,
-    const std::vector<std::vector<std::vector<RankedVector<Index_, Index_> > > >& ranked,
+    const TrainedIntegrated<Index_>& trained,
     const std::vector<const Label_*>& assigned,
     std::vector<RefLabel_>& reflabels_in_use, // workspace data structure: input value is ignored, output value should not be used.
     std::unordered_set<Index_>& miniverse_tmp, // workspace data structure: input value is ignored, output value should not be used.
@@ -127,7 +124,7 @@ std::pair<RefLabel_, Float_> fine_tune_integrated(
         miniverse_tmp.clear();
         for (auto r : reflabels_in_use) {
             auto curassigned = assigned[r][i];
-            const auto& curmarkers = markers[r][curassigned];
+            const auto& curmarkers = trained.markers[r][curassigned];
             miniverse_tmp.insert(curmarkers.begin(), curmarkers.end());
         }
 
@@ -138,7 +135,7 @@ std::pair<RefLabel_, Float_> fine_tune_integrated(
         all_scores.clear();
         workspace.direct_mapping_filled = false;
         for (auto r : reflabels_in_use) {
-            auto score = compute_single_reference_score_integrated(r, assigned[r][i], check_availability, available, ranked, miniverse, workspace, quantile);
+            auto score = compute_single_reference_score_integrated(r, assigned[r][i], test_ranked_full, trained, miniverse, workspace, quantile);
             all_scores.push_back(score);
         }
 
@@ -151,11 +148,7 @@ std::pair<RefLabel_, Float_> fine_tune_integrated(
 template<typename Value_, typename Index_, typename Label_, typename Float_, typename RefLabel_>
 void annotate_cells_integrated(
     const tatami::Matrix<Value_, Index_>& test,
-    const std::vector<Index_>& universe,
-    const std::vector<uint8_t>& check_availability,
-    const std::vector<std::unordered_set<Index_> >& available,
-    const std::vector<std::vector<std::vector<Index_> > >& markers,
-    const std::vector<std::vector<std::vector<RankedVector<Index_, Index_> > > >& ranked,
+    const TrainedIntegrated<Index_>& trained,
     const std::vector<const Label_*>& assigned,
     Float_ quantile,
     bool fine_tune,
@@ -166,20 +159,21 @@ void annotate_cells_integrated(
     int num_threads)
 {
     auto NR = test.nrow();
-    auto nref = markers.size();
+    auto nref = trained.markers.size();
 
     tatami::parallelize([&](size_t, Index_ start, Index_ len) -> void {
         // We perform an indexed extraction, so all subsequent indices
         // will refer to indices into this subset (i.e., 'universe').
-        tatami::VectorPtr<Index_> universe_ptr(tatami::VectorPtr<Index_>{}, &(universe));
+        tatami::VectorPtr<Index_> universe_ptr(tatami::VectorPtr<Index_>{}, &(trained.universe));
         auto wrk = tatami::consecutive_extractor<false>(&test, false, start, len, std::move(universe_ptr));
-        std::vector<Value_> buffer(universe.size());
+        std::vector<Value_> buffer(trained.universe.size());
 
         PerReferenceIntegratedWorkspace<Index_, Value_, Float_> workspace;
-        workspace.test_ranked_full.reserve(NR);
         workspace.test_ranked.reserve(NR);
         workspace.ref_ranked.reserve(NR);
 
+        RankedVector<Value_, Index_> test_ranked_full;
+        test_ranked_full.reserve(NR);
         std::unordered_set<Index_> miniverse_tmp;
         std::vector<Index_> miniverse;
         std::vector<Float_> all_scores;
@@ -190,7 +184,7 @@ void annotate_cells_integrated(
             miniverse_tmp.clear();
             for (size_t r = 0; r < nref; ++r) {
                 auto curassigned = assigned[r][i];
-                const auto& curmarkers = markers[r][curassigned];
+                const auto& curmarkers = trained.markers[r][curassigned];
                 miniverse_tmp.insert(curmarkers.begin(), curmarkers.end());
             }
 
@@ -198,18 +192,18 @@ void annotate_cells_integrated(
             miniverse.insert(miniverse.end(), miniverse_tmp.begin(), miniverse_tmp.end());
             std::sort(miniverse.begin(), miniverse.end()); // sorting for consistency in floating-point summation within scaled_ranks().
 
-            workspace.test_ranked_full.clear();
+            test_ranked_full.clear();
             auto ptr = wrk->fetch(buffer.data());
             for (auto u : miniverse) {
-                workspace.test_ranked_full.emplace_back(ptr[u], u);
+                test_ranked_full.emplace_back(ptr[u], u);
             }
-            std::sort(workspace.test_ranked_full.begin(), workspace.test_ranked_full.end());
+            std::sort(test_ranked_full.begin(), test_ranked_full.end());
 
             // Scanning through each reference and computing the score for the best group.
             all_scores.clear();
             workspace.direct_mapping_filled = false;
             for (size_t r = 0; r < nref; ++r) {
-                auto score = compute_single_reference_score_integrated(r, assigned[r][i], check_availability, available, ranked, miniverse, workspace, quantile);
+                auto score = compute_single_reference_score_integrated(r, assigned[r][i], test_ranked_full, trained, miniverse, workspace, quantile);
                 all_scores.push_back(score);
                 if (scores[r]) {
                     scores[r][i] = score;
@@ -220,21 +214,7 @@ void annotate_cells_integrated(
             if (!fine_tune) {
                 candidate = find_best_and_delta<Label_>(all_scores);
             } else {
-                candidate = fine_tune_integrated(
-                    i,
-                    all_scores,
-                    check_availability,
-                    available,
-                    markers,
-                    ranked,
-                    assigned,
-                    reflabels_in_use,
-                    miniverse_tmp,
-                    miniverse,
-                    workspace,
-                    quantile,
-                    threshold
-                );
+                candidate = fine_tune_integrated(i, test_ranked_full, all_scores, trained, assigned, reflabels_in_use, miniverse_tmp, miniverse, workspace, quantile, threshold);
             }
 
             best[i] = candidate.first;

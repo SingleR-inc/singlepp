@@ -131,11 +131,7 @@ void classify_integrated(
 {
     internal::annotate_cells_integrated(
         test,
-        trained.universe,
-        trained.check_availability,
-        trained.available,
-        trained.markers,
-        trained.ranked,
+        trained,
         assigned,
         options.quantile,
         options.fine_tune,
