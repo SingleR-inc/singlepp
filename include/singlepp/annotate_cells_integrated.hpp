@@ -19,6 +19,10 @@ namespace singlepp {
 
 namespace internal {
 
+// All data structures in the Workspace can contain anything as they are
+// cleared and filled by compute_single_reference_score_integrated(). They are
+// only persisted to reduce the number of new allocations when looping across
+// cells and references.
 template<typename Index_, typename Value_, typename Float_>
 struct PerReferenceIntegratedWorkspace {
     RankRemapper<Index_> intersect_mapping;
@@ -101,16 +105,16 @@ Float_ compute_single_reference_score_integrated(
 template<typename Index_, typename Label_, typename Float_, typename RefLabel_, typename Value_>
 std::pair<RefLabel_, Float_> fine_tune_integrated(
     Index_ i,
+    std::vector<Float_>& all_scores,
     const std::vector<uint8_t>& check_availability,
     const std::vector<std::unordered_set<Index_> >& available,
     const std::vector<std::vector<std::vector<Index_> > >& markers,
     const std::vector<std::vector<std::vector<RankedVector<Index_, Index_> > > >& ranked,
     const std::vector<const Label_*>& assigned,
-    std::vector<Float_>& all_scores,
-    std::vector<RefLabel_>& reflabels_in_use,
-    std::unordered_set<Index_>& miniverse_tmp,
-    std::vector<Index_>& miniverse,
-    PerReferenceIntegratedWorkspace<Index_, Value_, Float_>& workspace,
+    std::vector<RefLabel_>& reflabels_in_use, // workspace data structure: input value is ignored, output value should not be used.
+    std::unordered_set<Index_>& miniverse_tmp, // workspace data structure: input value is ignored, output value should not be used.
+    std::vector<Index_>& miniverse, // workspace data structure: input value is ignored, output value should not be used.
+    PerReferenceIntegratedWorkspace<Index_, Value_, Float_>& workspace, // collection of workspace data structures, obviously.
     Float_ quantile,
     Float_ threshold)
 {
@@ -218,12 +222,12 @@ void annotate_cells_integrated(
             } else {
                 candidate = fine_tune_integrated(
                     i,
+                    all_scores,
                     check_availability,
                     available,
                     markers,
                     ranked,
                     assigned,
-                    all_scores,
                     reflabels_in_use,
                     miniverse_tmp,
                     miniverse,
