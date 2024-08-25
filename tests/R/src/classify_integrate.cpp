@@ -13,7 +13,9 @@ Rcpp::List classify_integrate(
     Rcpp::List refs, 
     Rcpp::List labels,
     Rcpp::List markers,
-    double quantile = 0.8)
+    double quantile = 0.8,
+    bool fine_tune = true, 
+    double tune_thresh = 0.05)
 {
     size_t nrefs = refs.size();
     if (nrefs != results.size()) {
@@ -70,6 +72,8 @@ Rcpp::List classify_integrate(
 
     singlepp::ClassifyIntegratedOptions<double> copt;
     copt.quantile = quantile;
+    copt.fine_tune = fine_tune;
+    copt.fine_tune_threshold = tune_thresh;
     singlepp::classify_integrated(parsed_test, resptrs, itrained, buffers, copt);
 
     for (auto& o : output_best) {
