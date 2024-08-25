@@ -97,7 +97,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &quot;<a class="codeRef" href="https://tatami-inc.github.io/tatami/tatami_8hpp.html">tatami/tatami.hpp</a>&quot;</span></div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &quot;annotate_cells.hpp&quot;</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &quot;annotate_cells_single.hpp&quot;</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &quot;<a class="code" href="train__single_8hpp.html">train_single.hpp</a>&quot;</span></div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;vector&gt;</span> </div>
@@ -138,7 +138,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>    <span class="keyword">const</span> <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">ClassifySingleBuffers&lt;Label_, Float_&gt;</a>&amp; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">buffers</a>,</div>
 <div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>    <span class="keyword">const</span> <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">ClassifySingleOptions&lt;Float_&gt;</a>&amp; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">options</a>) </div>
 <div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>{</div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>    internal::annotate_cells_simple(</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>    internal::annotate_cells_single(</div>
 <div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>        <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">test</a>, </div>
 <div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>        <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">trained</a>.get_subset().size(), </div>
 <div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>        <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">trained</a>.get_subset().data(), </div>
@@ -163,7 +163,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>    <span class="keyword">const</span> <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">ClassifySingleBuffers&lt;Label_, Float_&gt;</a>&amp; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">buffers</a>,</div>
 <div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>    <span class="keyword">const</span> <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">ClassifySingleOptions&lt;Float_&gt;</a>&amp; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">options</a>) </div>
 <div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>{</div>
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>    internal::annotate_cells_simple(</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>    internal::annotate_cells_single(</div>
 <div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>        <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">test</a>, </div>
 <div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>        <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">trained</a>.get_test_subset().size(), </div>
 <div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>        <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">trained</a>.get_test_subset().data(), </div>

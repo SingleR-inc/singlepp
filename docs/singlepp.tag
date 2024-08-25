@@ -118,6 +118,20 @@
       <arglist></arglist>
     </member>
     <member kind="variable">
+      <type>Float_</type>
+      <name>fine_tune_threshold</name>
+      <anchorfile>structsinglepp_1_1ClassifyIntegratedOptions.html</anchorfile>
+      <anchor>ae963907ed5ed64dd7c198d6171e54003</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>bool</type>
+      <name>fine_tune</name>
+      <anchorfile>structsinglepp_1_1ClassifyIntegratedOptions.html</anchorfile>
+      <anchor>a4b00e9fdb3d16f431709932dd4dddca9</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
       <type>int</type>
       <name>num_threads</name>
       <anchorfile>structsinglepp_1_1ClassifyIntegratedOptions.html</anchorfile>

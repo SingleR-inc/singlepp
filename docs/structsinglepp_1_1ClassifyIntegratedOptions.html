@@ -98,6 +98,10 @@ $(function() {
 Public Attributes</h2></td></tr>
 <tr class="memitem:a6d4d11059b19ca5066ceed0d9e36bf19" id="r_a6d4d11059b19ca5066ceed0d9e36bf19"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1ClassifyIntegratedOptions.html#a6d4d11059b19ca5066ceed0d9e36bf19">quantile</a> = 0.8</td></tr>
 <tr class="separator:a6d4d11059b19ca5066ceed0d9e36bf19"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae963907ed5ed64dd7c198d6171e54003" id="r_ae963907ed5ed64dd7c198d6171e54003"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1ClassifyIntegratedOptions.html#ae963907ed5ed64dd7c198d6171e54003">fine_tune_threshold</a> = 0.05</td></tr>
+<tr class="separator:ae963907ed5ed64dd7c198d6171e54003"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4b00e9fdb3d16f431709932dd4dddca9" id="r_a4b00e9fdb3d16f431709932dd4dddca9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1ClassifyIntegratedOptions.html#a4b00e9fdb3d16f431709932dd4dddca9">fine_tune</a> = <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">true</a></td></tr>
+<tr class="separator:a4b00e9fdb3d16f431709932dd4dddca9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5562f346d14d824da25e56e367194c7c" id="r_a5562f346d14d824da25e56e367194c7c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">int</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1ClassifyIntegratedOptions.html#a5562f346d14d824da25e56e367194c7c">num_threads</a> = 1</td></tr>
 <tr class="separator:a5562f346d14d824da25e56e367194c7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -111,6 +115,40 @@ struct singlepp::ClassifyIntegratedOptions&lt; Float_ &gt;</div><p>Options for <
   </dd>
 </dl>
 </div><h2 class="groupheader">Member Data Documentation</h2>
+<a id="a4b00e9fdb3d16f431709932dd4dddca9" name="a4b00e9fdb3d16f431709932dd4dddca9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4b00e9fdb3d16f431709932dd4dddca9">&#9670;&#160;</a></span>fine_tune</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">typename</a> <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a> &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">bool</a> <a class="el" href="structsinglepp_1_1ClassifyIntegratedOptions.html">singlepp::ClassifyIntegratedOptions</a>&lt; <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a> &gt;::fine_tune = <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">true</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Whether to perform fine-tuning. This can be disabled to improve speed at the cost of accuracy. </p>
+
+</div>
+</div>
+<a id="ae963907ed5ed64dd7c198d6171e54003" name="ae963907ed5ed64dd7c198d6171e54003"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae963907ed5ed64dd7c198d6171e54003">&#9670;&#160;</a></span>fine_tune_threshold</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">typename</a> <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a> &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a> <a class="el" href="structsinglepp_1_1ClassifyIntegratedOptions.html">singlepp::ClassifyIntegratedOptions</a>&lt; <a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a> &gt;::fine_tune_threshold = 0.05</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Score threshold to use to select the top-scoring subset of references during fine-tuning, see <code><a class="el" href="structsinglepp_1_1ClassifySingleOptions.html#a2e9ca1a6da5fcb8877d9029db4b46b7a">ClassifySingleOptions::fine_tune</a></code> for more details. </p>
+
+</div>
+</div>
 <a id="a5562f346d14d824da25e56e367194c7c" name="a5562f346d14d824da25e56e367194c7c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5562f346d14d824da25e56e367194c7c">&#9670;&#160;</a></span>num_threads</h2>
 
@@ -141,7 +179,7 @@ template&lt;<a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Quantile to use to compute a per-label score from the correlations. This has the same interpretation as <code><a class="el" href="structsinglepp_1_1ClassifySingleOptions.html#aebeadb5d5c853a7e2d0c6d9d7f611656">ClassifySingleOptions::quantile</a></code>. </p>
+<p>Quantile to use to compute a per-reference score from the correlations. This has the same interpretation as <code><a class="el" href="structsinglepp_1_1ClassifySingleOptions.html#aebeadb5d5c853a7e2d0c6d9d7f611656">ClassifySingleOptions::quantile</a></code>. </p>
 
 </div>
 </div>
