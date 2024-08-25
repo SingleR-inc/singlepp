@@ -117,7 +117,7 @@ struct ClassifyIntegratedBuffers {
  * @param[in] assigned Vector of pointers of length equal to the number of references.
  * Each pointer should point to an array of length equal to the number of columns in `test`,
  * containing the assigned label for each column in each reference.
- * @param trained Set of integrated references produced by `IntegratedBuilder::finish()`.
+ * @param trained The integrated classifier returned by `train_integrated()`.
  * @param[out] buffers Buffers in which to store the classification output.
  * @param options Further options.
  */

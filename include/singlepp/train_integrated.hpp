@@ -246,7 +246,7 @@ public:
      */
     // Technically this should be private, but it's a pain to add
     // templated friend functions, so I can't be bothered.
-    std::vector<Index_> universe; // To be used by IntegratedScorer for indexed extraction.
+    std::vector<Index_> universe; // To be used by classify_integrated() for indexed extraction.
 
     std::vector<uint8_t> check_availability;
     std::vector<std::unordered_set<Index_> > available; // indices to 'universe'
@@ -444,7 +444,7 @@ TrainedIntegrated<Index_> train_integrated(Inputs_& inputs, const TrainIntegrate
  * @param inputs Vector of references, typically constructed with `prepare_integrated_input()` or `prepare_integrated_input_intersect()`.
  * @param options Further options.
  *
- * @return A pre-built classifier that integrates multiple references.
+ * @return A pre-built classifier that integrates multiple references, for use in `classify_integrated()`.
  */
 template<typename Value_, typename Index_, typename Label_>
 TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInput<Value_, Index_, Label_> >& inputs, const TrainIntegratedOptions& options) {
@@ -459,7 +459,7 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
  * @param inputs Vector of references, typically constructed with `prepare_integrated_input()` or `prepare_integrated_input_intersect()`.
  * @param options Further options.
  *
- * @return A pre-built classifier that integrates multiple references.
+ * @return A pre-built classifier that integrates multiple references, for use in `classify_integrated()`.
  */
 template<typename Value_, typename Index_, typename Label_>
 TrainedIntegrated<Index_> train_integrated(std::vector<TrainIntegratedInput<Value_, Index_, Label_> >&& inputs, const TrainIntegratedOptions& options) {

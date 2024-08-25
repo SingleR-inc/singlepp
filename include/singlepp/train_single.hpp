@@ -171,7 +171,7 @@ public:
  * Rows are genes while columns are profiles.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each reference profile.
  * Labels should be integers in \f$[0, L)\f$ where \f$L\f$ is the total number of unique labels.
- * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
+ * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `singlepp::Markers` for more details.
  * @param options Further options.
  *
  * @return A pre-built classifier that can be used in `classify_single()` with a test dataset.
@@ -299,7 +299,7 @@ public:
  * This should have non-zero columns.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each reference profile.
  * Labels should be integers in \f$[0, L)\f$ where \f$L\f$ is the total number of unique labels.
- * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
+ * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `singlepp::Markers` for more details.
  * @param options Further options.
  *
  * @return A pre-built classifier that can be used in `classify_single_intersect()`. 
@@ -340,7 +340,7 @@ TrainedSingleIntersect<Index_, Float_> train_single_intersect(
  * If any duplicate IDs are present, only the first occurrence is used.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each reference profile.
  * Labels should be integers in \f$[0, L)\f$ where \f$L\f$ is the total number of unique labels.
- * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `Markers` for more details.
+ * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `singlepp::Markers` for more details.
  * @param options Further options.
  *
  * @return A pre-built classifier that can be used in `classify_single_intersect()`.
