@@ -81,24 +81,24 @@ struct ClassifyIntegratedBuffers {
 /**
  * @brief Integrate classifications from multiple references.
  *
- * In situations where multiple reference datasets are available,
- * we would like to obtain a single prediction for each cell from all of those references.
- * This is somewhat tricky as the different references are likely to contain strong batch effects,
- * complicating the calculation of marker genes between labels from different references (and thus precluding direct use of the usual `Classifier::run()`).
- * The labels themselves also tend to be inconsistent, e.g., different vocabularies and resolutions, making it difficult to define sensible groups in a combined "super-reference".
+ * When multiple reference datasets are available, we would like to obtain a single prediction for each cell from all of those references.
+ * This is somewhat tricky as different references tend to have inconsistent labels, e.g., different vocabularies and cell subtype resolutions, 
+ * making it difficult to define sensible groups in a combined "super-reference".
+ * Strong batch effects are also likely to exist between different references, complicating the choice of marker genes when comparing between labels of different references.
  *
- * To avoid these issues, we first perform classification within each reference individually.
- * For each test cell, we identify its predicted label from a given reference, and we collect all the marker genes for that label (across all pairwise comparisons in that reference).
- * After doing this for each reference, we pool all of the collected markers to obtain a common set of interesting genes.
- * We then compute the correlation-based score between the test cell's expression profile and its predicted label from each reference, using that common set of genes.
+ * To avoid these issues, we first perform classification within each individual reference using, e.g., `classify_single()`.
+ * For each test cell, we collect all the marker genes for that cell's predicted label in each reference.
+ * We pool all of these collected markers to obtain a common set of interesting genes.
+ * Using this common set of genes, we compute the usual correlation-based score between the test cell's expression profile and its predicted label from each reference,
+ * along with some fine-tuning iterations to improve resolution between similar labels.
  * The label with the highest score is considered the best representative across all references.
  *
- * This strategy is similar to using `Classifier::run()` without fine-tuning, 
+ * This method is similar to the algorithm described in `classify_single()`,
  * except that we are choosing between the best labels from all references rather than between all labels from one reference.
- * The main idea is to create a common feature set so that the correlations can be reasonably compared across references.
- * Note that differences in the feature sets across references are tolerated by simply ignoring missing genes when computing the correlations.
- * This reduces the comparability of the scores as the effective feature set will vary a little (or a lot, depending) across references;
- * nonetheless, it is preferred to taking the intersection, which is liable to leave us with very few genes.
+ * The creation of a common gene set ensures that the correlations can be reasonably compared across references.
+ * (Note that differences in the gene sets across references are tolerated by simply ignoring missing genes when computing the correlations.
+ * This reduces the comparability of the scores as the actual genes used for each reference will vary; 
+ * nonetheless, it is preferred to taking the intersection, which is liable to leave us with very few genes.)
  *
  * Our approach avoids any direct comparison between the expression profiles of different references,
  * allowing us to side-step the question of how to deal with the batch effects.
