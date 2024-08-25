@@ -5,8 +5,7 @@
 
 #include "tatami/tatami.hpp"
 
-#include "compute_scores.hpp"
-#include "scaled_ranks.hpp"
+#include "annotate_cells_integrated.hpp"
 #include "train_integrated.hpp"
 
 #include <vector>
@@ -27,10 +26,22 @@ namespace singlepp {
 template<typename Float_>
 struct ClassifyIntegratedOptions {
     /**
-     * Quantile to use to compute a per-label score from the correlations.
+     * Quantile to use to compute a per-reference score from the correlations.
      * This has the same interpretation as `ClassifySingleOptions::quantile`.
      */
     Float_ quantile = 0.8;
+
+    /**
+     * Score threshold to use to select the top-scoring subset of references during fine-tuning,
+     * see `ClassifySingleOptions::fine_tune` for more details.
+     */
+    Float_ fine_tune_threshold = 0.05;
+
+    /**
+     * Whether to perform fine-tuning.
+     * This can be disabled to improve speed at the cost of accuracy.
+     */
+    bool fine_tune = true;
 
     /**
      * Number of threads to use.
@@ -70,24 +81,24 @@ struct ClassifyIntegratedBuffers {
 /**
  * @brief Integrate classifications from multiple references.
  *
- * In situations where multiple reference datasets are available,
- * we would like to obtain a single prediction for each cell from all of those references.
- * This is somewhat tricky as the different references are likely to contain strong batch effects,
- * complicating the calculation of marker genes between labels from different references (and thus precluding direct use of the usual `Classifier::run()`).
- * The labels themselves also tend to be inconsistent, e.g., different vocabularies and resolutions, making it difficult to define sensible groups in a combined "super-reference".
+ * When multiple reference datasets are available, we would like to obtain a single prediction for each cell from all of those references.
+ * This is somewhat tricky as different references tend to have inconsistent labels, e.g., different vocabularies and cell subtype resolutions, 
+ * making it difficult to define sensible groups in a combined "super-reference".
+ * Strong batch effects are also likely to exist between different references, complicating the choice of marker genes when comparing between labels of different references.
  *
- * To avoid these issues, we first perform classification within each reference individually.
- * For each test cell, we identify its predicted label from a given reference, and we collect all the marker genes for that label (across all pairwise comparisons in that reference).
- * After doing this for each reference, we pool all of the collected markers to obtain a common set of interesting genes.
- * We then compute the correlation-based score between the test cell's expression profile and its predicted label from each reference, using that common set of genes.
+ * To avoid these issues, we first perform classification within each individual reference using, e.g., `classify_single()`.
+ * For each test cell, we collect all the marker genes for that cell's predicted label in each reference.
+ * We pool all of these collected markers to obtain a common set of interesting genes.
+ * Using this common set of genes, we compute the usual correlation-based score between the test cell's expression profile and its predicted label from each reference,
+ * along with some fine-tuning iterations to improve resolution between similar labels.
  * The label with the highest score is considered the best representative across all references.
  *
- * This strategy is similar to using `Classifier::run()` without fine-tuning, 
+ * This method is similar to the algorithm described in `classify_single()`,
  * except that we are choosing between the best labels from all references rather than between all labels from one reference.
- * The main idea is to create a common feature set so that the correlations can be reasonably compared across references.
- * Note that differences in the feature sets across references are tolerated by simply ignoring missing genes when computing the correlations.
- * This reduces the comparability of the scores as the effective feature set will vary a little (or a lot, depending) across references;
- * nonetheless, it is preferred to taking the intersection, which is liable to leave us with very few genes.
+ * The creation of a common gene set ensures that the correlations can be reasonably compared across references.
+ * (Note that differences in the gene sets across references are tolerated by simply ignoring missing genes when computing the correlations.
+ * This reduces the comparability of the scores as the actual genes used for each reference will vary; 
+ * nonetheless, it is preferred to taking the intersection, which is liable to leave us with very few genes.)
  *
  * Our approach avoids any direct comparison between the expression profiles of different references,
  * allowing us to side-step the question of how to deal with the batch effects.
@@ -118,129 +129,18 @@ void classify_integrated(
     ClassifyIntegratedBuffers<RefLabel_, Float_>& buffers,
     const ClassifyIntegratedOptions<Float_>& options)
 {
-    auto NR = test.nrow();
-    auto nref = trained.num_references();
-
-    tatami::parallelize([&](size_t, Index_ start, Index_ len) -> void {
-        // We perform an indexed extraction, so all subsequent indices
-        // will refer to indices into this subset (i.e., 'trained.universe').
-        tatami::VectorPtr<Index_> universe_ptr(tatami::VectorPtr<Index_>{}, &(trained.universe));
-        auto wrk = tatami::consecutive_extractor<false>(&test, false, start, len, std::move(universe_ptr));
-        std::vector<Value_> buffer(trained.universe.size());
-
-        std::unordered_set<Index_> miniverse_tmp;
-        std::vector<Index_> miniverse;
-        internal::RankRemapper<Index_> intersect_mapping, direct_mapping;
-
-        internal::RankedVector<Value_, Index_> test_ranked_full, test_ranked;
-        test_ranked_full.reserve(NR);
-        test_ranked.reserve(NR);
-        internal::RankedVector<Index_, Index_> ref_ranked;
-        ref_ranked.reserve(NR);
-
-        std::vector<Float_> test_scaled(NR);
-        std::vector<Float_> ref_scaled(NR);
-        std::vector<Float_> all_correlations;
-
-        for (Index_ i = start, end = start + len; i < end; ++i) {
-            // Extracting only the markers of the best labels for this cell.
-            miniverse_tmp.clear();
-            for (size_t r = 0; r < nref; ++r) {
-                auto best = assigned[r][i];
-                const auto& markers = trained.markers[r][best];
-                miniverse_tmp.insert(markers.begin(), markers.end());
-            }
-
-            miniverse.clear();
-            miniverse.insert(miniverse.end(), miniverse_tmp.begin(), miniverse_tmp.end());
-            std::sort(miniverse.begin(), miniverse.end());
-
-            test_ranked_full.clear();
-            auto ptr = wrk->fetch(buffer.data());
-            for (auto u : miniverse) {
-                test_ranked_full.emplace_back(ptr[u], u);
-            }
-            std::sort(test_ranked_full.begin(), test_ranked_full.end());
-
-            // Scanning through each reference and computing the score for the best group.
-            Float_ best_score = -1000, next_best = -1000;
-            Index_ best_ref = 0;
-            bool direct_mapping_filled = false;
-
-            for (size_t r = 0; r < nref; ++r) {
-                // Further subsetting to the intersection of markers that are
-                // actual present in this particular reference.
-                const internal::RankRemapper<Index_>* mapping;
-                if (trained.check_availability[r]) {
-                    const auto& cur_available = trained.available[r];
-                    intersect_mapping.clear();
-                    intersect_mapping.reserve(miniverse.size());
-                    for (auto c : miniverse) {
-                        if (cur_available.find(c) != cur_available.end()) {
-                            intersect_mapping.add(c);
-                        }
-                    }
-                    mapping = &intersect_mapping;
-
-                } else {
-                    if (!direct_mapping_filled) {
-                        direct_mapping.clear();
-                        direct_mapping.reserve(miniverse.size());
-                        for (auto c : miniverse) {
-                            direct_mapping.add(c);
-                        }
-                        direct_mapping_filled = true;
-                    }
-                    mapping = &direct_mapping;
-                } 
-
-                mapping->remap(test_ranked_full, test_ranked);
-                test_scaled.resize(test_ranked.size());
-                internal::scaled_ranks(test_ranked, test_scaled.data());
-
-                // Now actually calculating the score for the best group for
-                // this cell in this reference. This assumes that
-                // 'trained.ranked' already contains sorted pairs where the
-                // indices refer to the rows of the original data matrix.
-                auto best = assigned[r][i];
-                const auto& best_ranked = trained.ranked[r][best];
-                all_correlations.clear();
-                ref_scaled.resize(test_scaled.size());
-
-                for (size_t s = 0; s < best_ranked.size(); ++s) {
-                    ref_ranked.clear();
-                    mapping->remap(best_ranked[s], ref_ranked);
-                    internal::scaled_ranks(ref_ranked, ref_scaled.data());
-                    Float_ cor = internal::distance_to_correlation<Float_>(test_scaled, ref_scaled);
-                    all_correlations.push_back(cor);
-                }
-
-                Float_ score = internal::correlations_to_scores(all_correlations, options.quantile);
-                if (buffers.scores[r]) {
-                    buffers.scores[r][i] = score;
-                }
-                if (score > best_score) {
-                    next_best = best_score;
-                    best_score = score;
-                    best_ref = r;
-                } else if (score > next_best) {
-                    next_best = score;
-                }
-            }
-
-            if (buffers.best) {
-                buffers.best[i] = best_ref;
-            }
-            if (buffers.delta) {
-                if (nref > 1) {
-                    buffers.delta[i] = best_score - next_best;
-                } else {
-                    buffers.delta[i] = std::numeric_limits<Float_>::quiet_NaN();
-                }
-            }
-        }
-
-    }, test.ncol(), options.num_threads);
+    internal::annotate_cells_integrated(
+        test,
+        trained,
+        assigned,
+        options.quantile,
+        options.fine_tune,
+        options.fine_tune_threshold,
+        buffers.best,
+        buffers.scores,
+        buffers.delta,
+        options.num_threads
+    );
 }
 
 /**

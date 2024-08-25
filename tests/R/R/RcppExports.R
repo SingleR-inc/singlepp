@@ -2,8 +2,8 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #' @export
-classify_integrate <- function(test, results, refs, labels, markers, quantile = 0.8) {
-    .Call('_singlepp_tests_classify_integrate', PACKAGE = 'singlepp.tests', test, results, refs, labels, markers, quantile)
+classify_integrate <- function(test, results, refs, labels, markers, quantile = 0.8, fine_tune = TRUE, tune_thresh = 0.05) {
+    .Call('_singlepp_tests_classify_integrate', PACKAGE = 'singlepp.tests', test, results, refs, labels, markers, quantile, fine_tune, tune_thresh)
 }
 
 #' @useDynLib singlepp.tests
@@ -14,8 +14,8 @@ classify_single <- function(test, ref, labels, markers, quantile = 0.8, fine_tun
 }
 
 #' @export
-intersect_integrate <- function(test, test_ids, results, refs, ref_ids, labels, markers, quantile = 0.8) {
-    .Call('_singlepp_tests_intersect_integrate', PACKAGE = 'singlepp.tests', test, test_ids, results, refs, ref_ids, labels, markers, quantile)
+intersect_integrate <- function(test, test_ids, results, refs, ref_ids, labels, markers, quantile = 0.8, fine_tune = TRUE, tune_thresh = 0.05) {
+    .Call('_singlepp_tests_intersect_integrate', PACKAGE = 'singlepp.tests', test, test_ids, results, refs, ref_ids, labels, markers, quantile, fine_tune, tune_thresh)
 }
 
 #' @export

@@ -5,7 +5,7 @@
 
 #include "tatami/tatami.hpp"
 
-#include "annotate_cells.hpp"
+#include "annotate_cells_single.hpp"
 #include "train_single.hpp"
 
 #include <vector> 
@@ -133,7 +133,7 @@ void classify_single(
     const ClassifySingleBuffers<Label_, Float_>& buffers,
     const ClassifySingleOptions<Float_>& options) 
 {
-    internal::annotate_cells_simple(
+    internal::annotate_cells_single(
         test, 
         trained.get_subset().size(), 
         trained.get_subset().data(), 
@@ -172,7 +172,7 @@ void classify_single_intersect(
     const ClassifySingleBuffers<Label_, Float_>& buffers,
     const ClassifySingleOptions<Float_>& options) 
 {
-    internal::annotate_cells_simple(
+    internal::annotate_cells_single(
         test, 
         trained.get_test_subset().size(), 
         trained.get_test_subset().data(), 

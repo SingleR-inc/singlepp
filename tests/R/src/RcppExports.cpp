@@ -11,8 +11,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // classify_integrate
-Rcpp::List classify_integrate(Rcpp::NumericMatrix test, Rcpp::List results, Rcpp::List refs, Rcpp::List labels, Rcpp::List markers, double quantile);
-RcppExport SEXP _singlepp_tests_classify_integrate(SEXP testSEXP, SEXP resultsSEXP, SEXP refsSEXP, SEXP labelsSEXP, SEXP markersSEXP, SEXP quantileSEXP) {
+Rcpp::List classify_integrate(Rcpp::NumericMatrix test, Rcpp::List results, Rcpp::List refs, Rcpp::List labels, Rcpp::List markers, double quantile, bool fine_tune, double tune_thresh);
+RcppExport SEXP _singlepp_tests_classify_integrate(SEXP testSEXP, SEXP resultsSEXP, SEXP refsSEXP, SEXP labelsSEXP, SEXP markersSEXP, SEXP quantileSEXP, SEXP fine_tuneSEXP, SEXP tune_threshSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type test(testSEXP);
@@ -21,7 +21,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::List >::type labels(labelsSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type markers(markersSEXP);
     Rcpp::traits::input_parameter< double >::type quantile(quantileSEXP);
-    rcpp_result_gen = Rcpp::wrap(classify_integrate(test, results, refs, labels, markers, quantile));
+    Rcpp::traits::input_parameter< bool >::type fine_tune(fine_tuneSEXP);
+    Rcpp::traits::input_parameter< double >::type tune_thresh(tune_threshSEXP);
+    rcpp_result_gen = Rcpp::wrap(classify_integrate(test, results, refs, labels, markers, quantile, fine_tune, tune_thresh));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -43,8 +45,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // intersect_integrate
-Rcpp::List intersect_integrate(Rcpp::NumericMatrix test, std::vector<std::string> test_ids, Rcpp::List results, Rcpp::List refs, Rcpp::List ref_ids, Rcpp::List labels, Rcpp::List markers, double quantile);
-RcppExport SEXP _singlepp_tests_intersect_integrate(SEXP testSEXP, SEXP test_idsSEXP, SEXP resultsSEXP, SEXP refsSEXP, SEXP ref_idsSEXP, SEXP labelsSEXP, SEXP markersSEXP, SEXP quantileSEXP) {
+Rcpp::List intersect_integrate(Rcpp::NumericMatrix test, std::vector<std::string> test_ids, Rcpp::List results, Rcpp::List refs, Rcpp::List ref_ids, Rcpp::List labels, Rcpp::List markers, double quantile, bool fine_tune, double tune_thresh);
+RcppExport SEXP _singlepp_tests_intersect_integrate(SEXP testSEXP, SEXP test_idsSEXP, SEXP resultsSEXP, SEXP refsSEXP, SEXP ref_idsSEXP, SEXP labelsSEXP, SEXP markersSEXP, SEXP quantileSEXP, SEXP fine_tuneSEXP, SEXP tune_threshSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type test(testSEXP);
@@ -55,7 +57,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::List >::type labels(labelsSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type markers(markersSEXP);
     Rcpp::traits::input_parameter< double >::type quantile(quantileSEXP);
-    rcpp_result_gen = Rcpp::wrap(intersect_integrate(test, test_ids, results, refs, ref_ids, labels, markers, quantile));
+    Rcpp::traits::input_parameter< bool >::type fine_tune(fine_tuneSEXP);
+    Rcpp::traits::input_parameter< double >::type tune_thresh(tune_threshSEXP);
+    rcpp_result_gen = Rcpp::wrap(intersect_integrate(test, test_ids, results, refs, ref_ids, labels, markers, quantile, fine_tune, tune_thresh));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -80,9 +84,9 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_singlepp_tests_classify_integrate", (DL_FUNC) &_singlepp_tests_classify_integrate, 6},
+    {"_singlepp_tests_classify_integrate", (DL_FUNC) &_singlepp_tests_classify_integrate, 8},
     {"_singlepp_tests_classify_single", (DL_FUNC) &_singlepp_tests_classify_single, 8},
-    {"_singlepp_tests_intersect_integrate", (DL_FUNC) &_singlepp_tests_intersect_integrate, 8},
+    {"_singlepp_tests_intersect_integrate", (DL_FUNC) &_singlepp_tests_intersect_integrate, 10},
     {"_singlepp_tests_intersect_single", (DL_FUNC) &_singlepp_tests_intersect_single, 10},
     {NULL, NULL, 0}
 };

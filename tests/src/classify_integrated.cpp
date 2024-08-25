@@ -383,6 +383,7 @@ TEST_P(ClassifyIntegratedTest, Basic) {
 
     // Comparing the classify_integrated output to a reference calculation.
     singlepp::ClassifyIntegratedOptions<double> copt;
+    copt.fine_tune = false;
     copt.quantile = quantile;
     auto output = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated, copt);
     auto by_labels = split_by_labels(labels);
@@ -459,6 +460,7 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
 
     // Comparing the ClassifyIntegrated to a reference calculation.
     singlepp::ClassifyIntegratedOptions<double> copt;
+    copt.fine_tune = false;
     copt.quantile = quantile;
     auto output = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated, copt);
     auto by_labels = split_by_labels(labels);
@@ -514,6 +516,75 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
     for (size_t r = 0; r < nrefs; ++r) {
         EXPECT_EQ(output.scores[r], poutput.scores[r]);
     }
+}
+
+TEST_P(ClassifyIntegratedTest, IntersectedComparison) {
+    auto param = GetParam();
+    int ntop = std::get<0>(param);
+    double quantile = std::get<1>(param);
+    int base_seed = ntop + quantile * 50;
+
+    // Creating the integrated set of references with intersection, along with
+    // a comparison to the simple method where we do the reorganization externally.
+    // The aim is to check that all the various gene indexing steps are done correctly.
+    std::vector<int> test_ids(ngenes);
+    std::iota(test_ids.begin(), test_ids.end(), 0);
+    std::vector<std::shared_ptr<tatami::Matrix<double, int> > > reorganized_references;
+
+    singlepp::TrainSingleOptions<int, double> bopt;
+    bopt.top = ntop;
+    std::vector<singlepp::TrainedSingleIntersect<int, double> > prebuilts;
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > reorganized_integrated_inputs;
+
+    std::mt19937_64 rng(base_seed);
+    for (size_t r = 0; r < nrefs; ++r) {
+        auto ref_ids = test_ids;
+        std::shuffle(ref_ids.begin(), ref_ids.end(), rng);
+
+        auto pre = singlepp::train_single_intersect<int>(ngenes, test_ids.data(), *(references[r]), ref_ids.data(), labels[r].data(), markers[r], bopt);
+        integrated_inputs.push_back(singlepp::prepare_integrated_input_intersect<int>(ngenes, test_ids.data(), *(references[r]), ref_ids.data(), labels[r].data(), pre));
+        prebuilts.push_back(std::move(pre));
+
+        // Doing a reference calculation with reorganization before calling the non-intersection methods.
+        std::vector<int> remapping(ngenes);
+        for (size_t i = 0; i < ngenes; ++i) {
+            remapping[ref_ids[i]] = i;
+        }
+        auto mcopy = markers[r];
+        for (auto& mm : mcopy) {
+            for (auto& m : mm) {
+                for (auto& x : m) {
+                    x = ref_ids[x];
+                }
+            }
+        }
+        auto shuffled = tatami::make_DelayedSubset(references[r], std::move(remapping), true);
+        auto pre_reorg = singlepp::train_single(*shuffled, labels[r].data(), std::move(mcopy), bopt);
+        reorganized_integrated_inputs.push_back(singlepp::prepare_integrated_input(*shuffled, labels[r].data(), pre_reorg));
+        reorganized_references.push_back(std::move(shuffled));
+    }
+
+    singlepp::TrainIntegratedOptions iopt;
+    auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
+    auto reorganized_integrated = singlepp::train_integrated(std::move(reorganized_integrated_inputs), iopt);
+
+    // Mocking up some of the best choices.
+    auto chosen = mock_best_choices(ntest, prebuilts, base_seed + 2468);
+    std::vector<const int*> chosen_ptrs(nrefs);
+    for (size_t r = 0; r < nrefs; ++r) {
+        chosen_ptrs[r] = chosen[r].data();
+    }
+
+    // Classifying, even with fine-tuning.
+    singlepp::ClassifyIntegratedOptions<double> copt;
+    copt.quantile = quantile;
+    auto output = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated, copt);
+    auto reorganized_output = singlepp::classify_integrated<int>(*test, chosen_ptrs, reorganized_integrated, copt);
+
+    EXPECT_EQ(output.best, reorganized_output.best);
+    EXPECT_EQ(output.scores, reorganized_output.scores);
+    EXPECT_EQ(output.delta, reorganized_output.delta);
 }
 
 INSTANTIATE_TEST_SUITE_P(
