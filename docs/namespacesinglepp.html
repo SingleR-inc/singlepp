@@ -238,10 +238,10 @@ template&lt;<a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944
         </tr>
       </table>
 </div><div class="memdoc">
-<p>A vector of vectors of ranked marker lists, used to determine which genes should be used to compute correlations in <code>Classifier</code>.</p>
-<p>For a <code>Markers</code> object <code>markers</code>, let us consider the vector at <code>markers[0][1]</code>. This vector is expected to contain the ranked indices of the marker genes for label 0 compared to label 1. Typically, this vector is created by identifying the genes that are upregulated in label 0 compared to 1 and sorting by decreasing effect size. Indices should refer to the rows of the reference expression matrices (i.e., <code>ref</code> in <code><a class="el" href="namespacesinglepp.html#abcea821671f9339e4e933be2ed123c6e">train_single()</a></code>). So, for example, <code>markers[0][1][0]</code> should contain the row index of the most upregulated gene in label 0 compared to 1.</p>
+<p>A vector of vectors of marker lists, with one list for each pairwise comparison between labels in the reference dataset. This is used to determine which genes should be used to compute correlations in <code><a class="el" href="namespacesinglepp.html#abcea821671f9339e4e933be2ed123c6e">train_single()</a></code> and <code><a class="el" href="namespacesinglepp.html#a606d38abb5608efdfdb0c3bdb945ef23">train_single_intersect()</a></code>.</p>
+<p>For a <code>Markers</code> object <code>markers</code>, let us consider the vector at <code>markers[0][1]</code>. This vector should contain a list of marker genes for label 0 compared to label 1. Each gene is represented as the row index of the reference expression matrix, i.e., <code>ref</code> in <code><a class="el" href="namespacesinglepp.html#abcea821671f9339e4e933be2ed123c6e">train_single()</a></code> and <code><a class="el" href="namespacesinglepp.html#a606d38abb5608efdfdb0c3bdb945ef23">train_single_intersect()</a></code>. The vector should also be sorted by the "strength" of the markers such that the earliest entries are the strongest markers for that pairwise comparison. Typically, this vector is created by identifying the genes that are upregulated in label 0 compared to 1 and sorting by decreasing effect size. So, for example, <code>markers[0][1][0]</code> should contain the row index of the most upregulated gene in this comparison.</p>
 <p>For a given reference dataset, the corresponding <code>Markers</code> object should have length equal to the number of labels in that reference. Each middle vector (i.e., <code>markers[i]</code> for non-negative <code>i</code> less than the number of labels) should also have length equal to the number of labels. Any innermost vector along the "diagonal" (i.e., <code>markers[i][i]</code>) is typically of zero length. The innermost vectors that are not on the diagonal (i.e., <code>markers[i][j]</code> for <code>i != j</code>) may be of any positive length and should contain unique row indices. Note that the length of all innermost vectors will be be capped by any non-negative <code><a class="el" href="structsinglepp_1_1TrainSingleOptions.html#aa72f73c9937301bd90c2fec19f523479">TrainSingleOptions::top</a></code> in <code><a class="el" href="namespacesinglepp.html#abcea821671f9339e4e933be2ed123c6e">train_single()</a></code> and friends.</p>
-<p>As mentioned previously, the diagonal innermost vectors are typically empty, given that it makes little sense to identify upregulated markers in a label compared to itself. That said, any genes stored on the diagonal will be respected and used in all gene subsets for the corresponding label. This can be exploited by advanced users to efficiently store "universal" markers for a label, i.e., markers that are applicable in all comparisons to other labels.</p>
+<p>As mentioned above, the diagonal innermost vectors are typically empty, given that it makes little sense to identify upregulated markers in a label compared to itself. That said, any genes stored on the diagonal will be respected and used in all gene subsets for the corresponding label. This can be exploited by advanced users to efficiently store "universal" markers for a label, i.e., markers that are applicable in all comparisons to other labels.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Index_</td><td>Integer type for the gene (row) indices. </td></tr>
@@ -425,7 +425,7 @@ template&lt;<a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944
   <table class="params">
     <tr><td class="paramdir"></td><td class="paramname">test</td><td>Expression matrix of the test dataset, where rows are genes and columns are cells. The identity of the rows should be consistent with the reference datasets used to construct <code>trained</code>, see <code><a class="el" href="namespacesinglepp.html#a280f3bfb8b5a2e7e51233bc7382a8db1">prepare_integrated_input()</a></code> and <code><a class="el" href="namespacesinglepp.html#a00d24ce81780d784bf9809afdad00736">prepare_integrated_input_intersect()</a></code> for details. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">assigned</td><td>Vector of pointers of length equal to the number of references. Each pointer should point to an array of length equal to the number of columns in <code>test</code>, containing the assigned label for each column in each reference. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">trained</td><td>Set of integrated references produced by <code>IntegratedBuilder::finish()</code>. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">trained</td><td>The integrated classifier returned by <code><a class="el" href="namespacesinglepp.html#af198ad22e020701691c9bb8326401a46">train_integrated()</a></code>. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">buffers</td><td>Buffers in which to store the classification output. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">options</td><td>Further options. </td></tr>
   </table>
@@ -1055,7 +1055,7 @@ template&lt;<a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A pre-built classifier that integrates multiple references. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A pre-built classifier that integrates multiple references, for use in <code><a class="el" href="namespacesinglepp.html#a60f705dc3fdc122139e2102713e7ec41" title="Integrate classifications from multiple references.">classify_integrated()</a></code>. </dd></dl>
 
 </div>
 </div>
@@ -1101,7 +1101,7 @@ template&lt;<a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A pre-built classifier that integrates multiple references. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A pre-built classifier that integrates multiple references, for use in <code><a class="el" href="namespacesinglepp.html#a60f705dc3fdc122139e2102713e7ec41" title="Integrate classifications from multiple references.">classify_integrated()</a></code>. </dd></dl>
 
 </div>
 </div>
@@ -1159,7 +1159,7 @@ template&lt;<a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944
   <table class="params">
     <tr><td class="paramdir"></td><td class="paramname">ref</td><td>Matrix for the reference expression profiles. Rows are genes while columns are profiles. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each reference profile. Labels should be integers in \([0, L)\) where \(L\) is the total number of unique labels. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>A vector of vectors of ranked marker genes for each pairwise comparison between labels, see <code>Markers</code> for more details. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>A vector of vectors of ranked marker genes for each pairwise comparison between labels, see <code><a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">singlepp::Markers</a></code> for more details. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">options</td><td>Further options.</td></tr>
   </table>
   </dd>
@@ -1229,7 +1229,7 @@ template&lt;<a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944
     <tr><td class="paramdir"></td><td class="paramname">intersection</td><td>Vector defining the intersection of genes between the test and reference datasets, see <code><a class="el" href="namespacesinglepp.html#a22b70c4d5949e28af164723543361214">intersect_genes()</a></code> for more details. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">ref</td><td>An expression matrix for the reference expression profiles, where rows are genes and columns are cells. This should have non-zero columns. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each reference profile. Labels should be integers in \([0, L)\) where \(L\) is the total number of unique labels. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>A vector of vectors of ranked marker genes for each pairwise comparison between labels, see <code>Markers</code> for more details. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>A vector of vectors of ranked marker genes for each pairwise comparison between labels, see <code><a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">singlepp::Markers</a></code> for more details. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">options</td><td>Further options.</td></tr>
   </table>
   </dd>
@@ -1314,7 +1314,7 @@ template&lt;<a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944
     <tr><td class="paramdir"></td><td class="paramname">ref</td><td>An expression matrix for the reference expression profiles, where rows are genes and columns are cells. This should have non-zero columns. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">ref_id</td><td>Pointer to an array of length equal to the number of rows of <code>ref</code>, containing a gene identifier for each row of the reference dataset. Identifiers should be comparable to those in <code>test_id</code>. If any duplicate IDs are present, only the first occurrence is used. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each reference profile. Labels should be integers in \([0, L)\) where \(L\) is the total number of unique labels. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>A vector of vectors of ranked marker genes for each pairwise comparison between labels, see <code>Markers</code> for more details. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>A vector of vectors of ranked marker genes for each pairwise comparison between labels, see <code><a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">singlepp::Markers</a></code> for more details. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">options</td><td>Further options.</td></tr>
   </table>
   </dd>
