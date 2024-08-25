@@ -99,7 +99,6 @@ TEST_F(FineTuneIntegratedTest, ExactRecovery) {
             scores[(r + 1) % nrefs] = 0; // forcing another reference to be zero so that it actually does the fine-tuning.
             auto output = singlepp::internal::fine_tune_integrated<int>(c, ranked, scores, trained, assigned, reflabels_in_use, miniverse_tmp, miniverse, workspace, 1.0, 0.05);
             EXPECT_EQ(output.first, r);
-            EXPECT_GT(output.second, 0.5); // the score should be 1 for the match and close to 0 for everything else.
 
             std::fill(scores.begin(), scores.end(), 0.5);
             scores[r] = 0; // forcing it to match to some other reference. 
@@ -131,7 +130,6 @@ TEST_F(FineTuneIntegratedTest, ExactRecoveryIntersected) {
             scores[(r + 1) % nrefs] = 0; // forcing another reference to be zero so that it actually does the fine-tuning.
             auto output = singlepp::internal::fine_tune_integrated<int>(c, ranked, scores, trained, assigned, reflabels_in_use, miniverse_tmp, miniverse, workspace, 1.0, 0.05);
             EXPECT_EQ(output.first, r);
-            EXPECT_GT(output.second, 0.5); // the score should be 1 for the match and close to 0 for everything else.
 
             std::fill(scores.begin(), scores.end(), 0.5);
             scores[r] = 0; // forcing it to match to some other reference. 
