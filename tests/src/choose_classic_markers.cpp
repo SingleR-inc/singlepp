@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include "custom_parallel.h"
 
 #include "singlepp/choose_classic_markers.hpp"
 #include "tatami/tatami.hpp"

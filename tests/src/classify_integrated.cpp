@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include "custom_parallel.h"
 
 #include "singlepp/classify_integrated.hpp"
 #include "singlepp/classify_single.hpp"
