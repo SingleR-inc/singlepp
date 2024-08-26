@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['new_5fextractor_2ehpp_0',['new_extractor.hpp',['https://tatami-inc.github.io/tatami/new__extractor_8hpp.html',1,'']]]
+  ['vptree_2ehpp_0',['Vptree.hpp',['https://knncolle.github.io/knncolle/Vptree_8hpp.html',1,'']]]
 ];

@@ -1,6 +1,10 @@
 var searchData=
 [
-  ['has_5fdata_0',['has_data',['https://tatami-inc.github.io/tatami/structtatami_1_1has__data.html',1,'tatami']]],
-  ['has_5fdata_2ehpp_1',['has_data.hpp',['https://tatami-inc.github.io/tatami/has__data_8hpp.html',1,'']]],
-  ['has_5fdata_3c_20t_2c_20v_2c_20decltype_28_28void_29_20std_3a_3adeclval_3c_20v_20_3e_28_29_2edata_28_29_2c_200_29_3e_2',['has_data&lt; T, V, decltype((void) std::declval&lt; V &gt;().data(), 0)&gt;',['https://tatami-inc.github.io/tatami/structtatami_1_1has__data_3_01T_00_01V_00_01decltype_07_07void_08_01std_1_1declval_3_01V_01_4_07_08_8data_07_08_00_010_08_4.html',1,'tatami']]]
+  ['kmknn_2ehpp_0',['Kmknn.hpp',['https://knncolle.github.io/knncolle/Kmknn_8hpp.html',1,'']]],
+  ['kmknnbuilder_1',['kmknnbuilder',['https://knncolle.github.io/knncolle/classknncolle_1_1KmknnBuilder.html',1,'knncolle::KmknnBuilder&lt; class Distance_, class Matrix_, typename Float_ &gt;'],['https://knncolle.github.io/knncolle/classknncolle_1_1KmknnBuilder.html#ae8338140eae1984a667f226475401491',1,'knncolle::KmknnBuilder::KmknnBuilder(Options options)'],['https://knncolle.github.io/knncolle/classknncolle_1_1KmknnBuilder.html#ac9a0a6e9e591b23b7bed3c16ab786ea3',1,'knncolle::KmknnBuilder::KmknnBuilder()=default']]],
+  ['kmknnoptions_2',['KmknnOptions',['https://knncolle.github.io/knncolle/structknncolle_1_1KmknnOptions.html',1,'knncolle']]],
+  ['kmknnprebuilt_3',['kmknnprebuilt',['https://knncolle.github.io/knncolle/classknncolle_1_1KmknnPrebuilt.html',1,'knncolle::KmknnPrebuilt&lt; class Distance_, typename Dim_, typename Index_, typename Store_, typename Float_ &gt;'],['https://knncolle.github.io/knncolle/classknncolle_1_1KmknnPrebuilt.html#aa45f08f940ab256706b3c27d00d2992a',1,'knncolle::KmknnPrebuilt::KmknnPrebuilt()']]],
+  ['kmknnsearcher_4',['KmknnSearcher',['https://knncolle.github.io/knncolle/classknncolle_1_1KmknnSearcher.html',1,'knncolle']]],
+  ['knncolle_5',['knncolle',['https://knncolle.github.io/knncolle/namespaceknncolle.html',1,'']]],
+  ['knncolle_2ehpp_6',['knncolle.hpp',['https://knncolle.github.io/knncolle/knncolle_8hpp.html',1,'']]]
 ];

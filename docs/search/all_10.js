@@ -1,8 +1,16 @@
 var searchData=
 [
-  ['raw_5fdistance_0',['raw_distance',['https://knncolle.github.io/knncolle/structknncolle_1_1EuclideanDistance.html#a0d6936a53ba4ed0e0ca33c9ac2515d06',1,'knncolle::EuclideanDistance::raw_distance()'],['https://knncolle.github.io/knncolle/structknncolle_1_1ManhattanDistance.html#ac782b1cfdb76e144a3d84d674e661456',1,'knncolle::ManhattanDistance::raw_distance()'],['https://knncolle.github.io/knncolle/structknncolle_1_1MockDistance.html#a7cfc77c0fd9806f9030a617404a5f954',1,'knncolle::MockDistance::raw_distance()']]],
-  ['reference_1',['reference',['https://tatami-inc.github.io/tatami/structtatami_1_1SomeNumericArray_1_1Iterator.html#a4bf2843ca912061c3cc0400bbb75abe6',1,'tatami::SomeNumericArray::Iterator']]],
-  ['refine_5falgorithm_2',['refine_algorithm',['https://knncolle.github.io/knncolle/structknncolle_1_1KmknnOptions.html#adf03e5a3046a1da5cacff93d37975ff8',1,'knncolle::KmknnOptions']]],
-  ['retrieve_5fcompressed_5fsparse_5fcontents_3',['retrieve_compressed_sparse_contents',['https://tatami-inc.github.io/tatami/namespacetatami.html#a6b95eab5d7370f965e4d6a9b9a9f3393',1,'tatami']]],
-  ['retrieve_5ffragmented_5fsparse_5fcontents_4',['retrieve_fragmented_sparse_contents',['https://tatami-inc.github.io/tatami/namespacetatami.html#ab5688af2360372f1535d6d68b2c14de6',1,'tatami']]]
+  ['top_0',['top',['../structsinglepp_1_1TrainSingleOptions.html#aa72f73c9937301bd90c2fec19f523479',1,'singlepp::TrainSingleOptions']]],
+  ['train_5fintegrated_1',['train_integrated',['../namespacesinglepp.html#af198ad22e020701691c9bb8326401a46',1,'singlepp::train_integrated(const std::vector&lt; TrainIntegratedInput&lt; Value_, Index_, Label_ &gt; &gt; &amp;inputs, const TrainIntegratedOptions &amp;options)'],['../namespacesinglepp.html#a82e0dfffaed84685432ad2a39cc12a97',1,'singlepp::train_integrated(std::vector&lt; TrainIntegratedInput&lt; Value_, Index_, Label_ &gt; &gt; &amp;&amp;inputs, const TrainIntegratedOptions &amp;options)']]],
+  ['train_5fintegrated_2ehpp_2',['train_integrated.hpp',['../train__integrated_8hpp.html',1,'']]],
+  ['train_5fsingle_3',['train_single',['../namespacesinglepp.html#abcea821671f9339e4e933be2ed123c6e',1,'singlepp']]],
+  ['train_5fsingle_2ehpp_4',['train_single.hpp',['../train__single_8hpp.html',1,'']]],
+  ['train_5fsingle_5fintersect_5',['train_single_intersect',['../namespacesinglepp.html#a606d38abb5608efdfdb0c3bdb945ef23',1,'singlepp::train_single_intersect(const Intersection&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, Markers&lt; Index_ &gt; markers, const TrainSingleOptions&lt; Index_, Float_ &gt; &amp;options)'],['../namespacesinglepp.html#a11341bf58d0086e0ec03a5bafb91bcf3',1,'singlepp::train_single_intersect(Index_ test_nrow, const Id_ *test_id, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Id_ *ref_id, const Label_ *labels, Markers&lt; Index_ &gt; markers, const TrainSingleOptions&lt; Index_, Float_ &gt; &amp;options)']]],
+  ['trainedintegrated_6',['TrainedIntegrated',['../classsinglepp_1_1TrainedIntegrated.html',1,'singlepp']]],
+  ['trainedsingle_7',['TrainedSingle',['../classsinglepp_1_1TrainedSingle.html',1,'singlepp']]],
+  ['trainedsingleintersect_8',['TrainedSingleIntersect',['../classsinglepp_1_1TrainedSingleIntersect.html',1,'singlepp']]],
+  ['trainer_9',['trainer',['../structsinglepp_1_1TrainSingleOptions.html#a36a62c8abfc04a46be71e2ba9e179a60',1,'singlepp::TrainSingleOptions']]],
+  ['trainintegratedinput_10',['TrainIntegratedInput',['../structsinglepp_1_1TrainIntegratedInput.html',1,'singlepp']]],
+  ['trainintegratedoptions_11',['TrainIntegratedOptions',['../structsinglepp_1_1TrainIntegratedOptions.html',1,'singlepp']]],
+  ['trainsingleoptions_12',['TrainSingleOptions',['../structsinglepp_1_1TrainSingleOptions.html',1,'singlepp']]]
 ];

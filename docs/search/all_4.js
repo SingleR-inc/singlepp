@@ -1,8 +1,8 @@
 var searchData=
 [
-  ['elementtype_0',['ElementType',['https://tatami-inc.github.io/tatami/namespacetatami.html#a58a028d23a7be58854b2e60dfae1b04b',1,'tatami']]],
-  ['elementtype_2ehpp_1',['ElementType.hpp',['https://tatami-inc.github.io/tatami/ElementType_8hpp.html',1,'']]],
-  ['end_2',['end',['https://tatami-inc.github.io/tatami/classtatami_1_1ArrayView.html#a904e6d03b59a20f2cc7831fbb318cf33',1,'tatami::ArrayView::end()'],['https://tatami-inc.github.io/tatami/classtatami_1_1SomeNumericArray.html#add771080790c65d2943c54a0615ee136',1,'tatami::SomeNumericArray::end()']]],
-  ['euclideandistance_3',['EuclideanDistance',['https://knncolle.github.io/knncolle/structknncolle_1_1EuclideanDistance.html',1,'knncolle']]],
-  ['extractor_2ehpp_4',['Extractor.hpp',['https://tatami-inc.github.io/tatami/Extractor_8hpp.html',1,'']]]
+  ['find_5fnearest_5fneighbors_0',['find_nearest_neighbors',['https://knncolle.github.io/knncolle/namespaceknncolle.html#a22e035b2d5eb293fd828a67e61f3213d',1,'knncolle']]],
+  ['find_5fnearest_5fneighbors_2ehpp_1',['find_nearest_neighbors.hpp',['https://knncolle.github.io/knncolle/find__nearest__neighbors_8hpp.html',1,'']]],
+  ['find_5fnearest_5fneighbors_5findex_5fonly_2',['find_nearest_neighbors_index_only',['https://knncolle.github.io/knncolle/namespaceknncolle.html#a0b726765329530a709095ba304033a0d',1,'knncolle']]],
+  ['fine_5ftune_3',['fine_tune',['../structsinglepp_1_1ClassifySingleOptions.html#a2e9ca1a6da5fcb8877d9029db4b46b7a',1,'singlepp::ClassifySingleOptions::fine_tune'],['../structsinglepp_1_1ClassifyIntegratedOptions.html#a4b00e9fdb3d16f431709932dd4dddca9',1,'singlepp::ClassifyIntegratedOptions::fine_tune']]],
+  ['fine_5ftune_5fthreshold_4',['fine_tune_threshold',['../structsinglepp_1_1ClassifySingleOptions.html#ac4b20b4e0d9f50695d60f86dc2f48406',1,'singlepp::ClassifySingleOptions::fine_tune_threshold'],['../structsinglepp_1_1ClassifyIntegratedOptions.html#ae963907ed5ed64dd7c198d6171e54003',1,'singlepp::ClassifyIntegratedOptions::fine_tune_threshold']]]
 ];

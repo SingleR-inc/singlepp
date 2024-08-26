@@ -1,10 +1,9 @@
 var searchData=
 [
-  ['get_0',['get',['https://tatami-inc.github.io/tatami/classtatami_1_1ConsecutiveOracle.html#a7310f20500d941eb27eb367b3f930b88',1,'tatami::ConsecutiveOracle::get()'],['https://tatami-inc.github.io/tatami/classtatami_1_1FixedVectorOracle.html#ac3a568555ec15ccbed4aab42d5dddb37',1,'tatami::FixedVectorOracle::get()'],['https://tatami-inc.github.io/tatami/classtatami_1_1FixedViewOracle.html#a6ff53180a31ec5c4a0f3d7f7eb026e0f',1,'tatami::FixedViewOracle::get()'],['https://tatami-inc.github.io/tatami/classtatami_1_1Oracle.html#a852153ae7d04d12fdea97ebb7b11f357',1,'tatami::Oracle::get()']]],
-  ['get_5fmarkers_1',['get_markers',['../classsinglepp_1_1TrainedSingle.html#af950945f130f3d957fc06bf029117a9e',1,'singlepp::TrainedSingle::get_markers()'],['../classsinglepp_1_1TrainedSingleIntersect.html#a6b8e1e521a826f67858f0c97c99c047e',1,'singlepp::TrainedSingleIntersect::get_markers()']]],
-  ['get_5fobservation_2',['get_observation',['https://knncolle.github.io/knncolle/classknncolle_1_1MockMatrix.html#a4c8aeb3684c8163c9ed3bbfcb688e400',1,'knncolle::MockMatrix']]],
-  ['get_5foptions_3',['get_options',['https://knncolle.github.io/knncolle/classknncolle_1_1KmknnBuilder.html#af6dc5c628478732fb4b5d0f027f1d7a8',1,'knncolle::KmknnBuilder']]],
-  ['get_5fref_5fsubset_4',['get_ref_subset',['../classsinglepp_1_1TrainedSingleIntersect.html#ac2ec2b035a62da9b175f84a37486d1bf',1,'singlepp::TrainedSingleIntersect']]],
-  ['get_5fsubset_5',['get_subset',['../classsinglepp_1_1TrainedSingle.html#a2054db73c1dfa8cff3024b9a89d8c304',1,'singlepp::TrainedSingle']]],
-  ['get_5ftest_5fsubset_6',['get_test_subset',['../classsinglepp_1_1TrainedSingleIntersect.html#a82b8ce08c57b8dc6bbb2acd0a10ea9d7',1,'singlepp::TrainedSingleIntersect']]]
+  ['index_5ftype_0',['index_type',['https://knncolle.github.io/knncolle/classknncolle_1_1MockMatrix.html#ade1c40b06e09d623e2b83a9bd6487479',1,'knncolle::MockMatrix']]],
+  ['initialize_1',['initialize',['https://knncolle.github.io/knncolle/classknncolle_1_1BruteforcePrebuilt.html#a591b94e2c5f4a0fe404cf89dcc20d0de',1,'knncolle::BruteforcePrebuilt::initialize()'],['https://knncolle.github.io/knncolle/classknncolle_1_1KmknnPrebuilt.html#a361ec0511a7cd79ce3f318560a8349cf',1,'knncolle::KmknnPrebuilt::initialize()'],['https://knncolle.github.io/knncolle/classknncolle_1_1L2NormalizedPrebuilt.html#a0879ea8c8512d04a2f73fb7afd7eae56',1,'knncolle::L2NormalizedPrebuilt::initialize()'],['https://knncolle.github.io/knncolle/classknncolle_1_1Prebuilt.html#a71b757b154aa2713d732afd2d9444bb9',1,'knncolle::Prebuilt::initialize()'],['https://knncolle.github.io/knncolle/classknncolle_1_1VptreePrebuilt.html#a583eeead36f94b77d5ceb46c47fd8aa3',1,'knncolle::VptreePrebuilt::initialize()']]],
+  ['initialize_5falgorithm_2',['initialize_algorithm',['https://knncolle.github.io/knncolle/structknncolle_1_1KmknnOptions.html#a01ab1d6e283fa8945723f33942e310c0',1,'knncolle::KmknnOptions']]],
+  ['intersect_5fgenes_3',['intersect_genes',['../namespacesinglepp.html#a22b70c4d5949e28af164723543361214',1,'singlepp']]],
+  ['intersection_4',['Intersection',['../namespacesinglepp.html#a24793af2399b65d4f290e28cc0ef475c',1,'singlepp']]],
+  ['intersection_2ehpp_5',['Intersection.hpp',['../Intersection_8hpp.html',1,'']]]
 ];
