@@ -93,7 +93,7 @@ $(document).ready(function() { init_codefold(0); });
 <a href="classify__single_8hpp.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef SINGLEPP_CLASSIFY_SINGLE_HPP</span></div>
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define SINGLEPP_CLASSIFY_SINGLE_HPP</span></div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
-<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;macros.hpp&quot;</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;<a class="code" href="defs_8hpp.html">defs.hpp</a>&quot;</span></div>
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &quot;tatami/tatami.hpp&quot;</span></div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
@@ -106,7 +106,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="foldopen" id="foldopen00019" data-start="{" data-end="}">
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno"><a class="line" href="namespacesinglepp.html">   19</a></span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesinglepp.html">singlepp</a> {</div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span> </div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Float_&gt;</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Float_ = DefaultFloat&gt;</div>
 <div class="foldopen" id="foldopen00026" data-start="{" data-end="};">
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="structsinglepp_1_1ClassifySingleOptions.html">   26</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structsinglepp_1_1ClassifySingleOptions.html">ClassifySingleOptions</a> {</div>
 <div class="line"><a id="l00034" name="l00034"></a><span class="lineno"><a class="line" href="structsinglepp_1_1ClassifySingleOptions.html#aebeadb5d5c853a7e2d0c6d9d7f611656">   34</a></span>    <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a> <a class="code hl_variable" href="structsinglepp_1_1ClassifySingleOptions.html#aebeadb5d5c853a7e2d0c6d9d7f611656">quantile</a> = 0.8;</div>
@@ -119,7 +119,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>};</div>
 </div>
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span> </div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Label_, <span class="keyword">typename</span> Float_&gt;</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Label_ = DefaultLabel, <span class="keyword">typename</span> Float_ = DefaultFloat&gt;</div>
 <div class="foldopen" id="foldopen00064" data-start="{" data-end="};">
 <div class="line"><a id="l00064" name="l00064"></a><span class="lineno"><a class="line" href="structsinglepp_1_1ClassifySingleBuffers.html">   64</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structsinglepp_1_1ClassifySingleBuffers.html">ClassifySingleBuffers</a> {</div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno"><a class="line" href="structsinglepp_1_1ClassifySingleBuffers.html#a051c296c60087f2bfa9c46240c885487">   69</a></span>    <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Label_</a>* <a class="code hl_variable" href="structsinglepp_1_1ClassifySingleBuffers.html#a051c296c60087f2bfa9c46240c885487">best</a>;</div>
@@ -180,7 +180,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>}</div>
 </div>
 <div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span> </div>
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Label_, <span class="keyword">typename</span> Float_&gt;</div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Label_ = DefaultLabel, <span class="keyword">typename</span> Float_ = DefaultFloat&gt;</div>
 <div class="foldopen" id="foldopen00198" data-start="{" data-end="};">
 <div class="line"><a id="l00198" name="l00198"></a><span class="lineno"><a class="line" href="structsinglepp_1_1ClassifySingleResults.html">  198</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structsinglepp_1_1ClassifySingleResults.html">ClassifySingleResults</a> {</div>
 <div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>    <a class="code hl_struct" href="structsinglepp_1_1ClassifySingleResults.html">ClassifySingleResults</a>(<span class="keywordtype">size_t</span> <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">num_cells</a>, <span class="keywordtype">size_t</span> num_labels) : <a class="code hl_variable" href="structsinglepp_1_1ClassifySingleResults.html#a85a0c24158c546a629455dabd24d5cb8">best</a>(<a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">num_cells</a>), <a class="code hl_variable" href="structsinglepp_1_1ClassifySingleResults.html#a095f534120dc3cc11de7b58a2eef64f1">delta</a>(<a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">num_cells</a>) {</div>
@@ -212,7 +212,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>}</div>
 <div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span> </div>
 <div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>}</div>
-<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Label_, <span class="keyword">typename</span> Value_, <span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Float_&gt;</div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Label_ = DefaultLabel, <span class="keyword">typename</span> Value_, <span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Float_&gt;</div>
 <div class="foldopen" id="foldopen00270" data-start="{" data-end="}">
 <div class="line"><a id="l00270" name="l00270"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#af23220206f86fe833bad096526d58db0">  270</a></span><a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">ClassifySingleResults&lt;Label_, Float_&gt;</a> <a class="code hl_function" href="namespacesinglepp.html#ae8772734badf4a09d6c285b9b98295ec">classify_single</a>(</div>
 <div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>    <span class="keyword">const</span> tatami::Matrix&lt;Value_, Index_&gt;&amp; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">test</a>,</div>
@@ -226,7 +226,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>}</div>
 </div>
 <div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span> </div>
-<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Label_, <span class="keyword">typename</span> Value_, <span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Float_&gt;</div>
+<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Label_ = DefaultLabel, <span class="keyword">typename</span> Value_, <span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Float_&gt;</div>
 <div class="foldopen" id="foldopen00297" data-start="{" data-end="}">
 <div class="line"><a id="l00297" name="l00297"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#aaf9de543e62eb0ff85b7e5b701406e72">  297</a></span><a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">ClassifySingleResults&lt;Label_, Float_&gt;</a> <a class="code hl_function" href="namespacesinglepp.html#ad7d214a5da53597d24dec5cec59e3beb">classify_single_intersect</a>(</div>
 <div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>    <span class="keyword">const</span> tatami::Matrix&lt;Value_, Index_&gt;&amp; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">test</a>,</div>
@@ -244,6 +244,7 @@ $(document).ready(function() { init_codefold(0); });
 </div>
 <div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span> </div>
 <div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span><span class="preprocessor">#endif</span></div>
+<div class="ttc" id="adefs_8hpp_html"><div class="ttname"><a href="defs_8hpp.html">defs.hpp</a></div><div class="ttdoc">Common definitions for singlepp.</div></div>
 <div class="ttc" id="anamespacesinglepp_html"><div class="ttname"><a href="namespacesinglepp.html">singlepp</a></div><div class="ttdoc">Cell type classification using the SingleR algorithm in C++.</div><div class="ttdef"><b>Definition</b> classify_single.hpp:19</div></div>
 <div class="ttc" id="anamespacesinglepp_html_a87e4be0939142d883ad98944e6336a5c"><div class="ttname"><a href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">singlepp::Markers</a></div><div class="ttdeci">std::vector&lt; std::vector&lt; std::vector&lt; Index_ &gt; &gt; &gt; Markers</div><div class="ttdef"><b>Definition</b> Markers.hpp:40</div></div>
 <div class="ttc" id="anamespacesinglepp_html_ad7d214a5da53597d24dec5cec59e3beb"><div class="ttname"><a href="namespacesinglepp.html#ad7d214a5da53597d24dec5cec59e3beb">singlepp::classify_single_intersect</a></div><div class="ttdeci">void classify_single_intersect(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;test, const TrainedSingleIntersect&lt; Index_, Float_ &gt; &amp;trained, const ClassifySingleBuffers&lt; Label_, Float_ &gt; &amp;buffers, const ClassifySingleOptions&lt; Float_ &gt; &amp;options)</div><div class="ttdef"><b>Definition</b> classify_single.hpp:170</div></div>

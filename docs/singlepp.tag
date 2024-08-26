@@ -26,6 +26,12 @@
     <namespace>singlepp</namespace>
   </compound>
   <compound kind="file">
+    <name>defs.hpp</name>
+    <path>singlepp/</path>
+    <filename>defs_8hpp.html</filename>
+    <namespace>singlepp</namespace>
+  </compound>
+  <compound kind="file">
     <name>Intersection.hpp</name>
     <path>singlepp/</path>
     <filename>Intersection_8hpp.html</filename>
@@ -427,6 +433,41 @@
       <name>Intersection</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
       <anchor>a24793af2399b65d4f290e28cc0ef475c</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>int</type>
+      <name>DefaultIndex</name>
+      <anchorfile>namespacesinglepp.html</anchorfile>
+      <anchor>a75885e26a4870572229427b4acc3e74f</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>int</type>
+      <name>DefaultLabel</name>
+      <anchorfile>namespacesinglepp.html</anchorfile>
+      <anchor>a16859be67879a6e0650877f12edd9f14</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>int</type>
+      <name>DefaultRefLabel</name>
+      <anchorfile>namespacesinglepp.html</anchorfile>
+      <anchor>a9e8cb5a049cb39b52068562ef2c9bbff</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>double</type>
+      <name>DefaultFloat</name>
+      <anchorfile>namespacesinglepp.html</anchorfile>
+      <anchor>a337b47b25c3bfaff91d30f38fe5bb31b</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>double</type>
+      <name>DefaultValue</name>
+      <anchorfile>namespacesinglepp.html</anchorfile>
+      <anchor>a1ced86db19f4d2cf55ba4310bd2c16d2</anchor>
       <arglist></arglist>
     </member>
     <member kind="function">

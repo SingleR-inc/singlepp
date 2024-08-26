@@ -93,7 +93,7 @@ $(document).ready(function() { init_codefold(0); });
 <a href="classify__integrated_8hpp.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef SINGLEPP_CLASSIFY_INTEGRATED_HPP</span></div>
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define SINGLEPP_CLASSIFY_INTEGRATED_HPP</span></div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
-<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;macros.hpp&quot;</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;<a class="code" href="defs_8hpp.html">defs.hpp</a>&quot;</span></div>
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &quot;tatami/tatami.hpp&quot;</span></div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
@@ -106,7 +106,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesinglepp.html">singlepp</a> {</div>
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Float_&gt;</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Float_ = DefaultFloat&gt;</div>
 <div class="foldopen" id="foldopen00027" data-start="{" data-end="};">
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno"><a class="line" href="structsinglepp_1_1ClassifyIntegratedOptions.html">   27</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structsinglepp_1_1ClassifyIntegratedOptions.html">ClassifyIntegratedOptions</a> {</div>
 <div class="line"><a id="l00032" name="l00032"></a><span class="lineno"><a class="line" href="structsinglepp_1_1ClassifyIntegratedOptions.html#a6d4d11059b19ca5066ceed0d9e36bf19">   32</a></span>    <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Float_</a> <a class="code hl_variable" href="structsinglepp_1_1ClassifyIntegratedOptions.html#a6d4d11059b19ca5066ceed0d9e36bf19">quantile</a> = 0.8;</div>
@@ -119,7 +119,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>};</div>
 </div>
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> RefLabel_, <span class="keyword">typename</span> Float_&gt;</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> RefLabel_ = DefaultRefLabel, <span class="keyword">typename</span> Float_ = DefaultFloat&gt;</div>
 <div class="foldopen" id="foldopen00059" data-start="{" data-end="};">
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno"><a class="line" href="structsinglepp_1_1ClassifyIntegratedBuffers.html">   59</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structsinglepp_1_1ClassifyIntegratedBuffers.html">ClassifyIntegratedBuffers</a> {</div>
 <div class="line"><a id="l00064" name="l00064"></a><span class="lineno"><a class="line" href="structsinglepp_1_1ClassifyIntegratedBuffers.html#a51dd05dee04d9d73f1ad6d62655ca1e1">   64</a></span>    <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">RefLabel_</a>* <a class="code hl_variable" href="structsinglepp_1_1ClassifyIntegratedBuffers.html#a51dd05dee04d9d73f1ad6d62655ca1e1">best</a>;</div>
@@ -154,7 +154,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>}</div>
 </div>
 <div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span> </div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> RefLabel_, <span class="keyword">typename</span> Float_&gt;</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> RefLabel_ = DefaultRefLabel, <span class="keyword">typename</span> Float_ = DefaultFloat&gt;</div>
 <div class="foldopen" id="foldopen00153" data-start="{" data-end="};">
 <div class="line"><a id="l00153" name="l00153"></a><span class="lineno"><a class="line" href="structsinglepp_1_1ClassifyIntegratedResults.html">  153</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structsinglepp_1_1ClassifyIntegratedResults.html">ClassifyIntegratedResults</a> {</div>
 <div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>    <a class="code hl_struct" href="structsinglepp_1_1ClassifyIntegratedResults.html">ClassifyIntegratedResults</a>(<span class="keywordtype">size_t</span> <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">ncells</a>, <span class="keywordtype">size_t</span> <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">nrefs</a>) : <a class="code hl_variable" href="structsinglepp_1_1ClassifyIntegratedResults.html#a2b2ab0c6b6cbefb29acbd685801f1e34">best</a>(<a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">ncells</a>), <a class="code hl_variable" href="structsinglepp_1_1ClassifyIntegratedResults.html#a7fa791e370428f1535d3218fd3313987">delta</a>(<a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">ncells</a>) {</div>
@@ -171,7 +171,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>};</div>
 </div>
 <div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span> </div>
-<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> RefLabel_, <span class="keyword">typename</span> Value_, <span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Label_, <span class="keyword">typename</span> Float_&gt;</div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> RefLabel_ = DefaultRefLabel, <span class="keyword">typename</span> Value_, <span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Label_, <span class="keyword">typename</span> Float_&gt;</div>
 <div class="foldopen" id="foldopen00202" data-start="{" data-end="}">
 <div class="line"><a id="l00202" name="l00202"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#aca35f5c98162213d14d4ce801b6376b0">  202</a></span><a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">ClassifyIntegratedResults&lt;RefLabel_, Float_&gt;</a> <a class="code hl_function" href="namespacesinglepp.html#a60f705dc3fdc122139e2102713e7ec41">classify_integrated</a>(</div>
 <div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    <span class="keyword">const</span> tatami::Matrix&lt;Value_, Index_&gt;&amp; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">test</a>,</div>
@@ -195,6 +195,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>}</div>
 <div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span> </div>
 <div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span><span class="preprocessor">#endif</span></div>
+<div class="ttc" id="adefs_8hpp_html"><div class="ttname"><a href="defs_8hpp.html">defs.hpp</a></div><div class="ttdoc">Common definitions for singlepp.</div></div>
 <div class="ttc" id="anamespacesinglepp_html"><div class="ttname"><a href="namespacesinglepp.html">singlepp</a></div><div class="ttdoc">Cell type classification using the SingleR algorithm in C++.</div><div class="ttdef"><b>Definition</b> classify_single.hpp:19</div></div>
 <div class="ttc" id="anamespacesinglepp_html_a60f705dc3fdc122139e2102713e7ec41"><div class="ttname"><a href="namespacesinglepp.html#a60f705dc3fdc122139e2102713e7ec41">singlepp::classify_integrated</a></div><div class="ttdeci">void classify_integrated(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;test, const std::vector&lt; const Label_ * &gt; &amp;assigned, const TrainedIntegrated&lt; Index_ &gt; &amp;trained, ClassifyIntegratedBuffers&lt; RefLabel_, Float_ &gt; &amp;buffers, const ClassifyIntegratedOptions&lt; Float_ &gt; &amp;options)</div><div class="ttdoc">Integrate classifications from multiple references.</div><div class="ttdef"><b>Definition</b> classify_integrated.hpp:126</div></div>
 <div class="ttc" id="anamespacesinglepp_html_a87e4be0939142d883ad98944e6336a5c"><div class="ttname"><a href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">singlepp::Markers</a></div><div class="ttdeci">std::vector&lt; std::vector&lt; std::vector&lt; Index_ &gt; &gt; &gt; Markers</div><div class="ttdef"><b>Definition</b> Markers.hpp:40</div></div>
