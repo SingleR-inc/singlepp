@@ -153,97 +153,79 @@ Markers<Index_> choose_classic_markers(
         pairs.insert(pairs.end(), pairs0.begin(), pairs0.end()); // already sorted by the std::set.
     }
 
-    struct PerThreadWorkspace {
-        PerThreadWorkspace(size_t ngenes, size_t nrefs) : 
-            sorter(ngenes), sorted_tmp(ngenes), 
-            rbuffer(ngenes), lbuffer(ngenes), 
-            rextractors(nrefs), lextractors(nrefs)
-        {}
+    SINGLEPP_CUSTOM_PARALLEL(options.num_threads, pairs.size(), [&](int, size_t start, size_t len) {
+        std::vector<std::pair<Value_, Index_> > sorter(ngenes), sorted_tmp(ngenes);
+        std::vector<Value_> rbuffer(ngenes), lbuffer(ngenes);
+        std::vector<std::shared_ptr<tatami::MyopicDenseExtractor<Value_, Index_> > > rextractors(nrefs), lextractors(nrefs);
 
-        std::vector<std::pair<Value_, Index_> > sorter, sorted_tmp;
-        std::vector<Value_> rbuffer, lbuffer;
-        std::vector<std::shared_ptr<tatami::MyopicDenseExtractor<Value_, Index_> > > rextractors, lextractors;
-    };
+        for (size_t p = start, end = start + len; p < end; ++p) {
+            auto curleft = pairs[p].first;
+            auto curright = pairs[p].second;
 
-    SINGLEPP_CUSTOM_PARALLEL(
-        options.num_threads,
-        pairs.size(),
-        [&]() -> PerThreadWorkspace {
-            return PerThreadWorkspace(ngenes, nrefs);
-        },
-        [&](int, size_t start, size_t len, PerThreadWorkspace& work) -> void {
-            auto& sorter = work.sorter;
-            auto& sorted_tmp = work.sorted_tmp;
+            for (size_t g = 0; g < ngenes; ++g) {
+                sorter[g].first = 0;
+                sorter[g].second = g;
+            }
 
-            for (size_t p = start, end = start + len; p < end; ++p) {
-                auto curleft = pairs[p].first;
-                auto curright = pairs[p].second;
+            for (size_t i = 0; i < nrefs; ++i) {
+                const auto& curavail = labels_to_index[i];
+                auto lcol = curavail[curleft];
+                auto rcol = curavail[curright];
+                if (!lcol.first || !rcol.first) {
+                    continue;                            
+                }
+
+                // Initialize extractors as needed.
+                auto& lext = lextractors[i];
+                if (!lext) {
+                    lext = representatives[i]->dense_column();
+                }
+                auto lptr = lext->fetch(lcol.second, lbuffer.data());
+
+                auto& rext = rextractors[i];
+                if (!rext) {
+                    rext = representatives[i]->dense_column();
+                }
+                auto rptr = rext->fetch(rcol.second, rbuffer.data());
 
                 for (size_t g = 0; g < ngenes; ++g) {
-                    sorter[g].first = 0;
-                    sorter[g].second = g;
+                    sorter[g].first += lptr[g] - rptr[g]; 
+                }
+            }
+
+            // At flip = 0, we're looking for genes upregulated in right over left,
+            // as we're sorting on left - right in increasing order. At flip = 1,
+            // we reverse the signs to we sort on right - left.
+            for (int flip = 0; flip < 2; ++flip) {
+                if (flip) {
+                    sorter.swap(sorted_tmp);
+                    for (auto& s : sorter) {
+                        s.first *= -1;
+                    }
+                } else {
+                    // We do a copy so that the treatment of tries would be the same as if
+                    // we had sorted on the reversed log-fold changes in the first place;
+                    // otherwise the first sort might change the order of ties.
+                    std::copy(sorter.begin(), sorter.end(), sorted_tmp.begin());
                 }
 
-                for (size_t i = 0; i < nrefs; ++i) {
-                    const auto& curavail = labels_to_index[i];
-                    auto lcol = curavail[curleft];
-                    auto rcol = curavail[curright];
-                    if (!lcol.first || !rcol.first) {
-                        continue;                            
-                    }
+                // partial sort is guaranteed to be stable due to the second index resolving ties.
+                std::partial_sort(sorter.begin(), sorter.begin() + actual_number, sorter.end());
 
-                    // Initialize extractors as needed.
-                    auto& lext = work.lextractors[i];
-                    if (!lext) {
-                        lext = representatives[i]->dense_column();
-                    }
-                    auto lptr = lext->fetch(lcol.second, work.lbuffer.data());
-
-                    auto& rext = work.rextractors[i];
-                    if (!rext) {
-                        rext = representatives[i]->dense_column();
-                    }
-                    auto rptr = rext->fetch(rcol.second, work.rbuffer.data());
-
-                    for (size_t g = 0; g < ngenes; ++g) {
-                        sorter[g].first += lptr[g] - rptr[g]; 
-                    }
+                std::vector<Index_> stuff;
+                stuff.reserve(actual_number);
+                for (int g = 0; g < actual_number && sorter[g].first < 0; ++g) { // only negative values (i.e., positive log-fold changes for our comparison).
+                    stuff.push_back(sorter[g].second); 
                 }
 
-                // At flip = 0, we're looking for genes upregulated in right over left,
-                // as we're sorting on left - right in increasing order. At flip = 1,
-                // we reverse the signs to we sort on right - left.
-                for (int flip = 0; flip < 2; ++flip) {
-                    if (flip) {
-                        sorter.swap(sorted_tmp);
-                        for (auto& s : sorter) {
-                            s.first *= -1;
-                        }
-                    } else {
-                        // We do a copy so that the treatment of tries would be the same as if
-                        // we had sorted on the reversed log-fold changes in the first place;
-                        // otherwise the first sort might change the order of ties.
-                        std::copy(sorter.begin(), sorter.end(), sorted_tmp.begin());
-                    }
-
-                    // partial sort is guaranteed to be stable due to the second index resolving ties.
-                    std::partial_sort(sorter.begin(), sorter.begin() + actual_number, sorter.end());
-
-                    std::vector<Index_> stuff;
-                    stuff.reserve(actual_number);
-                    for (int g = 0; g < actual_number && sorter[g].first < 0; ++g) { // only negative values (i.e., positive log-fold changes for our comparison).
-                        stuff.push_back(sorter[g].second); 
-                    }
-
-                    if (flip) {
-                        output[curleft][curright] = std::move(stuff);
-                    } else {
-                        output[curright][curleft] = std::move(stuff);
-                    }
+                if (flip) {
+                    output[curleft][curright] = std::move(stuff);
+                } else {
+                    output[curright][curleft] = std::move(stuff);
                 }
             }
         }
-    );
+    });
 
     return output;
 }

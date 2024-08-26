@@ -324,37 +324,25 @@ void train_integrated_per_reference(
         // for indexed extraction from a tatami::Matrix.
         tatami::VectorPtr<Index_> universe_ptr(tatami::VectorPtr<Index_>{}, &(output.universe));
 
-        struct PerThreadWorkspace {
-            PerThreadWorkspace(size_t universe_size) : buffer(universe_size) {
-                tmp_ranked.reserve(universe_size);
-            }
+        SINGLEPP_CUSTOM_PARALLEL(options.num_threads, ref.ncol(), [&](int, Index_ start, Index_ len) {
+            std::vector<Value_> buffer(output.universe.size());
             internal::RankedVector<Value_, Index_> tmp_ranked;
-            std::vector<Value_> buffer;
-        };
+            tmp_ranked.reserve(output.universe.size());
+            auto ext = tatami::consecutive_extractor<false>(&ref, false, start, len, universe_ptr); 
 
-        SINGLEPP_CUSTOM_PARALLEL(
-            options.num_threads,
-            ref.ncol(),
-            [&]() -> PerThreadWorkspace {
-                return PerThreadWorkspace(output.universe.size());
-            },
-            [&](int, Index_ start, Index_ len, PerThreadWorkspace& work) -> void {
-                auto ext = tatami::consecutive_extractor<false>(&ref, false, start, len, universe_ptr); 
+            for (Index_ c = start, end = start + len; c < end; ++c) {
+                auto ptr = ext->fetch(buffer.data());
 
-                for (Index_ c = start, end = start + len; c < end; ++c) {
-                    auto ptr = ext->fetch(work.buffer.data());
-
-                    work.tmp_ranked.clear();
-                    for (int i = 0, end = output.universe.size(); i < end; ++i, ++ptr) {
-                        work.tmp_ranked.emplace_back(*ptr, i);
-                    }
-                    std::sort(work.tmp_ranked.begin(), work.tmp_ranked.end());
-
-                    auto& final_ranked = cur_ranked[curlab[c]][positions[c]];
-                    simplify_ranks(work.tmp_ranked, final_ranked);
+                tmp_ranked.clear();
+                for (int i = 0, end = output.universe.size(); i < end; ++i, ++ptr) {
+                    tmp_ranked.emplace_back(*ptr, i);
                 }
+                std::sort(tmp_ranked.begin(), tmp_ranked.end());
+
+                auto& final_ranked = cur_ranked[curlab[c]][positions[c]];
+                simplify_ranks(tmp_ranked, final_ranked);
             }
-        );
+        });
 
     } else {
         output.check_availability[ref_i] = 1;
@@ -389,38 +377,26 @@ void train_integrated_per_reference(
         }
         tatami::VectorPtr<Index_> to_extract_ptr(tatami::VectorPtr<Index_>{}, &to_extract);
 
-        struct PerThreadWorkspace {
-            PerThreadWorkspace(size_t extract_size) : buffer(extract_size) {
-                tmp_ranked.reserve(extract_size);
-            }
+        SINGLEPP_CUSTOM_PARALLEL(options.num_threads, ref.ncol(), [&](size_t, Index_ start, Index_ len) {
+            std::vector<Value_> buffer(to_extract.size());
             internal::RankedVector<Value_, Index_> tmp_ranked;
-            std::vector<Value_> buffer;
-        };
+            tmp_ranked.reserve(to_extract.size());
+            auto ext = tatami::consecutive_extractor<false>(&ref, false, start, len, to_extract_ptr);
 
-        SINGLEPP_CUSTOM_PARALLEL(
-            options.num_threads,
-            ref.ncol(),
-            [&]() -> PerThreadWorkspace {
-                return PerThreadWorkspace(to_extract.size());
-            },
-            [&](size_t, Index_ start, Index_ len, PerThreadWorkspace& work) -> void {
-                auto ext = tatami::consecutive_extractor<false>(&ref, false, start, len, to_extract_ptr);
+            for (size_t c = start, end = start + len; c < end; ++c) {
+                auto ptr = ext->fetch(buffer.data());
 
-                for (size_t c = start, end = start + len; c < end; ++c) {
-                    auto ptr = ext->fetch(work.buffer.data());
-
-                    work.tmp_ranked.clear();
-                    for (const auto& p : intersection_in_universe) {
-                        work.tmp_ranked.emplace_back(*ptr, p.second); // remember, 'p.second' corresponds to indices into the universe.
-                        ++ptr;
-                    }
-                    std::sort(work.tmp_ranked.begin(), work.tmp_ranked.end());
-
-                    auto& final_ranked = cur_ranked[curlab[c]][positions[c]];
-                    simplify_ranks(work.tmp_ranked, final_ranked);
+                tmp_ranked.clear();
+                for (const auto& p : intersection_in_universe) {
+                    tmp_ranked.emplace_back(*ptr, p.second); // remember, 'p.second' corresponds to indices into the universe.
+                    ++ptr;
                 }
+                std::sort(tmp_ranked.begin(), tmp_ranked.end());
+
+                auto& final_ranked = cur_ranked[curlab[c]][positions[c]];
+                simplify_ranks(tmp_ranked, final_ranked);
             }
-        );
+        });
     }
 }
 

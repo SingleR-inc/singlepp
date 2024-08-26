@@ -162,100 +162,89 @@ void annotate_cells_integrated(
     auto nref = trained.markers.size();
     tatami::VectorPtr<Index_> universe_ptr(tatami::VectorPtr<Index_>{}, &(trained.universe));
 
-    struct PerThreadWorkspace {
-        PerThreadWorkspace(size_t universe_size, size_t test_ngenes) : buffer(universe_size) {
-            workspace.test_ranked.reserve(test_ngenes);
-            workspace.ref_ranked.reserve(test_ngenes);
-            test_ranked_full.reserve(test_ngenes);
-        }
-
+    SINGLEPP_CUSTOM_PARALLEL(num_threads, test.ncol(), [&](size_t, Index_ start, Index_ len) {
         std::unordered_set<Index_> miniverse_tmp;
         std::vector<Index_> miniverse;
 
         RankedVector<Value_, Index_> test_ranked_full;
-        std::vector<Value_> buffer;
+        test_ranked_full.reserve(NR);
+        std::vector<Value_> buffer(trained.universe.size());
 
         PerReferenceIntegratedWorkspace<Index_, Value_, Float_> workspace;
+        workspace.test_ranked.reserve(NR);
+        workspace.ref_ranked.reserve(NR);
+
         std::vector<Float_> all_scores;
         std::vector<RefLabel_> reflabels_in_use;
-    };
 
-    SINGLEPP_CUSTOM_PARALLEL(
-        num_threads,
-        test.ncol(),
-        [&]() -> PerThreadWorkspace { 
-            return PerThreadWorkspace(trained.universe.size(), NR); 
-        },
-        [&](size_t, Index_ start, Index_ len, PerThreadWorkspace& thread_work) -> void {
-            // We perform an indexed extraction, so all subsequent indices
-            // will refer to indices into this subset (i.e., 'universe').
-            auto mat_work = tatami::consecutive_extractor<false>(&test, false, start, len, universe_ptr);
+        // We perform an indexed extraction, so all subsequent indices
+        // will refer to indices into this subset (i.e., 'universe').
+        auto mat_work = tatami::consecutive_extractor<false>(&test, false, start, len, universe_ptr);
 
-            for (Index_ i = start, end = start + len; i < end; ++i) {
-                // Extracting only the markers of the best labels for this cell.
-                thread_work.miniverse_tmp.clear();
-                for (size_t r = 0; r < nref; ++r) {
-                    auto curassigned = assigned[r][i];
-                    const auto& curmarkers = trained.markers[r][curassigned];
-                    thread_work.miniverse_tmp.insert(curmarkers.begin(), curmarkers.end());
-                }
+        for (Index_ i = start, end = start + len; i < end; ++i) {
+            // Extracting only the markers of the best labels for this cell.
+            miniverse_tmp.clear();
+            for (size_t r = 0; r < nref; ++r) {
+                auto curassigned = assigned[r][i];
+                const auto& curmarkers = trained.markers[r][curassigned];
+                miniverse_tmp.insert(curmarkers.begin(), curmarkers.end());
+            }
 
-                thread_work.miniverse.clear();
-                thread_work.miniverse.insert(thread_work.miniverse.end(), thread_work.miniverse_tmp.begin(), thread_work.miniverse_tmp.end());
-                std::sort(thread_work.miniverse.begin(), thread_work.miniverse.end()); // sorting for consistency in floating-point summation within scaled_ranks().
+            miniverse.clear();
+            miniverse.insert(miniverse.end(), miniverse_tmp.begin(), miniverse_tmp.end());
+            std::sort(miniverse.begin(), miniverse.end()); // sorting for consistency in floating-point summation within scaled_ranks().
 
-                thread_work.test_ranked_full.clear();
-                auto ptr = mat_work->fetch(thread_work.buffer.data());
-                for (auto u : thread_work.miniverse) {
-                    thread_work.test_ranked_full.emplace_back(ptr[u], u);
-                }
-                std::sort(thread_work.test_ranked_full.begin(), thread_work.test_ranked_full.end());
+            test_ranked_full.clear();
+            auto ptr = mat_work->fetch(buffer.data());
+            for (auto u : miniverse) {
+                test_ranked_full.emplace_back(ptr[u], u);
+            }
+            std::sort(test_ranked_full.begin(), test_ranked_full.end());
 
-                // Scanning through each reference and computing the score for the best group.
-                thread_work.all_scores.clear();
-                thread_work.workspace.direct_mapping_filled = false;
-                for (size_t r = 0; r < nref; ++r) {
-                    auto score = compute_single_reference_score_integrated(
-                        r,
-                        assigned[r][i],
-                        thread_work.test_ranked_full,
-                        trained,
-                        thread_work.miniverse,
-                        thread_work.workspace,
-                        quantile
-                    );
-                    thread_work.all_scores.push_back(score);
-                    if (scores[r]) {
-                        scores[r][i] = score;
-                    }
-                }
-
-                std::pair<Label_, Float_> candidate;
-                if (!fine_tune) {
-                    candidate = find_best_and_delta<Label_>(thread_work.all_scores);
-                } else {
-                    candidate = fine_tune_integrated(
-                        i,
-                        thread_work.test_ranked_full,
-                        thread_work.all_scores,
-                        trained,
-                        assigned,
-                        thread_work.reflabels_in_use,
-                        thread_work.miniverse_tmp,
-                        thread_work.miniverse,
-                        thread_work.workspace,
-                        quantile,
-                        threshold
-                    );
-                }
-
-                best[i] = candidate.first;
-                if (delta) {
-                    delta[i] = candidate.second;
+            // Scanning through each reference and computing the score for the best group.
+            all_scores.clear();
+            workspace.direct_mapping_filled = false;
+            for (size_t r = 0; r < nref; ++r) {
+                auto score = compute_single_reference_score_integrated(
+                    r,
+                    assigned[r][i],
+                    test_ranked_full,
+                    trained,
+                    miniverse,
+                    workspace,
+                    quantile
+                );
+                all_scores.push_back(score);
+                if (scores[r]) {
+                    scores[r][i] = score;
                 }
             }
+
+            std::pair<Label_, Float_> candidate;
+            if (!fine_tune) {
+                candidate = find_best_and_delta<Label_>(all_scores);
+            } else {
+                candidate = fine_tune_integrated(
+                    i,
+                    test_ranked_full,
+                    all_scores,
+                    trained,
+                    assigned,
+                    reflabels_in_use,
+                    miniverse_tmp,
+                    miniverse,
+                    workspace,
+                    quantile,
+                    threshold
+                );
+            }
+
+            best[i] = candidate.first;
+            if (delta) {
+                delta[i] = candidate.second;
+            }
         }
-    );
+    });
 }
 
 }
