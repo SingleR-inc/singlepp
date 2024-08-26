@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['parallelize_0',['parallelize',['https://tatami-inc.github.io/tatami/namespacesubpar.html#a72a5ce4d83235f852907282b5212c560',1,'subpar']]],
+  ['parallelize_0',['parallelize',['https://tatami-inc.github.io/tatami/namespacesubpar.html#a63f23d31089b98cd332e8a7508e35c15',1,'subpar']]],
   ['port_20of_20singler_1',['C++ port of SingleR',['../index.html',1,'']]],
   ['power_2',['power',['https://knncolle.github.io/knncolle/structknncolle_1_1KmknnOptions.html#ad46d8aa236754eb65ea9983d355c3280',1,'knncolle::KmknnOptions']]],
   ['prebuilt_3',['Prebuilt',['https://knncolle.github.io/knncolle/classknncolle_1_1Prebuilt.html',1,'knncolle']]],
