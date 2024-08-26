@@ -62,62 +62,59 @@ std::vector<PerLabelReference<Index_, Float_> > build_indices(
     }
 
     SubsetSanitizer<Index_> subsorter(subset);
- 
-    tatami::parallelize([&](size_t, Index_ start, Index_ len) -> void {
-        std::vector<Value_> buffer(NR);
-        tatami::VectorPtr<Index_> mock_ptr(tatami::VectorPtr<Index_>{}, &(subsorter.extraction_subset()));
-        auto wrk = tatami::consecutive_extractor<false>(&ref, false, start, len, std::move(mock_ptr));
-        RankedVector<Value_, Index_> ranked(NR);
-
-        for (Index_ c = start, end = start + len; c < end; ++c) {
-            auto ptr = wrk->fetch(buffer.data());
-            subsorter.fill_ranks(ptr, ranked); 
-
-            auto curlab = labels[c];
-            auto curoff = label_offsets[c];
-            auto scaled = nndata[curlab].data() + curoff * NR; // these are already size_t's, so no need to cast.
-            scaled_ranks(ranked, scaled); 
-
-            // Storing as a pair of ints to save space; as long
-            // as we respect ties, everything should be fine.
-            auto& stored_ranks = nnrefs[curlab].ranked[curoff];
-            stored_ranks.reserve(ranked.size());
-            simplify_ranks(ranked, stored_ranks);
+    tatami::VectorPtr<Index_> subset_ptr(tatami::VectorPtr<Index_>{}, &(subsorter.extraction_subset()));
+    struct PerThreadWorkspace {
+        PerThreadWorkspace(size_t num_rows) : buffer(num_rows) {
+            ranked.reserve(num_rows);
         }
-    }, ref.ncol(), num_threads);
+        std::vector<Value_> buffer;
+        RankedVector<Value_, Index_> ranked;
+    };
 
-#ifndef SINGLEPP_CUSTOM_PARALLEL
-#ifdef _OPENMP
-    #pragma omp parallel num_threads(num_threads)
-#endif
-    {
-#else
-    SINGLEPP_CUSTOM_PARALLEL([&](int, size_t start, size_t len) -> void {
-#endif
+    SINGLEPP_CUSTOM_PARALLEL(
+        num_threads,
+        ref.ncol(),
+        [&]() -> PerThreadWorkspace {
+            return PerThreadWorkspace(NR);
+        },
+        [&](size_t, Index_ start, Index_ len, PerThreadWorkspace& work) -> void {
+            auto ext = tatami::consecutive_extractor<false>(&ref, false, start, len, subset_ptr);
 
-#ifndef SINGLEPP_CUSTOM_PARALLEL
-#ifdef _OPENMP
-        #pragma omp for
-#endif
-        for (size_t l = 0; l < nlabels; ++l) {
-#else
-        for (size_t l = start, end = start + len; l < end; ++l) {
-#endif
+            for (Index_ c = start, end = start + len; c < end; ++c) {
+                auto ptr = ext->fetch(work.buffer.data());
+                subsorter.fill_ranks(ptr, work.ranked); 
 
-            nnrefs[l].index = builder.build_shared(knncolle::SimpleMatrix<Index_, Index_, Float_>(NR, label_count[l], nndata[l].data()));
+                auto curlab = labels[c];
+                auto curoff = label_offsets[c];
+                auto scaled = nndata[curlab].data() + curoff * NR; // these are already size_t's, so no need to cast.
+                scaled_ranks(work.ranked, scaled); 
 
-            // Trying to free the memory as we go along, to offset the copying
-            // of nndata into the memory store owned by the knncolle index.
-            nndata[l].clear();
-            nndata[l].shrink_to_fit();
-
-#ifndef SINGLEPP_CUSTOM_PARALLEL
+                // Storing as a pair of ints to save space; as long
+                // as we respect ties, everything should be fine.
+                auto& stored_ranks = nnrefs[curlab].ranked[curoff];
+                stored_ranks.reserve(work.ranked.size());
+                simplify_ranks(work.ranked, stored_ranks);
+            }
         }
-    }
-#else
+    );
+
+    SINGLEPP_CUSTOM_PARALLEL(
+        num_threads,
+        nlabels,
+        []() -> bool {
+            return false;
+        },
+        [&](int, size_t start, size_t len, bool&) -> void {
+            for (size_t l = start, end = start + len; l < end; ++l) {
+                nnrefs[l].index = builder.build_shared(knncolle::SimpleMatrix<Index_, Index_, Float_>(NR, label_count[l], nndata[l].data()));
+
+                // Trying to free the memory as we go along, to offset the copying
+                // of nndata into the memory store owned by the knncolle index.
+                nndata[l].clear();
+                nndata[l].shrink_to_fit();
+            }
         }
-    }, nlabels, num_threads);
-#endif
+    );
 
     return nnrefs;
 }

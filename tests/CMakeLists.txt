@@ -31,45 +31,14 @@ add_executable(
     src/choose_classic_markers.cpp
 )
 
-include(GoogleTest)
+target_link_libraries(libtest gtest_main singlepp tatami_stats)
+target_compile_options(libtest PRIVATE -Wall -Werror -Wpedantic -Wextra)
 
 option(CODE_COVERAGE "Enable coverage testing" OFF)
-set(DO_CODE_COVERAGE OFF)
 if(CODE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    set(DO_CODE_COVERAGE ON)
+    target_compile_options(libtest PRIVATE -O0 -g --coverage)
+    target_link_options(libtest PRIVATE --coverage)
 endif()
 
-macro(decorate_test name)
-    target_link_libraries(${name} gtest_main singlepp)
-    target_compile_options(${name} PRIVATE -Wall -Werror -Wpedantic -Wextra)
-    if(DO_CODE_COVERAGE)
-        target_compile_options(${name} PRIVATE -O0 -g --coverage)
-        target_link_options(${name} PRIVATE --coverage)
-    endif()
-    gtest_discover_tests(${name})
-endmacro()
-
-target_link_libraries(libtest tatami_stats)
-decorate_test(libtest)
-
-# Check that the custom parallelization schemes are properly set up.
-add_executable(
-    cuspartest 
-    src/classify_single.cpp
-    src/classify_integrated.cpp
-    src/choose_classic_markers.cpp
-)
-set_target_properties(cuspartest PROPERTIES COMPILE_DEFINITIONS "TEST_SINGLEPP_CUSTOM_PARALLEL")
-decorate_test(cuspartest)
-
-find_package(OpenMP)
-if (OpenMP_FOUND)
-    add_executable(
-        omptest 
-        src/classify_single.cpp
-        src/classify_integrated.cpp
-        src/choose_classic_markers.cpp
-    )
-    target_link_libraries(omptest OpenMP::OpenMP_CXX)
-    decorate_test(omptest)
-endif()
+include(GoogleTest)
+gtest_discover_tests(libtest)

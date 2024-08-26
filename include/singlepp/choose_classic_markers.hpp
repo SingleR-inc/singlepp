@@ -46,6 +46,7 @@ struct ChooseClassicMarkersOptions {
 
     /**
      * Number of threads to use.
+     * Parallelization is performed using the `SINGLEPP_CUSTOM_PARALLEL` macro function, which defaults to `subpar::parallelize()` if not defined by the user.
      */
     int num_threads = 1;
 };
@@ -80,9 +81,6 @@ Markers<Index_> choose_classic_markers(
     const std::vector<const Label_*>& labels,
     const ChooseClassicMarkersOptions& options)
 {
-    /**
-     * @cond
-     */
     size_t nrefs = representatives.size();
     if (nrefs != labels.size()) {
         throw std::runtime_error("'representatives' and 'labels' should have the same length");
@@ -155,106 +153,97 @@ Markers<Index_> choose_classic_markers(
         pairs.insert(pairs.end(), pairs0.begin(), pairs0.end()); // already sorted by the std::set.
     }
 
-    size_t npairs = pairs.size();
+    struct PerThreadWorkspace {
+        PerThreadWorkspace(size_t ngenes, size_t nrefs) : 
+            sorter(ngenes), sorted_tmp(ngenes), 
+            rbuffer(ngenes), lbuffer(ngenes), 
+            rextractors(nrefs), lextractors(nrefs)
+        {}
 
-#ifndef SINGLEPP_CUSTOM_PARALLEL
-#ifdef _OPENMP
-    #pragma omp parallel num_threads(options.num_threads)
-#endif
-    {
-#else
-    SINGLEPP_CUSTOM_PARALLEL([&](int, size_t start, size_t len) -> void {
-#endif
-        
-        std::vector<std::pair<Value_, Index_> > sorter(ngenes), sorted_tmp(ngenes);
-        std::vector<Value_> rbuffer(ngenes), lbuffer(ngenes);
-        std::vector<std::shared_ptr<tatami::MyopicDenseExtractor<Value_, Index_> > > rworks(nrefs), lworks(nrefs);
+        std::vector<std::pair<Value_, Index_> > sorter, sorted_tmp;
+        std::vector<Value_> rbuffer, lbuffer;
+        std::vector<std::shared_ptr<tatami::MyopicDenseExtractor<Value_, Index_> > > rextractors, lextractors;
+    };
 
-#ifndef SINGLEPP_CUSTOM_PARALLEL
-#ifdef _OPENMP
-        #pragma omp for
-#endif
-        for (size_t p = 0; p < npairs; ++p) {
-#else
-        for (size_t p = start, end = start + len; p < end; ++p) {
-#endif
+    SINGLEPP_CUSTOM_PARALLEL(
+        options.num_threads,
+        pairs.size(),
+        [&]() -> PerThreadWorkspace {
+            return PerThreadWorkspace(ngenes, nrefs);
+        },
+        [&](int, size_t start, size_t len, PerThreadWorkspace& work) -> void {
+            auto& sorter = work.sorter;
+            auto& sorted_tmp = work.sorted_tmp;
 
-            auto curleft = pairs[p].first;
-            auto curright = pairs[p].second;
-
-            for (size_t g = 0; g < ngenes; ++g) {
-                sorter[g].first = 0;
-                sorter[g].second = g;
-            }
-
-            for (size_t i = 0; i < nrefs; ++i) {
-                const auto& curavail = labels_to_index[i];
-                auto lcol = curavail[curleft];
-                auto rcol = curavail[curright];
-                if (!lcol.first || !rcol.first) {
-                    continue;                            
-                }
-
-                // Initialize extractors as needed.
-                auto& lwrk = lworks[i];
-                if (!lwrk) {
-                    lwrk = representatives[i]->dense_column();
-                }
-                auto lptr = lwrk->fetch(lcol.second, lbuffer.data());
-
-                auto& rwrk = rworks[i];
-                if (!rwrk) {
-                    rwrk = representatives[i]->dense_column();
-                }
-                auto rptr = rwrk->fetch(rcol.second, rbuffer.data());
+            for (size_t p = start, end = start + len; p < end; ++p) {
+                auto curleft = pairs[p].first;
+                auto curright = pairs[p].second;
 
                 for (size_t g = 0; g < ngenes; ++g) {
-                    sorter[g].first += lptr[g] - rptr[g]; 
+                    sorter[g].first = 0;
+                    sorter[g].second = g;
                 }
-            }
 
-            // At flip = 0, we're looking for genes upregulated in right over left,
-            // as we're sorting on left - right in increasing order. At flip = 1,
-            // we reverse the signs to we sort on right - left.
-            for (int flip = 0; flip < 2; ++flip) {
-                if (flip) {
-                    sorter.swap(sorted_tmp);
-                    for (auto& s : sorter) {
-                        s.first *= -1;
+                for (size_t i = 0; i < nrefs; ++i) {
+                    const auto& curavail = labels_to_index[i];
+                    auto lcol = curavail[curleft];
+                    auto rcol = curavail[curright];
+                    if (!lcol.first || !rcol.first) {
+                        continue;                            
                     }
-                } else {
-                    // We do a copy so that the treatment of tries would be the same as if
-                    // we had sorted on the reversed log-fold changes in the first place;
-                    // otherwise the first sort might change the order of ties.
-                    std::copy(sorter.begin(), sorter.end(), sorted_tmp.begin());
+
+                    // Initialize extractors as needed.
+                    auto& lext = work.lextractors[i];
+                    if (!lext) {
+                        lext = representatives[i]->dense_column();
+                    }
+                    auto lptr = lext->fetch(lcol.second, work.lbuffer.data());
+
+                    auto& rext = work.rextractors[i];
+                    if (!rext) {
+                        rext = representatives[i]->dense_column();
+                    }
+                    auto rptr = rext->fetch(rcol.second, work.rbuffer.data());
+
+                    for (size_t g = 0; g < ngenes; ++g) {
+                        sorter[g].first += lptr[g] - rptr[g]; 
+                    }
                 }
 
-                // partial sort is guaranteed to be stable due to the second index resolving ties.
-                std::partial_sort(sorter.begin(), sorter.begin() + actual_number, sorter.end());
+                // At flip = 0, we're looking for genes upregulated in right over left,
+                // as we're sorting on left - right in increasing order. At flip = 1,
+                // we reverse the signs to we sort on right - left.
+                for (int flip = 0; flip < 2; ++flip) {
+                    if (flip) {
+                        sorter.swap(sorted_tmp);
+                        for (auto& s : sorter) {
+                            s.first *= -1;
+                        }
+                    } else {
+                        // We do a copy so that the treatment of tries would be the same as if
+                        // we had sorted on the reversed log-fold changes in the first place;
+                        // otherwise the first sort might change the order of ties.
+                        std::copy(sorter.begin(), sorter.end(), sorted_tmp.begin());
+                    }
 
-                std::vector<Index_> stuff;
-                stuff.reserve(actual_number);
-                for (int g = 0; g < actual_number && sorter[g].first < 0; ++g) { // only negative values (i.e., positive log-fold changes for our comparison).
-                    stuff.push_back(sorter[g].second); 
-                }
+                    // partial sort is guaranteed to be stable due to the second index resolving ties.
+                    std::partial_sort(sorter.begin(), sorter.begin() + actual_number, sorter.end());
 
-                if (flip) {
-                    output[curleft][curright] = std::move(stuff);
-                } else {
-                    output[curright][curleft] = std::move(stuff);
+                    std::vector<Index_> stuff;
+                    stuff.reserve(actual_number);
+                    for (int g = 0; g < actual_number && sorter[g].first < 0; ++g) { // only negative values (i.e., positive log-fold changes for our comparison).
+                        stuff.push_back(sorter[g].second); 
+                    }
+
+                    if (flip) {
+                        output[curleft][curright] = std::move(stuff);
+                    } else {
+                        output[curright][curleft] = std::move(stuff);
+                    }
                 }
             }
-
-#ifndef SINGLEPP_CUSTOM_PARALLEL
         }
-    }
-#else    
-        }
-    }, npairs, options.num_threads);
-#endif        
-    /**
-     * @endcond
-     */
+    );
 
     return output;
 }

@@ -140,61 +140,75 @@ void annotate_cells_single(
 
     std::vector<Index_> subcopy(subset, subset + num_subset);
     SubsetSanitizer<Index_> subsorted(subcopy);
+    tatami::VectorPtr<Index_> subset_ptr(tatami::VectorPtr<Index_>{}, &(subsorted.extraction_subset()));
 
-    tatami::parallelize([&](size_t, Index_ start, Index_ length) -> void {
-        std::vector<Value_> buffer(num_subset);
-        tatami::VectorPtr<Index_> mock_ptr(tatami::VectorPtr<Index_>{}, &(subsorted.extraction_subset()));
-        auto wrk = tatami::consecutive_extractor<false>(&test, false, start, length, std::move(mock_ptr));
-
-        std::vector<std::unique_ptr<knncolle::Searcher<Index_, Float_> > > searchers(num_labels);
-        for (size_t r = 0; r < num_labels; ++r) {
-            searchers[r] = ref[r].index->initialize();
-        }
-        std::vector<Float_> distances;
-
-        RankedVector<Value_, Index_> vec;
-        vec.reserve(num_subset);
-        FineTuneSingle<Label_, Index_, Float_, Value_> ft;
-        std::vector<Float_> curscores(num_labels);
-
-        for (Index_ c = start, end = start + length; c < end; ++c) {
-            auto ptr = wrk->fetch(buffer.data());
-            subsorted.fill_ranks(ptr, vec);
-            scaled_ranks(vec, buffer.data()); // 'buffer' can be re-used for output here, as all data is already extracted to 'vec'.
-
-            curscores.resize(num_labels);
+    struct PerThreadWorkspace {
+        PerThreadWorkspace(size_t num_subset, size_t num_labels, const std::vector<PerLabelReference<Index_, Float_> >& ref) :
+            buffer(num_subset),
+            curscores(num_labels)
+        {
+            vec.reserve(num_subset);
+            searchers.reserve(num_labels);
             for (size_t r = 0; r < num_labels; ++r) {
-                size_t k = search_k[r];
-                searchers[r]->search(buffer.data(), k, NULL, &distances);
-
-                Float_ last = distances[k - 1];
-                last = 1 - 2 * last * last;
-                if (k == 1) {
-                    curscores[r] = last;
-                } else {
-                    Float_ next = distances[k - 2];
-                    next = 1 - 2 * next * next;
-                    curscores[r] = coeffs[r].first * next + coeffs[r].second * last;
-                }
-
-                if (scores[r]) {
-                    scores[r][c] = curscores[r];
-                }
-            }
-
-            std::pair<Label_, Float_> chosen;
-            if (!fine_tune) {
-                chosen = find_best_and_delta<Label_>(curscores);
-            } else {
-                chosen = ft.run(vec, ref, markers, curscores, quantile, threshold);
-            }
-            best[c] = chosen.first;
-            if (delta) {
-                delta[c] = chosen.second;
+                searchers.emplace_back(ref[r].index->initialize());
             }
         }
 
-    }, test.ncol(), num_threads);
+        std::vector<Value_> buffer;
+        std::vector<std::unique_ptr<knncolle::Searcher<Index_, Float_> > > searchers;
+        std::vector<Float_> distances;
+        RankedVector<Value_, Index_> vec;
+        FineTuneSingle<Label_, Index_, Float_, Value_> ft;
+        std::vector<Float_> curscores;
+    };
+
+    SINGLEPP_CUSTOM_PARALLEL(
+        num_threads,
+        test.ncol(),
+        [&]() -> PerThreadWorkspace {
+            return PerThreadWorkspace(num_subset, num_labels, ref);
+        },
+        [&](size_t, Index_ start, Index_ length, PerThreadWorkspace& work) -> void {
+            auto ext = tatami::consecutive_extractor<false>(&test, false, start, length, subset_ptr);
+
+            for (Index_ c = start, end = start + length; c < end; ++c) {
+                auto ptr = ext->fetch(work.buffer.data());
+                subsorted.fill_ranks(ptr, work.vec);
+                scaled_ranks(work.vec, work.buffer.data()); // 'buffer' can be re-used for output here, as all data is already extracted to 'vec'.
+
+                work.curscores.resize(num_labels);
+                for (size_t r = 0; r < num_labels; ++r) {
+                    size_t k = search_k[r];
+                    work.searchers[r]->search(work.buffer.data(), k, NULL, &(work.distances));
+
+                    Float_ last = work.distances[k - 1];
+                    last = 1 - 2 * last * last;
+                    if (k == 1) {
+                        work.curscores[r] = last;
+                    } else {
+                        Float_ next = work.distances[k - 2];
+                        next = 1 - 2 * next * next;
+                        work.curscores[r] = coeffs[r].first * next + coeffs[r].second * last;
+                    }
+
+                    if (scores[r]) {
+                        scores[r][c] = work.curscores[r];
+                    }
+                }
+
+                std::pair<Label_, Float_> chosen;
+                if (!fine_tune) {
+                    chosen = find_best_and_delta<Label_>(work.curscores);
+                } else {
+                    chosen = work.ft.run(work.vec, ref, markers, work.curscores, quantile, threshold);
+                }
+                best[c] = chosen.first;
+                if (delta) {
+                    delta[c] = chosen.second;
+                }
+            }
+        }
+    );
 
     return;
 }

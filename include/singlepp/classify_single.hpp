@@ -50,6 +50,7 @@ struct ClassifySingleOptions {
 
     /**
      * Number of threads to use.
+     * Parallelization is performed using the `SINGLEPP_CUSTOM_PARALLEL` macro function, which defaults to `subpar::parallelize()` if not defined by the user.
      */
     int num_threads = 1;
 };
