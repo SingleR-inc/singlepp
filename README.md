@@ -31,12 +31,12 @@ ref_labels;
 ref_markers;
 
 // Building the classifier.
-singlepp::TrainSingleOptions<int, double> train_opt;
+singlepp::TrainSingleOptions train_opt;
 auto trained = singlepp::train_single(ref_mat, ref_labels.data(), train_opt);
 
 // Running the classification on the test matrix.
-singlepp::ClassifySingleOptions<double> class_opt;
-auto res = singlepp::classify_single<int>(test_mat, trained, class_opt);
+singlepp::ClassifySingleOptions class_opt;
+auto res = singlepp::classify_single(test_mat, trained, class_opt);
 ```
 
 See the [reference documentation](https://singler-inc.github.io/singlepp) for more details.
@@ -48,7 +48,7 @@ This is based on ranking the differences in median log-expression values between
 
 ```cpp
 singlepp::ChooseClassicMarkersOptions mrk;
-auto classic_markers = singlepp::choose_classic_markers<int>(
+auto classic_markers = singlepp::choose_classic_markers(
     ref_mat.get(),
     ref_labels.data(),
     m_opt
@@ -99,7 +99,7 @@ auto trained_intersect = singlepp::train_single_intersect(
 Then, `classify_single_intersect()` will perform classification using only the intersection of genes:
 
 ```cpp
-auto res_intersect = singlepp::classify_single_intersect<int>(
+auto res_intersect = singlepp::classify_single_intersect(
     test_mat,
     trained_intersect,
     class_opt
@@ -116,16 +116,16 @@ Let's say we have two references A and B:
 
 ```cpp
 auto trainA = singlepp::train_single(refA_mat, refA_labels.data(), refA_markers, train_opt);
-auto resA = singlepp::classify_single<int>(test_mat, trainA, class_opt);
+auto resA = singlepp::classify_single(test_mat, trainA, class_opt);
 
 auto trainB = singlepp::train_single(refB_mat, refB_labels.data(), refB_markers, train_opt);
-auto resB = singlepp::classify_single<int>(test_mat, trainB, class_opt);
+auto resB = singlepp::classify_single(test_mat, trainB, class_opt);
 ```
 
 We build the integrated classifier:
 
 ```cpp
-std::vector<singlepp::TrainIntegratedInput<double, int, int> > inputs;
+std::vector<singlepp::TrainIntegratedInput<> > inputs;
 inputs.push_back(singlepp::prepare_integrated_input(refA_mat, refA_labels.data(), preA));
 inputs.push_back(singlepp::prepare_integrated_input(refB_mat, refB_labels.data(), preB));
 
@@ -137,7 +137,7 @@ And then we can finally run the scoring.
 For each cell in the test dataset, `classify_integrated()` picks the best label among the assignments from each individual reference.
 
 ```cpp
-singlepp::ClassifyIntegratedOptions<double> ci_opt;
+singlepp::ClassifyIntegratedOptions ci_opt;
 auto ires = single.run(test_mat, train_integrated, ci_opt);
 ires.best; // index of the best reference.
 ```

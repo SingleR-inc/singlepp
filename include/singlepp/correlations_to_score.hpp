@@ -1,8 +1,6 @@
 #ifndef SINGLEPP_CORRELATIONS_TO_SCORE_HPP
 #define SINGLEPP_CORRELATIONS_TO_SCORE_HPP
 
-#include "macros.hpp"
-
 #include <vector>
 #include <algorithm>
 #include <limits>

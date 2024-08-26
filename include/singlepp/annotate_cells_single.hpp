@@ -1,7 +1,7 @@
 #ifndef SINGLEPP_ANNOTATE_CELLS_SINGLE_HPP
 #define SINGLEPP_ANNOTATE_CELLS_SINGLE_HPP
 
-#include "macros.hpp"
+#include "defs.hpp"
 
 #include "tatami/tatami.hpp"
 

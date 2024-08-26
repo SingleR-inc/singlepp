@@ -1,7 +1,7 @@
 #ifndef SINGLEPP_INTERSECTION_HPP
 #define SINGLEPP_INTERSECTION_HPP
 
-#include "macros.hpp"
+#include "defs.hpp"
 
 #include <vector>
 #include <algorithm>
@@ -27,7 +27,7 @@ namespace singlepp {
  *
  * @tparam Index_ Integer type for the gene (row) indices.
  */
-template<typename Index_>
+template<typename Index_ = DefaultIndex>
 using Intersection = std::vector<std::pair<Index_, Index_> >;
 
 /**

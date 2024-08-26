@@ -1,7 +1,7 @@
 #ifndef SINGLEPP_CHOOSE_CLASSIC_MARKERS_HPP
 #define SINGLEPP_CHOOSE_CLASSIC_MARKERS_HPP
 
-#include "macros.hpp"
+#include "defs.hpp"
 
 #include "tatami/tatami.hpp"
 

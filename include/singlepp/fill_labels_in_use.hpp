@@ -1,8 +1,6 @@
 #ifndef SINGLEPP_FILL_LABELS_IN_USE_HPP
 #define SINGLEPP_FILL_LABELS_IN_USE_HPP
 
-#include "macros.hpp"
-
 #include <vector>
 #include <algorithm>
 #include <type_traits>

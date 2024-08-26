@@ -1,7 +1,7 @@
 #ifndef SINGLEPP_CLASSIFY_INTEGRATED_HPP
 #define SINGLEPP_CLASSIFY_INTEGRATED_HPP
 
-#include "macros.hpp"
+#include "defs.hpp"
 
 #include "tatami/tatami.hpp"
 
@@ -23,7 +23,7 @@ namespace singlepp {
  * @brief Options for `classify_integrated()`.
  * @tparam Float_ Floating-point type for the correlations and scores.
  */
-template<typename Float_>
+template<typename Float_ = DefaultFloat>
 struct ClassifyIntegratedOptions {
     /**
      * Quantile to use to compute a per-reference score from the correlations.
@@ -55,7 +55,7 @@ struct ClassifyIntegratedOptions {
  * @tparam RefLabel_ Integer type for the label to represent each reference.
  * @tparam Float_ Floating-point type for the correlations and scores.
  */
-template<typename RefLabel_, typename Float_>
+template<typename RefLabel_ = DefaultRefLabel, typename Float_ = DefaultFloat>
 struct ClassifyIntegratedBuffers {
     /** 
      * Pointer to an array of length equal to the number of test cells.
@@ -149,7 +149,7 @@ void classify_integrated(
  * @tparam RefLabel_ Integer type for the label to represent each reference.
  * @tparam Float_ Floating-point type for the correlations and scores.
  */
-template<typename RefLabel_, typename Float_>
+template<typename RefLabel_ = DefaultRefLabel, typename Float_ = DefaultFloat>
 struct ClassifyIntegratedResults {
     /**
      * @cond
@@ -198,7 +198,7 @@ struct ClassifyIntegratedResults {
  *
  * @return Object containing the best reference and associated scores for each cell in `test`.
  */
-template<typename RefLabel_, typename Value_, typename Index_, typename Label_, typename Float_>
+template<typename RefLabel_ = DefaultRefLabel, typename Value_, typename Index_, typename Label_, typename Float_>
 ClassifyIntegratedResults<RefLabel_, Float_> classify_integrated(
     const tatami::Matrix<Value_, Index_>& test,
     const std::vector<const Label_*>& assigned,

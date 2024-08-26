@@ -1,8 +1,6 @@
 #ifndef SINGLEPP_SCALED_RANKS_HPP
 #define SINGLEPP_SCALED_RANKS_HPP
 
-#include "macros.hpp"
-
 #include <algorithm>
 #include <vector>
 #include <cmath>

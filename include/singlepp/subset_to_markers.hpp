@@ -1,8 +1,6 @@
 #ifndef SINGLEPP_SUBSET_TO_MARKERS_HPP
 #define SINGLEPP_SUBSET_TO_MARKERS_HPP
 
-#include "macros.hpp"
-
 #include "Markers.hpp"
 #include "Intersection.hpp"
 

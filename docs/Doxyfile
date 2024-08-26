@@ -924,6 +924,7 @@ INPUT                  = ../include/singlepp/classify_single.hpp \
                          ../include/singlepp/Markers.hpp \
                          ../include/singlepp/Intersection.hpp \
                          ../include/singlepp/choose_classic_markers.hpp \
+                         ../include/singlepp/defs.hpp \
                          ../include/singlepp/singlepp.hpp \
                          ../README.md
 

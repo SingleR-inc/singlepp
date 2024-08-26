@@ -1,7 +1,7 @@
 #ifndef SINGLEPP_TRAIN_INTEGRATED_HPP
 #define SINGLEPP_TRAIN_INTEGRATED_HPP
 
-#include "macros.hpp"
+#include "defs.hpp"
 
 #include "scaled_ranks.hpp"
 #include "train_single.hpp"
@@ -30,7 +30,7 @@ namespace singlepp {
  * @tparam Index_ Integer type for the row/column indices of the matrix.
  * @tparam Label_ Integer type for the reference labels.
  */
-template<typename Value_, typename Index_, typename Label_>
+template<typename Value_ = DefaultValue, typename Index_ = DefaultIndex, typename Label_ = DefaultLabel>
 struct TrainIntegratedInput {
     /**
      * @cond

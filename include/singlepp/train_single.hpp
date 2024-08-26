@@ -1,7 +1,7 @@
 #ifndef SINGLEPP_TRAIN_SINGLE_HPP
 #define SINGLEPP_TRAIN_SINGLE_HPP
 
-#include "macros.hpp"
+#include "defs.hpp"
 
 #include "knncolle/knncolle.hpp"
 #include "tatami/tatami.hpp"
@@ -24,7 +24,7 @@ namespace singlepp {
  * @tparam Index_ Integer type for the row/column indices of the matrix.
  * @tparam Float_ Floating-point type for the correlations and scores.
  */
-template<typename Index_, typename Float_>
+template<typename Index_ = DefaultIndex, typename Float_ = DefaultFloat>
 struct TrainSingleOptions {
     /**
      * Number of top markers to use from each pairwise comparison between labels.

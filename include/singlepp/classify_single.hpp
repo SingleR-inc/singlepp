@@ -1,7 +1,7 @@
 #ifndef SINGLEPP_CLASSIFY_SINGLE_HPP
 #define SINGLEPP_CLASSIFY_SINGLE_HPP
 
-#include "macros.hpp"
+#include "defs.hpp"
 
 #include "tatami/tatami.hpp"
 
@@ -22,7 +22,7 @@ namespace singlepp {
  * @brief Options for `classify_single()` and friends.
  * @tparam Float_ Floating-point type for the correlations and scores.
  */
-template<typename Float_>
+template<typename Float_ = DefaultFloat>
 struct ClassifySingleOptions {
     /**
      * Quantile to use to define a per-label score for each test cell,
@@ -60,7 +60,7 @@ struct ClassifySingleOptions {
  * @tparam Label_ Integer type for the reference labels.
  * @tparam Float_ Floating-point type for the correlations and scores.
  */
-template<typename Label_, typename Float_>
+template<typename Label_ = DefaultLabel, typename Float_ = DefaultFloat>
 struct ClassifySingleBuffers {
     /** 
      * Pointer to an array of length equal to the number of test cells.
@@ -194,7 +194,7 @@ void classify_single_intersect(
  * @tparam Label_ Integer type for the reference labels.
  * @tparam Float_ Floating-point type for the correlations and scores.
  */
-template<typename Label_, typename Float_>
+template<typename Label_ = DefaultLabel, typename Float_ = DefaultFloat>
 struct ClassifySingleResults {
     /**
      * @cond
@@ -266,7 +266,7 @@ ClassifySingleBuffers<Label_, Float_> results_to_buffers(ClassifySingleResults<L
  *
  * @return Results of the classification for each cell in the test dataset.
  */
-template<typename Label_, typename Value_, typename Index_, typename Float_>
+template<typename Label_ = DefaultLabel, typename Value_, typename Index_, typename Float_>
 ClassifySingleResults<Label_, Float_> classify_single(
     const tatami::Matrix<Value_, Index_>& test,
     const TrainedSingle<Index_, Float_>& trained,
@@ -293,7 +293,7 @@ ClassifySingleResults<Label_, Float_> classify_single(
  *
  * @return Results of the classification for each cell in the test dataset.
  */ 
-template<typename Label_, typename Value_, typename Index_, typename Float_>
+template<typename Label_ = DefaultLabel, typename Value_, typename Index_, typename Float_>
 ClassifySingleResults<Label_, Float_> classify_single_intersect(
     const tatami::Matrix<Value_, Index_>& test,
     const TrainedSingleIntersect<Index_, Float_>& trained,

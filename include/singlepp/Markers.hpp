@@ -1,7 +1,7 @@
 #ifndef SINGLEPP_MARKERS_HPP
 #define SINGLEPP_MARKERS_HPP
 
-#include "macros.hpp"
+#include "defs.hpp"
 
 #include <vector>
 
@@ -36,7 +36,7 @@ namespace singlepp {
  *
  * @tparam Index_ Integer type for the gene (row) indices.
  */
-template<typename Index_>
+template<typename Index_ = DefaultIndex>
 using Markers = std::vector<std::vector<std::vector<Index_> > >;
 
 }

@@ -1,7 +1,7 @@
 #ifndef SINGLEPP_BUILD_INDICES_HPP
 #define SINGLEPP_BUILD_INDICES_HPP
 
-#include "macros.hpp"
+#include "defs.hpp"
 
 #include "knncolle/knncolle.hpp"
 #include "tatami/tatami.hpp"
