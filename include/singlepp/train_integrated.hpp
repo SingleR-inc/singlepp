@@ -263,7 +263,7 @@ public:
 struct TrainIntegratedOptions {
     /**
      * Number of threads to use.
-     * Parallelization is performed using the `SINGLEPP_CUSTOM_PARALLEL` macro function, which defaults to `subpar::parallelize()` if not defined by the user.
+     * The parallelization scheme is determined by `tatami::parallelize()`.
      */
     int num_threads = 1;
 };
@@ -324,7 +324,7 @@ void train_integrated_per_reference(
         // for indexed extraction from a tatami::Matrix.
         tatami::VectorPtr<Index_> universe_ptr(tatami::VectorPtr<Index_>{}, &(output.universe));
 
-        SINGLEPP_CUSTOM_PARALLEL(options.num_threads, ref.ncol(), [&](int, Index_ start, Index_ len) {
+        tatami::parallelize([&](int, Index_ start, Index_ len) {
             std::vector<Value_> buffer(output.universe.size());
             internal::RankedVector<Value_, Index_> tmp_ranked;
             tmp_ranked.reserve(output.universe.size());
@@ -342,7 +342,7 @@ void train_integrated_per_reference(
                 auto& final_ranked = cur_ranked[curlab[c]][positions[c]];
                 simplify_ranks(tmp_ranked, final_ranked);
             }
-        });
+        }, ref.ncol(), options.num_threads);
 
     } else {
         output.check_availability[ref_i] = 1;
@@ -377,7 +377,7 @@ void train_integrated_per_reference(
         }
         tatami::VectorPtr<Index_> to_extract_ptr(tatami::VectorPtr<Index_>{}, &to_extract);
 
-        SINGLEPP_CUSTOM_PARALLEL(options.num_threads, ref.ncol(), [&](size_t, Index_ start, Index_ len) {
+        tatami::parallelize([&](size_t, Index_ start, Index_ len) {
             std::vector<Value_> buffer(to_extract.size());
             internal::RankedVector<Value_, Index_> tmp_ranked;
             tmp_ranked.reserve(to_extract.size());
@@ -396,7 +396,7 @@ void train_integrated_per_reference(
                 auto& final_ranked = cur_ranked[curlab[c]][positions[c]];
                 simplify_ranks(tmp_ranked, final_ranked);
             }
-        });
+        }, ref.ncol(), options.num_threads);
     }
 }
 

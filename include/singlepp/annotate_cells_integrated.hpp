@@ -162,7 +162,7 @@ void annotate_cells_integrated(
     auto nref = trained.markers.size();
     tatami::VectorPtr<Index_> universe_ptr(tatami::VectorPtr<Index_>{}, &(trained.universe));
 
-    SINGLEPP_CUSTOM_PARALLEL(num_threads, test.ncol(), [&](size_t, Index_ start, Index_ len) {
+    tatami::parallelize([&](int, Index_ start, Index_ len) {
         std::unordered_set<Index_> miniverse_tmp;
         std::vector<Index_> miniverse;
 
@@ -244,7 +244,7 @@ void annotate_cells_integrated(
                 delta[i] = candidate.second;
             }
         }
-    });
+    }, test.ncol(), num_threads);
 }
 
 }

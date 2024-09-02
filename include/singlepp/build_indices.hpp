@@ -64,7 +64,7 @@ std::vector<PerLabelReference<Index_, Float_> > build_indices(
     SubsetSanitizer<Index_> subsorter(subset);
     tatami::VectorPtr<Index_> subset_ptr(tatami::VectorPtr<Index_>{}, &(subsorter.extraction_subset()));
 
-    SINGLEPP_CUSTOM_PARALLEL(num_threads, ref.ncol(), [&](size_t, Index_ start, Index_ len) {
+    tatami::parallelize([&](int, Index_ start, Index_ len) {
         auto ext = tatami::consecutive_extractor<false>(&ref, false, start, len, subset_ptr);
         std::vector<Value_> buffer(NR);
         RankedVector<Value_, Index_> ranked;
@@ -85,9 +85,9 @@ std::vector<PerLabelReference<Index_, Float_> > build_indices(
             stored_ranks.reserve(ranked.size());
             simplify_ranks(ranked, stored_ranks);
         }
-    });
+    }, ref.ncol(), num_threads);
 
-    SINGLEPP_CUSTOM_PARALLEL(num_threads, nlabels, [&](int, size_t start, size_t len) {
+    tatami::parallelize([&](int, size_t start, size_t len) {
         for (size_t l = start, end = start + len; l < end; ++l) {
             nnrefs[l].index = builder.build_shared(knncolle::SimpleMatrix<Index_, Index_, Float_>(NR, label_count[l], nndata[l].data()));
 
@@ -96,7 +96,7 @@ std::vector<PerLabelReference<Index_, Float_> > build_indices(
             nndata[l].clear();
             nndata[l].shrink_to_fit();
         }
-    });
+    }, nlabels, num_threads);
 
     return nnrefs;
 }

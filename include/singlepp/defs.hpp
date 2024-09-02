@@ -8,7 +8,6 @@
 
 #ifndef SINGLEPP_CUSTOM_PARALLEL
 #include "subpar/subpar.hpp"
-#define SINGLEPP_CUSTOM_PARALLEL subpar::parallelize
 #endif
 
 namespace singlepp {
@@ -43,6 +42,6 @@ typedef double DefaultFloat;
  */
 typedef double DefaultValue;
 
-};
+}
 
 #endif

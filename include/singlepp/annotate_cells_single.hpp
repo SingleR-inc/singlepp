@@ -142,7 +142,7 @@ void annotate_cells_single(
     SubsetSanitizer<Index_> subsorted(subcopy);
     tatami::VectorPtr<Index_> subset_ptr(tatami::VectorPtr<Index_>{}, &(subsorted.extraction_subset()));
 
-    SINGLEPP_CUSTOM_PARALLEL(num_threads, test.ncol(), [&](size_t, Index_ start, Index_ length) {
+    tatami::parallelize([&](int, Index_ start, Index_ length) {
         auto ext = tatami::consecutive_extractor<false>(&test, false, start, length, subset_ptr);
 
         std::vector<Value_> buffer(num_subset);
@@ -195,7 +195,7 @@ void annotate_cells_single(
                 delta[c] = chosen.second;
             }
         }
-    });
+    }, test.ncol(), num_threads);
 
     return;
 }

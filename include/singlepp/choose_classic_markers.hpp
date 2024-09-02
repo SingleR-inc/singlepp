@@ -46,7 +46,7 @@ struct ChooseClassicMarkersOptions {
 
     /**
      * Number of threads to use.
-     * Parallelization is performed using the `SINGLEPP_CUSTOM_PARALLEL` macro function, which defaults to `subpar::parallelize()` if not defined by the user.
+     * The parallelization scheme is determined by `tatami::parallelize()`.
      */
     int num_threads = 1;
 };
@@ -153,7 +153,7 @@ Markers<Index_> choose_classic_markers(
         pairs.insert(pairs.end(), pairs0.begin(), pairs0.end()); // already sorted by the std::set.
     }
 
-    SINGLEPP_CUSTOM_PARALLEL(options.num_threads, pairs.size(), [&](int, size_t start, size_t len) {
+    tatami::parallelize([&](int, size_t start, size_t len) {
         std::vector<std::pair<Value_, Index_> > sorter(ngenes), sorted_tmp(ngenes);
         std::vector<Value_> rbuffer(ngenes), lbuffer(ngenes);
         std::vector<std::shared_ptr<tatami::MyopicDenseExtractor<Value_, Index_> > > rextractors(nrefs), lextractors(nrefs);
@@ -225,7 +225,7 @@ Markers<Index_> choose_classic_markers(
                 }
             }
         }
-    });
+    }, pairs.size(), options.num_threads);
 
     return output;
 }
