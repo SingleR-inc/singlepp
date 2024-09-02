@@ -95,30 +95,29 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#ifndef SINGLEPP_CUSTOM_PARALLEL</span></div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &quot;<a class="codeRef" href="https://tatami-inc.github.io/tatami/subpar_8hpp.html">subpar/subpar.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#define SINGLEPP_CUSTOM_PARALLEL subpar::parallelize</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesinglepp.html">singlepp</a> {</div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#a75885e26a4870572229427b4acc3e74f">   20</a></span><span class="keyword">typedef</span> <span class="keywordtype">int</span> <a class="code hl_typedef" href="namespacesinglepp.html#a75885e26a4870572229427b4acc3e74f">DefaultIndex</a>;</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#a16859be67879a6e0650877f12edd9f14">   26</a></span><span class="keyword">typedef</span> <span class="keywordtype">int</span> <a class="code hl_typedef" href="namespacesinglepp.html#a16859be67879a6e0650877f12edd9f14">DefaultLabel</a>;</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#a9e8cb5a049cb39b52068562ef2c9bbff">   32</a></span><span class="keyword">typedef</span> <span class="keywordtype">int</span> <a class="code hl_typedef" href="namespacesinglepp.html#a9e8cb5a049cb39b52068562ef2c9bbff">DefaultRefLabel</a>;</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#a337b47b25c3bfaff91d30f38fe5bb31b">   38</a></span><span class="keyword">typedef</span> <span class="keywordtype">double</span> <a class="code hl_typedef" href="namespacesinglepp.html#a337b47b25c3bfaff91d30f38fe5bb31b">DefaultFloat</a>;</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#a1ced86db19f4d2cf55ba4310bd2c16d2">   44</a></span><span class="keyword">typedef</span> <span class="keywordtype">double</span> <a class="code hl_typedef" href="namespacesinglepp.html#a1ced86db19f4d2cf55ba4310bd2c16d2">DefaultValue</a>;</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>};</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesinglepp.html">singlepp</a> {</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#a75885e26a4870572229427b4acc3e74f">   19</a></span><span class="keyword">typedef</span> <span class="keywordtype">int</span> <a class="code hl_typedef" href="namespacesinglepp.html#a75885e26a4870572229427b4acc3e74f">DefaultIndex</a>;</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span> </div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#a16859be67879a6e0650877f12edd9f14">   25</a></span><span class="keyword">typedef</span> <span class="keywordtype">int</span> <a class="code hl_typedef" href="namespacesinglepp.html#a16859be67879a6e0650877f12edd9f14">DefaultLabel</a>;</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span> </div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#a9e8cb5a049cb39b52068562ef2c9bbff">   31</a></span><span class="keyword">typedef</span> <span class="keywordtype">int</span> <a class="code hl_typedef" href="namespacesinglepp.html#a9e8cb5a049cb39b52068562ef2c9bbff">DefaultRefLabel</a>;</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#a337b47b25c3bfaff91d30f38fe5bb31b">   37</a></span><span class="keyword">typedef</span> <span class="keywordtype">double</span> <a class="code hl_typedef" href="namespacesinglepp.html#a337b47b25c3bfaff91d30f38fe5bb31b">DefaultFloat</a>;</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#a1ced86db19f4d2cf55ba4310bd2c16d2">   43</a></span><span class="keyword">typedef</span> <span class="keywordtype">double</span> <a class="code hl_typedef" href="namespacesinglepp.html#a1ced86db19f4d2cf55ba4310bd2c16d2">DefaultValue</a>;</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>}</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="anamespacesinglepp_html"><div class="ttname"><a href="namespacesinglepp.html">singlepp</a></div><div class="ttdoc">Cell type classification using the SingleR algorithm in C++.</div><div class="ttdef"><b>Definition</b> classify_single.hpp:19</div></div>
-<div class="ttc" id="anamespacesinglepp_html_a16859be67879a6e0650877f12edd9f14"><div class="ttname"><a href="namespacesinglepp.html#a16859be67879a6e0650877f12edd9f14">singlepp::DefaultLabel</a></div><div class="ttdeci">int DefaultLabel</div><div class="ttdef"><b>Definition</b> defs.hpp:26</div></div>
-<div class="ttc" id="anamespacesinglepp_html_a1ced86db19f4d2cf55ba4310bd2c16d2"><div class="ttname"><a href="namespacesinglepp.html#a1ced86db19f4d2cf55ba4310bd2c16d2">singlepp::DefaultValue</a></div><div class="ttdeci">double DefaultValue</div><div class="ttdef"><b>Definition</b> defs.hpp:44</div></div>
-<div class="ttc" id="anamespacesinglepp_html_a337b47b25c3bfaff91d30f38fe5bb31b"><div class="ttname"><a href="namespacesinglepp.html#a337b47b25c3bfaff91d30f38fe5bb31b">singlepp::DefaultFloat</a></div><div class="ttdeci">double DefaultFloat</div><div class="ttdef"><b>Definition</b> defs.hpp:38</div></div>
-<div class="ttc" id="anamespacesinglepp_html_a75885e26a4870572229427b4acc3e74f"><div class="ttname"><a href="namespacesinglepp.html#a75885e26a4870572229427b4acc3e74f">singlepp::DefaultIndex</a></div><div class="ttdeci">int DefaultIndex</div><div class="ttdef"><b>Definition</b> defs.hpp:20</div></div>
-<div class="ttc" id="anamespacesinglepp_html_a9e8cb5a049cb39b52068562ef2c9bbff"><div class="ttname"><a href="namespacesinglepp.html#a9e8cb5a049cb39b52068562ef2c9bbff">singlepp::DefaultRefLabel</a></div><div class="ttdeci">int DefaultRefLabel</div><div class="ttdef"><b>Definition</b> defs.hpp:32</div></div>
+<div class="ttc" id="anamespacesinglepp_html_a16859be67879a6e0650877f12edd9f14"><div class="ttname"><a href="namespacesinglepp.html#a16859be67879a6e0650877f12edd9f14">singlepp::DefaultLabel</a></div><div class="ttdeci">int DefaultLabel</div><div class="ttdef"><b>Definition</b> defs.hpp:25</div></div>
+<div class="ttc" id="anamespacesinglepp_html_a1ced86db19f4d2cf55ba4310bd2c16d2"><div class="ttname"><a href="namespacesinglepp.html#a1ced86db19f4d2cf55ba4310bd2c16d2">singlepp::DefaultValue</a></div><div class="ttdeci">double DefaultValue</div><div class="ttdef"><b>Definition</b> defs.hpp:43</div></div>
+<div class="ttc" id="anamespacesinglepp_html_a337b47b25c3bfaff91d30f38fe5bb31b"><div class="ttname"><a href="namespacesinglepp.html#a337b47b25c3bfaff91d30f38fe5bb31b">singlepp::DefaultFloat</a></div><div class="ttdeci">double DefaultFloat</div><div class="ttdef"><b>Definition</b> defs.hpp:37</div></div>
+<div class="ttc" id="anamespacesinglepp_html_a75885e26a4870572229427b4acc3e74f"><div class="ttname"><a href="namespacesinglepp.html#a75885e26a4870572229427b4acc3e74f">singlepp::DefaultIndex</a></div><div class="ttdeci">int DefaultIndex</div><div class="ttdef"><b>Definition</b> defs.hpp:19</div></div>
+<div class="ttc" id="anamespacesinglepp_html_a9e8cb5a049cb39b52068562ef2c9bbff"><div class="ttname"><a href="namespacesinglepp.html#a9e8cb5a049cb39b52068562ef2c9bbff">singlepp::DefaultRefLabel</a></div><div class="ttdeci">int DefaultRefLabel</div><div class="ttdef"><b>Definition</b> defs.hpp:31</div></div>
 <div class="ttc" id="asubpar_8hpp_html"><div class="ttname"><a href="https://tatami-inc.github.io/tatami/subpar_8hpp.html">subpar.hpp</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
