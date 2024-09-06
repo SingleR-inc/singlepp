@@ -377,7 +377,7 @@ void train_integrated_per_reference(
         }
         tatami::VectorPtr<Index_> to_extract_ptr(tatami::VectorPtr<Index_>{}, &to_extract);
 
-        tatami::parallelize([&](size_t, Index_ start, Index_ len) {
+        tatami::parallelize([&](int, Index_ start, Index_ len) {
             std::vector<Value_> buffer(to_extract.size());
             internal::RankedVector<Value_, Index_> tmp_ranked;
             tmp_ranked.reserve(to_extract.size());
