@@ -154,7 +154,7 @@ Markers<Index_> choose_classic_markers(
     }
 
     tatami::parallelize([&](int, size_t start, size_t len) {
-        std::vector<std::pair<Value_, Index_> > sorter(ngenes), sorted_tmp(ngenes);
+        std::vector<std::pair<Value_, Index_> > sorter(ngenes);
         std::vector<Value_> rbuffer(ngenes), lbuffer(ngenes);
         std::vector<std::shared_ptr<tatami::MyopicDenseExtractor<Value_, Index_> > > rextractors(nrefs), lextractors(nrefs);
 
@@ -198,15 +198,9 @@ Markers<Index_> choose_classic_markers(
             // we reverse the signs to we sort on right - left.
             for (int flip = 0; flip < 2; ++flip) {
                 if (flip) {
-                    sorter.swap(sorted_tmp);
                     for (auto& s : sorter) {
                         s.first *= -1;
                     }
-                } else {
-                    // We do a copy so that the treatment of tries would be the same as if
-                    // we had sorted on the reversed log-fold changes in the first place;
-                    // otherwise the first sort might change the order of ties.
-                    std::copy(sorter.begin(), sorter.end(), sorted_tmp.begin());
                 }
 
                 // partial sort is guaranteed to be stable due to the second index resolving ties.
@@ -249,9 +243,10 @@ Markers<Index_> choose_classic_markers(
 
 /**
  * Implements the classic **SingleR** method for choosing markers from (typically bulk) reference datasets.
- * We assume that we have a matrix of representative log-expression profiles for each label, typically computed by taking some average across all reference profiles for that label.
- * For the comparison between labels \f$A\f$ and \f$B\f$, we define the marker set as the top genes with the largest positive differences in \f$A\f$'s profile over \f$B\f$
- * (i.e., the log-fold change, for a matrix containing log-expression values).
+ * We assume that we have a matrix of representative expression profiles for each label, typically computed by averaging across all reference profiles for that label.
+ * For the comparison between labels \f$A\f$ and \f$B\f$, we define the marker set as the top genes with the largest positive differences in \f$A\f$'s profile over \f$B\f$.
+ * This difference can be interpreted as the log-fold change if the input matrix contains log-expression values.
+ * If multiple genes have the same difference, ties are broken by favoring genes in earlier rows of the input matrix.
  * The number of top genes can either be explicitly specified or it can be automatically determined from the number of labels.
  *
  * @tparam Value_ Numeric type of matrix values.

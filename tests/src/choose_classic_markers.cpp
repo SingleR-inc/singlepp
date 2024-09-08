@@ -193,3 +193,23 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(false, true) // whether to reverse the label order
     )
 );
+
+TEST(ChooseClassicMarkers, Ties) { 
+    size_t ngenes = 100;
+    size_t nlabels = 2;
+    std::vector<double> expression(nlabels * ngenes);
+    std::fill(expression.begin(), expression.begin() + 50, 1);
+    std::fill(expression.begin() + 150, expression.end(), 1);
+    tatami::DenseColumnMatrix<double, int> mat(ngenes, nlabels, std::move(expression));
+
+    singlepp::ChooseClassicMarkersOptions mopt;
+    mopt.number = 10;
+    std::vector<int> grouping { 0, 1 };
+    auto tied = singlepp::choose_classic_markers(mat, grouping.data(), mopt);
+
+    // Ties are broken in a stable way.
+    std::vector<int> expected1 { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    EXPECT_EQ(tied[0][1], expected1);
+    std::vector<int> expected2 { 50, 51, 52, 53, 54, 55, 56, 57, 58, 59 };
+    EXPECT_EQ(tied[1][0], expected2);
+}
