@@ -424,7 +424,7 @@ template&lt;<a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Implements the classic <b>SingleR</b> method for choosing markers from (typically bulk) reference datasets. We assume that we have a matrix of representative log-expression profiles for each label, typically computed by taking some average across all reference profiles for that label. For the comparison between labels \(A\) and \(B\), we define the marker set as the top genes with the largest positive differences in \(A\)'s profile over \(B\) (i.e., the log-fold change, for a matrix containing log-expression values). The number of top genes can either be explicitly specified or it can be automatically determined from the number of labels.</p>
+<p>Implements the classic <b>SingleR</b> method for choosing markers from (typically bulk) reference datasets. We assume that we have a matrix of representative expression profiles for each label, typically computed by averaging across all reference profiles for that label. For the comparison between labels \(A\) and \(B\), we define the marker set as the top genes with the largest positive differences in \(A\)'s profile over \(B\). This difference can be interpreted as the log-fold change if the input matrix contains log-expression values. If multiple genes have the same difference, ties are broken by favoring genes in earlier rows of the input matrix. The number of top genes can either be explicitly specified or it can be automatically determined from the number of labels.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Value_</td><td>Numeric type of matrix values. </td></tr>

@@ -201,7 +201,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>    }</div>
 <div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span> </div>
 <div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>    tatami::parallelize([&amp;](<span class="keywordtype">int</span>, <span class="keywordtype">size_t</span> start, <span class="keywordtype">size_t</span> len) {</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>        std::vector&lt;std::pair&lt;Value_, Index_&gt; &gt; sorter(ngenes), sorted_tmp(ngenes);</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>        std::vector&lt;std::pair&lt;Value_, Index_&gt; &gt; sorter(ngenes);</div>
 <div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>        std::vector&lt;Value_&gt; rbuffer(ngenes), lbuffer(ngenes);</div>
 <div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>        std::vector&lt;std::shared_ptr&lt;tatami::MyopicDenseExtractor&lt;Value_, Index_&gt; &gt; &gt; rextractors(nrefs), lextractors(nrefs);</div>
 <div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span> </div>
@@ -245,59 +245,53 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>            <span class="comment">// we reverse the signs to we sort on right - left.</span></div>
 <div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>            <span class="keywordflow">for</span> (<span class="keywordtype">int</span> flip = 0; flip &lt; 2; ++flip) {</div>
 <div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>                <span class="keywordflow">if</span> (flip) {</div>
-<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>                    sorter.swap(sorted_tmp);</div>
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>                    <span class="keywordflow">for</span> (<span class="keyword">auto</span>&amp; s : sorter) {</div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>                        s.first *= -1;</div>
-<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>                    }</div>
-<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>                } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>                    <span class="comment">// We do a copy so that the treatment of tries would be the same as if</span></div>
-<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>                    <span class="comment">// we had sorted on the reversed log-fold changes in the first place;</span></div>
-<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>                    <span class="comment">// otherwise the first sort might change the order of ties.</span></div>
-<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>                    std::copy(sorter.begin(), sorter.end(), sorted_tmp.begin());</div>
-<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>                }</div>
-<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span> </div>
-<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>                <span class="comment">// partial sort is guaranteed to be stable due to the second index resolving ties.</span></div>
-<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>                std::partial_sort(sorter.begin(), sorter.begin() + actual_number, sorter.end());</div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>                    <span class="keywordflow">for</span> (<span class="keyword">auto</span>&amp; s : sorter) {</div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>                        s.first *= -1;</div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>                    }</div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>                }</div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span> </div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>                <span class="comment">// partial sort is guaranteed to be stable due to the second index resolving ties.</span></div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>                std::partial_sort(sorter.begin(), sorter.begin() + actual_number, sorter.end());</div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span> </div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>                std::vector&lt;Index_&gt; stuff;</div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>                stuff.reserve(actual_number);</div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>                <span class="keywordflow">for</span> (<span class="keywordtype">int</span> g = 0; g &lt; actual_number &amp;&amp; sorter[g].first &lt; 0; ++g) { <span class="comment">// only negative values (i.e., positive log-fold changes for our comparison).</span></div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>                    stuff.push_back(sorter[g].second); </div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>                }</div>
 <div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span> </div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>                std::vector&lt;Index_&gt; stuff;</div>
-<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>                stuff.reserve(actual_number);</div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>                <span class="keywordflow">for</span> (<span class="keywordtype">int</span> g = 0; g &lt; actual_number &amp;&amp; sorter[g].first &lt; 0; ++g) { <span class="comment">// only negative values (i.e., positive log-fold changes for our comparison).</span></div>
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>                    stuff.push_back(sorter[g].second); </div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>                <span class="keywordflow">if</span> (flip) {</div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>                    output[curleft][curright] = std::move(stuff);</div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>                } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>                    output[curright][curleft] = std::move(stuff);</div>
 <div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>                }</div>
-<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span> </div>
-<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>                <span class="keywordflow">if</span> (flip) {</div>
-<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>                    output[curleft][curright] = std::move(stuff);</div>
-<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>                } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>                    output[curright][curleft] = std::move(stuff);</div>
-<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>                }</div>
-<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>            }</div>
-<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>        }</div>
-<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>    }, pairs.size(), options.<a class="code hl_variable" href="structsinglepp_1_1ChooseClassicMarkersOptions.html#a7c694f5f2e2cf5d8610aa3028bce4055">num_threads</a>);</div>
-<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span> </div>
-<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>    <span class="keywordflow">return</span> output;</div>
-<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>}</div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>            }</div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>        }</div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>    }, pairs.size(), options.<a class="code hl_variable" href="structsinglepp_1_1ChooseClassicMarkersOptions.html#a7c694f5f2e2cf5d8610aa3028bce4055">num_threads</a>);</div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span> </div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>    <span class="keywordflow">return</span> output;</div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>}</div>
 </div>
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span> </div>
-<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span><span class="comment">// Overload for the non-const case.</span></div>
-<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Value_, <span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Label_&gt;</div>
-<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span><a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Markers&lt;Index_&gt;</a> <a class="code hl_function" href="namespacesinglepp.html#ae888912441a04acf856e74a9f4a0452b">choose_classic_markers</a>(</div>
-<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>    <span class="keyword">const</span> std::vector&lt;tatami::Matrix&lt;Value_, Index_&gt;*&gt;&amp; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">representatives</a>,</div>
-<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>    <span class="keyword">const</span> std::vector&lt;const Label_*&gt;&amp; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">labels</a>,</div>
-<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>    <span class="keyword">const</span> ChooseClassicMarkersOptions&amp; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">options</a>)</div>
-<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>{</div>
-<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>    std::vector&lt;const tatami::Matrix&lt;Value_, Index_&gt;*&gt; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">rep2</a>(<a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">representatives</a>.begin(), <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">representatives</a>.end());</div>
-<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespacesinglepp.html#ae888912441a04acf856e74a9f4a0452b">choose_classic_markers</a>(<a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">rep2</a>, <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">labels</a>, <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">options</a>);</div>
-<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>}</div>
-<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Value_, <span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Label_&gt;</div>
-<div class="foldopen" id="foldopen00271" data-start="{" data-end="}">
-<div class="line"><a id="l00271" name="l00271"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#ae6b37c9c0ac535f7c85771fbeb98e4df">  271</a></span><a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Markers&lt;Index_&gt;</a> <a class="code hl_function" href="namespacesinglepp.html#ae888912441a04acf856e74a9f4a0452b">choose_classic_markers</a>(<span class="keyword">const</span> tatami::Matrix&lt;Value_, Index_&gt;&amp; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">representative</a>, <span class="keyword">const</span> <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Label_</a>* <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">labels</a>, <span class="keyword">const</span> <a class="code hl_struct" href="structsinglepp_1_1ChooseClassicMarkersOptions.html">ChooseClassicMarkersOptions</a>&amp; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">options</a>) {</div>
-<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespacesinglepp.html#ae888912441a04acf856e74a9f4a0452b">choose_classic_markers</a>(std::vector&lt;<span class="keyword">const</span> tatami::Matrix&lt;Value_, Index_&gt;*&gt;{ &amp;<a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">representative</a> }, std::vector&lt;const Label_*&gt;{ <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">labels</a> }, <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">options</a>);</div>
-<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>}</div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span> </div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span><span class="comment">// Overload for the non-const case.</span></div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Value_, <span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Label_&gt;</div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span><a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Markers&lt;Index_&gt;</a> <a class="code hl_function" href="namespacesinglepp.html#ae888912441a04acf856e74a9f4a0452b">choose_classic_markers</a>(</div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>    <span class="keyword">const</span> std::vector&lt;tatami::Matrix&lt;Value_, Index_&gt;*&gt;&amp; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">representatives</a>,</div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>    <span class="keyword">const</span> std::vector&lt;const Label_*&gt;&amp; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">labels</a>,</div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>    <span class="keyword">const</span> ChooseClassicMarkersOptions&amp; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">options</a>)</div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>{</div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>    std::vector&lt;const tatami::Matrix&lt;Value_, Index_&gt;*&gt; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">rep2</a>(<a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">representatives</a>.begin(), <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">representatives</a>.end());</div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespacesinglepp.html#ae888912441a04acf856e74a9f4a0452b">choose_classic_markers</a>(<a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">rep2</a>, <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">labels</a>, <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">options</a>);</div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>}</div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Value_, <span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Label_&gt;</div>
+<div class="foldopen" id="foldopen00266" data-start="{" data-end="}">
+<div class="line"><a id="l00266" name="l00266"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#ae6b37c9c0ac535f7c85771fbeb98e4df">  266</a></span><a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Markers&lt;Index_&gt;</a> <a class="code hl_function" href="namespacesinglepp.html#ae888912441a04acf856e74a9f4a0452b">choose_classic_markers</a>(<span class="keyword">const</span> tatami::Matrix&lt;Value_, Index_&gt;&amp; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">representative</a>, <span class="keyword">const</span> <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">Label_</a>* <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">labels</a>, <span class="keyword">const</span> <a class="code hl_struct" href="structsinglepp_1_1ChooseClassicMarkersOptions.html">ChooseClassicMarkersOptions</a>&amp; <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">options</a>) {</div>
+<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespacesinglepp.html#ae888912441a04acf856e74a9f4a0452b">choose_classic_markers</a>(std::vector&lt;<span class="keyword">const</span> tatami::Matrix&lt;Value_, Index_&gt;*&gt;{ &amp;<a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">representative</a> }, std::vector&lt;const Label_*&gt;{ <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">labels</a> }, <a class="code hl_typedef" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">options</a>);</div>
+<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>}</div>
 </div>
-<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span> </div>
-<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>}</div>
-<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span> </div>
-<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span> </div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>}</div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span> </div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="aMarkers_8hpp_html"><div class="ttname"><a href="Markers_8hpp.html">Markers.hpp</a></div><div class="ttdoc">Define the Markers typedef.</div></div>
 <div class="ttc" id="adefs_8hpp_html"><div class="ttname"><a href="defs_8hpp.html">defs.hpp</a></div><div class="ttdoc">Common definitions for singlepp.</div></div>
 <div class="ttc" id="anamespacesinglepp_html"><div class="ttname"><a href="namespacesinglepp.html">singlepp</a></div><div class="ttdoc">Cell type classification using the SingleR algorithm in C++.</div><div class="ttdef"><b>Definition</b> classify_single.hpp:19</div></div>
