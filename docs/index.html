@@ -99,7 +99,12 @@ $(function() {
 <div class="line"> </div>
 <div class="line"><span class="comment">// Building the classifier.</span></div>
 <div class="line"><a class="code hl_struct" href="structsinglepp_1_1TrainSingleOptions.html">singlepp::TrainSingleOptions</a> train_opt;</div>
-<div class="line"><span class="keyword">auto</span> trained = <a class="code hl_function" href="namespacesinglepp.html#abcea821671f9339e4e933be2ed123c6e">singlepp::train_single</a>(ref_mat, ref_labels.data(), train_opt);</div>
+<div class="line"><span class="keyword">auto</span> trained = <a class="code hl_function" href="namespacesinglepp.html#abcea821671f9339e4e933be2ed123c6e">singlepp::train_single</a>(</div>
+<div class="line">    ref_mat,</div>
+<div class="line">    ref_labels.data(), </div>
+<div class="line">    ref_markers,</div>
+<div class="line">    train_opt</div>
+<div class="line">);</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Running the classification on the test matrix.</span></div>
 <div class="line"><a class="code hl_struct" href="structsinglepp_1_1ClassifySingleOptions.html">singlepp::ClassifySingleOptions</a> class_opt;</div>
@@ -126,6 +131,7 @@ $(function() {
 <div class="line"><span class="keyword">auto</span> trained20 = <a class="code hl_function" href="namespacesinglepp.html#abcea821671f9339e4e933be2ed123c6e">singlepp::train_single</a>(</div>
 <div class="line">    ref_mat,</div>
 <div class="line">    ref_labels.data(),</div>
+<div class="line">    ref_markers,</div>
 <div class="line">    train_opt</div>
 <div class="line">);</div>
 <div class="ttc" id="astructsinglepp_1_1TrainSingleOptions_html_aa72f73c9937301bd90c2fec19f523479"><div class="ttname"><a href="structsinglepp_1_1TrainSingleOptions.html#aa72f73c9937301bd90c2fec19f523479">singlepp::TrainSingleOptions::top</a></div><div class="ttdeci">int top</div><div class="ttdef"><b>Definition</b> train_single.hpp:36</div></div>
