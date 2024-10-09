@@ -32,7 +32,12 @@ ref_markers;
 
 // Building the classifier.
 singlepp::TrainSingleOptions train_opt;
-auto trained = singlepp::train_single(ref_mat, ref_labels.data(), train_opt);
+auto trained = singlepp::train_single(
+    ref_mat,
+    ref_labels.data(), 
+    ref_markers,
+    train_opt
+);
 
 // Running the classification on the test matrix.
 singlepp::ClassifySingleOptions class_opt;
@@ -68,6 +73,7 @@ train_opt.top = 20;
 auto trained20 = singlepp::train_single(
     ref_mat,
     ref_labels.data(),
+    ref_markers,
     train_opt
 );
 ```
