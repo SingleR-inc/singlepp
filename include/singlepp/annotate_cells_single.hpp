@@ -107,8 +107,7 @@ public:
 template<typename Value_, typename Index_, typename Float_, typename Label_>
 void annotate_cells_single(
     const tatami::Matrix<Value_, Index_>& test,
-    size_t num_subset,
-    const Index_* subset,
+    const std::vector<Index_> subset,
     const std::vector<PerLabelReference<Index_, Float_> >& ref,
     const Markers<Index_>& markers,
     Float_ quantile,
@@ -139,13 +138,13 @@ void annotate_cells_single(
         coeffs[r].second = prod - static_cast<Float_>(k - 2);
     }
 
-    std::vector<Index_> subcopy(subset, subset + num_subset);
-    SubsetSanitizer<Index_> subsorted(subcopy);
+    SubsetSanitizer<Index_> subsorted(subset);
     tatami::VectorPtr<Index_> subset_ptr(tatami::VectorPtr<Index_>{}, &(subsorted.extraction_subset()));
 
     tatami::parallelize([&](int, Index_ start, Index_ length) {
         auto ext = tatami::consecutive_extractor<false>(&test, false, start, length, subset_ptr);
 
+        size_t num_subset = subset.size();
         std::vector<Value_> buffer(num_subset);
         RankedVector<Value_, Index_> vec;
         vec.reserve(num_subset);

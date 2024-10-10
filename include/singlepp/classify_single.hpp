@@ -136,8 +136,7 @@ void classify_single(
 {
     internal::annotate_cells_single(
         test, 
-        trained.get_subset().size(), 
-        trained.get_subset().data(), 
+        trained.get_subset(),
         trained.get_references(), 
         trained.get_markers(), 
         options.quantile, 
@@ -175,8 +174,7 @@ void classify_single_intersect(
 {
     internal::annotate_cells_single(
         test, 
-        trained.get_test_subset().size(), 
-        trained.get_test_subset().data(), 
+        trained.get_test_subset(),
         trained.get_references(), 
         trained.get_markers(), 
         options.quantile, 
