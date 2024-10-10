@@ -120,45 +120,62 @@ TEST_P(ClassifySingleIntersectTest, Intersect) {
     copt.quantile = quantile;
     auto result = singlepp::classify_single_intersect<int>(*mat, trained, copt);
 
-    // Computing the reference result using the other run() method,
+    // Computing the reference result using the classify_single() function,
     // after effectively subsetting the input matrices and reindexing the markers.
-    auto intersection = singlepp::intersect_genes(left.size(), left.data(), right.size(), right.data());
-    std::pair<std::vector<int>, std::vector<int> > pairs;
-    for (const auto& in : intersection) {
-        pairs.first.push_back(in.first);
-        pairs.second.push_back(in.second);
-    }
-    auto submat = tatami::make_DelayedSubset<0>(mat, pairs.first);
-    auto subrefs = tatami::make_DelayedSubset<0>(refs, pairs.second);
-
-    std::unordered_map<int, int> locations;
-    for (size_t i = 0; i < pairs.second.size(); ++i) {
-        locations[pairs.second[i]] = i;
-    }
-
-    auto markers2 = markers;
-    for (size_t i = 0; i < nlabels; ++i) {
-        for (size_t j = 0; j < nlabels; ++j) {
-            if (i == j) {
-                continue;
-            }
-
-            std::vector<int> current;
-            for (auto s : markers[i][j]) {
-                auto it = locations.find(s);
-                if (it != locations.end()) {
-                    current.push_back(it->second);
-                }
-            }
-            markers2[i][j] = current;
+    {
+        auto intersection = singlepp::intersect_genes(left.size(), left.data(), right.size(), right.data());
+        std::pair<std::vector<int>, std::vector<int> > pairs;
+        for (const auto& in : intersection) {
+            pairs.first.push_back(in.first);
+            pairs.second.push_back(in.second);
         }
+        auto submat = tatami::make_DelayedSubset<0>(mat, pairs.first);
+        auto subrefs = tatami::make_DelayedSubset<0>(refs, pairs.second);
+
+        std::unordered_map<int, int> locations;
+        for (size_t i = 0; i < pairs.second.size(); ++i) {
+            locations[pairs.second[i]] = i;
+        }
+
+        auto markers2 = markers;
+        for (size_t i = 0; i < nlabels; ++i) {
+            for (size_t j = 0; j < nlabels; ++j) {
+                if (i == j) {
+                    continue;
+                }
+
+                std::vector<int> current;
+                for (auto s : markers[i][j]) {
+                    auto it = locations.find(s);
+                    if (it != locations.end()) {
+                        current.push_back(it->second);
+                    }
+                }
+                markers2[i][j] = current;
+            }
+        }
+
+        auto trained2 = singlepp::train_single(*subrefs, labels.data(), markers2, bopt);
+        auto result2 = singlepp::classify_single<int>(*submat, trained2, copt);
+        EXPECT_EQ(result2.scores[0], result.scores[0]);
+        EXPECT_EQ(result2.best, result.best);
+        EXPECT_EQ(result2.delta, result.delta);
     }
 
-    auto trained2 = singlepp::train_single(*subrefs, labels.data(), markers2, bopt);
-    auto result2 = singlepp::classify_single<int>(*submat, trained2, copt);
-    EXPECT_EQ(result2.scores[0], result.scores[0]);
-    EXPECT_EQ(result2.best, result.best);
-    EXPECT_EQ(result2.delta, result.delta);
+    // Using the shuffled intersection to check that the order doesn't matter.
+    {
+        auto intersection = singlepp::intersect_genes<int>(left.size(), left.data(), right.size(), right.data());
+        std::shuffle(intersection.begin(), intersection.end(), rng);
+        auto trained2 = singlepp::train_single_intersect<int>(intersection, *refs, labels.data(), markers, bopt);
+
+        singlepp::ClassifySingleOptions<double> copt;
+        copt.quantile = quantile;
+        auto result2 = singlepp::classify_single_intersect<int>(*mat, trained, copt);
+
+        EXPECT_EQ(result2.scores[0], result.scores[0]);
+        EXPECT_EQ(result2.best, result.best);
+        EXPECT_EQ(result2.delta, result.delta);
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(

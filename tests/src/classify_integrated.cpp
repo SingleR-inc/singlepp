@@ -381,45 +381,51 @@ TEST_P(ClassifyIntegratedTest, Basic) {
     }
 
     // Comparing the classify_integrated output to a reference calculation.
+    // This requires disabling of fine-tuning as there's no easy way to test that.
     singlepp::ClassifyIntegratedOptions<double> copt;
     copt.fine_tune = false;
     copt.quantile = quantile;
     auto output = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated, copt);
-    auto by_labels = split_by_labels(labels);
-    auto wrk = test->dense_column();
-    std::vector<double> buffer(test->nrow());
 
-    for (size_t t = 0; t < ntest; ++t) {
-        auto my_universe = create_universe(t, prebuilts, chosen);
-        std::vector<int> universe(my_universe.begin(), my_universe.end());
-        std::sort(universe.begin(), universe.end());
+    {
+        auto by_labels = split_by_labels(labels);
+        auto wrk = test->dense_column();
+        std::vector<double> buffer(test->nrow());
 
-        auto col = wrk->fetch(t, buffer.data());
-        tatami::copy_n(col, test->nrow(), buffer.data());
-        auto scaled = quick_scaled_ranks(buffer, universe);
+        for (size_t t = 0; t < ntest; ++t) {
+            auto my_universe = create_universe(t, prebuilts, chosen);
+            std::vector<int> universe(my_universe.begin(), my_universe.end());
+            std::sort(universe.begin(), universe.end());
 
-        std::vector<double> all_scores;
-        for (size_t r = 0; r < nrefs; ++r) {
-            double score = naive_score(scaled, by_labels[r][chosen[r][t]], references[r].get(), universe, quantile);
-            EXPECT_FLOAT_EQ(score, output.scores[r][t]);
-            all_scores.push_back(score);
+            auto col = wrk->fetch(t, buffer.data());
+            tatami::copy_n(col, test->nrow(), buffer.data());
+            auto scaled = quick_scaled_ranks(buffer, universe);
+
+            std::vector<double> all_scores;
+            for (size_t r = 0; r < nrefs; ++r) {
+                double score = naive_score(scaled, by_labels[r][chosen[r][t]], references[r].get(), universe, quantile);
+                EXPECT_FLOAT_EQ(score, output.scores[r][t]);
+                all_scores.push_back(score);
+            }
+
+            auto best = std::max_element(all_scores.begin(), all_scores.end());
+            EXPECT_EQ(output.best[t], best - all_scores.begin());
+
+            double best_score = *best;
+            *best = -100000;
+            EXPECT_FLOAT_EQ(output.delta[t], best_score - *std::max_element(all_scores.begin(), all_scores.end()));
         }
-
-        auto best = std::max_element(all_scores.begin(), all_scores.end());
-        EXPECT_EQ(output.best[t], best - all_scores.begin());
-
-        double best_score = *best;
-        *best = -100000;
-        EXPECT_FLOAT_EQ(output.delta[t], best_score - *std::max_element(all_scores.begin(), all_scores.end()));
     }
 
     // Same results in parallel.
-    copt.num_threads = 3;
-    auto poutput = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated, copt);
-    EXPECT_EQ(output.best, poutput.best);
-    EXPECT_EQ(output.delta, poutput.delta);
-    for (size_t r = 0; r < nrefs; ++r) {
-        EXPECT_EQ(output.scores[r], poutput.scores[r]);
+    {
+        copt.num_threads = 3;
+        auto poutput = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated, copt);
+        EXPECT_EQ(output.best, poutput.best);
+        EXPECT_EQ(output.delta, poutput.delta);
+        for (size_t r = 0; r < nrefs; ++r) {
+            EXPECT_EQ(output.scores[r], poutput.scores[r]);
+        }
     }
 }
 
@@ -458,62 +464,67 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
     }
 
     // Comparing the ClassifyIntegrated to a reference calculation.
+    // This requires disabling of fine-tuning as there's no easy way to test that.
     singlepp::ClassifyIntegratedOptions<double> copt;
     copt.fine_tune = false;
     copt.quantile = quantile;
     auto output = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated, copt);
     auto by_labels = split_by_labels(labels);
 
-    std::vector<std::unordered_map<int, int> > reverser(nrefs);
-    for (size_t r = 0; r < nrefs; ++r) {
-        const auto& ref_id = ref_ids[r];
-        for (size_t i = 0; i < ref_id.size(); ++i) {
-            if (ref_id[i] != MISSING_REF_ID) {
-                reverser[r][ref_id[i]] = i;
-            }
-        }
-    }
-
-    auto wrk = test->dense_column();
-    std::vector<double> buffer(test->nrow());
-    for (size_t t = 0; t < ntest; ++t) {
-        auto my_universe = create_universe(t, prebuilts, chosen);
-
-        std::vector<double> all_scores;
+    {
+        std::vector<std::unordered_map<int, int> > reverser(nrefs);
         for (size_t r = 0; r < nrefs; ++r) {
-            std::vector<int> universe_test, universe_ref;
-            for (auto s : my_universe) {
-                auto it = reverser[r].find(s);
-                if (it != reverser[r].end()) {
-                    universe_test.push_back(s);
-                    universe_ref.push_back(it->second);
+            const auto& ref_id = ref_ids[r];
+            for (size_t i = 0; i < ref_id.size(); ++i) {
+                if (ref_id[i] != MISSING_REF_ID) {
+                    reverser[r][ref_id[i]] = i;
                 }
             }
-
-            auto col = wrk->fetch(t, buffer.data());
-            tatami::copy_n(col, buffer.size(), buffer.data());
-            auto scaled = quick_scaled_ranks(buffer, universe_test);
-
-            double score = naive_score(scaled, by_labels[r][chosen[r][t]], references[r].get(), universe_ref, quantile);
-            EXPECT_FLOAT_EQ(score, output.scores[r][t]);
-            all_scores.push_back(score);
         }
 
-        auto best = std::max_element(all_scores.begin(), all_scores.end());
-        EXPECT_EQ(output.best[t], best - all_scores.begin());
+        auto wrk = test->dense_column();
+        std::vector<double> buffer(test->nrow());
+        for (size_t t = 0; t < ntest; ++t) {
+            auto my_universe = create_universe(t, prebuilts, chosen);
 
-        double best_score = *best;
-        *best = -100000;
-        EXPECT_FLOAT_EQ(output.delta[t], best_score - *std::max_element(all_scores.begin(), all_scores.end()));
+            std::vector<double> all_scores;
+            for (size_t r = 0; r < nrefs; ++r) {
+                std::vector<int> universe_test, universe_ref;
+                for (auto s : my_universe) {
+                    auto it = reverser[r].find(s);
+                    if (it != reverser[r].end()) {
+                        universe_test.push_back(s);
+                        universe_ref.push_back(it->second);
+                    }
+                }
+
+                auto col = wrk->fetch(t, buffer.data());
+                tatami::copy_n(col, buffer.size(), buffer.data());
+                auto scaled = quick_scaled_ranks(buffer, universe_test);
+
+                double score = naive_score(scaled, by_labels[r][chosen[r][t]], references[r].get(), universe_ref, quantile);
+                EXPECT_FLOAT_EQ(score, output.scores[r][t]);
+                all_scores.push_back(score);
+            }
+
+            auto best = std::max_element(all_scores.begin(), all_scores.end());
+            EXPECT_EQ(output.best[t], best - all_scores.begin());
+
+            double best_score = *best;
+            *best = -100000;
+            EXPECT_FLOAT_EQ(output.delta[t], best_score - *std::max_element(all_scores.begin(), all_scores.end()));
+        }
     }
 
     // Same results in parallel.
-    copt.num_threads = 3;
-    auto poutput = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated, copt);
-    EXPECT_EQ(output.best, poutput.best);
-    EXPECT_EQ(output.delta, poutput.delta);
-    for (size_t r = 0; r < nrefs; ++r) {
-        EXPECT_EQ(output.scores[r], poutput.scores[r]);
+    {
+        copt.num_threads = 3;
+        auto poutput = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated, copt);
+        EXPECT_EQ(output.best, poutput.best);
+        EXPECT_EQ(output.delta, poutput.delta);
+        for (size_t r = 0; r < nrefs; ++r) {
+            EXPECT_EQ(output.scores[r], poutput.scores[r]);
+        }
     }
 }
 
@@ -535,6 +546,9 @@ TEST_P(ClassifyIntegratedTest, IntersectedComparison) {
     std::vector<singlepp::TrainedSingleIntersect<int, double> > prebuilts;
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > reorganized_integrated_inputs;
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > shuffled_integrated_inputs;
+    std::vector<singlepp::Intersection<int> > shuffled_intersections;
+    shuffled_intersections.resize(nrefs);
 
     std::mt19937_64 rng(base_seed);
     for (size_t r = 0; r < nrefs; ++r) {
@@ -542,10 +556,10 @@ TEST_P(ClassifyIntegratedTest, IntersectedComparison) {
         std::shuffle(ref_ids.begin(), ref_ids.end(), rng);
 
         auto pre = singlepp::train_single_intersect<int>(ngenes, test_ids.data(), *(references[r]), ref_ids.data(), labels[r].data(), markers[r], bopt);
-        integrated_inputs.push_back(singlepp::prepare_integrated_input_intersect<int>(ngenes, test_ids.data(), *(references[r]), ref_ids.data(), labels[r].data(), pre));
-        prebuilts.push_back(std::move(pre));
+        prebuilts.emplace_back(std::move(pre));
+        integrated_inputs.push_back(singlepp::prepare_integrated_input_intersect<int>(ngenes, test_ids.data(), *(references[r]), ref_ids.data(), labels[r].data(), prebuilts.back()));
 
-        // Doing a reference calculation with reorganization before calling the non-intersection methods.
+        // Doing a reference calculation by reordering the matrix and then calling the non-intersection methods.
         std::vector<int> remapping(ngenes);
         for (size_t i = 0; i < ngenes; ++i) {
             remapping[ref_ids[i]] = i;
@@ -558,15 +572,22 @@ TEST_P(ClassifyIntegratedTest, IntersectedComparison) {
                 }
             }
         }
-        auto shuffled = tatami::make_DelayedSubset(references[r], std::move(remapping), true);
-        auto pre_reorg = singlepp::train_single(*shuffled, labels[r].data(), std::move(mcopy), bopt);
-        reorganized_integrated_inputs.push_back(singlepp::prepare_integrated_input(*shuffled, labels[r].data(), pre_reorg));
-        reorganized_references.push_back(std::move(shuffled));
+        auto reordered_mat = tatami::make_DelayedSubset(references[r], std::move(remapping), true);
+        auto pre_reorg = singlepp::train_single(*reordered_mat, labels[r].data(), std::move(mcopy), bopt);
+        reorganized_integrated_inputs.push_back(singlepp::prepare_integrated_input(*reordered_mat, labels[r].data(), pre_reorg));
+        reorganized_references.emplace_back(std::move(reordered_mat));
+
+        // Also shuffling the intersection to check that the input order doesn't affect the results.
+        auto& intersection = shuffled_intersections[r];
+        intersection = singlepp::intersect_genes<int>(ngenes, test_ids.data(), references[r]->nrow(), ref_ids.data());
+        std::shuffle(intersection.begin(), intersection.end(), rng);
+        shuffled_integrated_inputs.push_back(singlepp::prepare_integrated_input_intersect<int>(intersection, *(references[r]), labels[r].data(), prebuilts.back()));
     }
 
     singlepp::TrainIntegratedOptions iopt;
     auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
     auto reorganized_integrated = singlepp::train_integrated(std::move(reorganized_integrated_inputs), iopt);
+    auto shuffled_integrated = singlepp::train_integrated(std::move(shuffled_integrated_inputs), iopt);
 
     // Mocking up some of the best choices.
     auto chosen = mock_best_choices(ntest, prebuilts, base_seed + 2468);
@@ -575,15 +596,20 @@ TEST_P(ClassifyIntegratedTest, IntersectedComparison) {
         chosen_ptrs[r] = chosen[r].data();
     }
 
-    // Classifying, even with fine-tuning.
+    // Comparing classification results (with fine-tuning, for some test coverage).
     singlepp::ClassifyIntegratedOptions<double> copt;
     copt.quantile = quantile;
     auto output = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated, copt);
-    auto reorganized_output = singlepp::classify_integrated<int>(*test, chosen_ptrs, reorganized_integrated, copt);
 
+    auto reorganized_output = singlepp::classify_integrated<int>(*test, chosen_ptrs, reorganized_integrated, copt);
     EXPECT_EQ(output.best, reorganized_output.best);
     EXPECT_EQ(output.scores, reorganized_output.scores);
     EXPECT_EQ(output.delta, reorganized_output.delta);
+
+    auto shuffled_output = singlepp::classify_integrated<int>(*test, chosen_ptrs, shuffled_integrated, copt);
+    EXPECT_EQ(output.best, shuffled_output.best);
+    EXPECT_EQ(output.scores, shuffled_output.scores);
+    EXPECT_EQ(output.delta, shuffled_output.delta);
 }
 
 INSTANTIATE_TEST_SUITE_P(
