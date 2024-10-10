@@ -8,6 +8,7 @@
 #include "Markers.hpp"
 #include "build_indices.hpp"
 #include "SubsetSanitizer.hpp"
+#include "SubsetRemapper.hpp"
 #include "find_best_and_delta.hpp"
 #include "scaled_ranks.hpp"
 #include "correlations_to_score.hpp"
@@ -26,7 +27,7 @@ class FineTuneSingle {
 private:
     std::vector<Label_> my_labels_in_use;
 
-    RankRemapper<Index_> my_gene_subset;
+    SubsetRemapper<Index_> my_gene_subset;
 
     std::vector<Float_> my_scaled_left, my_scaled_right;
 

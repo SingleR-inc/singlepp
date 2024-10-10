@@ -6,6 +6,7 @@
 #include "tatami/tatami.hpp"
 
 #include "scaled_ranks.hpp"
+#include "SubsetRemapper.hpp"
 #include "train_integrated.hpp"
 #include "find_best_and_delta.hpp"
 #include "fill_labels_in_use.hpp"
@@ -26,9 +27,9 @@ namespace internal {
 // across cells and references.
 template<typename Index_, typename Value_, typename Float_>
 struct PerReferenceIntegratedWorkspace {
-    RankRemapper<Index_> intersect_mapping;
+    SubsetRemapper<Index_> intersect_mapping;
     bool direct_mapping_filled;
-    RankRemapper<Index_> direct_mapping;
+    SubsetRemapper<Index_> direct_mapping;
 
     RankedVector<Value_, Index_> test_ranked;
     RankedVector<Index_, Index_> ref_ranked;
@@ -50,7 +51,7 @@ Float_ compute_single_reference_score_integrated(
 {
     // Further subsetting to the intersection of markers that are
     // actual present in this particular reference.
-    const RankRemapper<Index_>* mapping;
+    const SubsetRemapper<Index_>* mapping;
     if (trained.check_availability[ref_i]) {
         const auto& cur_available = trained.available[ref_i];
         workspace.intersect_mapping.clear();

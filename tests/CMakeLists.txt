@@ -20,6 +20,7 @@ add_executable(
     libtest 
     src/classify_single.cpp
     src/scaled_ranks.cpp
+    src/SubsetRemapper.cpp
     src/correlations_to_score.cpp
     src/Intersection.cpp
     src/subset_to_markers.cpp

@@ -10,12 +10,14 @@ namespace singlepp {
 
 namespace internal {
 
-// This class sanitizes any user-provided subsets so that we can provide a
-// sorted and unique subset to the tatami extractor. We then undo the sorting
-// to use the original indices in the rank filler. This entire thing is
-// necessary as the behavior of the subsets isn't something that the user can
-// easily control (e.g., if the reference/test datasets do not use the same
-// feature ordering, in which case the subset is necessarily unsorted).
+/*
+ * This class sanitizes any user-provided subsets so that we can provide a
+ * sorted and unique subset to the tatami extractor. We then undo the sorting
+ * to use the original indices in the rank filler. This entire thing is
+ * necessary as the behavior of the subsets isn't something that the user can
+ * easily control (e.g., if the reference/test datasets do not use the same
+ * feature ordering, in which case the subset is necessarily unsorted).
+ */
 template<typename Index_>
 class SubsetSanitizer {
 private:
@@ -64,6 +66,8 @@ public:
 
     template<typename Stat_>
     void fill_ranks(const Stat_* ptr, RankedVector<Stat_, Index_>& vec) const {
+        // The indices in the output 'vec' refer to positions on the subset
+        // vector, as if the input data was already subsetted. 
         vec.clear();
         if (my_use_sorted_subset) {
             size_t num = my_original_indices.size();
