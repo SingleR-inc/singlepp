@@ -18,12 +18,16 @@ namespace singlepp {
 
 /**
  * Intersection of genes between two datasets.
- * Each element is a pair of matching genes and contains the row indices of those genes in each dataset.
- * A row index for either matrix should occur no more than once in this object.
+ * Each pair represents a gene that is present in both datasets.
+ * The two elements of the pair represent the row indices of that gene in the respective matrices.
  *
  * Typically, the first element of the pair contains the row index of a gene in the test dataset,
  * while the second element of the pair contains the row index of the same gene in the reference dataset.
  * This convention is used by `intersect_genes()`, `train_single_intersect()` and `prepare_integrated_input_intersect()`.
+ *
+ * A row index for a matrix should occur no more than once in the `Intersection` object.
+ * That is, all the first elements should be unique and all of the second elements should be unique.
+ * Pairs may be arbitrarily ordered within the object.
  *
  * @tparam Index_ Integer type for the gene (row) indices.
  */

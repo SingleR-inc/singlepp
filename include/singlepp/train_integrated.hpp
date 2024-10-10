@@ -115,7 +115,9 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input(
  * @tparam Label_ Integer type for the reference labels.
  * @tparam Float_ Floating-point type for the correlations and scores.
  *
- * @param intersection Vector defining the intersection of genes between the test and reference datasets, see `intersect_genes()` for details.
+ * @param intersection Vector defining the intersection of genes between the test and reference datasets. 
+ * Each pair corresponds to a gene where the first and second elements represent the row indices of that gene in the test and reference matrices, respectively.
+ * See `intersect_genes()` for more details.
  * @param ref Matrix containing the reference expression values, where rows are genes and columns are reference profiles.
  * The number and identity of genes should be consistent with `intersection`.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.

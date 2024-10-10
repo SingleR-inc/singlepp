@@ -295,7 +295,9 @@ public:
  * @tparam Label_ Integer type for the reference labels.
  * @tparam Float_ Floating-point type for the correlations and scores.
  *
- * @param intersection Vector defining the intersection of genes between the test and reference datasets, see `intersect_genes()` for more details.
+ * @param intersection Vector defining the intersection of genes between the test and reference datasets.
+ * Each pair corresponds to a gene where the first and second elements represent the row indices of that gene in the test and reference matrices, respectively.
+ * See `intersect_genes()` for more details.
  * @param ref An expression matrix for the reference expression profiles, where rows are genes and columns are cells.
  * This should have non-zero columns.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each reference profile.
