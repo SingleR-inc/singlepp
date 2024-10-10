@@ -299,8 +299,9 @@ template&lt;<a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Intersection of genes between two datasets. Each element is a pair of matching genes and contains the row indices of those genes in each dataset. A row index for either matrix should occur no more than once in this object.</p>
+<p>Intersection of genes between two datasets. Each pair represents a gene that is present in both datasets. The two elements of the pair represent the row indices of that gene in the respective matrices.</p>
 <p>Typically, the first element of the pair contains the row index of a gene in the test dataset, while the second element of the pair contains the row index of the same gene in the reference dataset. This convention is used by <code><a class="el" href="namespacesinglepp.html#a22b70c4d5949e28af164723543361214">intersect_genes()</a></code>, <code><a class="el" href="namespacesinglepp.html#a606d38abb5608efdfdb0c3bdb945ef23">train_single_intersect()</a></code> and <code><a class="el" href="namespacesinglepp.html#a00d24ce81780d784bf9809afdad00736">prepare_integrated_input_intersect()</a></code>.</p>
+<p>A row index for a matrix should occur no more than once in the <code>Intersection</code> object. That is, all the first elements should be unique and all of the second elements should be unique. Pairs may be arbitrarily ordered within the object.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Index_</td><td>Integer type for the gene (row) indices. </td></tr>
@@ -1010,7 +1011,7 @@ template&lt;<a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir"></td><td class="paramname">intersection</td><td>Vector defining the intersection of genes between the test and reference datasets, see <code><a class="el" href="namespacesinglepp.html#a22b70c4d5949e28af164723543361214">intersect_genes()</a></code> for details. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">intersection</td><td>Vector defining the intersection of genes between the test and reference datasets. Each pair corresponds to a gene where the first and second elements represent the row indices of that gene in the test and reference matrices, respectively. See <code><a class="el" href="namespacesinglepp.html#a22b70c4d5949e28af164723543361214">intersect_genes()</a></code> for more details. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">ref</td><td>Matrix containing the reference expression values, where rows are genes and columns are reference profiles. The number and identity of genes should be consistent with <code>intersection</code>. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each sample. Values should be integers in \([0, L)\) where \(L\) is the number of unique labels. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">trained</td><td>Classifier created by calling <code><a class="el" href="namespacesinglepp.html#a606d38abb5608efdfdb0c3bdb945ef23">train_single_intersect()</a></code> on <code>intersection</code>, <code>ref</code> and <code>labels</code>.</td></tr>
@@ -1311,7 +1312,7 @@ template&lt;<a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir"></td><td class="paramname">intersection</td><td>Vector defining the intersection of genes between the test and reference datasets, see <code><a class="el" href="namespacesinglepp.html#a22b70c4d5949e28af164723543361214">intersect_genes()</a></code> for more details. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">intersection</td><td>Vector defining the intersection of genes between the test and reference datasets. Each pair corresponds to a gene where the first and second elements represent the row indices of that gene in the test and reference matrices, respectively. See <code><a class="el" href="namespacesinglepp.html#a22b70c4d5949e28af164723543361214">intersect_genes()</a></code> for more details. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">ref</td><td>An expression matrix for the reference expression profiles, where rows are genes and columns are cells. This should have non-zero columns. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each reference profile. Labels should be integers in \([0, L)\) where \(L\) is the total number of unique labels. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">markers</td><td>A vector of vectors of ranked marker genes for each pairwise comparison between labels, see <code><a class="el" href="namespacesinglepp.html#a87e4be0939142d883ad98944e6336a5c">singlepp::Markers</a></code> for more details. </td></tr>
