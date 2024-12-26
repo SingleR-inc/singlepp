@@ -134,6 +134,9 @@ void classify_single(
     const ClassifySingleBuffers<Label_, Float_>& buffers,
     const ClassifySingleOptions<Float_>& options) 
 {
+    if (trained.get_test_nrow() != test.nrow()) {
+        throw std::runtime_error("number of rows in 'test' is not the same as that used to build 'trained'");
+    }
     internal::annotate_cells_single(
         test, 
         trained.get_subset(),
@@ -172,6 +175,9 @@ void classify_single_intersect(
     const ClassifySingleBuffers<Label_, Float_>& buffers,
     const ClassifySingleOptions<Float_>& options) 
 {
+    if (trained.get_test_nrow() != static_cast<Index_>(-1) && trained.get_test_nrow() != test.nrow()) {
+        throw std::runtime_error("number of rows in 'test' is not the same as that used to build 'trained'");
+    }
     internal::annotate_cells_single(
         test, 
         trained.get_test_subset(),

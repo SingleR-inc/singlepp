@@ -54,17 +54,6 @@ protected:
     static std::vector<int> simulate_ref_ids(size_t ngenes, int seed) {
         return simulate_ids(ngenes, seed, MISSING_REF_ID); // -1 => unique to the reference.
     }
-
-    static singlepp::Markers<int> truncate_markers(singlepp::Markers<int> remarkers, int ntop) {
-        for (auto& x : remarkers) {
-            for (auto& y : x) {
-                if (y.size() > static_cast<size_t>(ntop)) {
-                    y.resize(ntop);
-                }
-            }
-        }
-        return remarkers;
-    }
 };
 
 /********************************************/
@@ -286,6 +275,84 @@ INSTANTIATE_TEST_SUITE_P(
 
 /********************************************/
 
+class TrainIntegratedMismatchTest : public ::testing::Test, public IntegratedTestCore {
+protected:
+    inline static std::vector<std::shared_ptr<tatami::Matrix<double, int> > > sub_references;
+
+    void SetUp() {
+        assemble();
+        for (size_t r = 0; r < nrefs; ++r) {
+            sub_references.emplace_back(new tatami::DelayedSubsetBlock<double, int>(references[r], r, ngenes - r, true));
+        }
+    }
+};
+
+TEST_F(TrainIntegratedMismatchTest, Simple) {
+    singlepp::TrainSingleOptions<int, double> bopt;
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > inputs;
+    for (size_t r = 0; r < nrefs; ++r) {
+        const auto& sref = *(sub_references[r]);
+        auto pre = singlepp::train_single(sref, labels[r].data(), markers[r], bopt);
+        inputs.push_back(singlepp::prepare_integrated_input(sref, labels[r].data(), pre));
+    }
+
+    bool failed = false;
+    singlepp::TrainIntegratedOptions iopt;
+    try {
+        singlepp::train_integrated(std::move(inputs), iopt);
+    } catch (std::exception& e) {
+        EXPECT_TRUE(std::string(e.what()).find("inconsistent number of rows") != std::string::npos);
+        failed = true;
+    }
+    EXPECT_TRUE(failed);
+}
+
+TEST_F(TrainIntegratedMismatchTest, Intersect) {
+    singlepp::TrainSingleOptions<int, double> bopt;
+    std::vector<singlepp::TrainedSingleIntersect<int, double> > single_ref;
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > inputs;
+
+    int base_seed = 6969;
+    for (size_t r = 0; r < nrefs; ++r) {
+        const auto& srefmat = *sub_references[r];
+        size_t curgenes = srefmat.nrow();
+        auto test_ids = simulate_test_ids(curgenes, base_seed * 10 + r);
+        auto ref_ids = simulate_ref_ids(curgenes, base_seed * 20 + r);
+        auto labptr = labels[r].data();
+        auto pre = singlepp::train_single_intersect<int>(test_ids.size(), test_ids.data(), srefmat, ref_ids.data(), labptr, markers[r], bopt);
+        inputs.push_back(singlepp::prepare_integrated_input_intersect<int>(curgenes, test_ids.data(), srefmat, ref_ids.data(), labptr, pre));
+        single_ref.push_back(std::move(pre));
+    }
+
+    bool failed = false;
+    singlepp::TrainIntegratedOptions iopt;
+    try {
+        singlepp::train_integrated(std::move(inputs), iopt);
+    } catch (std::exception& e) {
+        EXPECT_TRUE(std::string(e.what()).find("inconsistent number of rows") != std::string::npos);
+        failed = true;
+    }
+    EXPECT_TRUE(failed);
+}
+
+/********************************************/
+
+template<class Prebuilt_>
+static std::vector<std::vector<int> > mock_best_choices(size_t ntest, const std::vector<Prebuilt_>& prebuilts, size_t seed) {
+    size_t nrefs = prebuilts.size();
+    std::vector<std::vector<int> > chosen(nrefs);
+
+    std::mt19937_64 rng(seed);
+    for (size_t r = 0; r < nrefs; ++r) {
+        size_t nlabels = prebuilts[r].get_markers().size();
+        for (size_t t = 0; t < ntest; ++t) {
+            chosen[r].push_back(rng() % nlabels);
+        }
+    }
+
+    return chosen;
+}
+
 class ClassifyIntegratedTest : public ::testing::TestWithParam<std::tuple<int, double> >, public IntegratedTestCore {
 protected:
     static void SetUpTestSuite() {
@@ -297,22 +364,6 @@ protected:
     inline static std::shared_ptr<tatami::Matrix<double, int> > test;
 
 protected:
-    template<class Prebuilt_>
-    static std::vector<std::vector<int> > mock_best_choices(size_t ntest, const std::vector<Prebuilt_>& prebuilts, size_t seed) {
-        size_t nrefs = prebuilts.size();
-        std::vector<std::vector<int> > chosen(nrefs);
-
-        std::mt19937_64 rng(seed);
-        for (size_t r = 0; r < nrefs; ++r) {
-            size_t nlabels = prebuilts[r].get_markers().size();
-            for (size_t t = 0; t < ntest; ++t) {
-                chosen[r].push_back(rng() % nlabels);
-            }
-        }
-
-        return chosen;
-    }
-
     static auto split_by_labels(const std::vector<std::vector<int> >& labels) {
         std::vector<std::vector<std::vector<int> > > by_labels(labels.size());
         for (size_t r = 0, nrefs = labels.size(); r < nrefs; ++r) {
@@ -526,6 +577,29 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
             EXPECT_EQ(output.scores[r], poutput.scores[r]);
         }
     }
+
+    // Back-compatibility check.
+    {
+        std::vector<singlepp::TrainIntegratedInput<double, int, int> > inputs;
+        std::vector<singlepp::Intersection<int> > intersections;
+        auto idptr = test_ids.data();
+        for (size_t r = 0; r < nrefs; ++r) {
+            auto refptr = ref_ids[r].data();
+            auto labptr = labels[r].data();
+            const auto& refmat = *references[r];
+            intersections.push_back(singlepp::intersect_genes<int>(test_ids.size(), idptr, refmat.nrow(), refptr));
+            inputs.push_back(singlepp::prepare_integrated_input_intersect<int>(intersections.back(), refmat, labptr, prebuilts[r]));
+        }
+
+        singlepp::TrainIntegratedOptions iopt;
+        auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
+        auto boutput = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated, copt);
+        EXPECT_EQ(boutput.best, output.best);
+        EXPECT_EQ(boutput.delta, output.delta);
+        for (size_t r = 0; r < nrefs; ++r) {
+            EXPECT_EQ(boutput.scores[r], output.scores[r]);
+        }
+    }
 }
 
 TEST_P(ClassifyIntegratedTest, IntersectedComparison) {
@@ -620,3 +694,49 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Values(0.5, 0.8, 0.9) // number of quantiles.
     )
 );
+
+/********************************************/
+
+class ClassifyIntegratedMismatchTest : public ::testing::Test, public IntegratedTestCore {
+protected:
+    static void SetUpTestSuite() {
+        assemble();
+    }
+};
+
+TEST_F(ClassifyIntegratedMismatchTest, Basic) {
+    singlepp::TrainSingleOptions<int, double> bopt;
+    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
+
+    for (size_t r = 0; r < nrefs; ++r) {
+        auto pre = singlepp::train_single(*(references[r]), labels[r].data(), markers[r], bopt);
+        prebuilts.push_back(std::move(pre));
+        integrated_inputs.push_back(singlepp::prepare_integrated_input(*(references[r]), labels[r].data(), prebuilts.back()));
+    }
+
+    singlepp::TrainIntegratedOptions iopt;
+    auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
+
+    // Mocking up the test dataset and its choices.
+    size_t ntest = 20;
+    auto test = spawn_matrix(ngenes * 2, ntest, 69); // more genes than expected.
+
+    int base_seed = 70;
+    auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ base_seed);
+    std::vector<const int*> chosen_ptrs(nrefs);
+    for (size_t r = 0; r < nrefs; ++r) {
+        chosen_ptrs[r] = chosen[r].data();
+    }
+
+    // Verifying that it does, in fact, fail.
+    singlepp::ClassifyIntegratedOptions<double> copt;
+    bool failed = false;
+    try {
+        singlepp::classify_integrated(*test, chosen_ptrs, integrated, copt);
+    } catch (std::exception& e) {
+        EXPECT_TRUE(std::string(e.what()).find("number of rows") != std::string::npos);
+        failed = true;
+    }
+    EXPECT_TRUE(failed);
+}

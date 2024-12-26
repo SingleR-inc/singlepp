@@ -35,6 +35,8 @@ struct TrainIntegratedInput {
     /**
      * @cond
      */
+    Index_ test_nrow;
+
     const tatami::Matrix<Value_, Index_>* ref;
 
     const Label_* labels;
@@ -76,6 +78,7 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input(
     const TrainedSingle<Index_, Float_>& trained)
 {
     TrainIntegratedInput<Value_, Index_, Label_> output;
+    output.test_nrow = ref.nrow(); // remember, test and ref are assumed to have the same features.
     output.ref = &ref;
     output.labels = labels;
 
@@ -115,25 +118,29 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input(
  * @tparam Label_ Integer type for the reference labels.
  * @tparam Float_ Floating-point type for the correlations and scores.
  *
+ * @param test_nrow Number of features in the test dataset.
  * @param intersection Vector defining the intersection of genes between the test and reference datasets. 
  * Each pair corresponds to a gene where the first and second elements represent the row indices of that gene in the test and reference matrices, respectively.
+ * The first element of each pair should be non-negative and less than `test_nrow`, while the second element should be non-negative and less than `ref->nrow()`.
  * See `intersect_genes()` for more details.
  * @param ref Matrix containing the reference expression values, where rows are genes and columns are reference profiles.
  * The number and identity of genes should be consistent with `intersection`.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
  * Values should be integers in \f$[0, L)\f$ where \f$L\f$ is the number of unique labels.
- * @param trained Classifier created by calling `train_single_intersect()` on `intersection`, `ref` and `labels`.
+ * @param trained Classifier created by calling `train_single_intersect()` on `test_nrow`, `intersection`, `ref` and `labels`.
  *
  * @return An opaque input object for `train_integrated()`.
  */
 template<typename Index_, typename Value_, typename Label_, typename Float_>
 TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
+    Index_ test_nrow,
     const Intersection<Index_>& intersection,
     const tatami::Matrix<Value_, Index_>& ref, 
     const Label_* labels, 
     const TrainedSingleIntersect<Index_, Float_>& trained) 
 {
     TrainIntegratedInput<Value_, Index_, Label_> output;
+    output.test_nrow = test_nrow;
     output.ref = &ref;
     output.labels = labels;
 
@@ -165,6 +172,23 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
     output.user_intersection = &intersection;
     return output;
 }
+
+/**
+ * @cond
+ */
+// For back-compatibility only.
+template<typename Index_, typename Value_, typename Label_, typename Float_>
+TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
+    const Intersection<Index_>& intersection,
+    const tatami::Matrix<Value_, Index_>& ref, 
+    const Label_* labels, 
+    const TrainedSingleIntersect<Index_, Float_>& trained) 
+{
+    return prepare_integrated_input_intersect<Index_, Value_, Label_, Float_>(-1, intersection, ref, labels, trained);
+}
+/**
+ * @endcond
+ */
 
 /**
  * Prepare a reference dataset for `train_integrated()`.
@@ -202,7 +226,7 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
     const TrainedSingleIntersect<Index_, Float_>& trained) 
 {
     auto intersection = intersect_genes(test_nrow, test_id, ref.nrow(), ref_id);
-    auto output = prepare_integrated_input_intersect(intersection, ref, labels, trained);
+    auto output = prepare_integrated_input_intersect(test_nrow, intersection, ref, labels, trained);
     output.user_intersection = NULL;
     output.auto_intersection.swap(intersection);
     return output;
@@ -248,6 +272,7 @@ public:
      */
     // Technically this should be private, but it's a pain to add
     // templated friend functions, so I can't be bothered.
+    Index_ test_nrow;
     std::vector<Index_> universe; // To be used by classify_integrated() for indexed extraction.
 
     std::vector<uint8_t> check_availability;
@@ -410,6 +435,16 @@ TrainedIntegrated<Index_> train_integrated(Inputs_& inputs, const TrainIntegrate
     output.available.resize(nrefs);
     output.markers.resize(nrefs);
     output.ranked.resize(nrefs);
+
+    // Checking that the number of genes in the test dataset are consistent.
+    output.test_nrow = -1;
+    for (const auto& in : inputs) {
+        if (output.test_nrow == static_cast<Index_>(-1)) {
+            output.test_nrow = in.test_nrow;
+        } else if (in.test_nrow != static_cast<Index_>(-1) && in.test_nrow != output.test_nrow) {
+            throw std::runtime_error("inconsistent number of rows in the test dataset across entries of 'inputs'");
+        }
+    }
 
     // Identify the union of all marker genes.
     std::unordered_map<Index_, Index_> remap_to_universe;
