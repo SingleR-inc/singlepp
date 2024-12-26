@@ -291,6 +291,13 @@
     <templarg>typename Index_</templarg>
     <templarg>typename Float_</templarg>
     <member kind="function">
+      <type>Index_</type>
+      <name>get_test_nrow</name>
+      <anchorfile>classsinglepp_1_1TrainedSingle.html</anchorfile>
+      <anchor>a7f4f34d6d10ebf69fc22b69cf8306666</anchor>
+      <arglist>() const</arglist>
+    </member>
+    <member kind="function">
       <type>const Markers&lt; Index_ &gt; &amp;</type>
       <name>get_markers</name>
       <anchorfile>classsinglepp_1_1TrainedSingle.html</anchorfile>
@@ -324,6 +331,13 @@
     <filename>classsinglepp_1_1TrainedSingleIntersect.html</filename>
     <templarg>typename Index_</templarg>
     <templarg>typename Float_</templarg>
+    <member kind="function">
+      <type>Index_</type>
+      <name>get_test_nrow</name>
+      <anchorfile>classsinglepp_1_1TrainedSingleIntersect.html</anchorfile>
+      <anchor>a5f836d3681b61bb1c5b6b9fc7fbb074f</anchor>
+      <arglist>() const</arglist>
+    </member>
     <member kind="function">
       <type>const Markers&lt; Index_ &gt; &amp;</type>
       <name>get_markers</name>
@@ -509,8 +523,8 @@
       <type>TrainedSingleIntersect&lt; Index_, Float_ &gt;</type>
       <name>train_single_intersect</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>a606d38abb5608efdfdb0c3bdb945ef23</anchor>
-      <arglist>(const Intersection&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, Markers&lt; Index_ &gt; markers, const TrainSingleOptions&lt; Index_, Float_ &gt; &amp;options)</arglist>
+      <anchor>a96846462f632dd26f8113aa97da97c91</anchor>
+      <arglist>(Index_ test_nrow, const Intersection&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, Markers&lt; Index_ &gt; markers, const TrainSingleOptions&lt; Index_, Float_ &gt; &amp;options)</arglist>
     </member>
     <member kind="function">
       <type>TrainedSingleIntersect&lt; Index_, Float_ &gt;</type>
@@ -544,8 +558,8 @@
       <type>TrainIntegratedInput&lt; Value_, Index_, Label_ &gt;</type>
       <name>prepare_integrated_input_intersect</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>a00d24ce81780d784bf9809afdad00736</anchor>
-      <arglist>(const Intersection&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, const TrainedSingleIntersect&lt; Index_, Float_ &gt; &amp;trained)</arglist>
+      <anchor>a5da95a907514caf12c99a9f3fd83aa20</anchor>
+      <arglist>(Index_ test_nrow, const Intersection&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, const TrainedSingleIntersect&lt; Index_, Float_ &gt; &amp;trained)</arglist>
     </member>
     <member kind="function">
       <type>TrainIntegratedInput&lt; Value_, Index_, Label_ &gt;</type>
