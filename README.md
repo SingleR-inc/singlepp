@@ -1,9 +1,9 @@
 # C++ port of SingleR 
 
-![Unit tests](https://github.com/singler-inc/singlepp/actions/workflows/run-tests.yaml/badge.svg)
-![Documentation](https://github.com/singler-inc/singlepp/actions/workflows/doxygenate.yaml/badge.svg)
-![R comparison](https://github.com/singler-inc/singlepp/actions/workflows/compare-r.yaml/badge.svg)
-[![codecov](https://codecov.io/gh/singler-inc/singlepp/branch/master/graph/badge.svg?token=OYTGM9IRSE)](https://codecov.io/gh/singler-inc/singlepp)
+![Unit tests](https://github.com/SingleR-inc/singlepp/actions/workflows/run-tests.yaml/badge.svg)
+![Documentation](https://github.com/SingleR-inc/singlepp/actions/workflows/doxygenate.yaml/badge.svg)
+![R comparison](https://github.com/SingleR-inc/singlepp/actions/workflows/compare-r.yaml/badge.svg)
+[![codecov](https://codecov.io/gh/SingleR-inc/singlepp/branch/master/graph/badge.svg?token=OYTGM9IRSE)](https://codecov.io/gh/SingleR-inc/singlepp)
 
 ## Overview
 
@@ -30,7 +30,7 @@ ref_labels;
 // Prepare a vector of vectors of markers for pairwise comparisons between labels.
 ref_markers;
 
-// Building the classifier.
+// Training the classifier.
 singlepp::TrainSingleOptions train_opt;
 auto trained = singlepp::train_single(
     ref_mat,
@@ -39,7 +39,7 @@ auto trained = singlepp::train_single(
     train_opt
 );
 
-// Running the classification on the test matrix.
+// Classifying cells in the test matrix.
 singlepp::ClassifySingleOptions class_opt;
 auto res = singlepp::classify_single(test_mat, trained, class_opt);
 ```
@@ -85,7 +85,7 @@ as the top set will not be contaminated by genes that are not present in the tes
 ## Intersecting feature sets
 
 Often the reference dataset will not have the same genes as the test dataset.
-To handle this case, users should use `train_single_intersect()` with identifiers for the rows of the reference and test matrices.
+To handle this case, users should call `train_single_intersect()` with the row identifiers of the reference and test matrices.
 
 ```cpp
 test_names; // vector of feature IDs for the test data
@@ -102,7 +102,7 @@ auto trained_intersect = singlepp::train_single_intersect(
 );
 ```
 
-Then, `classify_single_intersect()` will perform classification using only the intersection of genes:
+Then, `classify_single_intersect()` will perform classification using only the intersection of genes between the two datasets:
 
 ```cpp
 auto res_intersect = singlepp::classify_single_intersect(
@@ -134,6 +134,8 @@ We build the integrated classifier:
 std::vector<singlepp::TrainIntegratedInput<> > inputs;
 inputs.push_back(singlepp::prepare_integrated_input(refA_mat, refA_labels.data(), preA));
 inputs.push_back(singlepp::prepare_integrated_input(refB_mat, refB_labels.data(), preB));
+// If the genes are different between the test and reference datasets, use
+// prepare_integrated_input_intersect() instead.
 
 singlepp::TrainIntegratedOptions ti_opt;
 auto train_integrated = singlepp::train_integrated(inputs, ti_opt);
@@ -159,7 +161,7 @@ include(FetchContent)
 
 FetchContent_Declare(
   singlepp
-  GIT_REPOSITORY https://github.com/singler-inc/singlepp
+  GIT_REPOSITORY https://github.com/SingleR-inc/singlepp
   GIT_TAG master # or any version of interest
 )
 
@@ -198,7 +200,7 @@ See the tags in [`extern/CMakeLists.txt`](extern/CMakeLists.txt) to find compati
 ### Manual
 
 If you're not using CMake, the simple approach is to just copy the files in `include/` - either directly or with Git submodules - and include their path during compilation with, e.g., GCC's `-I`.
-This requires the external dependencies listed in [`extern/CMakeLists.txt`](extern/CMakeLists.txt), which also need to be made available during compilation.
+This assumes that the external dependencies listed in [`extern/CMakeLists.txt`](extern/CMakeLists.txt) are available during compilation.
 
 ## References
 
