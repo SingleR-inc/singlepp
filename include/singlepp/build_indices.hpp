@@ -28,15 +28,15 @@ size_t get_nlabels(size_t n, const Label_* labels) {
 template<typename Index_, typename Float_>
 struct PerLabelReference {
     std::vector<RankedVector<Index_, Index_> > ranked;
-    std::shared_ptr<knncolle::Prebuilt<Index_, Index_, Float_> > index;
+    std::shared_ptr<knncolle::Prebuilt<Index_, Float_, Float_> > index;
 };
 
-template<typename Value_, typename Index_, typename Label_, typename Float_>
+template<typename Value_, typename Index_, typename Label_, typename Float_, class Matrix_>
 std::vector<PerLabelReference<Index_, Float_> > build_indices(
     const tatami::Matrix<Value_, Index_>& ref,
     const Label_* labels,
     const std::vector<Index_>& subset,
-    const knncolle::Builder<knncolle::SimpleMatrix<Index_, Index_, Float_>, Float_>& builder,
+    const knncolle::Builder<Index_, Float_, Float_, Matrix_>& builder,
     int num_threads)
 {
     size_t NR = subset.size();
@@ -89,7 +89,7 @@ std::vector<PerLabelReference<Index_, Float_> > build_indices(
 
     tatami::parallelize([&](int, size_t start, size_t len) {
         for (size_t l = start, end = start + len; l < end; ++l) {
-            nnrefs[l].index = builder.build_shared(knncolle::SimpleMatrix<Index_, Index_, Float_>(NR, label_count[l], nndata[l].data()));
+            nnrefs[l].index = builder.build_shared(knncolle::SimpleMatrix<Index_, Float_>(NR, label_count[l], nndata[l].data()));
 
             // Trying to free the memory as we go along, to offset the copying
             // of nndata into the memory store owned by the knncolle index.

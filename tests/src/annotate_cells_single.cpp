@@ -22,7 +22,9 @@ protected:
         // Mocking up the reference indices.
         std::vector<int> subset(ngenes);
         std::iota(subset.begin(), subset.end(), 0);
-        indices = singlepp::internal::build_indices(*reference, labels.data(), subset, knncolle::VptreeBuilder(), 1);
+
+        knncolle::VptreeBuilder<int, double, double> builder(std::make_shared<knncolle::EuclideanDistance<double, double> >());
+        indices = singlepp::internal::build_indices(*reference, labels.data(), subset, builder, 1);
     }
 };
 

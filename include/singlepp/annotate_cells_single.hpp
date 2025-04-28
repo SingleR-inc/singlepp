@@ -4,6 +4,7 @@
 #include "defs.hpp"
 
 #include "tatami/tatami.hpp"
+#include "knncolle/knncolle.hpp"
 
 #include "Markers.hpp"
 #include "build_indices.hpp"
@@ -149,7 +150,7 @@ void annotate_cells_single(
         RankedVector<Value_, Index_> vec;
         vec.reserve(num_subset);
 
-        std::vector<std::unique_ptr<knncolle::Searcher<Index_, Float_> > > searchers;
+        std::vector<std::unique_ptr<knncolle::Searcher<Index_, Float_, Float_> > > searchers;
         searchers.reserve(num_labels);
         for (size_t r = 0; r < num_labels; ++r) {
             searchers.emplace_back(ref[r].index->initialize());
