@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['range_2ehpp_0',['range.hpp',['https://tatami-inc.github.io/tatami/range_8hpp.html',1,'']]]
+  ['prebuilt_2ehpp_0',['Prebuilt.hpp',['https://knncolle.github.io/knncolle/Prebuilt_8hpp.html',1,'']]]
 ];

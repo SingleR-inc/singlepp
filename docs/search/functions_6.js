@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['kmknnbuilder_0',['kmknnbuilder',['https://knncolle.github.io/knncolle/classknncolle_1_1KmknnBuilder.html#ae8338140eae1984a667f226475401491',1,'knncolle::KmknnBuilder::KmknnBuilder(Options options)'],['https://knncolle.github.io/knncolle/classknncolle_1_1KmknnBuilder.html#ac9a0a6e9e591b23b7bed3c16ab786ea3',1,'knncolle::KmknnBuilder::KmknnBuilder()=default']]],
-  ['kmknnprebuilt_1',['KmknnPrebuilt',['https://knncolle.github.io/knncolle/classknncolle_1_1KmknnPrebuilt.html#aa45f08f940ab256706b3c27d00d2992a',1,'knncolle::KmknnPrebuilt']]]
+  ['initialize_0',['initialize',['https://knncolle.github.io/knncolle/classknncolle_1_1BruteforcePrebuilt.html#aeac9a8865d093e6d019f7383ec556ec6',1,'knncolle::BruteforcePrebuilt::initialize()'],['https://knncolle.github.io/knncolle/classknncolle_1_1L2NormalizedPrebuilt.html#afb014f25024603b63877e5dee3ad3459',1,'knncolle::L2NormalizedPrebuilt::initialize()'],['https://knncolle.github.io/knncolle/classknncolle_1_1Prebuilt.html#aacc8819b7962ce27294cf0d42f6c6e68',1,'knncolle::Prebuilt::initialize()'],['https://knncolle.github.io/knncolle/classknncolle_1_1VptreePrebuilt.html#aa81f5ca04707010f2b8e56aac81f9196',1,'knncolle::VptreePrebuilt::initialize()']]],
+  ['intersect_5fgenes_1',['intersect_genes',['../namespacesinglepp.html#a22b70c4d5949e28af164723543361214',1,'singlepp']]],
+  ['is_5ffull_2',['is_full',['https://knncolle.github.io/knncolle/classknncolle_1_1NeighborQueue.html#ae459f76b2e81b65b7f437e01eea1689b',1,'knncolle::NeighborQueue']]]
 ];

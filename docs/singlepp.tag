@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
-<tagfile doxygen_version="1.9.8">
+<tagfile doxygen_version="1.12.0">
   <compound kind="file">
     <name>choose_classic_markers.hpp</name>
     <path>singlepp/</path>
@@ -397,25 +397,26 @@
     <filename>structsinglepp_1_1TrainSingleOptions.html</filename>
     <templarg>typename Index_</templarg>
     <templarg>typename Float_</templarg>
+    <templarg>class Matrix_</templarg>
     <member kind="variable">
       <type>int</type>
       <name>top</name>
       <anchorfile>structsinglepp_1_1TrainSingleOptions.html</anchorfile>
-      <anchor>aa72f73c9937301bd90c2fec19f523479</anchor>
+      <anchor>af45ac859255a937e08684870d12ab123</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>std::shared_ptr&lt; knncolle::Builder&lt; knncolle::SimpleMatrix&lt; Index_, Index_, Float_ &gt;, Float_ &gt; &gt;</type>
+      <type>std::shared_ptr&lt; knncolle::Builder&lt; Index_, Float_, Float_, Matrix_ &gt; &gt;</type>
       <name>trainer</name>
       <anchorfile>structsinglepp_1_1TrainSingleOptions.html</anchorfile>
-      <anchor>a36a62c8abfc04a46be71e2ba9e179a60</anchor>
+      <anchor>a40031e8c223fb65b0aa0dad922974ed7</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
       <type>int</type>
       <name>num_threads</name>
       <anchorfile>structsinglepp_1_1TrainSingleOptions.html</anchorfile>
-      <anchor>a23ecc04e6d269ad1ede160c7838b8a63</anchor>
+      <anchor>ab45efe2ac45394bb46bb4b186f234312</anchor>
       <arglist></arglist>
     </member>
   </compound>
@@ -439,14 +440,14 @@
       <type>std::vector&lt; std::vector&lt; std::vector&lt; Index_ &gt; &gt; &gt;</type>
       <name>Markers</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>a87e4be0939142d883ad98944e6336a5c</anchor>
+      <anchor>a1d147dc88bf87bef188bd24b56d0f571</anchor>
       <arglist></arglist>
     </member>
     <member kind="typedef">
       <type>std::vector&lt; std::pair&lt; Index_, Index_ &gt; &gt;</type>
       <name>Intersection</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>a24793af2399b65d4f290e28cc0ef475c</anchor>
+      <anchor>ae0c63a73c7c40ad5e6f47ef0f9abac5d</anchor>
       <arglist></arglist>
     </member>
     <member kind="typedef">
@@ -516,8 +517,8 @@
       <type>TrainedSingle&lt; Index_, Float_ &gt;</type>
       <name>train_single</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>abcea821671f9339e4e933be2ed123c6e</anchor>
-      <arglist>(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, Markers&lt; Index_ &gt; markers, const TrainSingleOptions&lt; Index_, Float_ &gt; &amp;options)</arglist>
+      <anchor>a9fc89c91fd655f9b1877f631bf20d352</anchor>
+      <arglist>(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, Markers&lt; Index_ &gt; markers, const TrainSingleOptions&lt; Index_, Float_, Matrix_ &gt; &amp;options)</arglist>
     </member>
     <member kind="function">
       <type>TrainedSingleIntersect&lt; Index_, Float_ &gt;</type>
@@ -530,8 +531,8 @@
       <type>TrainedSingleIntersect&lt; Index_, Float_ &gt;</type>
       <name>train_single_intersect</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>a11341bf58d0086e0ec03a5bafb91bcf3</anchor>
-      <arglist>(Index_ test_nrow, const Id_ *test_id, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Id_ *ref_id, const Label_ *labels, Markers&lt; Index_ &gt; markers, const TrainSingleOptions&lt; Index_, Float_ &gt; &amp;options)</arglist>
+      <anchor>a093757279cb45fcf7b1df51b71dfc8e1</anchor>
+      <arglist>(Index_ test_nrow, const Id_ *test_id, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Id_ *ref_id, const Label_ *labels, Markers&lt; Index_ &gt; markers, const TrainSingleOptions&lt; Index_, Float_, Matrix_ &gt; &amp;options)</arglist>
     </member>
     <member kind="function">
       <type>void</type>

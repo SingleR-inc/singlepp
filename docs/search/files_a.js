@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['searcher_2ehpp_0',['Searcher.hpp',['https://knncolle.github.io/knncolle/Searcher_8hpp.html',1,'']]],
-  ['simple_2ehpp_1',['simple.hpp',['https://tatami-inc.github.io/tatami/simple_8hpp.html',1,'']]],
-  ['singlepp_2ehpp_2',['singlepp.hpp',['../singlepp_8hpp.html',1,'']]],
-  ['subpar_2ehpp_3',['subpar.hpp',['https://tatami-inc.github.io/tatami/subpar_8hpp.html',1,'']]]
+  ['range_2ehpp_0',['range.hpp',['https://tatami-inc.github.io/tatami/range_8hpp.html',1,'']]],
+  ['report_5fall_5fneighbors_2ehpp_1',['report_all_neighbors.hpp',['https://knncolle.github.io/knncolle/report__all__neighbors_8hpp.html',1,'']]]
 ];

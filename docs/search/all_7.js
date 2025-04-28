@@ -1,10 +1,8 @@
 var searchData=
 [
-  ['kmknn_2ehpp_0',['Kmknn.hpp',['https://knncolle.github.io/knncolle/Kmknn_8hpp.html',1,'']]],
-  ['kmknnbuilder_1',['kmknnbuilder',['https://knncolle.github.io/knncolle/classknncolle_1_1KmknnBuilder.html',1,'knncolle::KmknnBuilder&lt; class Distance_, class Matrix_, typename Float_ &gt;'],['https://knncolle.github.io/knncolle/classknncolle_1_1KmknnBuilder.html#ae8338140eae1984a667f226475401491',1,'knncolle::KmknnBuilder::KmknnBuilder(Options options)'],['https://knncolle.github.io/knncolle/classknncolle_1_1KmknnBuilder.html#ac9a0a6e9e591b23b7bed3c16ab786ea3',1,'knncolle::KmknnBuilder::KmknnBuilder()=default']]],
-  ['kmknnoptions_2',['KmknnOptions',['https://knncolle.github.io/knncolle/structknncolle_1_1KmknnOptions.html',1,'knncolle']]],
-  ['kmknnprebuilt_3',['kmknnprebuilt',['https://knncolle.github.io/knncolle/classknncolle_1_1KmknnPrebuilt.html',1,'knncolle::KmknnPrebuilt&lt; class Distance_, typename Dim_, typename Index_, typename Store_, typename Float_ &gt;'],['https://knncolle.github.io/knncolle/classknncolle_1_1KmknnPrebuilt.html#aa45f08f940ab256706b3c27d00d2992a',1,'knncolle::KmknnPrebuilt::KmknnPrebuilt()']]],
-  ['kmknnsearcher_4',['KmknnSearcher',['https://knncolle.github.io/knncolle/classknncolle_1_1KmknnSearcher.html',1,'knncolle']]],
-  ['knncolle_5',['knncolle',['https://knncolle.github.io/knncolle/namespaceknncolle.html',1,'']]],
-  ['knncolle_2ehpp_6',['knncolle.hpp',['https://knncolle.github.io/knncolle/knncolle_8hpp.html',1,'']]]
+  ['initialize_0',['initialize',['https://knncolle.github.io/knncolle/classknncolle_1_1BruteforcePrebuilt.html#aeac9a8865d093e6d019f7383ec556ec6',1,'knncolle::BruteforcePrebuilt::initialize()'],['https://knncolle.github.io/knncolle/classknncolle_1_1L2NormalizedPrebuilt.html#afb014f25024603b63877e5dee3ad3459',1,'knncolle::L2NormalizedPrebuilt::initialize()'],['https://knncolle.github.io/knncolle/classknncolle_1_1Prebuilt.html#aacc8819b7962ce27294cf0d42f6c6e68',1,'knncolle::Prebuilt::initialize()'],['https://knncolle.github.io/knncolle/classknncolle_1_1VptreePrebuilt.html#aa81f5ca04707010f2b8e56aac81f9196',1,'knncolle::VptreePrebuilt::initialize()']]],
+  ['intersect_5fgenes_1',['intersect_genes',['../namespacesinglepp.html#a22b70c4d5949e28af164723543361214',1,'singlepp']]],
+  ['intersection_2',['Intersection',['../namespacesinglepp.html#ae0c63a73c7c40ad5e6f47ef0f9abac5d',1,'singlepp']]],
+  ['intersection_2ehpp_3',['Intersection.hpp',['../Intersection_8hpp.html',1,'']]],
+  ['is_5ffull_4',['is_full',['https://knncolle.github.io/knncolle/classknncolle_1_1NeighborQueue.html#ae459f76b2e81b65b7f437e01eea1689b',1,'knncolle::NeighborQueue']]]
 ];

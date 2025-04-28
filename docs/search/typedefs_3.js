@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['neighborlist_0',['NeighborList',['https://knncolle.github.io/knncolle/namespaceknncolle.html#a25d7a950cf7745b99bc834b79e064c09',1,'knncolle']]]
+  ['markers_0',['Markers',['../namespacesinglepp.html#a1d147dc88bf87bef188bd24b56d0f571',1,'singlepp']]]
 ];

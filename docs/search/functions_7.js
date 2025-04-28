@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['l2normalizedbuilder_0',['l2normalizedbuilder',['https://knncolle.github.io/knncolle/classknncolle_1_1L2NormalizedBuilder.html#a7f3702fbbf54bbbaceb925aa2936bd45',1,'knncolle::L2NormalizedBuilder::L2NormalizedBuilder(std::unique_ptr&lt; Builder&lt; L2NormalizedMatrix&lt; Matrix_ &gt;, Float_ &gt; &gt; builder)'],['https://knncolle.github.io/knncolle/classknncolle_1_1L2NormalizedBuilder.html#a16df727021e97c341b7ef957eb79dd23',1,'knncolle::L2NormalizedBuilder::L2NormalizedBuilder(Builder&lt; L2NormalizedMatrix&lt; Matrix_ &gt;, Float_ &gt; *builder)']]],
-  ['l2normalizedprebuilt_1',['L2NormalizedPrebuilt',['https://knncolle.github.io/knncolle/classknncolle_1_1L2NormalizedPrebuilt.html#a43c889080f754e44c6085cc10a46f32b',1,'knncolle::L2NormalizedPrebuilt']]],
-  ['l2normalizedsearcher_2',['L2NormalizedSearcher',['https://knncolle.github.io/knncolle/classknncolle_1_1L2NormalizedSearcher.html#ad97e99e0fd85202cce0357333a78a2a4',1,'knncolle::L2NormalizedSearcher']]]
+  ['l2normalizedbuilder_0',['L2NormalizedBuilder',['https://knncolle.github.io/knncolle/classknncolle_1_1L2NormalizedBuilder.html#a387250ea0ae7654b186545814cd51da3',1,'knncolle::L2NormalizedBuilder']]],
+  ['l2normalizedprebuilt_1',['L2NormalizedPrebuilt',['https://knncolle.github.io/knncolle/classknncolle_1_1L2NormalizedPrebuilt.html#a8e358a3bffddb15ea58428af9e475db0',1,'knncolle::L2NormalizedPrebuilt']]],
+  ['l2normalizedsearcher_2',['L2NormalizedSearcher',['https://knncolle.github.io/knncolle/classknncolle_1_1L2NormalizedSearcher.html#a5904180535cf1b42a6e986080d633355',1,'knncolle::L2NormalizedSearcher']]],
+  ['limit_3',['limit',['https://knncolle.github.io/knncolle/classknncolle_1_1NeighborQueue.html#ade4febddacc0e5725caa3c683486dcb0',1,'knncolle::NeighborQueue']]]
 ];
