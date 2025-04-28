@@ -151,7 +151,7 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span> </div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    <span class="keyword">const</span> <span class="keyword">auto</span>&amp; subset = trained.<a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a2054db73c1dfa8cff3024b9a89d8c304">get_subset</a>();</div>
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    <span class="keyword">const</span> <span class="keyword">auto</span>&amp; old_markers = trained.<a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#af950945f130f3d957fc06bf029117a9e">get_markers</a>();</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    <span class="keywordtype">size_t</span> nlabels = old_markers.size();</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    <span class="keyword">auto</span> nlabels = old_markers.size();</div>
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    <span class="comment">// Adding the markers for each label, indexed according to their</span></div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    <span class="comment">// position in the test matrix. This assumes that &#39;mat_subset&#39; is</span></div>
@@ -160,7 +160,7 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    new_markers.reserve(nlabels);</div>
 <div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    std::unordered_set&lt;Index_&gt; unified;</div>
 <div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span> </div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> i = 0; i &lt; nlabels; ++i) {</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    <span class="keywordflow">for</span> (<span class="keyword">decltype</span>(nlabels) i = 0; i &lt; nlabels; ++i) {</div>
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>        unified.clear();</div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; x : old_markers[i]) {</div>
 <div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>            unified.insert(x.begin(), x.end());</div>
@@ -192,14 +192,14 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span> </div>
 <div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>    <span class="comment">// Updating the markers so that they point to rows of the test matrix.</span></div>
 <div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>    <span class="keyword">const</span> <span class="keyword">auto</span>&amp; old_markers = trained.<a class="code hl_function" href="classsinglepp_1_1TrainedSingleIntersect.html#a6b8e1e521a826f67858f0c97c99c047e">get_markers</a>();</div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>    <span class="keywordtype">size_t</span> nlabels = old_markers.size();</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>    <span class="keyword">auto</span> nlabels = old_markers.size();</div>
 <div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>    <span class="keyword">auto</span>&amp; new_markers = output.markers;</div>
 <div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>    new_markers.resize(nlabels);</div>
 <div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span> </div>
 <div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>    <span class="keyword">const</span> <span class="keyword">auto</span>&amp; test_subset = trained.<a class="code hl_function" href="classsinglepp_1_1TrainedSingleIntersect.html#a82b8ce08c57b8dc6bbb2acd0a10ea9d7">get_test_subset</a>();</div>
 <div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>    std::unordered_set&lt;Index_&gt; unified;</div>
 <div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span> </div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> i = 0; i &lt; nlabels; ++i) {</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>    <span class="keywordflow">for</span> (<span class="keyword">decltype</span>(nlabels) i = 0; i &lt; nlabels; ++i) {</div>
 <div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>        <span class="keyword">const</span> <span class="keyword">auto</span>&amp; cur_old_markers = old_markers[i];</div>
 <div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span> </div>
 <div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>        unified.clear();</div>
@@ -253,20 +253,20 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00240" name="l00240"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedIntegrated.html">  240</a></span><span class="keyword">class </span><a class="code hl_class" href="classsinglepp_1_1TrainedIntegrated.html">TrainedIntegrated</a> {</div>
 <div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span><span class="keyword">public</span>:</div>
 <div class="foldopen" id="foldopen00245" data-start="{" data-end="}">
-<div class="line"><a id="l00245" name="l00245"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedIntegrated.html#ad71b65ed97da76741dacc690247b1239">  245</a></span>    <span class="keywordtype">size_t</span> <a class="code hl_function" href="classsinglepp_1_1TrainedIntegrated.html#ad71b65ed97da76741dacc690247b1239">num_references</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedIntegrated.html#a5a0e980d87d8d47e2a319558b11aeec7">  245</a></span>    std::size_t <a class="code hl_function" href="classsinglepp_1_1TrainedIntegrated.html#a5a0e980d87d8d47e2a319558b11aeec7">num_references</a>()<span class="keyword"> const </span>{</div>
 <div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>        <span class="keywordflow">return</span> markers.size();</div>
 <div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>    }</div>
 </div>
 <div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span> </div>
 <div class="foldopen" id="foldopen00253" data-start="{" data-end="}">
-<div class="line"><a id="l00253" name="l00253"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedIntegrated.html#a1e143e6103e7f64273ab6050c7ad4e4f">  253</a></span>    <span class="keywordtype">size_t</span> <a class="code hl_function" href="classsinglepp_1_1TrainedIntegrated.html#a1e143e6103e7f64273ab6050c7ad4e4f">num_labels</a>(<span class="keywordtype">size_t</span> r)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedIntegrated.html#af7e28abc4fc7c9b1f2645af46db94e8c">  253</a></span>    std::size_t <a class="code hl_function" href="classsinglepp_1_1TrainedIntegrated.html#af7e28abc4fc7c9b1f2645af46db94e8c">num_labels</a>(std::size_t r)<span class="keyword"> const </span>{</div>
 <div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>        <span class="keywordflow">return</span> markers[r].size();</div>
 <div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>    }</div>
 </div>
 <div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span> </div>
 <div class="foldopen" id="foldopen00261" data-start="{" data-end="}">
-<div class="line"><a id="l00261" name="l00261"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedIntegrated.html#a7a79785c99f5cd71388a3fe020171e38">  261</a></span>    <span class="keywordtype">size_t</span> <a class="code hl_function" href="classsinglepp_1_1TrainedIntegrated.html#a7a79785c99f5cd71388a3fe020171e38">num_profiles</a>(<span class="keywordtype">size_t</span> r)<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>        <span class="keywordtype">size_t</span> n = 0;</div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedIntegrated.html#adf3bc8f97fc1d012dae31e24b3c5d19a">  261</a></span>    std::size_t <a class="code hl_function" href="classsinglepp_1_1TrainedIntegrated.html#adf3bc8f97fc1d012dae31e24b3c5d19a">num_profiles</a>(std::size_t r)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>        std::size_t n = 0;</div>
 <div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; ref : ranked[r]) {</div>
 <div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>            n += ref.size();</div>
 <div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>        }</div>
@@ -295,9 +295,9 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span> </div>
 <div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span><span class="keyword">namespace </span>internal {</div>
 <div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span> </div>
-<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Value_, <span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Input_&gt;</div>
+<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Value_, <span class="keyword">typename</span> RefLabel_, <span class="keyword">typename</span> Input_, <span class="keyword">typename</span> Index_&gt;</div>
 <div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span><span class="keywordtype">void</span> train_integrated_per_reference(</div>
-<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>    <span class="keywordtype">size_t</span> ref_i,</div>
+<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>    RefLabel_ ref_i,</div>
 <div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>    Input_&amp; curinput,</div>
 <div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>    <a class="code hl_class" href="classsinglepp_1_1TrainedIntegrated.html">TrainedIntegrated&lt;Index_&gt;</a>&amp; output,</div>
 <div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>    <span class="keyword">const</span> std::unordered_map&lt;Index_, Index_&gt; remap_to_universe,</div>
@@ -323,7 +323,7 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span>    <span class="keyword">auto</span>&amp; cur_ranked = output.ranked[ref_i];</div>
 <div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span>    std::vector&lt;Index_&gt; positions;</div>
 <div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span>    {</div>
-<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>        <span class="keywordtype">size_t</span> nlabels = curmarkers.size();</div>
+<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>        <span class="keyword">auto</span> nlabels = curmarkers.size();</div>
 <div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span>        Index_ NC = ref.ncol();</div>
 <div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span>        positions.reserve(NC);                </div>
 <div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span> </div>
@@ -335,7 +335,7 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span>        }</div>
 <div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span> </div>
 <div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span>        cur_ranked.resize(nlabels);</div>
-<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span>        <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> l = 0; l &lt; nlabels; ++l) {</div>
+<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span>        <span class="keywordflow">for</span> (<span class="keyword">decltype</span>(nlabels) l = 0; l &lt; nlabels; ++l) {</div>
 <div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span>            cur_ranked[l].resize(samples_per_label[l]);</div>
 <div class="line"><a id="l00345" name="l00345"></a><span class="lineno">  345</span>        }</div>
 <div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span>    }</div>
@@ -405,7 +405,7 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00410" name="l00410"></a><span class="lineno">  410</span>            tmp_ranked.reserve(to_extract.size());</div>
 <div class="line"><a id="l00411" name="l00411"></a><span class="lineno">  411</span>            <span class="keyword">auto</span> ext = tatami::consecutive_extractor&lt;false&gt;(&amp;ref, <span class="keyword">false</span>, start, len, to_extract_ptr);</div>
 <div class="line"><a id="l00412" name="l00412"></a><span class="lineno">  412</span> </div>
-<div class="line"><a id="l00413" name="l00413"></a><span class="lineno">  413</span>            <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> c = start, end = start + len; c &lt; end; ++c) {</div>
+<div class="line"><a id="l00413" name="l00413"></a><span class="lineno">  413</span>            <span class="keywordflow">for</span> (Index_ c = start, end = start + len; c &lt; end; ++c) {</div>
 <div class="line"><a id="l00414" name="l00414"></a><span class="lineno">  414</span>                <span class="keyword">auto</span> ptr = ext-&gt;fetch(buffer.data());</div>
 <div class="line"><a id="l00415" name="l00415"></a><span class="lineno">  415</span> </div>
 <div class="line"><a id="l00416" name="l00416"></a><span class="lineno">  416</span>                tmp_ranked.clear();</div>
@@ -425,7 +425,7 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00430" name="l00430"></a><span class="lineno">  430</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Value_, <span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Inputs_&gt;</div>
 <div class="line"><a id="l00431" name="l00431"></a><span class="lineno">  431</span>TrainedIntegrated&lt;Index_&gt; train_integrated(Inputs_&amp; inputs, <span class="keyword">const</span> TrainIntegratedOptions&amp; options) {</div>
 <div class="line"><a id="l00432" name="l00432"></a><span class="lineno">  432</span>    TrainedIntegrated&lt;Index_&gt; output;</div>
-<div class="line"><a id="l00433" name="l00433"></a><span class="lineno">  433</span>    <span class="keywordtype">size_t</span> nrefs = inputs.size();</div>
+<div class="line"><a id="l00433" name="l00433"></a><span class="lineno">  433</span>    <span class="keyword">auto</span> nrefs = inputs.size();</div>
 <div class="line"><a id="l00434" name="l00434"></a><span class="lineno">  434</span>    output.check_availability.resize(nrefs);</div>
 <div class="line"><a id="l00435" name="l00435"></a><span class="lineno">  435</span>    output.available.resize(nrefs);</div>
 <div class="line"><a id="l00436" name="l00436"></a><span class="lineno">  436</span>    output.markers.resize(nrefs);</div>
@@ -457,7 +457,7 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00462" name="l00462"></a><span class="lineno">  462</span>        remap_to_universe[output.universe[i]] = i;</div>
 <div class="line"><a id="l00463" name="l00463"></a><span class="lineno">  463</span>    }</div>
 <div class="line"><a id="l00464" name="l00464"></a><span class="lineno">  464</span> </div>
-<div class="line"><a id="l00465" name="l00465"></a><span class="lineno">  465</span>    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> r = 0; r &lt; nrefs; ++r) {</div>
+<div class="line"><a id="l00465" name="l00465"></a><span class="lineno">  465</span>    <span class="keywordflow">for</span> (<span class="keyword">decltype</span>(nrefs) r = 0; r &lt; nrefs; ++r) {</div>
 <div class="line"><a id="l00466" name="l00466"></a><span class="lineno">  466</span>        train_integrated_per_reference&lt;Value_&gt;(r, inputs[r], output, remap_to_universe, options);</div>
 <div class="line"><a id="l00467" name="l00467"></a><span class="lineno">  467</span>    }</div>
 <div class="line"><a id="l00468" name="l00468"></a><span class="lineno">  468</span> </div>
@@ -484,17 +484,17 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00509" name="l00509"></a><span class="lineno">  509</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="aIntersection_8hpp_html"><div class="ttname"><a href="Intersection_8hpp.html">Intersection.hpp</a></div><div class="ttdoc">Create an intersection of genes.</div></div>
 <div class="ttc" id="aclasssinglepp_1_1TrainedIntegrated_html"><div class="ttname"><a href="classsinglepp_1_1TrainedIntegrated.html">singlepp::TrainedIntegrated</a></div><div class="ttdoc">Classifier that integrates multiple reference datasets.</div><div class="ttdef"><b>Definition</b> train_integrated.hpp:240</div></div>
-<div class="ttc" id="aclasssinglepp_1_1TrainedIntegrated_html_a1e143e6103e7f64273ab6050c7ad4e4f"><div class="ttname"><a href="classsinglepp_1_1TrainedIntegrated.html#a1e143e6103e7f64273ab6050c7ad4e4f">singlepp::TrainedIntegrated::num_labels</a></div><div class="ttdeci">size_t num_labels(size_t r) const</div><div class="ttdef"><b>Definition</b> train_integrated.hpp:253</div></div>
-<div class="ttc" id="aclasssinglepp_1_1TrainedIntegrated_html_a7a79785c99f5cd71388a3fe020171e38"><div class="ttname"><a href="classsinglepp_1_1TrainedIntegrated.html#a7a79785c99f5cd71388a3fe020171e38">singlepp::TrainedIntegrated::num_profiles</a></div><div class="ttdeci">size_t num_profiles(size_t r) const</div><div class="ttdef"><b>Definition</b> train_integrated.hpp:261</div></div>
-<div class="ttc" id="aclasssinglepp_1_1TrainedIntegrated_html_ad71b65ed97da76741dacc690247b1239"><div class="ttname"><a href="classsinglepp_1_1TrainedIntegrated.html#ad71b65ed97da76741dacc690247b1239">singlepp::TrainedIntegrated::num_references</a></div><div class="ttdeci">size_t num_references() const</div><div class="ttdef"><b>Definition</b> train_integrated.hpp:245</div></div>
-<div class="ttc" id="aclasssinglepp_1_1TrainedSingleIntersect_html"><div class="ttname"><a href="classsinglepp_1_1TrainedSingleIntersect.html">singlepp::TrainedSingleIntersect</a></div><div class="ttdoc">Classifier built from an intersection of genes.</div><div class="ttdef"><b>Definition</b> train_single.hpp:217</div></div>
-<div class="ttc" id="aclasssinglepp_1_1TrainedSingleIntersect_html_a6b8e1e521a826f67858f0c97c99c047e"><div class="ttname"><a href="classsinglepp_1_1TrainedSingleIntersect.html#a6b8e1e521a826f67858f0c97c99c047e">singlepp::TrainedSingleIntersect::get_markers</a></div><div class="ttdeci">const Markers&lt; Index_ &gt; &amp; get_markers() const</div><div class="ttdef"><b>Definition</b> train_single.hpp:259</div></div>
-<div class="ttc" id="aclasssinglepp_1_1TrainedSingleIntersect_html_a82b8ce08c57b8dc6bbb2acd0a10ea9d7"><div class="ttname"><a href="classsinglepp_1_1TrainedSingleIntersect.html#a82b8ce08c57b8dc6bbb2acd0a10ea9d7">singlepp::TrainedSingleIntersect::get_test_subset</a></div><div class="ttdeci">const std::vector&lt; Index_ &gt; &amp; get_test_subset() const</div><div class="ttdef"><b>Definition</b> train_single.hpp:268</div></div>
-<div class="ttc" id="aclasssinglepp_1_1TrainedSingle_html"><div class="ttname"><a href="classsinglepp_1_1TrainedSingle.html">singlepp::TrainedSingle</a></div><div class="ttdoc">Classifier trained from a single reference.</div><div class="ttdef"><b>Definition</b> train_single.hpp:88</div></div>
-<div class="ttc" id="aclasssinglepp_1_1TrainedSingle_html_a2054db73c1dfa8cff3024b9a89d8c304"><div class="ttname"><a href="classsinglepp_1_1TrainedSingle.html#a2054db73c1dfa8cff3024b9a89d8c304">singlepp::TrainedSingle::get_subset</a></div><div class="ttdeci">const std::vector&lt; Index_ &gt; &amp; get_subset() const</div><div class="ttdef"><b>Definition</b> train_single.hpp:135</div></div>
-<div class="ttc" id="aclasssinglepp_1_1TrainedSingle_html_af950945f130f3d957fc06bf029117a9e"><div class="ttname"><a href="classsinglepp_1_1TrainedSingle.html#af950945f130f3d957fc06bf029117a9e">singlepp::TrainedSingle::get_markers</a></div><div class="ttdeci">const Markers&lt; Index_ &gt; &amp; get_markers() const</div><div class="ttdef"><b>Definition</b> train_single.hpp:127</div></div>
+<div class="ttc" id="aclasssinglepp_1_1TrainedIntegrated_html_a5a0e980d87d8d47e2a319558b11aeec7"><div class="ttname"><a href="classsinglepp_1_1TrainedIntegrated.html#a5a0e980d87d8d47e2a319558b11aeec7">singlepp::TrainedIntegrated::num_references</a></div><div class="ttdeci">std::size_t num_references() const</div><div class="ttdef"><b>Definition</b> train_integrated.hpp:245</div></div>
+<div class="ttc" id="aclasssinglepp_1_1TrainedIntegrated_html_adf3bc8f97fc1d012dae31e24b3c5d19a"><div class="ttname"><a href="classsinglepp_1_1TrainedIntegrated.html#adf3bc8f97fc1d012dae31e24b3c5d19a">singlepp::TrainedIntegrated::num_profiles</a></div><div class="ttdeci">std::size_t num_profiles(std::size_t r) const</div><div class="ttdef"><b>Definition</b> train_integrated.hpp:261</div></div>
+<div class="ttc" id="aclasssinglepp_1_1TrainedIntegrated_html_af7e28abc4fc7c9b1f2645af46db94e8c"><div class="ttname"><a href="classsinglepp_1_1TrainedIntegrated.html#af7e28abc4fc7c9b1f2645af46db94e8c">singlepp::TrainedIntegrated::num_labels</a></div><div class="ttdeci">std::size_t num_labels(std::size_t r) const</div><div class="ttdef"><b>Definition</b> train_integrated.hpp:253</div></div>
+<div class="ttc" id="aclasssinglepp_1_1TrainedSingleIntersect_html"><div class="ttname"><a href="classsinglepp_1_1TrainedSingleIntersect.html">singlepp::TrainedSingleIntersect</a></div><div class="ttdoc">Classifier built from an intersection of genes.</div><div class="ttdef"><b>Definition</b> train_single.hpp:218</div></div>
+<div class="ttc" id="aclasssinglepp_1_1TrainedSingleIntersect_html_a6b8e1e521a826f67858f0c97c99c047e"><div class="ttname"><a href="classsinglepp_1_1TrainedSingleIntersect.html#a6b8e1e521a826f67858f0c97c99c047e">singlepp::TrainedSingleIntersect::get_markers</a></div><div class="ttdeci">const Markers&lt; Index_ &gt; &amp; get_markers() const</div><div class="ttdef"><b>Definition</b> train_single.hpp:260</div></div>
+<div class="ttc" id="aclasssinglepp_1_1TrainedSingleIntersect_html_a82b8ce08c57b8dc6bbb2acd0a10ea9d7"><div class="ttname"><a href="classsinglepp_1_1TrainedSingleIntersect.html#a82b8ce08c57b8dc6bbb2acd0a10ea9d7">singlepp::TrainedSingleIntersect::get_test_subset</a></div><div class="ttdeci">const std::vector&lt; Index_ &gt; &amp; get_test_subset() const</div><div class="ttdef"><b>Definition</b> train_single.hpp:269</div></div>
+<div class="ttc" id="aclasssinglepp_1_1TrainedSingle_html"><div class="ttname"><a href="classsinglepp_1_1TrainedSingle.html">singlepp::TrainedSingle</a></div><div class="ttdoc">Classifier trained from a single reference.</div><div class="ttdef"><b>Definition</b> train_single.hpp:89</div></div>
+<div class="ttc" id="aclasssinglepp_1_1TrainedSingle_html_a2054db73c1dfa8cff3024b9a89d8c304"><div class="ttname"><a href="classsinglepp_1_1TrainedSingle.html#a2054db73c1dfa8cff3024b9a89d8c304">singlepp::TrainedSingle::get_subset</a></div><div class="ttdeci">const std::vector&lt; Index_ &gt; &amp; get_subset() const</div><div class="ttdef"><b>Definition</b> train_single.hpp:136</div></div>
+<div class="ttc" id="aclasssinglepp_1_1TrainedSingle_html_af950945f130f3d957fc06bf029117a9e"><div class="ttname"><a href="classsinglepp_1_1TrainedSingle.html#af950945f130f3d957fc06bf029117a9e">singlepp::TrainedSingle::get_markers</a></div><div class="ttdeci">const Markers&lt; Index_ &gt; &amp; get_markers() const</div><div class="ttdef"><b>Definition</b> train_single.hpp:128</div></div>
 <div class="ttc" id="adefs_8hpp_html"><div class="ttname"><a href="defs_8hpp.html">defs.hpp</a></div><div class="ttdoc">Common definitions for singlepp.</div></div>
-<div class="ttc" id="anamespacesinglepp_html"><div class="ttname"><a href="namespacesinglepp.html">singlepp</a></div><div class="ttdoc">Cell type classification using the SingleR algorithm in C++.</div><div class="ttdef"><b>Definition</b> classify_single.hpp:19</div></div>
+<div class="ttc" id="anamespacesinglepp_html"><div class="ttname"><a href="namespacesinglepp.html">singlepp</a></div><div class="ttdoc">Cell type classification using the SingleR algorithm in C++.</div><div class="ttdef"><b>Definition</b> classify_single.hpp:20</div></div>
 <div class="ttc" id="anamespacesinglepp_html_a22b70c4d5949e28af164723543361214"><div class="ttname"><a href="namespacesinglepp.html#a22b70c4d5949e28af164723543361214">singlepp::intersect_genes</a></div><div class="ttdeci">Intersection&lt; Index_ &gt; intersect_genes(Index_ test_nrow, const Id_ *test_id, Index_ ref_nrow, const Id_ *ref_id)</div><div class="ttdef"><b>Definition</b> Intersection.hpp:54</div></div>
 <div class="ttc" id="anamespacesinglepp_html_a280f3bfb8b5a2e7e51233bc7382a8db1"><div class="ttname"><a href="namespacesinglepp.html#a280f3bfb8b5a2e7e51233bc7382a8db1">singlepp::prepare_integrated_input</a></div><div class="ttdeci">TrainIntegratedInput&lt; Value_, Index_, Label_ &gt; prepare_integrated_input(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, const TrainedSingle&lt; Index_, Float_ &gt; &amp;trained)</div><div class="ttdef"><b>Definition</b> train_integrated.hpp:75</div></div>
 <div class="ttc" id="anamespacesinglepp_html_a5da95a907514caf12c99a9f3fd83aa20"><div class="ttname"><a href="namespacesinglepp.html#a5da95a907514caf12c99a9f3fd83aa20">singlepp::prepare_integrated_input_intersect</a></div><div class="ttdeci">TrainIntegratedInput&lt; Value_, Index_, Label_ &gt; prepare_integrated_input_intersect(Index_ test_nrow, const Intersection&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, const TrainedSingleIntersect&lt; Index_, Float_ &gt; &amp;trained)</div><div class="ttdef"><b>Definition</b> train_integrated.hpp:135</div></div>

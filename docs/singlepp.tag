@@ -264,25 +264,25 @@
     <filename>classsinglepp_1_1TrainedIntegrated.html</filename>
     <templarg>typename Index_</templarg>
     <member kind="function">
-      <type>size_t</type>
+      <type>std::size_t</type>
       <name>num_references</name>
       <anchorfile>classsinglepp_1_1TrainedIntegrated.html</anchorfile>
-      <anchor>ad71b65ed97da76741dacc690247b1239</anchor>
+      <anchor>a5a0e980d87d8d47e2a319558b11aeec7</anchor>
       <arglist>() const</arglist>
     </member>
     <member kind="function">
-      <type>size_t</type>
+      <type>std::size_t</type>
       <name>num_labels</name>
       <anchorfile>classsinglepp_1_1TrainedIntegrated.html</anchorfile>
-      <anchor>a1e143e6103e7f64273ab6050c7ad4e4f</anchor>
-      <arglist>(size_t r) const</arglist>
+      <anchor>af7e28abc4fc7c9b1f2645af46db94e8c</anchor>
+      <arglist>(std::size_t r) const</arglist>
     </member>
     <member kind="function">
-      <type>size_t</type>
+      <type>std::size_t</type>
       <name>num_profiles</name>
       <anchorfile>classsinglepp_1_1TrainedIntegrated.html</anchorfile>
-      <anchor>a7a79785c99f5cd71388a3fe020171e38</anchor>
-      <arglist>(size_t r) const</arglist>
+      <anchor>adf3bc8f97fc1d012dae31e24b3c5d19a</anchor>
+      <arglist>(std::size_t r) const</arglist>
     </member>
   </compound>
   <compound kind="class">
@@ -312,17 +312,17 @@
       <arglist>() const</arglist>
     </member>
     <member kind="function">
-      <type>size_t</type>
+      <type>std::size_t</type>
       <name>num_labels</name>
       <anchorfile>classsinglepp_1_1TrainedSingle.html</anchorfile>
-      <anchor>a8b6ede4f1878f128f9af840e0f0984d0</anchor>
+      <anchor>acd1d604b21e8deb287ccd5210b431bf8</anchor>
       <arglist>() const</arglist>
     </member>
     <member kind="function">
-      <type>size_t</type>
+      <type>std::size_t</type>
       <name>num_profiles</name>
       <anchorfile>classsinglepp_1_1TrainedSingle.html</anchorfile>
-      <anchor>ae9650051a7b4e54584670bb64bcf600e</anchor>
+      <anchor>ae1a317b134a501627abacd439f3425bd</anchor>
       <arglist>() const</arglist>
     </member>
   </compound>
@@ -360,17 +360,17 @@
       <arglist>() const</arglist>
     </member>
     <member kind="function">
-      <type>size_t</type>
+      <type>std::size_t</type>
       <name>num_labels</name>
       <anchorfile>classsinglepp_1_1TrainedSingleIntersect.html</anchorfile>
-      <anchor>add601cf587ac70be43e69abf501197fe</anchor>
+      <anchor>ab18d9f51ddc258439aecbeea4bc758c0</anchor>
       <arglist>() const</arglist>
     </member>
     <member kind="function">
-      <type>size_t</type>
+      <type>std::size_t</type>
       <name>num_profiles</name>
       <anchorfile>classsinglepp_1_1TrainedSingleIntersect.html</anchorfile>
-      <anchor>ae66e9daad1171ea3e28951a4974c292b</anchor>
+      <anchor>a082bf3ff596b4f374933dc57fcc67f11</anchor>
       <arglist>() const</arglist>
     </member>
   </compound>
@@ -591,11 +591,11 @@
       <arglist>(Index_ test_nrow, const Id_ *test_id, Index_ ref_nrow, const Id_ *ref_id)</arglist>
     </member>
     <member kind="function">
-      <type>size_t</type>
+      <type>std::size_t</type>
       <name>number_of_classic_markers</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>ac26ab7d42558905cab72d85e509cfb0c</anchor>
-      <arglist>(size_t num_labels)</arglist>
+      <anchor>a07ddd9b4767b701d525c7077f0c7e03f</anchor>
+      <arglist>(std::size_t num_labels)</arglist>
     </member>
     <member kind="function">
       <type>Markers&lt; Index_ &gt;</type>
