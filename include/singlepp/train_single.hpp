@@ -11,6 +11,7 @@
 
 #include <vector>
 #include <memory>
+#include <cstddef>
 
 /**
  * @file train_single.hpp
@@ -139,15 +140,15 @@ public:
     /**
      * @return Number of labels in this reference.
      */
-    size_t num_labels() const {
+    std::size_t num_labels() const {
         return my_references.size();
     }
 
     /**
      * @return Number of profiles in this reference.
      */
-    size_t num_profiles() const {
-        size_t n = 0;
+    std::size_t num_profiles() const {
+        std::size_t n = 0;
         for (const auto& ref : my_references) {
             n += ref.ranked.size();
         }
@@ -281,15 +282,15 @@ public:
     /**
      * @return Number of labels in this reference.
      */
-    size_t num_labels() const {
+    std::size_t num_labels() const {
         return my_references.size();
     }
 
     /**
      * @return Number of profiles in this reference.
      */
-    size_t num_profiles() const {
-        size_t n = 0;
+    std::size_t num_profiles() const {
+        std::size_t n = 0;
         for (const auto& ref : my_references) {
             n += ref.ranked.size();
         }
