@@ -40,7 +40,7 @@ std::vector<PerLabelReference<Index_, Float_> > build_indices(
     const knncolle::Builder<Index_, Float_, Float_, Matrix_>& builder,
     int num_threads)
 {
-    auto NR = subset.size();
+    std::size_t NR = subset.size();
     auto NC = ref.ncol();
     auto nlabels = get_nlabels(NC, labels);
 
@@ -59,7 +59,7 @@ std::vector<PerLabelReference<Index_, Float_> > build_indices(
             throw std::runtime_error(std::string("no entries for label ") + std::to_string(l));
         }
         nnrefs[l].ranked.resize(label_count[l]);
-        nndata[l].resize(static_cast<std::size_t>(label_count[l]) * static_cast<std::size_t>(NR)); // cast to size_t to avoid overflow issues.
+        nndata[l].resize(static_cast<std::size_t>(label_count[l]) * NR); // cast to size_t to avoid overflow issues.
     }
 
     SubsetSanitizer<Index_> subsorter(subset);
@@ -77,7 +77,7 @@ std::vector<PerLabelReference<Index_, Float_> > build_indices(
 
             auto curlab = labels[c];
             auto curoff = label_offsets[c];
-            auto scaled = nndata[curlab].data() + static_cast<std::size_t>(curoff) * static_cast<std::size_t>(NR); // cast to overflow to avoid overflow.
+            auto scaled = nndata[curlab].data() + static_cast<std::size_t>(curoff) * NR; // cast to overflow to avoid overflow.
             scaled_ranks(ranked, scaled); 
 
             // Storing as a pair of ints to save space; as long
