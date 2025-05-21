@@ -162,7 +162,7 @@ include(FetchContent)
 FetchContent_Declare(
   singlepp
   GIT_REPOSITORY https://github.com/SingleR-inc/singlepp
-  GIT_TAG master # or any version of interest
+  GIT_TAG master # replace with a pinned release
 )
 
 FetchContent_MakeAvailable(singlepp)
@@ -177,6 +177,10 @@ target_link_libraries(myexe singlepp)
 # For libaries
 target_link_libraries(mylib INTERFACE singlepp)
 ```
+
+By default, this will use `FetchContent` to fetch all external dependencies.
+Applications are advised to pin the versions of all dependencies - see [`extern/CMakeLists.txt`](extern/CMakeLists.txt) for suggested versions.
+If you want to install them manually, use `-DSINGLEPP_FETCH_EXTERN=OFF`.
 
 ### CMake with `find_package()`
 
@@ -193,9 +197,7 @@ cmake .. -DSINGLEPP_TESTS=OFF
 cmake --build . --target install
 ```
 
-By default, this will use `FetchContent` to fetch all external dependencies.
-If you want to install them manually, use `-DSINGLEPP_FETCH_EXTERN=OFF`.
-See the tags in [`extern/CMakeLists.txt`](extern/CMakeLists.txt) to find compatible versions of each dependency.
+Again, this will use `FetchContent` to retrieve dependencies, see comments above.
 
 ### Manual
 

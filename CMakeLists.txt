@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(singlepp
-    VERSION 2.0.1
+    VERSION 3.0.0
     DESCRIPTION "C++ port of the SingleR algorithm"
     LANGUAGES CXX)
 
@@ -22,7 +22,7 @@ option(SINGLEPP_FETCH_EXTERN "Automatically fetch singlepp's external dependenci
 if(SINGLEPP_FETCH_EXTERN)
     add_subdirectory(extern)
 else()
-    find_package(knncolle_knncolle 2.0.0 CONFIG REQUIRED)
+    find_package(knncolle_knncolle 3.0.0 CONFIG REQUIRED)
     find_package(tatami_tatami 3.0.0 CONFIG REQUIRED)
 endif()
 
