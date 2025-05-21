@@ -166,6 +166,9 @@ void annotate_cells_single(
 
             curscores.resize(num_labels);
             for (decltype(num_labels) r = 0; r < num_labels; ++r) {
+                // No need to use knncolle::cap_k_query(), as our quantile
+                // calculations guarantee that 'k' is less than or equal to the
+                // number of observations in the reference.
                 auto k = search_k[r];
                 searchers[r]->search(buffer.data(), k, NULL, &(distances));
 
