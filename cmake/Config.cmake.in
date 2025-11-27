@@ -2,6 +2,6 @@
 
 include(CMakeFindDependencyMacro)
 find_dependency(knncolle_knncolle 3.0.0 CONFIG REQUIRED)
-find_dependency(tatami_tatami 3.0.0 CONFIG REQUIRED)
+find_dependency(tatami_tatami 4.0.0 CONFIG REQUIRED)
 
 include("${CMAKE_CURRENT_LIST_DIR}/singler_singleppTargets.cmake")

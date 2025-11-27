@@ -1,7 +1,5 @@
-hnswlib-src
 aarand-src/include
-kmeans-src/include
 knncolle-src/include
 tatami-src/include
-powerit-src/include
 subpar-src/include
+sanisizer-src/include
