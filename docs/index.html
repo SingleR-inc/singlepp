@@ -157,7 +157,7 @@ $(function(){ initResizable(false); });
 <div class="fragment"><div class="line">test_names; <span class="comment">// vector of feature IDs for the test data</span></div>
 <div class="line">ref_names; <span class="comment">// vector of feature IDs for the reference data</span></div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">auto</span> trained_intersect = <a class="code hl_function" href="namespacesinglepp.html#a96846462f632dd26f8113aa97da97c91">singlepp::train_single_intersect</a>(</div>
+<div class="line"><span class="keyword">auto</span> trained_intersect = <a class="code hl_function" href="namespacesinglepp.html#ad2e949a84751e1cca2ddc757f5f4e581">singlepp::train_single_intersect</a>(</div>
 <div class="line">    test_mat.nrow(),</div>
 <div class="line">    test_names.data(),</div>
 <div class="line">    ref_mat,</div>
@@ -166,7 +166,7 @@ $(function(){ initResizable(false); });
 <div class="line">    ref_markers,</div>
 <div class="line">    train_opt</div>
 <div class="line">);</div>
-<div class="ttc" id="anamespacesinglepp_html_a96846462f632dd26f8113aa97da97c91"><div class="ttname"><a href="namespacesinglepp.html#a96846462f632dd26f8113aa97da97c91">singlepp::train_single_intersect</a></div><div class="ttdeci">TrainedSingleIntersect&lt; Index_, Float_ &gt; train_single_intersect(Index_ test_nrow, const Intersection&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, Markers&lt; Index_ &gt; markers, const TrainSingleOptions&lt; Index_, Float_ &gt; &amp;options)</div><div class="ttdef"><b>Definition</b> train_single.hpp:340</div></div>
+<div class="ttc" id="anamespacesinglepp_html_ad2e949a84751e1cca2ddc757f5f4e581"><div class="ttname"><a href="namespacesinglepp.html#ad2e949a84751e1cca2ddc757f5f4e581">singlepp::train_single_intersect</a></div><div class="ttdeci">TrainedSingleIntersect&lt; Index_, Float_ &gt; train_single_intersect(Index_ test_nrow, const Intersection&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, Markers&lt; Index_ &gt; markers, const TrainSingleOptions&lt; Index_, Float_, Matrix_ &gt; &amp;options)</div><div class="ttdef"><b>Definition</b> train_single.hpp:340</div></div>
 </div><!-- fragment --><p>Then, <code>classify_single_intersect()</code> will perform classification using only the intersection of genes between the two datasets:</p>
 <div class="fragment"><div class="line"><span class="keyword">auto</span> res_intersect = <a class="code hl_function" href="namespacesinglepp.html#ad7d214a5da53597d24dec5cec59e3beb">singlepp::classify_single_intersect</a>(</div>
 <div class="line">    test_mat,</div>

@@ -524,8 +524,8 @@
       <type>TrainedSingleIntersect&lt; Index_, Float_ &gt;</type>
       <name>train_single_intersect</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>a96846462f632dd26f8113aa97da97c91</anchor>
-      <arglist>(Index_ test_nrow, const Intersection&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, Markers&lt; Index_ &gt; markers, const TrainSingleOptions&lt; Index_, Float_ &gt; &amp;options)</arglist>
+      <anchor>ad2e949a84751e1cca2ddc757f5f4e581</anchor>
+      <arglist>(Index_ test_nrow, const Intersection&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, Markers&lt; Index_ &gt; markers, const TrainSingleOptions&lt; Index_, Float_, Matrix_ &gt; &amp;options)</arglist>
     </member>
     <member kind="function">
       <type>TrainedSingleIntersect&lt; Index_, Float_ &gt;</type>

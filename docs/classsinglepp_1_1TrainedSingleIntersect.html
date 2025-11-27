@@ -127,7 +127,7 @@ Public Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename Index_, typename Float_&gt;<br />
 class singlepp::TrainedSingleIntersect&lt; Index_, Float_ &gt;</div><p>Classifier built from an intersection of genes. </p>
-<p>Instances of this class should not be directly constructed, but instead returned by calling <code><a class="el" href="namespacesinglepp.html#a96846462f632dd26f8113aa97da97c91">train_single_intersect()</a></code>. This uses the intersection of genes between the test dataset and those of the reference dataset. Each instance can be used in <code><a class="el" href="namespacesinglepp.html#ad7d214a5da53597d24dec5cec59e3beb">classify_single_intersect()</a></code> with a test dataset that has the specified genes.</p>
+<p>Instances of this class should not be directly constructed, but instead returned by calling <code><a class="el" href="namespacesinglepp.html#ad2e949a84751e1cca2ddc757f5f4e581">train_single_intersect()</a></code>. This uses the intersection of genes between the test dataset and those of the reference dataset. Each instance can be used in <code><a class="el" href="namespacesinglepp.html#ad7d214a5da53597d24dec5cec59e3beb">classify_single_intersect()</a></code> with a test dataset that has the specified genes.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Index_</td><td>Integer type for the row/column indices of the matrix. </td></tr>
@@ -160,7 +160,7 @@ template&lt;typename Index_ , typename Float_ &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>A vector of vectors of ranked marker genes to be used in the classification. In the innermost vectors, each value is an index into the subset vectors (see <code><a class="el" href="#a82b8ce08c57b8dc6bbb2acd0a10ea9d7">get_test_subset()</a></code> and <code><a class="el" href="#ac2ec2b035a62da9b175f84a37486d1bf">get_ref_subset()</a></code>). e.g., <code><a class="el" href="#a82b8ce08c57b8dc6bbb2acd0a10ea9d7">get_test_subset()</a>[<a class="el" href="#a6b8e1e521a826f67858f0c97c99c047e">get_markers()</a>[2][1].front()]</code> is the test matrix row index of the first marker of the third label over the first label. The set of marker genes is a subset of those in the input <code>markers</code> in <code><a class="el" href="namespacesinglepp.html#a96846462f632dd26f8113aa97da97c91">train_single_intersect()</a></code>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A vector of vectors of ranked marker genes to be used in the classification. In the innermost vectors, each value is an index into the subset vectors (see <code><a class="el" href="#a82b8ce08c57b8dc6bbb2acd0a10ea9d7">get_test_subset()</a></code> and <code><a class="el" href="#ac2ec2b035a62da9b175f84a37486d1bf">get_ref_subset()</a></code>). e.g., <code><a class="el" href="#a82b8ce08c57b8dc6bbb2acd0a10ea9d7">get_test_subset()</a>[<a class="el" href="#a6b8e1e521a826f67858f0c97c99c047e">get_markers()</a>[2][1].front()]</code> is the test matrix row index of the first marker of the third label over the first label. The set of marker genes is a subset of those in the input <code>markers</code> in <code><a class="el" href="namespacesinglepp.html#ad2e949a84751e1cca2ddc757f5f4e581">train_single_intersect()</a></code>. </dd></dl>
 
 </div>
 </div>
@@ -188,7 +188,7 @@ template&lt;typename Index_ , typename Float_ &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>Subset of genes in the intersection for the test dataset. These are unique indices into the <code>ref_id</code> matrix supplied to <code><a class="el" href="namespacesinglepp.html#a96846462f632dd26f8113aa97da97c91">train_single_intersect()</a></code>, and can be assumed to represent row indices into the reference matrix. This has the same length as the subset vector returned by <code><a class="el" href="#a82b8ce08c57b8dc6bbb2acd0a10ea9d7">get_test_subset()</a></code>, where corresponding entries refer to the same genes in the respective datasets. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Subset of genes in the intersection for the test dataset. These are unique indices into the <code>ref_id</code> matrix supplied to <code><a class="el" href="namespacesinglepp.html#ad2e949a84751e1cca2ddc757f5f4e581">train_single_intersect()</a></code>, and can be assumed to represent row indices into the reference matrix. This has the same length as the subset vector returned by <code><a class="el" href="#a82b8ce08c57b8dc6bbb2acd0a10ea9d7">get_test_subset()</a></code>, where corresponding entries refer to the same genes in the respective datasets. </dd></dl>
 
 </div>
 </div>
@@ -244,7 +244,7 @@ template&lt;typename Index_ , typename Float_ &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>Subset of genes in the intersection for the test dataset. These are unique indices into the <code>test_id</code> array supplied to <code><a class="el" href="namespacesinglepp.html#a96846462f632dd26f8113aa97da97c91">train_single_intersect()</a></code>, and can be assumed to represent row indices into the test matrix. This has the same length as the subset vector returned by <code><a class="el" href="#ac2ec2b035a62da9b175f84a37486d1bf">get_ref_subset()</a></code>, where corresponding entries refer to the same genes in the respective datasets. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Subset of genes in the intersection for the test dataset. These are unique indices into the <code>test_id</code> array supplied to <code><a class="el" href="namespacesinglepp.html#ad2e949a84751e1cca2ddc757f5f4e581">train_single_intersect()</a></code>, and can be assumed to represent row indices into the test matrix. This has the same length as the subset vector returned by <code><a class="el" href="#ac2ec2b035a62da9b175f84a37486d1bf">get_ref_subset()</a></code>, where corresponding entries refer to the same genes in the respective datasets. </dd></dl>
 
 </div>
 </div>
