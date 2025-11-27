@@ -336,14 +336,14 @@ public:
  *
  * @return A pre-built classifier that can be used in `classify_single_intersect()`. 
  */
-template<typename Index_, typename Value_, typename Label_, typename Float_>
+template<typename Index_, typename Value_, typename Label_, typename Float_, class Matrix_>
 TrainedSingleIntersect<Index_, Float_> train_single_intersect(
     Index_ test_nrow,
     const Intersection<Index_>& intersection,
     const tatami::Matrix<Value_, Index_>& ref, 
     const Label_* labels,
     Markers<Index_> markers,
-    const TrainSingleOptions<Index_, Float_>& options)
+    const TrainSingleOptions<Index_, Float_, Matrix_>& options)
 {
     auto pairs = internal::subset_to_markers(intersection, markers, options.top);
     auto subref = internal::build_references(ref, labels, pairs.second, options);
@@ -362,7 +362,7 @@ TrainedSingleIntersect<Index_, Float_> train_single_intersect(
     Markers<Index_> markers,
     const TrainSingleOptions<Index_, Float_, Matrix_>& options)
 {
-    return train_single_intersect<Index_, Value_, Label_, Float_>(-1, intersection, ref, labels, std::move(markers), options);
+    return train_single_intersect<Index_, Value_, Label_, Float_, Matrix_>(-1, intersection, ref, labels, std::move(markers), options);
 }
 /**
  * @endcond
