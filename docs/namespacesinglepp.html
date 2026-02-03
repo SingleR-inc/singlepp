@@ -106,9 +106,6 @@ $(function(){ initResizable(false); });
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1ChooseClassicMarkersOptions.html">ChooseClassicMarkersOptions</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Options for <code><a class="el" href="#ae888912441a04acf856e74a9f4a0452b">choose_classic_markers()</a></code>.  <a href="structsinglepp_1_1ChooseClassicMarkersOptions.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1ClassifyIntegratedBuffers.html">ClassifyIntegratedBuffers</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output buffers for <code><a class="el" href="#ae8772734badf4a09d6c285b9b98295ec" title="Implements the SingleR algorithm for automated annotation of single-cell RNA-seq data.">classify_single()</a></code>.  <a href="structsinglepp_1_1ClassifyIntegratedBuffers.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -214,14 +211,6 @@ Functions</h2></td></tr>
 <tr class="memitem:a22b70c4d5949e28af164723543361214" id="r_a22b70c4d5949e28af164723543361214"><td class="memTemplParams" colspan="2">template&lt;typename Index_ , typename Id_ &gt; </td></tr>
 <tr class="memitem:a22b70c4d5949e28af164723543361214"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="#ae0c63a73c7c40ad5e6f47ef0f9abac5d">Intersection</a>&lt; Index_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a22b70c4d5949e28af164723543361214">intersect_genes</a> (Index_ test_nrow, const Id_ *test_id, Index_ ref_nrow, const Id_ *ref_id)</td></tr>
 <tr class="separator:a22b70c4d5949e28af164723543361214"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a07ddd9b4767b701d525c7077f0c7e03f" id="r_a07ddd9b4767b701d525c7077f0c7e03f"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a07ddd9b4767b701d525c7077f0c7e03f">number_of_classic_markers</a> (std::size_t num_labels)</td></tr>
-<tr class="separator:a07ddd9b4767b701d525c7077f0c7e03f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae888912441a04acf856e74a9f4a0452b" id="r_ae888912441a04acf856e74a9f4a0452b"><td class="memTemplParams" colspan="2">template&lt;typename Value_ , typename Index_ , typename Label_ &gt; </td></tr>
-<tr class="memitem:ae888912441a04acf856e74a9f4a0452b"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="#a1d147dc88bf87bef188bd24b56d0f571">Markers</a>&lt; Index_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ae888912441a04acf856e74a9f4a0452b">choose_classic_markers</a> (const std::vector&lt; const tatami::Matrix&lt; Value_, Index_ &gt; * &gt; &amp;representatives, const std::vector&lt; const Label_ * &gt; &amp;labels, const <a class="el" href="structsinglepp_1_1ChooseClassicMarkersOptions.html">ChooseClassicMarkersOptions</a> &amp;options)</td></tr>
-<tr class="separator:ae888912441a04acf856e74a9f4a0452b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae6b37c9c0ac535f7c85771fbeb98e4df" id="r_ae6b37c9c0ac535f7c85771fbeb98e4df"><td class="memTemplParams" colspan="2">template&lt;typename Value_ , typename Index_ , typename Label_ &gt; </td></tr>
-<tr class="memitem:ae6b37c9c0ac535f7c85771fbeb98e4df"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="#a1d147dc88bf87bef188bd24b56d0f571">Markers</a>&lt; Index_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ae6b37c9c0ac535f7c85771fbeb98e4df">choose_classic_markers</a> (const tatami::Matrix&lt; Value_, Index_ &gt; &amp;representative, const Label_ *labels, const <a class="el" href="structsinglepp_1_1ChooseClassicMarkersOptions.html">ChooseClassicMarkersOptions</a> &amp;options)</td></tr>
-<tr class="separator:ae6b37c9c0ac535f7c85771fbeb98e4df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Cell type classification using the SingleR algorithm in C++. </p>
@@ -353,98 +342,6 @@ template&lt;typename Index_  = DefaultIndex&gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="ae888912441a04acf856e74a9f4a0452b" name="ae888912441a04acf856e74a9f4a0452b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae888912441a04acf856e74a9f4a0452b">&#9670;&#160;</a></span>choose_classic_markers() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename Value_ , typename Index_ , typename Label_ &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="#a1d147dc88bf87bef188bd24b56d0f571">Markers</a>&lt; Index_ &gt; singlepp::choose_classic_markers </td>
-          <td>(</td>
-          <td class="paramtype">const std::vector&lt; const tatami::Matrix&lt; Value_, Index_ &gt; * &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>representatives</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const std::vector&lt; const Label_ * &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>labels</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="structsinglepp_1_1ChooseClassicMarkersOptions.html">ChooseClassicMarkersOptions</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>options</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Overload of <code><a class="el" href="#ae888912441a04acf856e74a9f4a0452b">choose_classic_markers()</a></code> that handles multiple references. When choosing markers for label \(A\) against \(B\), we only consider those references with both labels \(A\) and \(B\). For each gene, we compute the log-fold change within each reference, and then sum the log-fold changes across references; the ordering of the top genes is then performed using this sum. It is assumed that all references have the same number and ordering of features in their rows.</p>
-<dl class="tparams"><dt>Template Parameters</dt><dd>
-  <table class="tparams">
-    <tr><td class="paramname">Value_</td><td>Numeric type of matrix values. </td></tr>
-    <tr><td class="paramname">Index_</td><td>Integer type of matrix row/column indices. </td></tr>
-    <tr><td class="paramname">Label_</td><td>Integer type for the label identity.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">representatives</td><td>Vector of pointers to representative <b>tatami</b> matrices. Each matrix should contain no more than one column per label. Each column should contain a "representative" log-expression profile for that label, e.g., using the per-gene median expression across all samples assigned to that label. All matrices should have the same number of rows, corresponding to the same features. </td></tr>
-    <tr><td class="paramname">labels</td><td>Vector of pointers of length equal to <code>representatives</code>. Each array should be of length equal to the number of columns of the corresponding entry of <code>representatives</code>. Each value of the array should specify the label for the corresponding column in its matrix. Values should lie in \([0, L)\) for \(L\) unique labels across all entries of <code>labels</code>. </td></tr>
-    <tr><td class="paramname">options</td><td>Further options.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Top markers for each pairwise comparison between labels. </dd></dl>
-
-</div>
-</div>
-<a id="ae6b37c9c0ac535f7c85771fbeb98e4df" name="ae6b37c9c0ac535f7c85771fbeb98e4df"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae6b37c9c0ac535f7c85771fbeb98e4df">&#9670;&#160;</a></span>choose_classic_markers() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename Value_ , typename Index_ , typename Label_ &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="#a1d147dc88bf87bef188bd24b56d0f571">Markers</a>&lt; Index_ &gt; singlepp::choose_classic_markers </td>
-          <td>(</td>
-          <td class="paramtype">const tatami::Matrix&lt; Value_, Index_ &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>representative</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const Label_ *</td>          <td class="paramname"><span class="paramname"><em>labels</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="structsinglepp_1_1ChooseClassicMarkersOptions.html">ChooseClassicMarkersOptions</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>options</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Implements the classic <b>SingleR</b> method for choosing markers from (typically bulk) reference datasets. We assume that we have a matrix of representative expression profiles for each label, typically computed by averaging across all reference profiles for that label. For the comparison between labels \(A\) and \(B\), we define the marker set as the top genes with the largest positive differences in \(A\)'s profile over \(B\). This difference can be interpreted as the log-fold change if the input matrix contains log-expression values. If multiple genes have the same difference, ties are broken by favoring genes in earlier rows of the input matrix. The number of top genes can either be explicitly specified or it can be automatically determined from the number of labels.</p>
-<dl class="tparams"><dt>Template Parameters</dt><dd>
-  <table class="tparams">
-    <tr><td class="paramname">Value_</td><td>Numeric type of matrix values. </td></tr>
-    <tr><td class="paramname">Index_</td><td>Integer type of matrix row/column indices. </td></tr>
-    <tr><td class="paramname">Label_</td><td>Integer type for the label identity.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">representative</td><td>A representative matrix, containing one column per label. Each column should have a representative log-expression profile for that label. </td></tr>
-    <tr><td class="paramname">labels</td><td>Pointer to an array of length equal to the number of columns in <code>representative</code>. Each value of the array should specify the label for the corresponding column. Values should lie in \([0, L)\) for \(L\) unique labels. </td></tr>
-    <tr><td class="paramname">options</td><td>Further options.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Top markers for each pairwise comparison between labels. </dd></dl>
-
-</div>
-</div>
 <a id="a60f705dc3fdc122139e2102713e7ec41" name="a60f705dc3fdc122139e2102713e7ec41"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a60f705dc3fdc122139e2102713e7ec41">&#9670;&#160;</a></span>classify_integrated() <span class="overload">[1/2]</span></h2>
 
@@ -585,7 +482,7 @@ template&lt;typename Value_ , typename Index_ , typename Float_ , typename Label
 </div><div class="memdoc">
 
 <p>Implements the <a href="https://bioconductor.org/packages/SingleR"><b>SingleR</b></a> algorithm for automated annotation of single-cell RNA-seq data. </p>
-<p>For each cell, we compute the Spearman rank correlation between that cell and the reference expression profiles. This is done using only the subset of genes that are label-specific markers, most typically the top genes from pairwise comparisons between each label's expression profiles (see <code><a class="el" href="#ae888912441a04acf856e74a9f4a0452b">choose_classic_markers()</a></code> for an example). For each label, we take the correlations involving that label's reference profiles and convert it into a score. The label with the highest score is used as an initial label for that cell.</p>
+<p>For each cell, we compute the Spearman rank correlation between that cell and the reference expression profiles. This is done using only the subset of genes that are label-specific markers, most typically the top genes from pairwise comparisons between each label's expression profiles (see <code>choose_classic_markers()</code> for an example). For each label, we take the correlations involving that label's reference profiles and convert it into a score. The label with the highest score is used as an initial label for that cell.</p>
 <p>Next, we apply fine-tuning iterations to improve the label accuracy for each cell by refining the feature space. We find the subset of labels with scores that are "close enough" to the maximum score according to some threshold. We recompute the scores using only the markers for this subset of labels, and we repeat the process until only one label is left or the subset of labels no longer changes. At the end of the iterations, the label with the highest score (or the only label, if just one is left) is used as the label for the cell. This process aims to remove noise by eliminating irrelevant genes when attempting to distinguish closely related labels.</p>
 <p>Each label's score is defined as a user-specified quantile of the distribution of correlations across all reference profiles assigned to that label. Larger quantiles focus on similarity between the test cell and the closest profiles for a label, which is useful for broad labels with heterogeneous profiles. Smaller quantiles require the test cell to be similar to the majority of profiles for a label. The use of a quantile ensures that the score adjusts to the number of reference profiles per label; otherwise, just using the "top X correlations" would implicitly favor labels with more reference profiles.</p>
 <p>The choice of Spearman's correlation provides some robustness against batch effects when comparing reference and test datasets. Only the relative expression <em>within</em> each cell needs to be comparable, not their relative expression across cells. As a result, it does not matter whether raw counts are supplied or log-transformed expression values, as the latter is a monotonic transformation of the latter (within each cell). The algorithm is also robust to differences in technologies between reference and test profiles, though it is preferable to have like-for-like comparisons.</p>
@@ -805,39 +702,6 @@ template&lt;typename Index_ , typename Id_ &gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Intersection of genes between the two datasets. The first entry of each pair contains the row index in the test dataset while the second entry contains the row index in the reference. If duplicated identifiers are present in either of <code>test_id</code> or <code>ref_id</code>, only the first occurrence is considered in the intersection. </dd></dl>
-
-</div>
-</div>
-<a id="a07ddd9b4767b701d525c7077f0c7e03f" name="a07ddd9b4767b701d525c7077f0c7e03f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a07ddd9b4767b701d525c7077f0c7e03f">&#9670;&#160;</a></span>number_of_classic_markers()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::size_t singlepp::number_of_classic_markers </td>
-          <td>(</td>
-          <td class="paramtype">std::size_t</td>          <td class="paramname"><span class="paramname"><em>num_labels</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Choose the number of markers in <code><a class="el" href="#ae888912441a04acf856e74a9f4a0452b">choose_classic_markers()</a></code>. The exact expression is defined as \(500 (\frac{2}{3})^{\log_2{L}}\) for \(L\) labels, which steadily decreases the markers per comparison as the number of labels increases. This aims to avoid an excessive number of features when dealing with references with many labels.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">num_labels</td><td>Number of labels in the reference(s).</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>An appropriate number of markers for each pairwise comparison. </dd></dl>
 
 </div>
 </div>

@@ -280,7 +280,7 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>    Index_ test_nrow;</div>
 <div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>    std::vector&lt;Index_&gt; universe; <span class="comment">// To be used by classify_integrated() for indexed extraction.</span></div>
 <div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span> </div>
-<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>    std::vector&lt;uint8_t&gt; check_availability;</div>
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>    std::vector&lt;std::uint8_t&gt; check_availability;</div>
 <div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>    std::vector&lt;std::unordered_set&lt;Index_&gt; &gt; available; <span class="comment">// indices to &#39;universe&#39;</span></div>
 <div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>    std::vector&lt;std::vector&lt;std::vector&lt;Index_&gt; &gt; &gt; markers; <span class="comment">// indices to &#39;universe&#39;</span></div>
 <div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>    std::vector&lt;std::vector&lt;std::vector&lt;internal::RankedVector&lt;Index_, Index_&gt; &gt; &gt; &gt; ranked; <span class="comment">// .second contains indices to &#39;universe&#39;</span></div>

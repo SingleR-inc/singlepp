@@ -1,13 +1,6 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
 <tagfile doxygen_version="1.12.0">
   <compound kind="file">
-    <name>choose_classic_markers.hpp</name>
-    <path>singlepp/</path>
-    <filename>choose__classic__markers_8hpp.html</filename>
-    <class kind="struct">singlepp::ChooseClassicMarkersOptions</class>
-    <namespace>singlepp</namespace>
-  </compound>
-  <compound kind="file">
     <name>classify_integrated.hpp</name>
     <path>singlepp/</path>
     <filename>classify__integrated_8hpp.html</filename>
@@ -66,24 +59,6 @@
     <class kind="class">singlepp::TrainedSingle</class>
     <class kind="class">singlepp::TrainedSingleIntersect</class>
     <namespace>singlepp</namespace>
-  </compound>
-  <compound kind="struct">
-    <name>singlepp::ChooseClassicMarkersOptions</name>
-    <filename>structsinglepp_1_1ChooseClassicMarkersOptions.html</filename>
-    <member kind="variable">
-      <type>int</type>
-      <name>number</name>
-      <anchorfile>structsinglepp_1_1ChooseClassicMarkersOptions.html</anchorfile>
-      <anchor>a9d44e81aaf6d22c6d32264281e548ffd</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="variable">
-      <type>int</type>
-      <name>num_threads</name>
-      <anchorfile>structsinglepp_1_1ChooseClassicMarkersOptions.html</anchorfile>
-      <anchor>a7c694f5f2e2cf5d8610aa3028bce4055</anchor>
-      <arglist></arglist>
-    </member>
   </compound>
   <compound kind="struct">
     <name>singlepp::ClassifyIntegratedBuffers</name>
@@ -423,7 +398,6 @@
   <compound kind="namespace">
     <name>singlepp</name>
     <filename>namespacesinglepp.html</filename>
-    <class kind="struct">singlepp::ChooseClassicMarkersOptions</class>
     <class kind="struct">singlepp::ClassifyIntegratedBuffers</class>
     <class kind="struct">singlepp::ClassifyIntegratedOptions</class>
     <class kind="struct">singlepp::ClassifyIntegratedResults</class>
@@ -589,27 +563,6 @@
       <anchorfile>namespacesinglepp.html</anchorfile>
       <anchor>a22b70c4d5949e28af164723543361214</anchor>
       <arglist>(Index_ test_nrow, const Id_ *test_id, Index_ ref_nrow, const Id_ *ref_id)</arglist>
-    </member>
-    <member kind="function">
-      <type>std::size_t</type>
-      <name>number_of_classic_markers</name>
-      <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>a07ddd9b4767b701d525c7077f0c7e03f</anchor>
-      <arglist>(std::size_t num_labels)</arglist>
-    </member>
-    <member kind="function">
-      <type>Markers&lt; Index_ &gt;</type>
-      <name>choose_classic_markers</name>
-      <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>ae888912441a04acf856e74a9f4a0452b</anchor>
-      <arglist>(const std::vector&lt; const tatami::Matrix&lt; Value_, Index_ &gt; * &gt; &amp;representatives, const std::vector&lt; const Label_ * &gt; &amp;labels, const ChooseClassicMarkersOptions &amp;options)</arglist>
-    </member>
-    <member kind="function">
-      <type>Markers&lt; Index_ &gt;</type>
-      <name>choose_classic_markers</name>
-      <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>ae6b37c9c0ac535f7c85771fbeb98e4df</anchor>
-      <arglist>(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;representative, const Label_ *labels, const ChooseClassicMarkersOptions &amp;options)</arglist>
     </member>
   </compound>
   <compound kind="page">
