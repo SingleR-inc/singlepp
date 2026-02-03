@@ -33,7 +33,10 @@ struct TrainSingleOptions {
      * Number of top markers to use from each pairwise comparison between labels.
      * Larger values improve the stability of the correlations at the cost of increasing noise and computational work.
      *
-     * Setting this to a negative value will instruct `train_single()` to use all supplied markers.
+     * For `train_single_intersect()`, the specified number of top markers is taken from the intersection of features.
+     * This avoids that some markers will be selected even if not all genes in `markers` are present in the test dataset.
+     *
+     * Setting this to a negative value will instruct `train_single()` and `train_single_intersect()` to use all supplied markers.
      * This is useful in situations where the supplied markers have already been curated.
      */
     int top = -1;

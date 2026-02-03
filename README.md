@@ -70,7 +70,8 @@ For single-cell references, users may be interested in some of the differential 
 
 By default, it is expected that the `markers` supplied to `train_single()` has already been filtered to only the top markers for each pairwise comparison.
 However, in some cases, it might be more convenient for `markers` to contain a ranking of all genes such that the desired subset of top markers can be chosen later.
-This is achieved by setting `TrainSingleOptions::top` to the desired number of markers per comparison, e.g., for 20 markers:
+This is achieved by setting `TrainSingleOptions::top` to the desired number of markers per comparison.
+In the example below, setting `top = 20` is roughly equivalent to slicing each vector in `markers` to the top 20 entries before calling `train_single()`.
 
 ```cpp
 train_opt.top = 20;
@@ -82,18 +83,19 @@ auto trained20 = singlepp::train_single(
 );
 ```
 
-Doing so is roughly equivalent to slicing each vector in `markers` to the top 20 entries before calling `train_single()`.
-In fact, calling `set_top()` is the better approach when intersecting feature spaces - see below -
-as the top set will not be contaminated by genes that are not present in the test dataset.
-
 ## Intersecting feature sets
 
 Often the reference dataset will not have the same genes as the test dataset.
 To handle this case, users should call `train_single_intersect()` with the row identifiers of the reference and test matrices.
+If a gene is not in the intersection of reference/test identifiers, it will be ignored in the rest of the analysis, even if it was specifically requested in `ref_markers`.
 
 ```cpp
 test_names; // vector of feature IDs for the test data
 ref_names; // vector of feature IDs for the reference data
+
+// Instruct the function to select the top 20 markers from ref_markers after
+// discarding any genes that are not present in the test matrix. 
+train_opt.top = 20;
 
 auto trained_intersect = singlepp::train_single_intersect(
     test_mat.nrow(),
