@@ -275,7 +275,7 @@ public:
     Index_ test_nrow;
     std::vector<Index_> universe; // To be used by classify_integrated() for indexed extraction.
 
-    std::vector<uint8_t> check_availability;
+    std::vector<std::uint8_t> check_availability;
     std::vector<std::unordered_set<Index_> > available; // indices to 'universe'
     std::vector<std::vector<std::vector<Index_> > > markers; // indices to 'universe'
     std::vector<std::vector<std::vector<internal::RankedVector<Index_, Index_> > > > ranked; // .second contains indices to 'universe'

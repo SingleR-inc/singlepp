@@ -29,7 +29,6 @@ add_executable(
     src/annotate_cells_single.cpp
     src/annotate_cells_integrated.cpp
     src/classify_integrated.cpp
-    src/choose_classic_markers.cpp
 )
 
 target_link_libraries(libtest gtest_main singlepp tatami_stats)

@@ -48,20 +48,24 @@ See the [reference documentation](https://singler-inc.github.io/singlepp) for mo
 
 ## Identifying markers
 
-Given a reference dataset, **singlepp** implements a simple method of identifying marker genes between labels.
+Given a reference dataset from bulk RNA-seq or microarray,
+the [**singler_classic_markers**](https://github.com/SingleR-inc/singler_classic_markers) library implements a simple method of identifying marker genes between labels.
 This is based on ranking the differences in median log-expression values between labels and is the "classic" method provided in the original **SingleR** package.
 
 ```cpp
-singlepp::ChooseClassicMarkersOptions mrk;
-auto classic_markers = singlepp::choose_classic_markers(
-    ref_mat.get(),
+#include "singler_classic_markers/singler_classic_markers.hpp"
+
+singler_classic_markers::ChooseOptions m_opt;
+auto classic_markers = singler_classic_markers::choose_index(
+    ref_mat,
     ref_labels.data(),
     m_opt
 );
 ```
 
-The `classic_markers` can then be directly used in `train_single()`.
-Of course, other marker detection schemes can be used, depending on the type of reference dataset.
+The `classic_markers` can then be directly used in `train_single()` as shown above for `ref_markers`.
+Other marker detection schemes can also be used here, depending on the type of reference dataset.
+For bulk RNA-seq, we could use more advanced approaches based on pairwise differential expression analyses with [**edgeR**](https://bioconductor.org/packages/edgeR) and related packages.
 For single-cell references, users may be interested in some of the differential analysis methods in the [**libscran**](https://github.com/libscran/scran_markers) library.
 
 By default, it is expected that the `markers` supplied to `train_single()` has already been filtered to only the top markers for each pairwise comparison.
