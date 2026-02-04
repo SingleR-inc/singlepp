@@ -30,7 +30,7 @@ TEST_P(ClassifySingleSimpleTest, Simple) {
     auto markers = mock_markers<int>(nlabels, 50, ngenes); 
 
     // Performing classification without fine-tuning for a reference comparison.
-    singlepp::TrainSingleOptions<int, double> bopt;
+    singlepp::TrainSingleOptions bopt;
     bopt.top = top;
     auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
     EXPECT_EQ(trained.get_test_nrow(), 200);
@@ -113,9 +113,9 @@ TEST_P(ClassifySingleIntersectTest, Intersect) {
     auto markers = mock_markers<int>(nlabels, 50, right.size()); 
 
     // Computing the observed result.
-    singlepp::TrainSingleOptions<int, double> bopt;
+    singlepp::TrainSingleOptions bopt;
     bopt.top = top;
-    auto trained = singlepp::train_single_intersect<int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, bopt);
+    auto trained = singlepp::train_single_intersect<double, int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, bopt);
     EXPECT_EQ(trained.get_test_nrow(), left.size());
     EXPECT_EQ(trained.get_ref_subset().size(), trained.get_test_subset().size());
     EXPECT_GE(trained.get_test_subset().size(), 10); // should be, on average, 'ngenes * prop^2' overlapping genes.
@@ -170,7 +170,7 @@ TEST_P(ClassifySingleIntersectTest, Intersect) {
     {
         auto intersection = singlepp::intersect_genes<int>(left.size(), left.data(), right.size(), right.data());
         std::shuffle(intersection.begin(), intersection.end(), rng);
-        auto trained2 = singlepp::train_single_intersect<int>(left.size(), intersection, *refs, labels.data(), markers, bopt);
+        auto trained2 = singlepp::train_single_intersect<double, int>(left.size(), intersection, *refs, labels.data(), markers, bopt);
 
         singlepp::ClassifySingleOptions<double> copt;
         copt.quantile = quantile;
@@ -184,7 +184,7 @@ TEST_P(ClassifySingleIntersectTest, Intersect) {
     // Back-compatibility check for the soft-deprecated intersection method.
     {
         auto intersection = singlepp::intersect_genes<int>(left.size(), left.data(), right.size(), right.data());
-        auto trained2 = singlepp::train_single_intersect<int>(intersection, *refs, labels.data(), markers, bopt);
+        auto trained2 = singlepp::train_single_intersect<double, int>(intersection, *refs, labels.data(), markers, bopt);
 
         singlepp::ClassifySingleOptions<double> copt;
         copt.quantile = quantile;
@@ -220,7 +220,7 @@ TEST(ClassifySingleTest, Simple) {
     // Checking that we get an exact match when we use the references
     // directly for annotation. We set quantile = 1 so that a perfect
     // correlation to any reference profile guarantees a match.
-    singlepp::TrainSingleOptions<int, double> bopt;
+    singlepp::TrainSingleOptions bopt;
     auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
     singlepp::ClassifySingleOptions<double> copt;
     copt.quantile = 1;
@@ -246,9 +246,9 @@ TEST(ClassifySingleTest, NoShared) {
     std::iota(left.begin(), left.end(), 0);
     std::iota(right.begin(), right.end(), ngenes);
 
-    singlepp::TrainSingleOptions<int, double> bopt;
+    singlepp::TrainSingleOptions bopt;
     bopt.top = 20;
-    auto trained = singlepp::train_single_intersect<int>(ngenes, left.data(), *refs, right.data(), labels.data(), markers, bopt);
+    auto trained = singlepp::train_single_intersect<double, int>(ngenes, left.data(), *refs, right.data(), labels.data(), markers, bopt);
     EXPECT_EQ(trained.get_test_subset().size(), 0);
     EXPECT_EQ(trained.get_ref_subset().size(), 0);
 
@@ -275,7 +275,7 @@ TEST(ClassifySingleTest, Nulls) {
 
     auto markers = mock_markers<int>(nlabels, 50, ngenes); 
 
-    singlepp::TrainSingleOptions<int, double> bopt;
+    singlepp::TrainSingleOptions bopt;
     auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
     singlepp::ClassifySingleOptions<double> copt;
     auto full = singlepp::classify_single<int>(*mat, trained, copt);
@@ -300,7 +300,7 @@ TEST(ClassifySingleTest, SimpleMismatch) {
     auto labels = spawn_labels(nrefs, nlabels, 1000);
     auto markers = mock_markers<int>(nlabels, 50, ngenes); 
 
-    singlepp::TrainSingleOptions<int, double> bopt;
+    singlepp::TrainSingleOptions bopt;
     auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
 
     auto test = spawn_matrix(ngenes + 10, nrefs, 100);
@@ -328,8 +328,8 @@ TEST(ClassifySingleTest, IntersectMismatch) {
 
     std::vector<int> ids(ngenes);
     std::iota(ids.begin(), ids.end(), 0);
-    singlepp::TrainSingleOptions<int, double> bopt;
-    auto trained = singlepp::train_single_intersect<int>(ngenes, ids.data(), *refs, ids.data(), labels.data(), markers, bopt);
+    singlepp::TrainSingleOptions bopt;
+    auto trained = singlepp::train_single_intersect<double, int>(ngenes, ids.data(), *refs, ids.data(), labels.data(), markers, bopt);
 
     auto test = spawn_matrix(ngenes + 10, nrefs, 100);
     singlepp::ClassifySingleOptions<double> copt;
