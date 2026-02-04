@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cstddef> 
 #include <random>
+#include <optional>
 
 namespace singlepp {
 
@@ -40,7 +41,7 @@ Index_ get_num_samples(const PerLabelReference<Index_, Float_>& ref) {
 template<typename Index_, typename Float_>
 void select_seeds(const std::size_t num_dim, const Index_ num_samples, PerLabelReference<Index_, Float_>& ref) {
     // No need to check for overlow, num_samples >= num_seeds here.
-    const Index_ num_seeds = std::round(std::sqrt(num_samples));
+    Index_ num_seeds = std::round(std::sqrt(num_samples));
 
     // Implementing a variant of kmeans++ initialization to select representative ("seed") points.
     // We also record the minimum distance between each sample and its assigned seed.
@@ -55,43 +56,6 @@ void select_seeds(const std::size_t num_dim, const Index_ num_samples, PerLabelR
         identities.reserve(num_samples);
 
         for (Index_ se = 0; se < num_seeds; ++se) {
-            if (!identities.empty()) {
-                const auto seed_ptr = ref.data.data() + sanisizer::product_unsafe<std::size_t>(identities.back(), num_dim);
-                auto compute_d2 = [&](const Float_* current) -> Float_ {
-                    Float_ r2 = 0;
-                    for (std::size_t d = 0; d < num_dim; ++d) {
-                        const Float_ delta = current[d] - seed_ptr[d]; 
-                        r2 += delta * delta;
-                    }
-                    return r2;
-                };
-
-                if (se == 1) {
-                    // Always compute the minimum distance in the first round, except for points that were selected as seeds.
-                    for (Index_ sam = 0; sam < num_samples; ++sam) {
-                        const auto current = ref.data.data() + sanisizer::product_unsafe<std::size_t>(sam, num_dim);
-                        if (mindist[sam] == 0) {
-                            continue;
-                        }
-                        mindist[sam] = compute_d2(current);
-                    }
-
-                } else {
-                    // See if we can get a lower minimum distance to the latest seed.
-                    for (Index_ sam = 0; sam < num_samples; ++sam) {
-                        const auto current = ref.data.data() + sanisizer::product_unsafe<std::size_t>(sam, num_dim);
-                        if (mindist[sam] == 0) {
-                            continue;
-                        }
-                        const auto r2 = compute_d2(current);
-                        if (r2 < mindist[sam]) {
-                            mindist[sam] = r2;
-                            assignment[sam] = se - 1;
-                        }
-                    }
-                }
-            }
-
             cumulative[0] = mindist[0];
             for (Index_ sam = 1; sam < num_samples; ++sam) {
                 cumulative[sam] = cumulative[sam - 1] + mindist[sam];
@@ -116,7 +80,44 @@ void select_seeds(const std::size_t num_dim, const Index_ num_samples, PerLabelR
             mindist[chosen_id] = 0;
             assignment[chosen_id] = se;
             identities.push_back(chosen_id);
+
+            // Now updating the distances and assignments of all observations based on the new seed.
+            const auto seed_ptr = ref.data.data() + sanisizer::product_unsafe<std::size_t>(identities.back(), num_dim);
+            auto compute_d2 = [&](const Float_* current) -> Float_ {
+                Float_ r2 = 0;
+                for (std::size_t d = 0; d < num_dim; ++d) {
+                    const Float_ delta = current[d] - seed_ptr[d]; 
+                    r2 += delta * delta;
+                }
+                return r2;
+            };
+
+            if (se == 0) {
+                // Always compute the minimum distance in the first round, except for the point that was selected as a seed.
+                for (Index_ sam = 0; sam < num_samples; ++sam) {
+                    const auto current = ref.data.data() + sanisizer::product_unsafe<std::size_t>(sam, num_dim);
+                    if (mindist[sam] == 0) {
+                        continue;
+                    }
+                    mindist[sam] = compute_d2(current);
+                }
+            } else {
+                // See if we can get a lower minimum distance to the latest seed.
+                for (Index_ sam = 0; sam < num_samples; ++sam) {
+                    const auto current = ref.data.data() + sanisizer::product_unsafe<std::size_t>(sam, num_dim);
+                    if (mindist[sam] == 0) {
+                        continue;
+                    }
+                    const auto r2 = compute_d2(current);
+                    if (r2 < mindist[sam]) {
+                        mindist[sam] = r2;
+                        assignment[sam] = se;
+                    }
+                }
+            }
         }
+
+        num_seeds = identities.size(); // updating for the actual number of seeds, if there were duplicates.
     }
 
     // Now populating the rest of the seed information.
@@ -138,27 +139,20 @@ void select_seeds(const std::size_t num_dim, const Index_ num_samples, PerLabelR
             const auto range_start = ref.distances.size();
             ref.seed_ranges.emplace_back(range_start, curgroup.size() - 1);
 
-            Index_ pos = 0;
             const auto seed = identities[se];
-            for (; pos < num_samples; ++pos) {
-                const auto curid = curgroup[pos].second;
-                if (curid == seed) {
-                    break;
-                } 
-                ref.distances.push_back(0);
-                identities.push_back(curid);
-            }
-
-            for (; pos < num_samples; ++pos) {
-                ref.distances.push_back(std::sqrt(curgroup[pos].second));
-                identities.push_back(curgroup[pos].first);
+            for (const auto& x : curgroup) {
+                const auto curid = x.second;
+                if (curid != seed) {
+                    ref.distances.push_back(std::sqrt(x.first));
+                    identities.push_back(curid);
+                }
             }
         }
     }
 
     // Reordering the data in-place to be more cache-friendly. 
     {
-        auto buffer = sanisizer::create<std::vector<Float_> >(num_dim);
+        auto data_buffer = sanisizer::create<std::vector<Float_> >(num_dim);
         auto used = sanisizer::create<std::vector<char> >(num_samples);
 
         for (Index_ x = 0; x < num_samples; ++x) {
@@ -171,21 +165,27 @@ void select_seeds(const std::size_t num_dim, const Index_ num_samples, PerLabelR
                 continue;
             }
 
-            auto previous = ref.data.data() + sanisizer::product_unsafe<std::size_t>(x, num_dim);
-            std::copy_n(previous, num_dim, buffer.data());
+            auto previous_ptr = ref.data.data() + sanisizer::product_unsafe<std::size_t>(x, num_dim);
+            std::copy_n(previous_ptr, num_dim, data_buffer.data());
+            auto previous_ranked = &(ref.ranked[x]);
+
             do {
-                auto next = ref.data.data() + sanisizer::product_unsafe<std::size_t>(replacement, num_dim);
-                std::copy_n(next, num_dim, previous);
-                previous = next;
+                auto next_ptr = ref.data.data() + sanisizer::product_unsafe<std::size_t>(replacement, num_dim);
+                std::copy_n(next_ptr, num_dim, previous_ptr);
+                previous_ptr = next_ptr;
+
+                auto& next_ranked = ref.ranked[replacement];
+                previous_ranked->swap(next_ranked);
+                previous_ranked = &next_ranked;
+
                 used[replacement] = true;
                 replacement = identities[replacement];
             } while (replacement != x);
 
-            std::copy_n(buffer.data(), num_dim, previous);
+            std::copy_n(data_buffer.data(), num_dim, previous_ptr);
         }
     }
 }
-
 
 template<typename Index_, typename Float_>
 struct FindClosestWorkspace {
@@ -197,6 +197,66 @@ struct FindClosestWorkspace {
     std::vector<std::pair<Float_, Index_> > seed_distances;
     std::vector<std::pair<Float_, Index_> > closest_neighbors;
 };
+
+template<bool can_truncate_upper_bound_, typename Index_, typename Float_, typename NumNeighbors_>
+void find_closest_for_seed(
+    const Float_* const query,
+    const NumNeighbors_ num_neighbors,
+    typename std::conditional<can_truncate_upper_bound_, Float_, void*>::type query2seed,
+    const Index_ firstsubj,
+    Index_ lastsubj,
+    const PerLabelReference<Index_, Float_>& ref,
+    FindClosestWorkspace<Index_, Float_>& work,
+    Float_& threshold_raw
+) {
+    const auto num_dim = ref.num_dim;
+
+    for (auto s = firstsubj; s < lastsubj; ++s) {
+        const auto subject = ref.data.data() + sanisizer::product_unsafe<std::size_t>(s, num_dim);
+        Float_ dist2subj_raw = 0;
+        for (std::size_t d = 0; d < num_dim; ++d) {
+            const Float_ delta = query[d] - subject[d]; 
+            dist2subj_raw += delta * delta;
+        }
+
+        if (dist2subj_raw <= threshold_raw) {
+            work.closest_neighbors.emplace_back(dist2subj_raw, s);
+            std::push_heap(work.closest_neighbors.begin(), work.closest_neighbors.end());
+            
+            if (work.closest_neighbors.size() >= num_neighbors) {
+                if (work.closest_neighbors.size() > num_neighbors) {
+                    std::pop_heap(work.closest_neighbors.begin(), work.closest_neighbors.end());
+                    work.closest_neighbors.pop_back();
+                }
+                threshold_raw = work.closest_neighbors.back().first;
+
+                if constexpr(can_truncate_upper_bound_) {
+                    /* If we can use an upper bound, we see if a lower threshold might allow us to truncate the search.
+                     * As described below, this exploits the triangle inequality to ignore points where:
+                     *     threshold + query-to-seed < subject-to-seed
+                     * 
+                     * If we can't use an upper bound, we skip this section entirely.
+                     * This gives the compiler a better opportunity for optimization (e.g., reduced dependencies between loops),
+                     * especially given that this section will not be used for the majority of seeds.
+                     */
+                    const Float_ threshold = std::sqrt(threshold_raw);
+                    const Float_ upper_bd = query2seed + threshold;
+                    while (lastsubj > s && ref.distances[lastsubj - 1] > upper_bd) {
+                        --lastsubj;
+                    }
+
+                    /* As an aside: we could also consider increasing 'firstsubj' as threshold decreases. 
+                     * This would exploit the triangle inequality to ignore points where:
+                     *     threshold + subject-to-seed < query-to-seed 
+                     * However, this is pointless because 'query-to-seed - threshold' will never increase enough to skip subsequent observations.
+                     * We wouldn't have been able to skip the observation that we just added,
+                     * so there's no way we could skip observations with larger subject-to-seed distances.
+                     */
+                }
+            }
+        }
+    }
+}
 
 template<typename Index_, typename Float_>
 void find_closest(
@@ -223,69 +283,55 @@ void find_closest(
     std::sort(work.seed_distances.begin(), work.seed_distances.end());
 
     work.closest_neighbors.clear();
-    work.closest_neighbors.insert(work.closest_neighbors.end(), work.seed_distances.begin(), work.seed_distances.begin());
+    const auto to_add = sanisizer::min(num_neighbors, work.seed_distances.size()); // adding the smallest distances preferentially.
+    work.closest_neighbors.insert(work.closest_neighbors.end(), work.seed_distances.begin(), work.seed_distances.begin() + to_add);
     std::make_heap(work.closest_neighbors.begin(), work.closest_neighbors.begin());
     Float_ threshold_raw = (work.closest_neighbors.size() < num_neighbors ? std::numeric_limits<Float_>::infinity() : work.closest_neighbors.back().first);
 
     // Now we traverse each seed.
     for (const auto& curseed : work.seed_distances) {
         const Index_ seed = curseed.second;
-        const Float_ query2seed = std::sqrt(curseed.first);
-    
         const auto& ranges = ref.seed_ranges[seed];
-        Index_ firstsubj = ranges.first, lastsubj = ranges.first + ranges.second;
-        Float_ lower_bd = -std::numeric_limits<Float_>::infinity(), upper_bd = std::numeric_limits<Float_>::infinity();
-
-        if (!std::isinf(threshold_raw)) {
-            const Float_ threshold = std::sqrt(threshold_raw);
-
-            /* The conditional expression below exploits the triangle inequality; it is equivalent to asking whether:
-             *     threshold + subject-to-seed <= query-to-seed 
-             * All points (if any) within this cluster with distances at or above 'lower_bd' are potentially countable.
-             */
-            lower_bd = query2seed - threshold;
-            firstsubj = std::lower_bound(ref.distances.data() + firstsubj, ref.distances.data() + lastsubj, lower_bd) - ref.distances.data();
-
-            /* This exploits the reverse triangle inequality, to ignore points where:
-             *     threshold + query-to-seed <= subject-to-seed
-             * All points (if any) within this cluster with distances at or below 'upper_bd' are potentially countable.
-             */
-            upper_bd = query2seed + threshold;
-            lastsubj = std::upper_bound(ref.distances.data() + firstsubj, ref.distances.data() + lastsubj, upper_bd) - ref.distances.data();
+        if (ranges.second == 0) { // i.e., the seed was the only point in its own cluster.
+            continue;
         }
 
-        for (auto s = firstsubj; s < lastsubj; ++s) {
-            const auto subject2seed = ref.distances[s];
-            if (subject2seed < lower_bd) {
-                continue;
-            } else if (subject2seed > upper_bd) {
-                break;
-            }
+        std::optional<Float_> query2seed;
+        Index_ firstsubj = ranges.first, lastsubj = ranges.first + ranges.second;
 
-            const auto subject = ref.data.data() + sanisizer::product_unsafe<std::size_t>(s, num_dim);
-            Float_ dist2subj_raw = 0;
-            for (std::size_t d = 0; d < num_dim; ++d) {
-                const Float_ delta = query[d] - subject[d]; 
-                dist2subj_raw += delta * delta;
-            }
+        bool can_truncate_upper_bound = false;
+        if (!std::isinf(threshold_raw)) {
+            const Float_ threshold = std::sqrt(threshold_raw);
+            query2seed = std::sqrt(curseed.first);
 
-            if (dist2subj_raw <= threshold_raw) {
-                work.closest_neighbors.emplace_back(dist2subj_raw, s);
-                std::push_heap(work.closest_neighbors.begin(), work.closest_neighbors.end());
-                
-                if (work.closest_neighbors.size() >= num_neighbors) {
-                    if (work.closest_neighbors.size() > num_neighbors) {
-                        std::pop_heap(work.closest_neighbors.begin(), work.closest_neighbors.end());
-                        work.closest_neighbors.pop_back();
-                    }
-                    threshold_raw = work.closest_neighbors.back().first;
+            /* The conditional expression below exploits the triangle inequality; it is equivalent to asking whether:
+             *     threshold + subject-to-seed < query-to-seed 
+             * All points (if any) within this cluster with distances at or above 'lower_bd' are potentially countable.
+             */
+            const Float_ lower_bd = *query2seed - threshold;
+            firstsubj = std::lower_bound(ref.distances.data() + firstsubj, ref.distances.data() + lastsubj, lower_bd) - ref.distances.data();
 
-                    // Updating the boundaries. 
-                    const Float_ threshold = std::sqrt(threshold_raw);
-                    lower_bd = query2seed - threshold;
-                    upper_bd = query2seed + threshold;
-                }
+            /* This exploits the triangle inequality in an opposite manner to that described above, to ignore points where:
+             *     threshold + query-to-seed < subject-to-seed
+             * All points (if any) within this cluster with distances at or below 'upper_bd' are potentially countable.
+             * 
+             * If query-to-seed distance is less than the largest possible subject-to-seed for a seed,
+             * there's no point exploiting this inequality, so we just skip it. 
+             * Note that this also means that there's no point trying to adjust 'lastsubj' for decreases in 'threshold' within a seed,
+             * because even if 'threshold = 0', there's no way to satisfy the inequality above,
+             * i.e., all points for this seed will always be searchable.
+             */
+            can_truncate_upper_bound = *query2seed < ref.distances[lastsubj - 1];
+            if (can_truncate_upper_bound) {
+                const Float_ upper_bd = *query2seed + threshold;
+                lastsubj = std::upper_bound(ref.distances.data() + firstsubj, ref.distances.data() + lastsubj, upper_bd) - ref.distances.data();
             }
+        }
+
+        if (can_truncate_upper_bound) {
+            find_closest_for_seed<true>(query, num_neighbors, *query2seed, firstsubj, lastsubj, ref, work, threshold_raw); 
+        } else {
+            find_closest_for_seed<false>(query, num_neighbors, NULL, firstsubj, lastsubj, ref, work, threshold_raw); 
         }
     }
 }
