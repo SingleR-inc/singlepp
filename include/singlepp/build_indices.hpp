@@ -228,7 +228,7 @@ void find_closest_for_seed(
                     std::pop_heap(work.closest_neighbors.begin(), work.closest_neighbors.end());
                     work.closest_neighbors.pop_back();
                 }
-                threshold_raw = work.closest_neighbors.back().first;
+                threshold_raw = work.closest_neighbors.front().first;
 
                 if constexpr(can_truncate_upper_bound_) {
                     /* If we can use an upper bound, we see if a lower threshold might allow us to truncate the search.
@@ -285,8 +285,8 @@ void find_closest(
     work.closest_neighbors.clear();
     const auto to_add = sanisizer::min(num_neighbors, work.seed_distances.size()); // adding the smallest distances preferentially.
     work.closest_neighbors.insert(work.closest_neighbors.end(), work.seed_distances.begin(), work.seed_distances.begin() + to_add);
-    std::make_heap(work.closest_neighbors.begin(), work.closest_neighbors.begin());
-    Float_ threshold_raw = (work.closest_neighbors.size() < num_neighbors ? std::numeric_limits<Float_>::infinity() : work.closest_neighbors.back().first);
+    std::make_heap(work.closest_neighbors.begin(), work.closest_neighbors.end());
+    Float_ threshold_raw = (work.closest_neighbors.size() < num_neighbors ? std::numeric_limits<Float_>::infinity() : work.closest_neighbors.front().first);
 
     // Now we traverse each seed.
     for (const auto& curseed : work.seed_distances) {
@@ -338,7 +338,7 @@ void find_closest(
 
 template<typename Index_, typename Float_>
 std::pair<Float_, Index_> pop_furthest_neighbor(FindClosestWorkspace<Index_, Float_>& work) {
-    auto output = work.closest_neighbors.back();
+    auto output = work.closest_neighbors.front();
     std::pop_heap(work.closest_neighbors.begin(), work.closest_neighbors.end());
     work.closest_neighbors.pop_back();
     return output;

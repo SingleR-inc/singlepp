@@ -167,13 +167,13 @@ void annotate_cells_single(
                 const auto k = search_k[r];
                 find_closest(buffer.data(), k, ref[r], workspaces[r]);
 
-                Float_ last = pop_furthest_neighbor(workspaces[r]).first;
-                last = 1 - 2 * last * last;
+                const Float_ last_squared = pop_furthest_neighbor(workspaces[r]).first;
+                const Float_ last = 1 - 2 * last_squared;
                 if (k == 1) {
                     curscores[r] = last;
                 } else {
-                    Float_ next = pop_furthest_neighbor(workspaces[r]).first;
-                    next = 1 - 2 * next * next;
+                    const Float_ next_squared = pop_furthest_neighbor(workspaces[r]).first;
+                    const Float_ next = 1 - 2 * next_squared;
                     curscores[r] = coeffs[r].first * next + coeffs[r].second * last;
                 }
 
