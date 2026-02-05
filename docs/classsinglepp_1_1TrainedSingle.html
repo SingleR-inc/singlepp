@@ -125,7 +125,7 @@ Public Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename Index_, typename Float_&gt;<br />
 class singlepp::TrainedSingle&lt; Index_, Float_ &gt;</div><p>Classifier trained from a single reference. </p>
-<p>Instances of this class should not be directly constructed, but instead returned by calling <code><a class="el" href="namespacesinglepp.html#a9fc89c91fd655f9b1877f631bf20d352">train_single()</a></code> on a reference dataset. Each instance can be used in <code><a class="el" href="namespacesinglepp.html#ae8772734badf4a09d6c285b9b98295ec" title="Implements the SingleR algorithm for automated annotation of single-cell RNA-seq data.">classify_single()</a></code> with a test dataset that has the same number and order of genes as the reference dataset.</p>
+<p>Instances of this class should not be directly constructed, but instead returned by calling <code><a class="el" href="namespacesinglepp.html#a5f8f8106b91cfe79435b20c9b38e500c">train_single()</a></code> on a reference dataset. Each instance can be used in <code><a class="el" href="namespacesinglepp.html#ae8772734badf4a09d6c285b9b98295ec" title="Implements the SingleR algorithm for automated annotation of single-cell RNA-seq data.">classify_single()</a></code> with a test dataset that has the same number and order of genes as the reference dataset.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Index_</td><td>Integer type for the row/column indices of the matrix. </td></tr>
@@ -158,7 +158,7 @@ template&lt;typename Index_ , typename Float_ &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>A vector of vectors of vectors of ranked marker genes to be used in the classification. In the innermost vectors, each value is an index into the subset vector (see <code><a class="el" href="#a2054db73c1dfa8cff3024b9a89d8c304">get_subset()</a></code>), e.g., <code><a class="el" href="#a2054db73c1dfa8cff3024b9a89d8c304">get_subset()</a>[<a class="el" href="#af950945f130f3d957fc06bf029117a9e">get_markers()</a>[2][1].front()]</code> is the row index of the first marker of the third label over the first label. The set of marker genes is a subset of the input <code>markers</code> used in <code><a class="el" href="namespacesinglepp.html#a9fc89c91fd655f9b1877f631bf20d352">train_single()</a></code>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A vector of vectors of vectors of ranked marker genes to be used in the classification. In the innermost vectors, each value is an index into the subset vector (see <code><a class="el" href="#a2054db73c1dfa8cff3024b9a89d8c304">get_subset()</a></code>), e.g., <code><a class="el" href="#a2054db73c1dfa8cff3024b9a89d8c304">get_subset()</a>[<a class="el" href="#af950945f130f3d957fc06bf029117a9e">get_markers()</a>[2][1].front()]</code> is the row index of the first marker of the third label over the first label. The set of marker genes is a subset of the input <code>markers</code> used in <code><a class="el" href="namespacesinglepp.html#a5f8f8106b91cfe79435b20c9b38e500c">train_single()</a></code>. </dd></dl>
 
 </div>
 </div>

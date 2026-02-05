@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.12.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>singlepp: singlepp::TrainSingleOptions&lt; Index_, Float_, Matrix_ &gt; Struct Template Reference</title>
+<title>singlepp: singlepp::TrainSingleOptions Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -100,46 +100,33 @@ $(function(){ initResizable(false); });
   <div class="summary">
 <a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="structsinglepp_1_1TrainSingleOptions-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">singlepp::TrainSingleOptions&lt; Index_, Float_, Matrix_ &gt; Struct Template Reference</div></div>
+  <div class="headertitle"><div class="title">singlepp::TrainSingleOptions Struct Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Options for <code><a class="el" href="namespacesinglepp.html#a9fc89c91fd655f9b1877f631bf20d352">train_single()</a></code> and friends.  
+<p>Options for <code><a class="el" href="namespacesinglepp.html#a5f8f8106b91cfe79435b20c9b38e500c">train_single()</a></code> and friends.  
  <a href="#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="train__single_8hpp_source.html">train_single.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:af45ac859255a937e08684870d12ab123" id="r_af45ac859255a937e08684870d12ab123"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af45ac859255a937e08684870d12ab123">top</a> = -1</td></tr>
-<tr class="separator:af45ac859255a937e08684870d12ab123"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a40031e8c223fb65b0aa0dad922974ed7" id="r_a40031e8c223fb65b0aa0dad922974ed7"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; <a class="elRef" href="https://knncolle.github.io/knncolle/classknncolle_1_1Builder.html">knncolle::Builder</a>&lt; Index_, Float_, Float_, Matrix_ &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a40031e8c223fb65b0aa0dad922974ed7">trainer</a></td></tr>
-<tr class="separator:a40031e8c223fb65b0aa0dad922974ed7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab45efe2ac45394bb46bb4b186f234312" id="r_ab45efe2ac45394bb46bb4b186f234312"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab45efe2ac45394bb46bb4b186f234312">num_threads</a> = 1</td></tr>
-<tr class="separator:ab45efe2ac45394bb46bb4b186f234312"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8cf88a1fd176fb330c3d3a57cccda477" id="r_a8cf88a1fd176fb330c3d3a57cccda477"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8cf88a1fd176fb330c3d3a57cccda477">top</a> = -1</td></tr>
+<tr class="separator:a8cf88a1fd176fb330c3d3a57cccda477"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a76c303868ef63d76fd157ad80974d3a6" id="r_a76c303868ef63d76fd157ad80974d3a6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a76c303868ef63d76fd157ad80974d3a6">num_threads</a> = 1</td></tr>
+<tr class="separator:a76c303868ef63d76fd157ad80974d3a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;typename Index_ = DefaultIndex, typename Float_ = DefaultFloat, class Matrix_ = knncolle::Matrix&lt;Index_, Float_&gt;&gt;<br />
-struct singlepp::TrainSingleOptions&lt; Index_, Float_, Matrix_ &gt;</div><p>Options for <code><a class="el" href="namespacesinglepp.html#a9fc89c91fd655f9b1877f631bf20d352">train_single()</a></code> and friends. </p>
-<dl class="tparams"><dt>Template Parameters</dt><dd>
-  <table class="tparams">
-    <tr><td class="paramname">Index_</td><td>Integer type for the row/column indices of the matrix. </td></tr>
-    <tr><td class="paramname">Float_</td><td>Floating-point type for the correlations and scores. </td></tr>
-    <tr><td class="paramname">Matrix_</td><td>Class of the input data for the neighbor search. This should satisfy the <code><a class="elRef" href="https://knncolle.github.io/knncolle/classknncolle_1_1Matrix.html">knncolle::Matrix</a></code> interface. </td></tr>
-  </table>
-  </dd>
-</dl>
+<div class="textblock"><p>Options for <code><a class="el" href="namespacesinglepp.html#a5f8f8106b91cfe79435b20c9b38e500c">train_single()</a></code> and friends. </p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
-<a id="ab45efe2ac45394bb46bb4b186f234312" name="ab45efe2ac45394bb46bb4b186f234312"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab45efe2ac45394bb46bb4b186f234312">&#9670;&#160;</a></span>num_threads</h2>
+<a id="a76c303868ef63d76fd157ad80974d3a6" name="a76c303868ef63d76fd157ad80974d3a6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a76c303868ef63d76fd157ad80974d3a6">&#9670;&#160;</a></span>num_threads</h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;typename Index_  = DefaultIndex, typename Float_  = DefaultFloat, class Matrix_  = knncolle::Matrix&lt;Index_, Float_&gt;&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">int <a class="el" href="structsinglepp_1_1TrainSingleOptions.html">singlepp::TrainSingleOptions</a>&lt; Index_, Float_, Matrix_ &gt;::num_threads = 1</td>
+          <td class="memname">int singlepp::TrainSingleOptions::num_threads = 1</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -147,39 +134,20 @@ template&lt;typename Index_  = DefaultIndex, typename Float_  = DefaultFloat, cl
 
 </div>
 </div>
-<a id="af45ac859255a937e08684870d12ab123" name="af45ac859255a937e08684870d12ab123"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af45ac859255a937e08684870d12ab123">&#9670;&#160;</a></span>top</h2>
+<a id="a8cf88a1fd176fb330c3d3a57cccda477" name="a8cf88a1fd176fb330c3d3a57cccda477"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8cf88a1fd176fb330c3d3a57cccda477">&#9670;&#160;</a></span>top</h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;typename Index_  = DefaultIndex, typename Float_  = DefaultFloat, class Matrix_  = knncolle::Matrix&lt;Index_, Float_&gt;&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">int <a class="el" href="structsinglepp_1_1TrainSingleOptions.html">singlepp::TrainSingleOptions</a>&lt; Index_, Float_, Matrix_ &gt;::top = -1</td>
+          <td class="memname">int singlepp::TrainSingleOptions::top = -1</td>
         </tr>
       </table>
 </div><div class="memdoc">
 <p>Number of top markers to use from each pairwise comparison between labels. Larger values improve the stability of the correlations at the cost of increasing noise and computational work.</p>
-<p>For <code><a class="el" href="namespacesinglepp.html#ad2e949a84751e1cca2ddc757f5f4e581">train_single_intersect()</a></code>, the specified number of top markers is taken from the intersection of features. This avoids that some markers will be selected even if not all genes in <code>markers</code> are present in the test dataset.</p>
-<p>Setting this to a negative value will instruct <code><a class="el" href="namespacesinglepp.html#a9fc89c91fd655f9b1877f631bf20d352">train_single()</a></code> and <code><a class="el" href="namespacesinglepp.html#ad2e949a84751e1cca2ddc757f5f4e581">train_single_intersect()</a></code> to use all supplied markers. This is useful in situations where the supplied markers have already been curated. </p>
-
-</div>
-</div>
-<a id="a40031e8c223fb65b0aa0dad922974ed7" name="a40031e8c223fb65b0aa0dad922974ed7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a40031e8c223fb65b0aa0dad922974ed7">&#9670;&#160;</a></span>trainer</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename Index_  = DefaultIndex, typename Float_  = DefaultFloat, class Matrix_  = knncolle::Matrix&lt;Index_, Float_&gt;&gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">std::shared_ptr&lt;<a class="elRef" href="https://knncolle.github.io/knncolle/classknncolle_1_1Builder.html">knncolle::Builder</a>&lt;Index_, Float_, Float_, Matrix_&gt; &gt; <a class="el" href="structsinglepp_1_1TrainSingleOptions.html">singlepp::TrainSingleOptions</a>&lt; Index_, Float_, Matrix_ &gt;::trainer</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Algorithm for the nearest-neighbor search. This allows us to skip the explicit calculation of correlations between each test cell and every reference sample. If NULL, this defaults to an exact search based on <code><a class="elRef" href="https://knncolle.github.io/knncolle/classknncolle_1_1VptreeBuilder.html">knncolle::VptreeBuilder</a></code>. </p>
+<p>For <code><a class="el" href="namespacesinglepp.html#ae9aef6aa0694cdeef9d111f8a66f8b05">train_single_intersect()</a></code>, the specified number of top markers is taken from the intersection of features. This avoids that some markers will be selected even if not all genes in <code>markers</code> are present in the test dataset.</p>
+<p>Setting this to a negative value will instruct <code><a class="el" href="namespacesinglepp.html#a5f8f8106b91cfe79435b20c9b38e500c">train_single()</a></code> and <code><a class="el" href="namespacesinglepp.html#ae9aef6aa0694cdeef9d111f8a66f8b05">train_single_intersect()</a></code> to use all supplied markers. This is useful in situations where the supplied markers have already been curated. </p>
 
 </div>
 </div>

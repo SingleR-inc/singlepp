@@ -115,7 +115,7 @@ $(function(){ initResizable(false); });
 <div class="line"> </div>
 <div class="line"><span class="comment">// Training the classifier.</span></div>
 <div class="line"><a class="code hl_struct" href="structsinglepp_1_1TrainSingleOptions.html">singlepp::TrainSingleOptions</a> train_opt;</div>
-<div class="line"><span class="keyword">auto</span> trained = <a class="code hl_function" href="namespacesinglepp.html#a9fc89c91fd655f9b1877f631bf20d352">singlepp::train_single</a>(</div>
+<div class="line"><span class="keyword">auto</span> trained = <a class="code hl_function" href="namespacesinglepp.html#a5f8f8106b91cfe79435b20c9b38e500c">singlepp::train_single</a>(</div>
 <div class="line">    ref_mat,</div>
 <div class="line">    ref_labels.data(), </div>
 <div class="line">    ref_markers,</div>
@@ -125,11 +125,11 @@ $(function(){ initResizable(false); });
 <div class="line"><span class="comment">// Classifying cells in the test matrix.</span></div>
 <div class="line"><a class="code hl_struct" href="structsinglepp_1_1ClassifySingleOptions.html">singlepp::ClassifySingleOptions</a> class_opt;</div>
 <div class="line"><span class="keyword">auto</span> res = <a class="code hl_function" href="namespacesinglepp.html#ae8772734badf4a09d6c285b9b98295ec">singlepp::classify_single</a>(test_mat, trained, class_opt);</div>
-<div class="ttc" id="anamespacesinglepp_html_a9fc89c91fd655f9b1877f631bf20d352"><div class="ttname"><a href="namespacesinglepp.html#a9fc89c91fd655f9b1877f631bf20d352">singlepp::train_single</a></div><div class="ttdeci">TrainedSingle&lt; Index_, Float_ &gt; train_single(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, Markers&lt; Index_ &gt; markers, const TrainSingleOptions&lt; Index_, Float_, Matrix_ &gt; &amp;options)</div><div class="ttdef"><b>Definition</b> train_single.hpp:198</div></div>
+<div class="ttc" id="anamespacesinglepp_html_a5f8f8106b91cfe79435b20c9b38e500c"><div class="ttname"><a href="namespacesinglepp.html#a5f8f8106b91cfe79435b20c9b38e500c">singlepp::train_single</a></div><div class="ttdeci">TrainedSingle&lt; Index_, Float_ &gt; train_single(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, Markers&lt; Index_ &gt; markers, const TrainSingleOptions &amp;options)</div><div class="ttdef"><b>Definition</b> train_single.hpp:159</div></div>
 <div class="ttc" id="anamespacesinglepp_html_ae8772734badf4a09d6c285b9b98295ec"><div class="ttname"><a href="namespacesinglepp.html#ae8772734badf4a09d6c285b9b98295ec">singlepp::classify_single</a></div><div class="ttdeci">void classify_single(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;test, const TrainedSingle&lt; Index_, Float_ &gt; &amp;trained, const ClassifySingleBuffers&lt; Label_, Float_ &gt; &amp;buffers, const ClassifySingleOptions&lt; Float_ &gt; &amp;options)</div><div class="ttdoc">Implements the SingleR algorithm for automated annotation of single-cell RNA-seq data.</div><div class="ttdef"><b>Definition</b> classify_single.hpp:132</div></div>
 <div class="ttc" id="asinglepp_8hpp_html"><div class="ttname"><a href="singlepp_8hpp.html">singlepp.hpp</a></div><div class="ttdoc">Umbrella header for the singlepp library.</div></div>
 <div class="ttc" id="astructsinglepp_1_1ClassifySingleOptions_html"><div class="ttname"><a href="structsinglepp_1_1ClassifySingleOptions.html">singlepp::ClassifySingleOptions</a></div><div class="ttdoc">Options for classify_single() and friends.</div><div class="ttdef"><b>Definition</b> classify_single.hpp:27</div></div>
-<div class="ttc" id="astructsinglepp_1_1TrainSingleOptions_html"><div class="ttname"><a href="structsinglepp_1_1TrainSingleOptions.html">singlepp::TrainSingleOptions</a></div><div class="ttdoc">Options for train_single() and friends.</div><div class="ttdef"><b>Definition</b> train_single.hpp:31</div></div>
+<div class="ttc" id="astructsinglepp_1_1TrainSingleOptions_html"><div class="ttname"><a href="structsinglepp_1_1TrainSingleOptions.html">singlepp::TrainSingleOptions</a></div><div class="ttdoc">Options for train_single() and friends.</div><div class="ttdef"><b>Definition</b> train_single.hpp:25</div></div>
 </div><!-- fragment --><p>See the <a href="https://singler-inc.github.io/singlepp">reference documentation</a> for more details.</p>
 <h1>Identifying markers</h1>
 <p>Given a reference dataset from bulk RNA-seq or microarray, the <a href="https://github.com/SingleR-inc/singler_classic_markers"><b>singler_classic_markers</b></a> library implements a simple method of identifying marker genes between labels. This is based on ranking the differences in median log-expression values between labels and is the "classic" method provided in the original <b>SingleR</b> package.</p>
@@ -143,14 +143,14 @@ $(function(){ initResizable(false); });
 <div class="line">);</div>
 </div><!-- fragment --><p>The <code>classic_markers</code> can then be directly used in <code>train_single()</code> as shown above for <code>ref_markers</code>. Other marker detection schemes can also be used here, depending on the type of reference dataset. For bulk RNA-seq, we could use more advanced approaches based on pairwise differential expression analyses with <a href="https://bioconductor.org/packages/edgeR"><b>edgeR</b></a> and related packages. For single-cell references, users may be interested in some of the differential analysis methods in the <a href="https://github.com/libscran/scran_markers"><b>libscran</b></a> library.</p>
 <p>By default, it is expected that the <code>markers</code> supplied to <code>train_single()</code> has already been filtered to only the top markers for each pairwise comparison. However, in some cases, it might be more convenient for <code>markers</code> to contain a ranking of all genes such that the desired subset of top markers can be chosen later. This is achieved by setting <code>TrainSingleOptions::top</code> to the desired number of markers per comparison. In the example below, setting <code>top = 20</code> is roughly equivalent to slicing each vector in <code>markers</code> to the top 20 entries before calling <code>train_single()</code>.</p>
-<div class="fragment"><div class="line">train_opt.<a class="code hl_variable" href="structsinglepp_1_1TrainSingleOptions.html#af45ac859255a937e08684870d12ab123">top</a> = 20;</div>
-<div class="line"><span class="keyword">auto</span> trained20 = <a class="code hl_function" href="namespacesinglepp.html#a9fc89c91fd655f9b1877f631bf20d352">singlepp::train_single</a>(</div>
+<div class="fragment"><div class="line">train_opt.<a class="code hl_variable" href="structsinglepp_1_1TrainSingleOptions.html#a8cf88a1fd176fb330c3d3a57cccda477">top</a> = 20;</div>
+<div class="line"><span class="keyword">auto</span> trained20 = <a class="code hl_function" href="namespacesinglepp.html#a5f8f8106b91cfe79435b20c9b38e500c">singlepp::train_single</a>(</div>
 <div class="line">    ref_mat,</div>
 <div class="line">    ref_labels.data(),</div>
 <div class="line">    ref_markers,</div>
 <div class="line">    train_opt</div>
 <div class="line">);</div>
-<div class="ttc" id="astructsinglepp_1_1TrainSingleOptions_html_af45ac859255a937e08684870d12ab123"><div class="ttname"><a href="structsinglepp_1_1TrainSingleOptions.html#af45ac859255a937e08684870d12ab123">singlepp::TrainSingleOptions::top</a></div><div class="ttdeci">int top</div><div class="ttdef"><b>Definition</b> train_single.hpp:42</div></div>
+<div class="ttc" id="astructsinglepp_1_1TrainSingleOptions_html_a8cf88a1fd176fb330c3d3a57cccda477"><div class="ttname"><a href="structsinglepp_1_1TrainSingleOptions.html#a8cf88a1fd176fb330c3d3a57cccda477">singlepp::TrainSingleOptions::top</a></div><div class="ttdeci">int top</div><div class="ttdef"><b>Definition</b> train_single.hpp:36</div></div>
 </div><!-- fragment --><h1>Intersecting feature sets</h1>
 <p>Often the reference dataset will not have the same genes as the test dataset. To handle this case, users should call <code>train_single_intersect()</code> with the row identifiers of the reference and test matrices. If a gene is not in the intersection of reference/test identifiers, it will be ignored in the rest of the analysis, even if it was specifically requested in <code>ref_markers</code>.</p>
 <div class="fragment"><div class="line">test_names; <span class="comment">// vector of feature IDs for the test data</span></div>
@@ -158,9 +158,9 @@ $(function(){ initResizable(false); });
 <div class="line"> </div>
 <div class="line"><span class="comment">// Instruct the function to select the top 20 markers from ref_markers after</span></div>
 <div class="line"><span class="comment">// discarding any genes that are not present in the test matrix. </span></div>
-<div class="line">train_opt.<a class="code hl_variable" href="structsinglepp_1_1TrainSingleOptions.html#af45ac859255a937e08684870d12ab123">top</a> = 20;</div>
+<div class="line">train_opt.<a class="code hl_variable" href="structsinglepp_1_1TrainSingleOptions.html#a8cf88a1fd176fb330c3d3a57cccda477">top</a> = 20;</div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">auto</span> trained_intersect = <a class="code hl_function" href="namespacesinglepp.html#ad2e949a84751e1cca2ddc757f5f4e581">singlepp::train_single_intersect</a>(</div>
+<div class="line"><span class="keyword">auto</span> trained_intersect = <a class="code hl_function" href="namespacesinglepp.html#ae9aef6aa0694cdeef9d111f8a66f8b05">singlepp::train_single_intersect</a>(</div>
 <div class="line">    test_mat.nrow(),</div>
 <div class="line">    test_names.data(),</div>
 <div class="line">    ref_mat,</div>
@@ -169,7 +169,7 @@ $(function(){ initResizable(false); });
 <div class="line">    ref_markers,</div>
 <div class="line">    train_opt</div>
 <div class="line">);</div>
-<div class="ttc" id="anamespacesinglepp_html_ad2e949a84751e1cca2ddc757f5f4e581"><div class="ttname"><a href="namespacesinglepp.html#ad2e949a84751e1cca2ddc757f5f4e581">singlepp::train_single_intersect</a></div><div class="ttdeci">TrainedSingleIntersect&lt; Index_, Float_ &gt; train_single_intersect(Index_ test_nrow, const Intersection&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, Markers&lt; Index_ &gt; markers, const TrainSingleOptions&lt; Index_, Float_, Matrix_ &gt; &amp;options)</div><div class="ttdef"><b>Definition</b> train_single.hpp:343</div></div>
+<div class="ttc" id="anamespacesinglepp_html_ae9aef6aa0694cdeef9d111f8a66f8b05"><div class="ttname"><a href="namespacesinglepp.html#ae9aef6aa0694cdeef9d111f8a66f8b05">singlepp::train_single_intersect</a></div><div class="ttdeci">TrainedSingleIntersect&lt; Index_, Float_ &gt; train_single_intersect(Index_ test_nrow, const Intersection&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, Markers&lt; Index_ &gt; markers, const TrainSingleOptions &amp;options)</div><div class="ttdef"><b>Definition</b> train_single.hpp:302</div></div>
 </div><!-- fragment --><p>Then, <code>classify_single_intersect()</code> will perform classification using only the intersection of genes between the two datasets:</p>
 <div class="fragment"><div class="line"><span class="keyword">auto</span> res_intersect = <a class="code hl_function" href="namespacesinglepp.html#ad7d214a5da53597d24dec5cec59e3beb">singlepp::classify_single_intersect</a>(</div>
 <div class="line">    test_mat,</div>
@@ -180,10 +180,10 @@ $(function(){ initResizable(false); });
 </div><!-- fragment --><p>The gene identifiers can be anything that can be hashed and compared. These are most commonly <code>std::string</code>s but can also be integers (e.g., for Entrez IDs).</p>
 <h1>Integrating results across references</h1>
 <p>To combine results from multiple references, we first need to perform classification within each reference. Let's say we have two references A and B:</p>
-<div class="fragment"><div class="line"><span class="keyword">auto</span> trainA = <a class="code hl_function" href="namespacesinglepp.html#a9fc89c91fd655f9b1877f631bf20d352">singlepp::train_single</a>(refA_mat, refA_labels.data(), refA_markers, train_opt);</div>
+<div class="fragment"><div class="line"><span class="keyword">auto</span> trainA = <a class="code hl_function" href="namespacesinglepp.html#a5f8f8106b91cfe79435b20c9b38e500c">singlepp::train_single</a>(refA_mat, refA_labels.data(), refA_markers, train_opt);</div>
 <div class="line"><span class="keyword">auto</span> resA = <a class="code hl_function" href="namespacesinglepp.html#ae8772734badf4a09d6c285b9b98295ec">singlepp::classify_single</a>(test_mat, trainA, class_opt);</div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">auto</span> trainB = <a class="code hl_function" href="namespacesinglepp.html#a9fc89c91fd655f9b1877f631bf20d352">singlepp::train_single</a>(refB_mat, refB_labels.data(), refB_markers, train_opt);</div>
+<div class="line"><span class="keyword">auto</span> trainB = <a class="code hl_function" href="namespacesinglepp.html#a5f8f8106b91cfe79435b20c9b38e500c">singlepp::train_single</a>(refB_mat, refB_labels.data(), refB_markers, train_opt);</div>
 <div class="line"><span class="keyword">auto</span> resB = <a class="code hl_function" href="namespacesinglepp.html#ae8772734badf4a09d6c285b9b98295ec">singlepp::classify_single</a>(test_mat, trainB, class_opt);</div>
 </div><!-- fragment --><p>We build the integrated classifier:</p>
 <div class="fragment"><div class="line">std::vector&lt;singlepp::TrainIntegratedInput&lt;&gt; &gt; inputs;</div>
