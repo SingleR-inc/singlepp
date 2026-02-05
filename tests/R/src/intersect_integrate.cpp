@@ -50,7 +50,7 @@ Rcpp::List intersect_integrate(
     tatami::DenseColumnMatrix<double, int> parsed_test(test.nrow(), test.ncol(), std::vector<double>(test.begin(), test.end()));
 
     // Building the integrated classifier.
-    singlepp::TrainSingleOptions<int, double> bopt;
+    singlepp::TrainSingleOptions bopt;
     bopt.top = -1; // use all markers.
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > inputs; 
     for (size_t r = 0; r < nrefs; ++r) {

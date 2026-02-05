@@ -4,7 +4,6 @@
 #include "defs.hpp"
 
 #include "tatami/tatami.hpp"
-#include "knncolle/knncolle.hpp"
 
 #include "Markers.hpp"
 #include "build_indices.hpp"
@@ -79,9 +78,9 @@ public:
 
                 my_all_correlations.clear();
                 const auto& curref = ref[curlab];
-                auto NC = curref.index->num_observations();
+                const auto NC = get_num_samples(curref);
 
-                for (decltype(NC) c = 0; c < NC; ++c) {
+                for (I<decltype(NC)> c = 0; c < NC; ++c) {
                     // Technically we could be faster if we remembered the
                     // subset from the previous fine-tuning iteration, but this
                     // requires us to (possibly) make a copy of the entire
@@ -124,8 +123,8 @@ void annotate_cells_single(
     std::vector<std::pair<Float_, Float_> > coeffs(num_labels);
 
     for (decltype(num_labels) r = 0; r < num_labels; ++r) {
-        Float_ denom = static_cast<Float_>(ref[r].index->num_observations()) - 1;
-        Float_  prod = denom * (1 - quantile);
+        const Float_ denom = get_num_samples(ref[r]) - 1;
+        const Float_  prod = denom * (1 - quantile);
         auto k = std::ceil(prod) + 1;
         search_k[r] = k;
 
@@ -149,12 +148,11 @@ void annotate_cells_single(
         RankedVector<Value_, Index_> vec;
         vec.reserve(num_subset);
 
-        std::vector<std::unique_ptr<knncolle::Searcher<Index_, Float_, Float_> > > searchers;
-        searchers.reserve(num_labels);
-        for (decltype(num_labels) r = 0; r < num_labels; ++r) {
-            searchers.emplace_back(ref[r].index->initialize());
+        std::vector<FindClosestWorkspace<Index_, Float_> > workspaces;
+        workspaces.reserve(num_labels);
+        for (I<decltype(num_labels)> r = 0; r < num_labels; ++r) {
+            workspaces.emplace_back(get_num_samples(ref[r]));
         }
-        std::vector<Float_> distances;
 
         FineTuneSingle<Label_, Index_, Float_, Value_> ft;
         std::vector<Float_> curscores(num_labels);
@@ -166,19 +164,16 @@ void annotate_cells_single(
 
             curscores.resize(num_labels);
             for (decltype(num_labels) r = 0; r < num_labels; ++r) {
-                // No need to use knncolle::cap_k_query(), as our quantile
-                // calculations guarantee that 'k' is less than or equal to the
-                // number of observations in the reference.
-                auto k = search_k[r];
-                searchers[r]->search(buffer.data(), k, NULL, &(distances));
+                const auto k = search_k[r];
+                find_closest(buffer.data(), k, ref[r], workspaces[r]);
 
-                Float_ last = distances[k - 1];
-                last = 1 - 2 * last * last;
+                const Float_ last_squared = pop_furthest_neighbor(workspaces[r]).first;
+                const Float_ last = 1 - 2 * last_squared;
                 if (k == 1) {
                     curscores[r] = last;
                 } else {
-                    Float_ next = distances[k - 2];
-                    next = 1 - 2 * next * next;
+                    const Float_ next_squared = pop_furthest_neighbor(workspaces[r]).first;
+                    const Float_ next = 1 - 2 * next_squared;
                     curscores[r] = coeffs[r].first * next + coeffs[r].second * last;
                 }
 

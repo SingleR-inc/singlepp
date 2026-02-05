@@ -23,8 +23,7 @@ protected:
         std::vector<int> subset(ngenes);
         std::iota(subset.begin(), subset.end(), 0);
 
-        knncolle::VptreeBuilder<int, double, double> builder(std::make_shared<knncolle::EuclideanDistance<double, double> >());
-        indices = singlepp::internal::build_indices(*reference, labels.data(), subset, builder, 1);
+        indices = singlepp::internal::build_indices<double>(*reference, labels.data(), subset, 1);
     }
 };
 

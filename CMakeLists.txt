@@ -22,11 +22,12 @@ option(SINGLEPP_FETCH_EXTERN "Automatically fetch singlepp's external dependenci
 if(SINGLEPP_FETCH_EXTERN)
     add_subdirectory(extern)
 else()
-    find_package(knncolle_knncolle 3.0.0 CONFIG REQUIRED)
     find_package(tatami_tatami 4.0.0 CONFIG REQUIRED)
+    find_package(ltla_aarand 1.1.0 CONFIG REQUIRED)
+    find_package(ltla_sanisizer 0.1.5 CONFIG REQUIRED)
 endif()
 
-target_link_libraries(singlepp INTERFACE knncolle::knncolle tatami::tatami)
+target_link_libraries(singlepp INTERFACE tatami::tatami ltla::aarand ltla::sanisizer)
 
 # Tests
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)

@@ -32,7 +32,7 @@ protected:
             labels.push_back(spawn_labels(nprofiles, nlabels, seed * 2));
             auto current = mock_markers<int>(nlabels, 10, ngenes, seed * 3);
 
-            singlepp::TrainSingleOptions<int, double> topt;
+            singlepp::TrainSingleOptions topt;
             auto single_built = singlepp::train_single(*(references.back()), labels.back().data(), std::move(current), topt);
             inputs.push_back(singlepp::prepare_integrated_input(*(references.back()), labels.back().data(), single_built));
         }

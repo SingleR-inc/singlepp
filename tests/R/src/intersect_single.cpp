@@ -39,7 +39,7 @@ Rcpp::List intersect_single(
     }
 
     // Running everything.
-    singlepp::TrainSingleOptions<int, double> bopt;
+    singlepp::TrainSingleOptions bopt;
     bopt.top = top;
     auto trained = singlepp::train_single_intersect(parsed_test.nrow(), test_ids.data(), parsed_ref, ref_ids.data(), labels2.data(), std::move(markers2), bopt);
 

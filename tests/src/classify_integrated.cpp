@@ -70,7 +70,7 @@ TEST_P(TrainIntegratedTest, Simple) {
     int ntop = std::get<0>(param);
     int nthreads = std::get<1>(param);
 
-    singlepp::TrainSingleOptions<int, double> bopt;
+    singlepp::TrainSingleOptions bopt;
     bopt.top = ntop;
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > inputs;
     for (size_t r = 0; r < nrefs; ++r) {
@@ -163,7 +163,7 @@ TEST_P(TrainIntegratedTest, Intersect) {
     }
 
     // Adding each reference to the list. We store the single prebuilts for testing later.
-    singlepp::TrainSingleOptions<int, double> bopt;
+    singlepp::TrainSingleOptions bopt;
     bopt.top = ntop;
     std::vector<singlepp::TrainedSingleIntersect<int, double> > single_ref;
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > inputs;
@@ -173,7 +173,7 @@ TEST_P(TrainIntegratedTest, Intersect) {
         auto refptr = ref_ids[r].data();
         auto labptr = labels[r].data();
         const auto& refmat = *references[r];
-        auto pre = singlepp::train_single_intersect<int>(ngenes, idptr, refmat, refptr, labptr, markers[r], bopt);
+        auto pre = singlepp::train_single_intersect<double, int>(ngenes, idptr, refmat, refptr, labptr, markers[r], bopt);
         inputs.push_back(singlepp::prepare_integrated_input_intersect<int>(ngenes, idptr, refmat, refptr, labptr, pre));
         single_ref.push_back(std::move(pre));
     }
@@ -288,7 +288,7 @@ protected:
 };
 
 TEST_F(TrainIntegratedMismatchTest, Simple) {
-    singlepp::TrainSingleOptions<int, double> bopt;
+    singlepp::TrainSingleOptions bopt;
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > inputs;
     for (size_t r = 0; r < nrefs; ++r) {
         const auto& sref = *(sub_references[r]);
@@ -308,7 +308,7 @@ TEST_F(TrainIntegratedMismatchTest, Simple) {
 }
 
 TEST_F(TrainIntegratedMismatchTest, Intersect) {
-    singlepp::TrainSingleOptions<int, double> bopt;
+    singlepp::TrainSingleOptions bopt;
     std::vector<singlepp::TrainedSingleIntersect<int, double> > single_ref;
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > inputs;
 
@@ -319,7 +319,7 @@ TEST_F(TrainIntegratedMismatchTest, Intersect) {
         auto test_ids = simulate_test_ids(curgenes, base_seed * 10 + r);
         auto ref_ids = simulate_ref_ids(curgenes, base_seed * 20 + r);
         auto labptr = labels[r].data();
-        auto pre = singlepp::train_single_intersect<int>(test_ids.size(), test_ids.data(), srefmat, ref_ids.data(), labptr, markers[r], bopt);
+        auto pre = singlepp::train_single_intersect<double, int>(test_ids.size(), test_ids.data(), srefmat, ref_ids.data(), labptr, markers[r], bopt);
         inputs.push_back(singlepp::prepare_integrated_input_intersect<int>(curgenes, test_ids.data(), srefmat, ref_ids.data(), labptr, pre));
         single_ref.push_back(std::move(pre));
     }
@@ -410,7 +410,7 @@ TEST_P(ClassifyIntegratedTest, Basic) {
     int base_seed = ntop + quantile * 50;
 
     // Creating the integrated set of references.
-    singlepp::TrainSingleOptions<int, double> bopt;
+    singlepp::TrainSingleOptions bopt;
     bopt.top = ntop;
     std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
@@ -489,7 +489,7 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
     // Creating the integrated set of references.
     auto test_ids = simulate_test_ids(ngenes, base_seed * 20);
 
-    singlepp::TrainSingleOptions<int, double> bopt;
+    singlepp::TrainSingleOptions bopt;
     bopt.top = ntop;
     std::vector<std::vector<int> > ref_ids;
     std::vector<singlepp::TrainedSingleIntersect<int, double> > prebuilts;
@@ -499,7 +499,7 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
         size_t seed = base_seed * 20 + r * 321;
         ref_ids.push_back(simulate_ref_ids(ngenes, seed + 3));
         const auto& ref_id = ref_ids.back();
-        auto pre = singlepp::train_single_intersect<int>(ngenes, test_ids.data(), *(references[r]), ref_id.data(), labels[r].data(), markers[r], bopt);
+        auto pre = singlepp::train_single_intersect<double, int>(ngenes, test_ids.data(), *(references[r]), ref_id.data(), labels[r].data(), markers[r], bopt);
         prebuilts.push_back(std::move(pre));
         integrated_inputs.push_back(singlepp::prepare_integrated_input_intersect<int>(ngenes, test_ids.data(), *(references[r]), ref_id.data(), labels[r].data(), prebuilts.back()));
     }
@@ -615,7 +615,7 @@ TEST_P(ClassifyIntegratedTest, IntersectedComparison) {
     std::iota(test_ids.begin(), test_ids.end(), 0);
     std::vector<std::shared_ptr<tatami::Matrix<double, int> > > reorganized_references;
 
-    singlepp::TrainSingleOptions<int, double> bopt;
+    singlepp::TrainSingleOptions bopt;
     bopt.top = ntop;
     std::vector<singlepp::TrainedSingleIntersect<int, double> > prebuilts;
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
@@ -629,7 +629,7 @@ TEST_P(ClassifyIntegratedTest, IntersectedComparison) {
         auto ref_ids = test_ids;
         std::shuffle(ref_ids.begin(), ref_ids.end(), rng);
 
-        auto pre = singlepp::train_single_intersect<int>(ngenes, test_ids.data(), *(references[r]), ref_ids.data(), labels[r].data(), markers[r], bopt);
+        auto pre = singlepp::train_single_intersect<double, int>(ngenes, test_ids.data(), *(references[r]), ref_ids.data(), labels[r].data(), markers[r], bopt);
         prebuilts.emplace_back(std::move(pre));
         integrated_inputs.push_back(singlepp::prepare_integrated_input_intersect<int>(ngenes, test_ids.data(), *(references[r]), ref_ids.data(), labels[r].data(), prebuilts.back()));
 
@@ -705,7 +705,7 @@ protected:
 };
 
 TEST_F(ClassifyIntegratedMismatchTest, Basic) {
-    singlepp::TrainSingleOptions<int, double> bopt;
+    singlepp::TrainSingleOptions bopt;
     std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
 
