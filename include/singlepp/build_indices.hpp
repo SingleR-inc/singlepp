@@ -211,51 +211,6 @@ void find_closest_for_seed(
 ) {
     const auto num_dim = ref.num_dim;
 
-    for (auto s = firstsubj; s < lastsubj; ++s) {
-        const auto subject = ref.data.data() + sanisizer::product_unsafe<std::size_t>(s, num_dim);
-        Float_ dist2subj_raw = 0;
-        for (std::size_t d = 0; d < num_dim; ++d) {
-            const Float_ delta = query[d] - subject[d]; 
-            dist2subj_raw += delta * delta;
-        }
-
-        if (dist2subj_raw <= threshold_raw) {
-            work.closest_neighbors.emplace_back(dist2subj_raw, s);
-            std::push_heap(work.closest_neighbors.begin(), work.closest_neighbors.end());
-            
-            if (work.closest_neighbors.size() >= num_neighbors) {
-                if (work.closest_neighbors.size() > num_neighbors) {
-                    std::pop_heap(work.closest_neighbors.begin(), work.closest_neighbors.end());
-                    work.closest_neighbors.pop_back();
-                }
-                threshold_raw = work.closest_neighbors.front().first;
-
-                if constexpr(can_truncate_upper_bound_) {
-                    /* If we can use an upper bound, we see if a lower threshold might allow us to truncate the search.
-                     * As described below, this exploits the triangle inequality to ignore points where:
-                     *     threshold + query-to-seed < subject-to-seed
-                     * 
-                     * If we can't use an upper bound, we skip this section entirely.
-                     * This gives the compiler a better opportunity for optimization (e.g., reduced dependencies between loops),
-                     * especially given that this section will not be used for the majority of seeds.
-                     */
-                    const Float_ threshold = std::sqrt(threshold_raw);
-                    const Float_ upper_bd = query2seed + threshold;
-                    while (lastsubj > s && ref.distances[lastsubj - 1] > upper_bd) {
-                        --lastsubj;
-                    }
-
-                    /* As an aside: we could also consider increasing 'firstsubj' as threshold decreases. 
-                     * This would exploit the triangle inequality to ignore points where:
-                     *     threshold + subject-to-seed < query-to-seed 
-                     * However, this is pointless because 'query-to-seed - threshold' will never increase enough to skip subsequent observations.
-                     * We wouldn't have been able to skip the observation that we just added,
-                     * so there's no way we could skip observations with larger subject-to-seed distances.
-                     */
-                }
-            }
-        }
-    }
 }
 
 template<typename Index_, typename Float_>
@@ -296,42 +251,78 @@ void find_closest(
             continue;
         }
 
-        std::optional<Float_> query2seed;
         Index_ firstsubj = ranges.first, lastsubj = ranges.first + ranges.second;
-
-        bool can_truncate_upper_bound = false;
         if (!std::isinf(threshold_raw)) {
             const Float_ threshold = std::sqrt(threshold_raw);
-            query2seed = std::sqrt(curseed.first);
+            const Float_ query2seed = std::sqrt(curseed.first);
+            const Float_ max_subj2seed = ref.distances[lastsubj - 1];
 
-            /* The conditional expression below exploits the triangle inequality; it is equivalent to asking whether:
+            /* This exploits the triangle inequality to ignore points where:
              *     threshold + subject-to-seed < query-to-seed 
              * All points (if any) within this cluster with distances at or above 'lower_bd' are potentially countable.
+             *
+             * If the maximum distance between a subject and the seed is less than 'lower_bd', there's no point proceeding,
+             * as we know that all other subjects will have smaller distances and are thus uncountable.
              */
             const Float_ lower_bd = *query2seed - threshold;
+            if (max_subj2seed < lower_bd) {
+                continue;
+            }
             firstsubj = std::lower_bound(ref.distances.data() + firstsubj, ref.distances.data() + lastsubj, lower_bd) - ref.distances.data();
 
             /* This exploits the triangle inequality in an opposite manner to that described above, to ignore points where:
              *     threshold + query-to-seed < subject-to-seed
              * All points (if any) within this cluster with distances at or below 'upper_bd' are potentially countable.
              * 
-             * If query-to-seed distance is less than the largest possible subject-to-seed for a seed,
-             * there's no point exploiting this inequality, so we just skip it. 
-             * Note that this also means that there's no point trying to adjust 'lastsubj' for decreases in 'threshold' within a seed,
-             * because even if 'threshold = 0', there's no way to satisfy the inequality above,
-             * i.e., all points for this seed will always be searchable.
+             * If query-to-seed distance is greater than or equal to the largest possible subject-to-seed for a seed,
+             * there's no point exploiting this inequality as we must examine all subjects... so we don't bother with it.
+             *
+             * We could also skip this seed altogether if the minimum subject-to-seed distance is greater than 'upper_bd'.
+             * However, this seems too unlikely to warrant a special clause.
              */
-            can_truncate_upper_bound = *query2seed < ref.distances[lastsubj - 1];
-            if (can_truncate_upper_bound) {
-                const Float_ upper_bd = *query2seed + threshold;
+            const Float_ upper_bd = *query2seed + threshold;
+            if (max_subj2seed > upper_bd) {
                 lastsubj = std::upper_bound(ref.distances.data() + firstsubj, ref.distances.data() + lastsubj, upper_bd) - ref.distances.data();
             }
         }
 
-        if (can_truncate_upper_bound) {
-            find_closest_for_seed<true>(query, num_neighbors, *query2seed, firstsubj, lastsubj, ref, work, threshold_raw); 
-        } else {
-            find_closest_for_seed<false>(query, num_neighbors, NULL, firstsubj, lastsubj, ref, work, threshold_raw); 
+        for (auto s = firstsubj; s < lastsubj; ++s) {
+            const auto subject = ref.data.data() + sanisizer::product_unsafe<std::size_t>(s, num_dim);
+            Float_ dist2subj_raw = 0;
+            for (std::size_t d = 0; d < num_dim; ++d) {
+                const Float_ delta = query[d] - subject[d]; 
+                dist2subj_raw += delta * delta;
+            }
+
+            if (dist2subj_raw <= threshold_raw) {
+                work.closest_neighbors.emplace_back(dist2subj_raw, s);
+                std::push_heap(work.closest_neighbors.begin(), work.closest_neighbors.end());
+
+                if (work.closest_neighbors.size() >= num_neighbors) {
+                    if (work.closest_neighbors.size() > num_neighbors) {
+                        std::pop_heap(work.closest_neighbors.begin(), work.closest_neighbors.end());
+                        work.closest_neighbors.pop_back();
+                    }
+                    threshold_raw = work.closest_neighbors.front().first;
+
+                    /* P.S. We could also consider increasing 'firstsubj' as 'threshold_raw' decreases. 
+                     * The idea would be to exploit the triangle inequality to quickly skip over more points. 
+                     * However, this is pointless because 'lower_bd' will never increase enough to skip subsequent observations.
+                     * We wouldn't have been able to skip the observation that we just added,
+                     * so there's no way we could skip observations with larger subject-to-seed distances.
+                     *
+                     * P.P.S. We could also consider decreasing 'lastsubj' as 'threshold_raw' decreases.
+                     * The idea would be to exploit the triangle inequality to terminate sooner. 
+                     * However, this doesn't seem to provide a lot of benefit in practice. 
+                     * In theory, we can only trim the search space if the query already lies in a seed's hypersphere (as 'upper_bd' cannot decrease below 'query2seed').
+                     * Even then, 'upper_bd' is usually too large; testing indicates that a reduced 'upper_bd' only trims away a single observation at a time.
+                     * There are also practical challenges as changes to 'lastsubj' within the loop might prevent out-of-order CPU execution;
+                     * we need to do more memory accesses to 'dist2seeds' to check if 'lastsubj' can be decreased;
+                     * and we need to run an extra 'normalize()' to recompute 'upper_bd' inside the loop.
+                     * All in all, I don't think it's worth it.
+                     */
+                }
+            }
         }
     }
 }
