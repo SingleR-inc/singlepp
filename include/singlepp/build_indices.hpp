@@ -198,21 +198,6 @@ struct FindClosestWorkspace {
     std::vector<std::pair<Float_, Index_> > closest_neighbors;
 };
 
-template<bool can_truncate_upper_bound_, typename Index_, typename Float_, typename NumNeighbors_>
-void find_closest_for_seed(
-    const Float_* const query,
-    const NumNeighbors_ num_neighbors,
-    typename std::conditional<can_truncate_upper_bound_, Float_, void*>::type query2seed,
-    const Index_ firstsubj,
-    Index_ lastsubj,
-    const PerLabelReference<Index_, Float_>& ref,
-    FindClosestWorkspace<Index_, Float_>& work,
-    Float_& threshold_raw
-) {
-    const auto num_dim = ref.num_dim;
-
-}
-
 template<typename Index_, typename Float_>
 void find_closest(
     const Float_* query,
@@ -264,7 +249,7 @@ void find_closest(
              * If the maximum distance between a subject and the seed is less than 'lower_bd', there's no point proceeding,
              * as we know that all other subjects will have smaller distances and are thus uncountable.
              */
-            const Float_ lower_bd = *query2seed - threshold;
+            const Float_ lower_bd = query2seed - threshold;
             if (max_subj2seed < lower_bd) {
                 continue;
             }
@@ -280,7 +265,7 @@ void find_closest(
              * We could also skip this seed altogether if the minimum subject-to-seed distance is greater than 'upper_bd'.
              * However, this seems too unlikely to warrant a special clause.
              */
-            const Float_ upper_bd = *query2seed + threshold;
+            const Float_ upper_bd = query2seed + threshold;
             if (max_subj2seed > upper_bd) {
                 lastsubj = std::upper_bound(ref.distances.data() + firstsubj, ref.distances.data() + lastsubj, upper_bd) - ref.distances.data();
             }
