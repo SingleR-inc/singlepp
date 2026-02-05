@@ -39,7 +39,7 @@ Rcpp::List classify_single(
     }
 
     // Running everything.
-    singlepp::TrainSingleOptions<int, double> bopt;
+    singlepp::TrainSingleOptions bopt;
     bopt.top = top;
     auto trained = singlepp::train_single(parsed_ref, labels2.data(), std::move(markers2), bopt);
 

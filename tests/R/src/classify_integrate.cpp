@@ -40,7 +40,7 @@ Rcpp::List classify_integrate(
         reresults.emplace_back(setup_labels(results[r]));
     }
 
-    singlepp::TrainSingleOptions<int, double> bopt;
+    singlepp::TrainSingleOptions bopt;
     bopt.top = -1; // use all markers.
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > inputs; 
     for (size_t r = 0; r < nrefs; ++r) {
