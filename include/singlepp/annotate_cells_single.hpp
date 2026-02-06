@@ -103,10 +103,10 @@ public:
     }
 };
 
-template<typename Value_, typename Index_, typename Float_, typename Label_>
-void annotate_cells_single(
+template<bool query_sparse_, bool ref_sparse_, typename Value_, typename Index_, bool ref_sparse_, typename Float_, typename Label_>
+void annotate_cells_single_raw(
     const tatami::Matrix<Value_, Index_>& test,
-    const std::vector<Index_> subset,
+    const std::vector<Index_>& subset,
     const std::vector<PerLabelReference<Index_, Float_> >& ref,
     const Markers<Index_>& markers,
     Float_ quantile,
@@ -115,10 +115,10 @@ void annotate_cells_single(
     Label_* best, 
     const std::vector<Float_*>& scores,
     Float_* delta,
-    int num_threads)
-{
+    int num_threads
+) {
     // Figuring out how many neighbors to keep and how to compute the quantiles.
-    auto num_labels = ref.size();
+    const auto num_labels = ref.size();
     std::vector<Index_> search_k(num_labels);
     std::vector<std::pair<Float_, Float_> > coeffs(num_labels);
 
@@ -141,10 +141,18 @@ void annotate_cells_single(
     tatami::VectorPtr<Index_> subset_ptr(tatami::VectorPtr<Index_>{}, &(subsorted.extraction_subset()));
 
     tatami::parallelize([&](int, Index_ start, Index_ length) {
-        auto ext = tatami::consecutive_extractor<false>(&test, false, start, length, subset_ptr);
+        auto ext = tatami::consecutive_extractor<query_sparse_>(&test, false, start, length, subset_ptr);
 
-        auto num_subset = subset.size();
-        std::vector<Value_> buffer(num_subset);
+        const auto num_subset = subset.size();
+        auto vbuffer = sanisizer::create<std::vector<Value_> >(num_subset);
+        auto ibuffer = [&](){
+            if constexpr(query_sparse_) {
+                return sanisizer::create<std::vector<Index_> >(num_subset);
+            } else {
+                return false;
+            }
+        }();
+
         RankedVector<Value_, Index_> vec;
         vec.reserve(num_subset);
 
@@ -154,18 +162,34 @@ void annotate_cells_single(
             workspaces.emplace_back(get_num_samples(ref[r]));
         }
 
+        auto scaled = [&](){
+            if constexpr(query_sparse_) {
+                SparseScaled<Input_, Float_> output;
+                sanisizer::reserve(output.nonzero, num_subset);
+                return output;
+            } else {
+                return sanisizer::create<std::vector<Float_> >(num_subset);
+            }
+        }();
+
         FineTuneSingle<Label_, Index_, Float_, Value_> ft;
         std::vector<Float_> curscores(num_labels);
 
         for (Index_ c = start, end = start + length; c < end; ++c) {
-            auto ptr = ext->fetch(buffer.data());
-            subsorted.fill_ranks(ptr, vec);
-            scaled_ranks(vec, buffer.data()); // 'buffer' can be re-used for output here, as all data is already extracted to 'vec'.
+            if constexpr(query_sparse_) {
+                const auto info = ext->fetch(vbuffer.data(), ibuffer.data());
+                subsorted.fill_ranks(info, vec);
+                scaled_ranks_sparse(nmarkers, vec, scaled); 
+            } else {
+                const auto ptr = ext->fetch(vbuffer.data());
+                subsorted.fill_ranks(ptr, vec);
+                scaled_ranks_dense(vec, scaled.data());
+            }
 
             curscores.resize(num_labels);
             for (decltype(num_labels) r = 0; r < num_labels; ++r) {
                 const auto k = search_k[r];
-                find_closest(buffer.data(), k, ref[r], workspaces[r]);
+                find_closest<query_sparse_, ref_sparse_>(num_subset, scaled, k, ref[r], workspaces[r]);
 
                 const Float_ last_squared = pop_furthest_neighbor(workspaces[r]).first;
                 const Float_ last = 1 - 2 * last_squared;

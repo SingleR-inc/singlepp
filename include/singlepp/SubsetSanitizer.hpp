@@ -1,11 +1,14 @@
 #ifndef SINGLEPP_SUBSET_SANITIZER_HPP
 #define SINGLEPP_SUBSET_SANITIZER_HPP
 
-#include "scaled_ranks.hpp"
+#include "utils.hpp"
+
+#include "tatami/tatami.hpp"
+#include "sanisizer/sanisizer.hpp"
 
 #include <algorithm>
 #include <vector>
-#include <cstddef>
+#include <type_traits>
 
 namespace singlepp {
 
@@ -19,7 +22,7 @@ namespace internal {
  * easily control (e.g., if the reference/test datasets do not use the same
  * feature ordering, in which case the subset is necessarily unsorted).
  */
-template<typename Index_>
+template<bool sparse_, typename Index_>
 class SubsetSanitizer {
 private:
     bool my_use_sorted_subset = false;
@@ -27,12 +30,15 @@ private:
     std::vector<Index_> my_sorted_subset;
 
     typedef typename std::vector<Index_>::size_type Size; // index type of the input subset vector in the constructor.
-    std::vector<Size> my_original_indices;
+    typename std::conditional<sparse_, bool, std::vector<Size> >::type my_original_indices;
+
+    typename std::conditional<sparse_, std::vector<Index_>, bool>::type my_remapping;
+    typename std::conditional<sparse_, Index_, bool>::type my_remap_start = 0;
 
 public:
     SubsetSanitizer(const std::vector<Index_>& sub) : my_original_subset(sub) {
         auto num_subset = sub.size();
-        for (decltype(num_subset) i = 1; i < num_subset; ++i) {
+        for (I<decltype(num_subset)> i = 1; i < num_subset; ++i) {
             if (sub[i] <= sub[i-1]) {
                 my_use_sorted_subset = true;
                 break;
@@ -41,19 +47,29 @@ public:
 
         if (my_use_sorted_subset) {
             std::vector<std::pair<Index_, Size> > store;
-            store.reserve(num_subset);
+            sanisizer::reserve(store, num_subset);
             for (decltype(num_subset) i = 0; i < num_subset; ++i) {
                 store.emplace_back(sub[i], i);
             }
-
             std::sort(store.begin(), store.end());
-            my_sorted_subset.reserve(num_subset);
-            my_original_indices.resize(num_subset);
+
+            sanisizer::reserve(my_sorted_subset, num_subset);
+            if constexpr(sparse_) {
+                my_remap_start = store.front().first;
+                sanisizer::resize(my_remapping, store.back().first - my_remap_start + 1);
+            } else {
+                sanisizer::resize(my_original_indices, num_subset);
+            }
+
             for (const auto& s : store) {
                 if (my_sorted_subset.empty() || my_sorted_subset.back() != s.first) {
                     my_sorted_subset.push_back(s.first);
                 }
-                my_original_indices[s.second] = my_sorted_subset.size() - 1;
+                if constexpr(sparse_) {
+                    my_remapping[s.first - my_remap_start] = s.second;
+                } else {
+                    my_original_indices[s.second] = my_sorted_subset.size() - 1;
+                }
             }
         }
     }
@@ -67,22 +83,38 @@ public:
         }
     }
 
-    template<typename Stat_>
-    void fill_ranks(const Stat_* ptr, RankedVector<Stat_, Index_>& vec) const {
+    template<typename Input_, typename Stat_>
+    void fill_ranks(const Input_& input, RankedVector<Stat_, Index_>& vec) const {
         // The indices in the output 'vec' refer to positions on the subset
         // vector, as if the input data was already subsetted. 
         vec.clear();
-        if (my_use_sorted_subset) {
-            auto num = my_original_indices.size();
-            for (decltype(num) s = 0; s < num; ++s) {
-                vec.emplace_back(ptr[my_original_indices[s]], s);
+
+        if constexpr(sparse_) {
+            if (my_use_sorted_subset) {
+                for (I<decltype(input.num)> s = 0; s < num; ++s) {
+                    vec.emplace_back(input.value[s], my_remapping[input.index[s] - my_remap_start]);
+                }
+            } else {
+                for (I<decltype(input.num)> s = 0; s < num; ++s) {
+                    vec.emplace_back(input.value[s], s);
+                }
             }
+
         } else {
-            auto num = my_original_subset.size();
-            for (decltype(num) s = 0; s < num; ++s) {
-                vec.emplace_back(ptr[s], s);
+            if (my_use_sorted_subset) {
+                const auto num = my_original_indices.size();
+                for (I<decltype(num)> s = 0; s < num; ++s) {
+                    vec.emplace_back(input[my_original_indices[s]], s);
+                }
+            } else {
+                const auto num = my_original_subset.size();
+                for (I<decltype(num)> s = 0; s < num; ++s) {
+                    vec.emplace_back(input[s], s);
+                }
             }
         }
+
+        // RankedVector's whole schtick is that it's sorted, so we make sure of it here.
         std::sort(vec.begin(), vec.end());
     }
 };
