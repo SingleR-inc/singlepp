@@ -10,8 +10,6 @@
 
 namespace singlepp {
 
-namespace internal {
-
 /*
  * This class remaps the indices in the RankVector to the subset of interest.
  * For example, if our subset of features of interest is:
@@ -74,18 +72,16 @@ public:
 
 public:
     template<typename Stat_>
-    void remap(const RankedVector<Stat_, Index_>& input, RankedVector<Stat_, Index_>& output) const {
+    void remap(typename RankedVector<Stat_, Index_>::const_iterator begin, typename RankedVector<Stat_, Index_>::const_iterator end, RankedVector<Stat_, Index_>& output) const {
         output.clear();
-        for (const auto& x : input) {
-            const auto& target = my_mapping[x.second];
+        for (; begin != end; ++begin) {
+            const auto& target = my_mapping[begin->second];
             if (target.first) {
-                output.emplace_back(x.first, target.second);
+                output.emplace_back(begin->first, target.second);
             }
         }
     }
 };
-
-}
 
 }
 

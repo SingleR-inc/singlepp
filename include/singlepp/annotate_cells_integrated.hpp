@@ -47,8 +47,8 @@ Float_ compute_single_reference_score_integrated(
     const TrainedIntegrated<Index_>& trained,
     const std::vector<Index_>& miniverse,
     PerReferenceIntegratedWorkspace<Index_, Value_, Float_>& workspace,
-    Float_ quantile)
-{
+    Float_ quantile
+) {
     // Further subsetting to the intersection of markers that are
     // actual present in this particular reference.
     const SubsetRemapper<Index_>* mapping;

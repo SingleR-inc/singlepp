@@ -8,8 +8,6 @@
 
 namespace singlepp {
 
-namespace internal {
-
 template<typename Float_>
 Float_ correlations_to_score(std::vector<Float_>& correlations, Float_ quantile) {
     static_assert(std::is_floating_point<Float_>::value);
@@ -48,8 +46,6 @@ Float_ correlations_to_score(std::vector<Float_>& correlations, Float_ quantile)
     const Float_ rightweight = prod - left;
 
     return rightval * rightweight + leftval * leftweight;
-}
-
 }
 
 }

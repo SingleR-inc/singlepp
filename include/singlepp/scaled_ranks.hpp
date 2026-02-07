@@ -7,21 +7,20 @@
 #include <vector>
 #include <cmath>
 #include <type_traits>
+#include <cassert>
 
 namespace singlepp {
-
-namespace internal {
 
 template<typename Stat_, typename Index_>
 using RankedVector = std::vector<std::pair<Stat_, Index_> >;
 
 template<typename Stat_, typename Index_, typename Output_>
-void scaled_ranks_dense(const RankedVector<Stat_, Index_>& collected, Output_* outgoing) { 
+void scaled_ranks(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Output_* outgoing) { 
     static_assert(std::is_floating_point<Output_>::value);
+    assert(sanisizer::is_equal(num_markers, collected.size()));
 
     // Computing tied ranks. 
-    const auto ncollected = collected.size();
-    I<decltype(ncollected)> cur_rank = 0;
+    Index_ cur_rank = 0;
     auto cIt = collected.begin();
     auto cEnd = collected.end();
 
@@ -43,8 +42,8 @@ void scaled_ranks_dense(const RankedVector<Stat_, Index_>& collected, Output_* o
 
     // Mean-adjusting and converting to cosine values.
     Output_ sum_squares = 0;
-    const Output_ center_rank = static_cast<Output_>(ncollected - 1) / static_cast<Output_>(2); 
-    for (I<decltype(ncollected)> i = 0 ; i < ncollected; ++i) {
+    const Output_ center_rank = static_cast<Output_>(num_markers - 1) / static_cast<Output_>(2); 
+    for (Index_ i = 0 ; i < num_markers; ++i) {
         auto& o = outgoing[i];
         o -= center_rank;
         sum_squares += o * o;
@@ -52,33 +51,35 @@ void scaled_ranks_dense(const RankedVector<Stat_, Index_>& collected, Output_* o
 
     // Special behaviour for no-variance cells; these are left as all-zero scaled ranks.
     if (sum_squares == 0) {
-        std::fill_n(outgoing, ncollected, 0);
+        std::fill_n(outgoing, num_markers, 0);
     } else {
         const Output_ denom = 0.5 / std::sqrt(sum_squares);
-        for (I<decltype(ncollected)> i = 0; i < ncollected; ++i) {
+        for (Index_ i = 0; i < num_markers; ++i) {
             outgoing[i] *= denom;
         }
     }
 }
 
+template<typename Stat_, typename Index_, typename Output_>
+void scaled_ranks(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, std::vector<Output_>& outgoing) { 
+    assert(sanisizer::is_equal(num_markers, outgoing.size()));
+    scaled_ranks(num_markers, collected, outgoing.data());
+}
+
 template<typename Index_, typename Float_>
 struct SparseScaled {
-    SparseScaled() = default;
-    SparseScaled(const Index_ nmarkers) {
-        sanisizer::reserve(nonzero, nmarkers);
-    }
-
     std::vector<std::pair<Index_, Float_> > nonzero;
     Float_ zero = 0;
 };
 
 template<typename Stat_, typename Index_, typename Float_>
-void scaled_ranks_sparse(const Index_ num_dim, const RankedVector<Stat_, Index_>& collected, SparseScaled<Index_, Float_>& outgoing) { 
+void scaled_ranks(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, SparseScaled<Index_, Float_>& outgoing) { 
     static_assert(std::is_floating_point<Float_>::value);
+    assert(sanisizer::is_greater_than_or_equal(num_markers, collected.size()));
 
     // Computing tied ranks: before, at, and after zero.
-    const auto ncollected = collected.size();
-    I<decltype(ncollected)> cur_rank = 0;
+    const Index_ ncollected = collected.size();
+    Index_ cur_rank = 0;
     auto cIt = collected.begin();
     auto cEnd = collected.end();
     outgoing.nonzero.clear();
@@ -99,7 +100,7 @@ void scaled_ranks_sparse(const Index_ num_dim, const RankedVector<Stat_, Index_>
         cur_rank += jump;
     }
 
-    const auto num_zero = num_dim - ncollected;
+    const Index_ num_zero = num_markers - ncollected;
     Float_ zero_rank = 0; 
     if (num_zero) {
         zero_rank = cur_rank + static_cast<Float_>(num_zero - 1) / static_cast<Float_>(2);
@@ -160,8 +161,6 @@ void simplify_ranks(const RankedVector<Stat_, Index_>& x, RankedVector<Simple_, 
         }
         output.emplace_back(counter, r.second);
     }
-}
-
 }
 
 }

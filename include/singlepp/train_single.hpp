@@ -5,7 +5,7 @@
 
 #include "tatami/tatami.hpp"
 
-#include "build_indices.hpp"
+#include "build_reference.hpp"
 #include "subset_to_markers.hpp"
 
 #include <vector>
@@ -43,6 +43,36 @@ struct TrainSingleOptions {
 };
 
 /**
+ * @cond
+ */
+template<typename Index_, typename Float_>
+std::size_t get_num_labels_from_built(const BuiltReference<Index_, Float_>& built) {
+    if (built.sparse.has_value()) {
+        return built.sparse->size();
+    } else {
+        return built.dense->size();
+    }
+}
+
+template<typename Index_, typename Float_>
+std::size_t get_num_profiles_from_built(const BuiltReference<Index_, Float_>& built) {
+    std::size_t n = 0;
+    if (built.sparse.has_value()) {
+        for (const auto& ref : *(built.sparse)) {
+            n += get_num_samples(ref);
+        }
+    } else {
+        for (const auto& ref : *(built->dense)) {
+            n += get_num_samples(ref);
+        }
+    }
+    return n;
+}
+/**
+ * @endcond
+ */
+
+/**
  * @brief Classifier trained from a single reference.
  *
  * Instances of this class should not be directly constructed, but instead returned by calling `train_single()` on a reference dataset.
@@ -61,11 +91,12 @@ public:
         Index_ test_nrow,
         Markers<Index_> markers,
         std::vector<Index_> subset,
-        std::vector<internal::PerLabelReference<Index_, Float_> > references) :
+        BuiltReference<Index_, Float_> built
+    ) : 
         my_test_nrow(test_nrow),
         my_markers(std::move(markers)),
         my_subset(std::move(subset)),
-        my_references(std::move(references)) 
+        my_built(std::move(built)) 
     {}
     /**
      * @endcond
@@ -75,7 +106,7 @@ private:
     Index_ my_test_nrow;
     Markers<Index_> my_markers;
     std::vector<Index_> my_subset;
-    std::vector<internal::PerLabelReference<Index_, Float_> > my_references;
+    BuiltReference<Index_, Float_> my_built;
 
 public:
     /**
@@ -107,25 +138,21 @@ public:
      * @return Number of labels in this reference.
      */
     std::size_t num_labels() const {
-        return my_references.size();
+        return get_num_labels_from_built(my_built);
     }
 
     /**
      * @return Number of profiles in this reference.
      */
     std::size_t num_profiles() const {
-        std::size_t n = 0;
-        for (const auto& ref : my_references) {
-            n += ref.ranked.size();
-        }
-        return n;
+        return get_num_profiles_from_built(my_built);
     }
 
     /**
      * @cond
      */
-    const auto& get_references() const {
-        return my_references;
+    const auto& get_built() const {
+        return my_built;
     }
     /**
      * @endcond
@@ -160,10 +187,10 @@ TrainedSingle<Index_, Float_> train_single(
     const tatami::Matrix<Value_, Index_>& ref,
     const Label_* labels,
     Markers<Index_> markers,
-    const TrainSingleOptions& options)
-{
+    const TrainSingleOptions& options
+) {
     auto subset = internal::subset_to_markers(markers, options.top);
-    auto subref = internal::build_indices<Float_>(ref, labels, subset, options.num_threads);
+    auto subref = build_reference<Float_>(ref, labels, subset, options.num_threads);
     Index_ test_nrow = ref.nrow(); // remember, test and ref are assumed to have the same features.
     return TrainedSingle<Index_, Float_>(test_nrow, std::move(markers), std::move(subset), std::move(subref));
 }
@@ -189,12 +216,13 @@ public:
         Markers<Index_> markers,
         std::vector<Index_> test_subset,
         std::vector<Index_> ref_subset,
-        std::vector<internal::PerLabelReference<Index_, Float_> > references) :
+        BuiltReference<Index_, Float_> built
+    ) :
         my_test_nrow(test_nrow),
         my_markers(std::move(markers)),
         my_test_subset(std::move(test_subset)),
         my_ref_subset(std::move(ref_subset)),
-        my_references(std::move(references)) 
+        my_built(std::move(built)) 
     {}
     /**
      * @endcond
@@ -205,7 +233,7 @@ private:
     Markers<Index_> my_markers;
     std::vector<Index_> my_test_subset;
     std::vector<Index_> my_ref_subset;
-    std::vector<internal::PerLabelReference<Index_, Float_> > my_references;
+    BuiltReference<Index_, Float_> my_built;
 
 public:
     /**
@@ -247,25 +275,21 @@ public:
      * @return Number of labels in this reference.
      */
     std::size_t num_labels() const {
-        return my_references.size();
+        return get_num_labels_from_built(my_built);
     }
 
     /**
      * @return Number of profiles in this reference.
      */
     std::size_t num_profiles() const {
-        std::size_t n = 0;
-        for (const auto& ref : my_references) {
-            n += ref.ranked.size();
-        }
-        return n;
+        return get_num_profiles_from_built(my_built);
     }
 
     /**
      * @cond
      */
-    const auto& get_references() const {
-        return my_references;
+    const auto& get_built() const {
+        return my_built;
     }
     /**
      * @endcond
@@ -308,7 +332,7 @@ TrainedSingleIntersect<Index_, Float_> train_single_intersect(
     const TrainSingleOptions& options)
 {
     auto pairs = internal::subset_to_markers(intersection, markers, options.top);
-    auto subref = internal::build_indices<Float_>(ref, labels, pairs.second, options.num_threads);
+    auto subref = build_reference<Float_>(ref, labels, pairs.second, options.num_threads);
     return TrainedSingleIntersect<Index_, Float_>(test_nrow, std::move(markers), std::move(pairs.first), std::move(pairs.second), std::move(subref));
 }
 

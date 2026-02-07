@@ -1,5 +1,5 @@
-#ifndef SINGLEPP_BUILD_INDICES_HPP
-#define SINGLEPP_BUILD_INDICES_HPP
+#ifndef SINGLEPP_BUILD_REFERENCE_HPP
+#define SINGLEPP_BUILD_REFERENCE_HPP
 
 #include "defs.hpp"
 
@@ -21,16 +21,38 @@
 
 namespace singlepp {
 
-namespace internal {
+template<typename Index_, typename Float_>
+struct DensePerLabelReference {
+    std::vector<Float_> data;
+
+    // Structures for the KMKNN search.
+    std::vector<Float_> distances;
+    std::vector<std::pair<Index_, Index_> > seed_ranges;
+
+    // Concatenation of RankedVectors for all samples.
+    RankedVector<Index_, Index_> all_ranked;
+};
+
+template<typename Index_, typename Float_>
+const Float_* retrieve_vector(const Index_ num_markers, const DensePerLabelReference<Index_, Float_>& ref, const Index_ col) {
+    return ref.data.data() + sanisizer::product_unsafe<std::size_t>(num_markers, col);
+}
 
 /*** Sparse matrix constructs ***/
 
 template<typename Index_, typename Float_>
-struct CompressedSparseMatrix {
+struct SparsePerLabelReference {
     std::vector<Float_> value;
     std::vector<Index_> index;
     std::vector<std::size_t> indptrs;
     std::vector<Float_> zeros;
+
+    // Structures for the KMKNN search.
+    std::vector<Float_> distances;
+    std::vector<std::pair<Index_, Index_> > seed_ranges;
+
+    // Concatenation of RankedVectors for all samples.
+    RankedVector<Index_, Index_> all_ranked;
 };
 
 template<typename Index_, typename Float_>
@@ -42,22 +64,22 @@ struct CompressedSparseVector {
 };
 
 template<typename Index_, typename Float_>
-CompressedSparseVector<Index_, Float_> retrieve_vector(const CompressedSparseMatrix<Index_, Float_>& mat, const Index_ col) {
+CompressedSparseVector<Index_, Float_> retrieve_vector([[maybe_unused]] const Index_ num_markers, const SparsePerLabelReference<Index_, Float_>& mat, const Index_ col) {
     CompressedSparseVector<Index_, Float_> output;
-    const auto seed_start = ref.data.indptrs[col], seed_len = ref.data.indptrs[col + 1] - seed_start;
+    const auto seed_start = mat.indptrs[col], seed_len = mat.indptrs[col + 1] - seed_start;
     output.number = seed_len;
-    output.index = ref.data.index.data() + seed_start;
-    output.value = ref.data.value.data() + seed_start;
-    output.zero = ref.data.zeros[col];
+    output.index = mat.index.data() + seed_start;
+    output.value = mat.value.data() + seed_start;
+    output.zero = mat.zeros[col];
     return output;
 }
 
 /*** L2 calculation methods ***/
 
 template<typename Index_, typename Float_>
-Float_ compute_l2(const Index_ nmarkers, const Float_* vec1, const Float_* vec2) {
+Float_ compute_l2(const Index_ num_markers, const Float_* vec1, const Float_* vec2) {
     Float_ r2 = 0;
-    for (Index_ d = 0; d < nmarkers; ++d) {
+    for (Index_ d = 0; d < num_markers; ++d) {
         const Float_ delta = vec1[d] - vec2[d]; 
         r2 += delta * delta;
     }
@@ -81,8 +103,8 @@ Index_ get_sparse_zero(const CompressedSparseVector<Index_, Float_>& x) { return
 template<typename Index_, typename Float_>
 Index_ get_sparse_zero(const SparseScaled<Index_, Float_>& x) { return x.zero; }
 
-template<typename Index_, class SparseInput1_, typename SparseInput2_>
-Float_ sparse_l2(const Index_ nmarkers, const SparseInput1_& vec1, const SparseInput2_& vec2) {
+template<typename Index_, typename Float_, class SparseInput1_, typename SparseInput2_>
+Float_ sparse_l2(const Index_ num_markers, const SparseInput1_& vec1, const SparseInput2_& vec2) {
     const auto num1 = get_sparse_num(vec1);
     const auto zero1 = get_sparse_zero(vec1);
     const auto num2 = get_sparse_num(vec2);
@@ -99,22 +121,22 @@ Float_ sparse_l2(const Index_ nmarkers, const SparseInput1_& vec1, const SparseI
             if (samdex < seeddex) {
                 const Float_ delta = get_sparse_value(vec1, i1) - zero2;
                 r2 += delta * delta;
-                ++isam;
+                ++i1;
                 if (i1 == num1) {
                     break;
                 }
             } else if (samdex > seeddex) {
                 const Float_ delta = get_sparse_value(vec2, i2) - zero1;
                 r2 += delta * delta;
-                ++iseed;
+                ++i2;
                 if (i2 == num2) {
                     break;
                 }
             } else {
                 const Float_ delta = get_sparse_value(vec1, i1) - get_sparse_value(vec2, i2);
                 r2 += delta * delta;
-                ++iseed;
-                ++isam;
+                ++i1;
+                ++i2;
                 ++both;
                 if (i1 == num1 || i2 == num2) {
                     break;
@@ -127,43 +149,50 @@ Float_ sparse_l2(const Index_ nmarkers, const SparseInput1_& vec1, const SparseI
         const Float_ delta = get_sparse_value(vec1, i1) - zero2;
         r2 += delta * delta;
     }
-    for (; iseed < sam_end; ++iseed) { 
+    for (; i2 < num2; ++i2) { 
         const Float_ delta = get_sparse_value(vec2, i2) - zero1;
         r2 += delta * delta;
     }
 
     const Float_ delta = zero1 - zero2;
-    r2 += (nmarkers - num1 - (num2 - both)) * (delta * delta);
+    r2 += (num_markers - num1 - (num2 - both)) * (delta * delta);
     return r2;
 }
 
 template<typename Index_, typename Float_>
-Float_ compute_l2(const Index_ nmarkers, const CompressedSparseVector<Index_, Float_>& vec1, const CompressedSparseVector<Index_, Float_>& vec2) {
-    return sparse_l2(nmarkers, vec1, vec2);
+Float_ compute_l2(const Index_ num_markers, const CompressedSparseVector<Index_, Float_>& vec1, const CompressedSparseVector<Index_, Float_>& vec2) {
+    return sparse_l2<Index_, Float_>(num_markers, vec1, vec2);
 }
 
 template<typename Index_, typename Float_>
-Float_ compute_l2(const Index_ nmarkers, const SparseScaled<Index_, Float_>& vec1, const CompressedSparseVector<Index_, Float_>& vec2) {
-    return sparse_l2(nmarkers, vec1, vec2);
+Float_ compute_l2(const Index_ num_markers, const SparseScaled<Index_, Float_>& vec1, const CompressedSparseVector<Index_, Float_>& vec2) {
+    return sparse_l2<Index_, Float_>(num_markers, vec1, vec2);
 }
 
 template<typename Index_, typename Float_>
-Float_ compute_l2(const Index_ nmarkers, const SparseScaled<Index_, Float_>& vec1, const SparseScaled<Index_, Float_>& vec2) {
-    return sparse_l2(nmarkers, vec1, vec2);
+Float_ compute_l2(const Index_ num_markers, const SparseScaled<Index_, Float_>& vec1, const SparseScaled<Index_, Float_>& vec2) {
+    return sparse_l2<Index_, Float_>(num_markers, vec1, vec2);
 }
 
 template<typename Index_, typename Float_, typename SparseInput_>
-Float_ mixed_l2(const Index_ nmarkers, const Float_* vec1, const SparseInput_& vec2) {
+Float_ mixed_l2(const Index_ num_markers, const Float_* vec1, const SparseInput_& vec2) {
     Float_ r2 = 0;
     Index_ i = 0, j = 0;
+    const auto num2 = get_sparse_num(vec2);
+    const auto zero2 = get_sparse_zero(vec2);
 
-    while (j < vec2.number) {
-        const auto limit = vec2.index[j];
+    while (j < num2) {
+        const auto limit = get_sparse_index(vec2, j);
         for (; i < limit; ++i) {
-            const auto delta = vec1[i] - vec2.zero;
+            const auto delta = vec1[i] - zero2;
             r2 += delta * delta;
         }
-        const auto delta = vec1[i] - vec2.data[j]; 
+        const auto delta = vec1[i] - get_sparse_value(vec2, j);
+        r2 += delta * delta;
+    }
+
+    for (; i < num_markers; ++i) {
+        const auto delta = vec1[i] - zero2;
         r2 += delta * delta;
     }
 
@@ -171,56 +200,72 @@ Float_ mixed_l2(const Index_ nmarkers, const Float_* vec1, const SparseInput_& v
 }
 
 template<typename Index_, typename Float_>
-Float_ compute_l2(const Index_ nmarkers, const Float_* vec1, const CompressedSparseVector<Index_, Float_>& vec2) {
-    return mixed_l2(nmarkers, vec1, vec2);
+Float_ compute_l2(const Index_ num_markers, const Float_* vec1, const CompressedSparseVector<Index_, Float_>& vec2) {
+    return mixed_l2(num_markers, vec1, vec2);
 }
 
 template<typename Index_, typename Float_>
-Float_ compute_l2(const Index_ nmarkers, const SparseScaled<Index_, Float_>& vec1, const Float_* vec2) {
-    return mixed_l2(nmarkers, vec2, vec1);
+Float_ compute_l2(const Index_ num_markers, const SparseScaled<Index_, Float_>& vec1, const Float_* vec2) {
+    return mixed_l2(num_markers, vec2, vec1);
+}
+
+// Overloads for vectors.
+template<typename Index_, typename Float_>
+Float_ compute_l2(const Index_ num_markers, const std::vector<Float_>& vec1, const Float_* vec2) {
+    return compute_l2(num_markers, vec1.data(), vec2);
+}
+
+template<typename Index_, typename Float_>
+Float_ compute_l2(const Index_ num_markers, const std::vector<Float_>& vec1, const std::vector<Float_>& vec2) {
+    return compute_l2(num_markers, vec1.data(), vec2.data());
+}
+
+template<typename Index_, typename Float_>
+Float_ compute_l2(const Index_ num_markers, const std::vector<Float_>& vec1, const SparseScaled<Index_, Float_>& vec2) {
+    return compute_l2(num_markers, vec2, vec1.data());
+}
+
+template<typename Index_, typename Float_>
+Float_ compute_l2(const Index_ num_markers, const std::vector<Float_>& vec1, const CompressedSparseVector<Index_, Float_>& vec2) {
+    return compute_l2(num_markers, vec1.data(), vec2);
+}
+
+template<typename Index_, typename Float_>
+Float_ compute_l2(const Index_ num_markers, const SparseScaled<Index_, Float_>& vec1, const std::vector<Float_>& vec2) {
+    return compute_l2(num_markers, vec1, vec2.data());
 }
 
 /*** KMKNN building ***/ 
 
 template<typename Index_, typename Float_>
-struct PerLabelReference {
-    std::optional<std::vector<Float_> > dense_data;
-    std::optional<CompressedSparseMatrix<Index_, Float_> sparse_data;
+Index_ get_num_samples(const DensePerLabelReference<Index_, Float_>& ref) {
+    return ref.distances.size();
+}
 
-    // Structures for the KMKNN search.
-    std::vector<Float_> distances;
-    std::vector<std::pair<Index_, Index_> > seed_ranges;
-
-    // Concatenation of RankedVectors for all samples.
-    RankedVector<Index_, Index_> > all_ranked;
-};
-
-template<bool ref_sparse_, typename Index_, typename Float_>
-Index_ get_num_samples(const PerLabelReference<ref_sparse_, Index_, Float_>& ref) {
+template<typename Index_, typename Float_>
+Index_ get_num_samples(const SparsePerLabelReference<Index_, Float_>& ref) {
     return ref.distances.size();
 }
 
 template<bool ref_sparse_, typename Index_, typename Float_>
-void select_seeds(const Index_ nmarkers, PerLabelReference<Index_, Float_>& ref, const std::vector<std::pair<Index_, Index_> >& ranked) {
-    const Index_ num_samples = ref.ranked.size();
-    if constexpr(ref_sparse_) {
-        assert(ref.sparse_data.has_value());
-    } else {
-        assert(ref.dense_data.has_value());
-    }
+void select_seeds(
+    const Index_ num_markers,
+    typename std::conditional<ref_sparse_, SparsePerLabelReference<Index_, Float_>, DensePerLabelReference<Index_, Float_> >::type& ref,
+    const std::vector<RankedVector<Index_, Index_> >& ranked
+) {
+    const Index_ num_samples = ranked.size();
 
     // No need to check for overlow, num_samples >= num_seeds here.
     Index_ num_seeds = std::round(std::sqrt(num_samples));
 
     // Implementing a variant of kmeans++ initialization to select representative ("seed") points.
     // We also record the minimum distance between each sample and its assigned seed.
-    const auto num_samples_att = sanisizer::attest_gez(num_samples);
-    auto assignment = sanisizer::create<std::vector<Index_> >(num_samples_att);
-    auto mindist = sanisizer::create<std::vector<Float_> >(num_samples_att, 1);
-    auto identities = sanisizer:;create<std::vector<Index_>  >(num_samples_att);
+    auto assignment = sanisizer::create<std::vector<Index_> >(num_samples);
+    auto mindist = sanisizer::create<std::vector<Float_> >(num_samples, 1);
+    auto identities = sanisizer::create<std::vector<Index_>  >(num_samples);
     {
-        auto cumulative = sanisizer::create<std::vector<Float_> >(num_samples_att);
-        std::mt19937_64 eng(/* seed = */ 6237u + nmarkers * static_cast<std::size_t>(num_samples)); // making a semi-deterministic seed that depends on the input data. 
+        auto cumulative = sanisizer::create<std::vector<Float_> >(num_samples);
+        std::mt19937_64 eng(/* seed = */ 6237u + num_markers * static_cast<std::size_t>(num_samples)); // making a semi-deterministic seed that depends on the input data. 
 
         for (Index_ se = 0; se < num_seeds; ++se) {
             cumulative[0] = mindist[0];
@@ -249,29 +294,15 @@ void select_seeds(const Index_ nmarkers, PerLabelReference<Index_, Float_>& ref,
             identities.push_back(chosen_id);
 
             // Now updating the distances and assignments of all observations based on the new seed.
-            const auto seed_info = [&](){
-                if constexpr(ref_sparse_) {
-                    return retrieve_vector(*(ref.sparse_data), chosen_id);
-                } else {
-                    return ref.dense_data->data() + sanisizer::product_unsafe<std::size_t>(chosen_id, nmarkers);
-                }
-            }();
-
+            const auto seed_info = retrieve_vector(num_markers, ref, chosen_id);
             for (Index_ sam = 0; sam < num_samples; ++sam) {
-                const auto sam_info = [&](){
-                    if constexpr(ref_sparse_) {
-                        return retrieve_vector(*(ref.sparse_data), sam);
-                    } else {
-                        return ref.dense_data->data() + sanisizer::product_unsafe<std::size_t>(sam, nmarkers);
-                    }
-                }();
-
                 auto& mdist = mindist[sam];
                 if (mdist == 0) {
                     continue;
                 }
 
-                const auto r2 = compute_l2(nmarkers, sam_info, seed_info);
+                const auto sam_info = retrieve_vector(num_markers, ref, sam);
+                const auto r2 = compute_l2(num_markers, sam_info, seed_info);
                 if (se == 0) {
                     mdist = r2;
                 } else if (r2 < mdist) {
@@ -286,14 +317,13 @@ void select_seeds(const Index_ nmarkers, PerLabelReference<Index_, Float_>& ref,
 
     // Now populating the rest of the seed information.
     {
-        const auto num_seeds_att = sanisizer::attest_gez(num_seeds);
-        auto grouping = sanisizer::create<std::vector<std::vector<std::pair<Float_, Index_> > > >(num_seeds_att);
+        auto grouping = sanisizer::create<std::vector<std::vector<std::pair<Float_, Index_> > > >(num_seeds);
         for (Index_ sam = 0; sam < num_samples; ++sam) {
             grouping[assignment[sam]].emplace_back(mindist[sam], sam);
         }
 
         ref.distances.reserve(num_samples);
-        sanisizer::resize(ref.distances, num_seeds_att);
+        sanisizer::resize(ref.distances, num_seeds);
         ref.seed_ranges.reserve(num_seeds);
 
         for (Index_ se = 0; se < num_seeds; ++se) {
@@ -319,32 +349,32 @@ void select_seeds(const Index_ nmarkers, PerLabelReference<Index_, Float_>& ref,
         // Resorting the data to be more cache-friendly.
         // This is too hard to do in-place with sparse data, so we just run over it and do it manually.
         std::vector<Float_> value;
-        value.reserve(ref.sparse_data->value.size());
+        value.reserve(ref.value.size());
         std::vector<Index_> index;
-        index.reserve(ref.sparse_data->index.size());
+        index.reserve(ref.index.size());
         std::vector<std::size_t> indptrs;
-        indptrs.reserve(ref.sparse_data->indptrs.size());
+        indptrs.reserve(ref.indptrs.size());
         indptrs.push_back(0);
         std::vector<Float_> zeros;
-        zeros.reserve(ref.sparse_data->zeros.size());
+        zeros.reserve(ref.zeros.size());
 
         for (auto sam : identities) {
-            const auto sam_start = ref.sparse_data->indptrs[sam], sam_end = ref.sparse_data->indptrs[sam + 1];
-            value.push_back(value.end(), ref.sparse_data->value.begin() + sam_start, ref.sparse_data->value.begin() + sam_end);
-            index.push_back(index.end(), ref.sparse_data->index.begin() + sam_start, ref.sparse_data->index.begin() + sam_end);
+            const auto sam_start = ref.indptrs[sam], sam_end = ref.indptrs[sam + 1];
+            value.insert(value.end(), ref.value.begin() + sam_start, ref.value.begin() + sam_end);
+            index.insert(index.end(), ref.index.begin() + sam_start, ref.index.begin() + sam_end);
             indptrs.push_back(value.size());
             zeros.push_back(ref.zeros[sam]);
         }
 
-        ref.sparse_data->value.swap(value);
-        ref.sparse_data->index.swap(index);
-        ref.sparse_data->indptrs.swap(indptrs);
-        ref.sparse_data->zeros.swap(zeros);
+        ref.value.swap(value);
+        ref.index.swap(index);
+        ref.indptrs.swap(indptrs);
+        ref.zeros.swap(zeros);
 
     } else {
         // Reordering the data in-place to be more cache-friendly.
-        auto used = sanisizer::create<std::vector<char> >(sanisizer::attest_gez(num_samples));
-        auto data_buffer = sanisizer::create<std::vector<Float_> >(sanisizer::attest_gez(nmarkers));
+        auto used = sanisizer::create<std::vector<char> >(num_samples);
+        auto data_buffer = sanisizer::create<std::vector<Float_> >(num_markers);
 
         for (Index_ x = 0; x < num_samples; ++x) {
             if (used[x]) {
@@ -356,72 +386,60 @@ void select_seeds(const Index_ nmarkers, PerLabelReference<Index_, Float_>& ref,
                 continue;
             }
 
-            auto previous_ptr = ref.dense_data->data() + sanisizer::product_unsafe<std::size_t>(x, nmarkers);
-            std::copy_n(previous_ptr, nmarkers, data_buffer.data());
+            auto previous_ptr = ref.data.data() + sanisizer::product_unsafe<std::size_t>(x, num_markers);
+            std::copy_n(previous_ptr, num_markers, data_buffer.data());
 
             do {
-                auto next_ptr = ref.dense_data->data() + sanisizer::product_unsafe<std::size_t>(replacement, nmarkers);
-                std::copy_n(next_ptr, nmarkers, previous_ptr);
+                auto next_ptr = ref.data.data() + sanisizer::product_unsafe<std::size_t>(replacement, num_markers);
+                std::copy_n(next_ptr, num_markers, previous_ptr);
                 previous_ptr = next_ptr;
 
                 used[replacement] = true;
                 replacement = identities[replacement];
             } while (replacement != x);
 
-            std::copy_n(data_buffer.data(), nmarkers, previous_ptr);
+            std::copy_n(data_buffer.data(), num_markers, previous_ptr);
         }
     }
 
     // Populating the ranked supervector. 
-    if constexpr(sparse_) {
-        sanisizer::reserve(ref.all_ranked, ref.sparse_data->value.size());
+    if constexpr(ref_sparse_) {
+        sanisizer::reserve(ref.all_ranked, ref.value.size());
     } else {
-        sanisizer::reserve(ref.all_ranked, ref.dense_data->size());
+        sanisizer::reserve(ref.all_ranked, ref.data.size());
     }
     for (auto sam : identities) {
-        ref.ranked.insert(ref.ranked.end(), ranked[sam].begin(), ranked[sam].end()); 
+        ref.all_ranked.insert(ref.all_ranked.end(), ranked[sam].begin(), ranked[sam].end()); 
     }
 }
 
 /*** KMKNN search ***/ 
 
 template<bool query_sparse_, bool ref_sparse_, typename Index_, typename Float_>
-struct FindClosestWorkspace {
-    FindClosestWorkspace(Index_ nmarkers, Index_ num_samples) {
-        const auto num_samples_att = sanisizer::attest_gez(num_samples);
-        sanisizer::reserve(seed_distances, num_samples_att);
-        sanisizer::reserve(closest_neighbors, num_samples_att);
-
-        if constexpr(query_sparse_) {
-            const auto nmarkers_att = sanisizer::attest_gez(nmarkers);
-            sanisizer::resize(value_buffer, nmarkers_att);
-            if constexpr(ref_sparse_) {
-                sanisizer::resize(index_buffer, nmarkers_att);
-            }
+struct FindClosestNeighborsWorkspace {
+    FindClosestNeighborsWorkspace(Index_ num_markers, Index_ num_samples) {
+        sanisizer::reserve(seed_distances, num_samples);
+        sanisizer::reserve(closest_neighbors, num_samples);
+        if constexpr(!ref_sparse_ && query_sparse_) {
+            sanisizer::resize(dense_buffer, num_markers);
         }
     }
 
     std::vector<std::pair<Float_, Index_> > seed_distances;
     std::vector<std::pair<Float_, Index_> > closest_neighbors;
-    typename std::conditional<query_sparse_ && !ref_sparse_, std::vector<Index_>, bool>::type dense_buffer;
+    typename std::conditional<query_sparse_ && !ref_sparse_, std::vector<Float_>, bool>::type dense_buffer;
 };
 
 template<bool query_sparse_, bool ref_sparse_, typename Index_, typename Float_>
-void find_closest(
-    const Index_ nmarkers,
-    typename std::conditional<query_sparse_, const SparseRanked<Float_, Index_>&, const Float_*>::type query,
+void find_closest_neighbors(
+    const Index_ num_markers,
+    const typename std::conditional<query_sparse_, SparseScaled<Index_, Float_>, std::vector<Float_> >::type& query,
     const Index_ k,
-    const PerLabelReference<Index_, Float_>& ref,
-    FindClosestWorkspace<query_sparse_, ref_sparse_, Index_, Float_>& work
+    const typename std::conditional<ref_sparse_, SparsePerLabelReference<Index_, Float_>, DensePerLabelReference<Index_, Float_> >::type& ref,
+    FindClosestNeighborsWorkspace<query_sparse_, ref_sparse_, Index_, Float_>& work
 ) {
     const auto num_seeds = ref.seed_ranges.size();
     const auto num_neighbors = sanisizer::cast<I<decltype(work.closest_neighbors.size())> >(sanisizer::attest_gez(k));
-
-    if constexpr(ref_sparse_) {
-        assert(ref.sparse_data.has_value());
-    } else {
-        assert(ref.dense_data.has_value());
-    }
 
     if constexpr(!ref_sparse_) {
         if constexpr(query_sparse_) {
@@ -433,16 +451,11 @@ void find_closest(
     }
 
     auto compute_distance = [&](Index_ se) -> Float_ {
-        if constexpr(ref_sparse_) {
-            const auto refinfo = retrieve_vector(*(ref.sparse_data), se);
-            return compute_l2(nmarkers, query, refinfo);
+        const auto refinfo = retrieve_vector(num_markers, ref, se);
+        if constexpr(!ref_sparse_ && query_sparse_) {
+            return compute_l2(num_markers, work.dense_buffer.data(), refinfo);
         } else {
-            const auto refinfo = ref.dense_data->data() + sanisizer::product_unsafe<std::size_t>(se, nmarkers);
-            if constexpr(query_sparse_) {
-                return compute_l2(nmarkers, work.dense_buffer.data(), refinfo);
-            } else {
-                return compute_l2(nmarkers, query, refinfo);
-            }
+            return compute_l2(num_markers, query, refinfo);
         }
     };
 
@@ -538,8 +551,8 @@ void find_closest(
     }
 }
 
-template<typename Index_, typename Float_>
-std::pair<Float_, Index_> pop_furthest_neighbor(FindClosestWorkspace<Index_, Float_>& work) {
+template<bool query_sparse_, bool ref_sparse_, typename Index_, typename Float_>
+std::pair<Float_, Index_> pop_furthest_neighbor(FindClosestNeighborsWorkspace<query_sparse_, ref_sparse_, Index_, Float_>& work) {
     auto output = work.closest_neighbors.front();
     std::pop_heap(work.closest_neighbors.begin(), work.closest_neighbors.end());
     work.closest_neighbors.pop_back();
@@ -548,21 +561,39 @@ std::pair<Float_, Index_> pop_furthest_neighbor(FindClosestWorkspace<Index_, Flo
 
 /*** Overlord function ***/ 
 
+template<typename Index_, typename Float_>
+struct BuiltReference {
+    Index_ num_markers = 0;
+    std::optional<std::vector<DensePerLabelReference<Index_, Float_> > > dense;
+    std::optional<std::vector<SparsePerLabelReference<Index_, Float_> > > sparse;
+};
+
+template<bool ref_sparse_, typename Index_, typename Float_>
+auto& allocate_references(BuiltReference<Index_, Float_>& output, const std::size_t num_labels) {
+    if constexpr(ref_sparse_) {
+        output.sparse.emplace(sanisizer::cast<I<decltype(output.sparse->size())> >(num_labels));
+        return *(output.sparse);
+    } else {
+        output.dense.emplace(sanisizer::cast<I<decltype(output.dense->size())> >(num_labels));
+        return *(output.dense);
+    }
+}
+
 template<bool ref_sparse_, typename Float_, typename Value_, typename Index_, typename Label_>
-std::vector<PerLabelReference<Index_, Float_> > build_indices_raw(
+BuiltReference<Index_, Float_> build_reference_raw(
     const tatami::Matrix<Value_, Index_>& ref,
     const Label_* labels,
     const std::vector<Index_>& subset,
     int num_threads
 ) {
-    const auto nmarkers = sanisizer::cast<Index_>(subset.size());
+    const auto num_markers = sanisizer::cast<Index_>(subset.size());
     const auto num_samples = ref.ncol();
     if (num_samples == 0) {
         throw std::runtime_error("reference dataset must have at least one column");
     }
 
-    const auto nlabels = sanisizer::sum<std::size_t>(*std::max_element(labels, labels + num_samples), 1);
-    auto label_count = sanisizer::create<std::vector<Index_> >(nlabels);
+    const auto num_labels = sanisizer::sum<std::size_t>(*std::max_element(labels, labels + num_samples), 1);
+    auto label_count = sanisizer::create<std::vector<Index_> >(num_labels);
     auto label_offsets = sanisizer::create<std::vector<Index_> >(sanisizer::attest_gez(num_samples));
     for (I<decltype(num_samples)> i = 0; i < num_samples; ++i) {
         auto& lcount = label_count[labels[i]];
@@ -570,22 +601,22 @@ std::vector<PerLabelReference<Index_, Float_> > build_indices_raw(
         ++lcount;
     }
 
-    auto nnrefs = sanisizer::create<std::vector<PerLabelReference<ref_sparse_, Index_, Float_> > >(nlabels);
-    auto tmp_ranked = sanisizer::create<std::vector<std::vector<RankedVector<Index_, Index_> > >(nlabels);
-    for (I<decltype(nlabels)> l = 0; l < nlabels; ++l) {
+    BuiltReference<Index_, Float_> output;
+    output.num_markers = num_markers;
+    auto& nnrefs = allocate_references<ref_sparse_>(output, num_labels);
+
+    auto tmp_ref_ranked = sanisizer::create<std::vector<std::vector<RankedVector<Index_, Index_> > > >(num_labels);
+    for (I<decltype(num_labels)> l = 0; l < num_labels; ++l) {
         const auto labcount = label_count[l];
-        if (lcount == 0) {
+        if (labcount == 0) {
             throw std::runtime_error(std::string("no entries for label ") + std::to_string(l));
         }
+        sanisizer::resize(tmp_ref_ranked[l], labcount);
 
-        auto& curlab = nrrefs[l];
-        const auto labcount_att = sanisizer::attest_gez(labcount); 
-        sanisizer::resize(curlab.ranked, labcount_att);
         if constexpr(!ref_sparse_) {
-            curlab.data.resize(sanisizer::product<sanisizer::EffectiveSizeType<I<decltype(curlab.data)> > >(labcount_att, sanisizer::attest_gez(nmarkers)));
+            auto& curlab = nnrefs[l];
+            curlab.data.resize(sanisizer::product<I<decltype(curlab.data.size())> >(labcount, num_markers));
         }
-
-        sanisizer::resize(tmp_ranked[l], labcount_att);
     }
 
     SubsetSanitizer<ref_sparse_, Index_> subsorter(subset);
@@ -593,92 +624,93 @@ std::vector<PerLabelReference<Index_, Float_> > build_indices_raw(
 
     tatami::parallelize([&](int, Index_ start, Index_ len) {
         auto ext = tatami::consecutive_extractor<ref_sparse_>(ref, false, start, len, subset_ptr);
-        auto vbuffer = sanisizer::create<std::vector<Value_> >(sanisizer::attest_gez(nmarkers));
+        auto vbuffer = sanisizer::create<std::vector<Value_> >(sanisizer::attest_gez(num_markers));
         auto ibuffer = [&](){
             if constexpr(ref_sparse_) {
-                return sanisizer::create<std::vector<Index_> >(sanisizer::attest_gez(nmarkers));
+                return sanisizer::create<std::vector<Index_> >(sanisizer::attest_gez(num_markers));
             } else {
                 return false;
             }
         }();
 
-        RankedVector<Value_, Index_> ranked;
-        ranked.reserve(nmarkers);
-        sanisizer::as_effective_size_type<I<decltype(tmp_ranked.front().front())> >(nmarkers);
+        RankedVector<Value_, Index_> query_ranked;
+        sanisizer::reserve(query_ranked, num_markers);
+        sanisizer::cast<I<decltype(tmp_ref_ranked.front().front().size())> >(num_markers);
 
         for (Index_ c = start, end = start + len; c < end; ++c) {
             const auto col = [&](){
                 if constexpr(ref_sparse_) {
-                    return ext->fetch(vbuffer.data(), ibuffer.data();
+                    return ext->fetch(vbuffer.data(), ibuffer.data());
                 } else {
                     return ext->fetch(vbuffer.data());
                 }
             }();
-            subsorter.fill_ranks(col, ranked); 
+            subsorter.fill_ranks(col, query_ranked); 
 
             const auto curlab = labels[c];
             const auto curoff = label_offsets[c];
             if constexpr(!ref_sparse_) {
-                const auto scaled = nnrefs[curlab].data.data() + sanisizer::product_unsafe<std::size_t>(curoff, nmarkers);
-                scaled_ranks_dense(ranked, scaled); 
+                const auto scaled = nnrefs[curlab].data.data() + sanisizer::product_unsafe<std::size_t>(curoff, num_markers);
+                scaled_ranks(num_markers, query_ranked, scaled); 
             }
 
             // Storing as a pair of ints to save space; as long as we respect ties, everything should be fine.
-            auto& stored_ranks = tmp_ranked[curlab][curoff];
-            stored_ranks.reserve(ranked.size());
-            simplify_ranks(ranked, stored_ranks);
+            auto& stored_ranks = tmp_ref_ranked[curlab][curoff];
+            stored_ranks.reserve(query_ranked.size());
+            simplify_ranks(query_ranked, stored_ranks);
         }
     }, num_samples, num_threads);
 
     tatami::parallelize([&](int, std::size_t start, std::size_t len) {
         for (std::size_t l = start, end = start + len; l < end; ++l) {
             auto& curlab = nnrefs[l]; 
+            auto& cur_ref_ranked = tmp_ref_ranked[l];
 
             if constexpr(ref_sparse_) {
                 std::size_t total_nzeros = 0;
-                for (const auto& x : curlab.ranked) {
+                for (const auto& x : cur_ref_ranked) {
                     total_nzeros = sanisizer::sum<std::size_t>(total_nzeros, x.size());
                 }
 
-                sanisizer::reserve(curlab.data.value, total_nzeros);
-                sanisizer::reserve(curlab.data.index, total_nzeros);
-                curlab.data.indptrs.reserve(sanisizer::sum<sanisizer::EffectiveSizeType<decltype(curlab.data.indptrs)> >(curlab.ranked.size(), 1));
-                curlab.data.push_back(0);
-                sanisizer::reserve(curlab.data.zeros, curlab.ranked.size());
+                sanisizer::reserve(curlab.value, total_nzeros);
+                sanisizer::reserve(curlab.index, total_nzeros);
+                curlab.indptrs.reserve(sanisizer::sum<I<decltype(curlab.indptrs.size())> >(cur_ref_ranked.size(), 1));
+                curlab.indptrs.push_back(0);
+                sanisizer::reserve(curlab.zeros, cur_ref_ranked.size());
 
                 SparseScaled<Index_, Float_> scaled;
-                for (const auto& x : curlab.ranked) {
-                    scaled_ranks_sparse(nmarkers, x, scaled);
+                for (const auto& x : cur_ref_ranked) {
+                    scaled_ranks(num_markers, x, scaled);
                     for (const auto& y : scaled.nonzero) {
-                        curlab.data.index.push_back(y.first);
-                        curlab.data.value.push_back(y.second);
+                        curlab.index.push_back(y.first);
+                        curlab.value.push_back(y.second);
                     }
-                    curlab.indptrs.push_back(curlab.data.value.size());
-                    curlab.data.zeros.push_back(scaled.zero);
+                    curlab.indptrs.push_back(curlab.value.size());
+                    curlab.zeros.push_back(scaled.zero);
                 }
             }
 
-            select_seeds(nmarkers, curlab, tmp_ranked);
+            select_seeds<ref_sparse_, Index_, Float_>(num_markers, curlab, cur_ref_ranked);
+            cur_ref_ranked.clear();
+            cur_ref_ranked.shrink_to_fit();
         }
-    }, nlabels, num_threads);
+    }, num_labels, num_threads);
 
-    return nnrefs;
+    return output;
 }
 
 template<typename Float_, typename Value_, typename Index_, typename Label_>
-std::vector<PerLabelReference<Index_, Float_> > build_indices(
+BuiltReference<Index_, Float_> build_reference(
     const tatami::Matrix<Value_, Index_>& ref,
     const Label_* labels,
     const std::vector<Index_>& subset,
     int num_threads
 ) {
     if (ref.is_sparse()) {
-        return build_indices_raw<true, Float_>(ref, labels, subset, num_threads); 
+        return build_reference_raw<true, Float_>(ref, labels, subset, num_threads); 
     } else {
-        return build_indices_raw<false, Float_>(ref, labels, subset, num_threads); 
+        return build_reference_raw<false, Float_>(ref, labels, subset, num_threads); 
     }
-}
-
 }
 
 }

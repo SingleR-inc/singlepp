@@ -278,7 +278,9 @@ public:
     std::vector<std::uint8_t> check_availability;
     std::vector<std::unordered_set<Index_> > available; // indices to 'universe'
     std::vector<std::vector<std::vector<Index_> > > markers; // indices to 'universe'
-    std::vector<std::vector<std::vector<internal::RankedVector<Index_, Index_> > > > ranked; // .second contains indices to 'universe'
+
+    internal::RankedVector<Index_, Index_> all_ranked; // .second contains indices to 'universe'
+    std::optional<std::vector<std::size_t> > all_ranked_indptrs;
     /**
      * @endcond
      */
@@ -300,8 +302,8 @@ struct TrainIntegratedOptions {
  */
 namespace internal {
 
-template<typename Value_, typename RefLabel_, typename Input_, typename Index_>
-void train_integrated_per_reference(
+template<bool ref_sparse_, typename Value_, typename RefLabel_, typename Input_, typename Index_>
+void train_integrated_per_reference_raw(
     RefLabel_ ref_i,
     Input_& curinput,
     TrainedIntegrated<Index_>& output,
@@ -355,7 +357,7 @@ void train_integrated_per_reference(
             std::vector<Value_> buffer(output.universe.size());
             internal::RankedVector<Value_, Index_> tmp_ranked;
             tmp_ranked.reserve(output.universe.size());
-            auto ext = tatami::consecutive_extractor<false>(&ref, false, start, len, universe_ptr); 
+            auto ext = tatami::consecutive_extractor<ref_sparse_>(&ref, false, start, len, universe_ptr); 
 
             for (Index_ c = start, end = start + len; c < end; ++c) {
                 auto ptr = ext->fetch(buffer.data());

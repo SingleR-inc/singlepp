@@ -12,8 +12,6 @@
 
 namespace singlepp {
 
-namespace internal {
-
 /*
  * This class sanitizes any user-provided subsets so that we can provide a
  * sorted and unique subset to the tatami extractor. We then undo the sorting
@@ -48,7 +46,7 @@ public:
         if (my_use_sorted_subset) {
             std::vector<std::pair<Index_, Size> > store;
             sanisizer::reserve(store, num_subset);
-            for (decltype(num_subset) i = 0; i < num_subset; ++i) {
+            for (I<decltype(num_subset)> i = 0; i < num_subset; ++i) {
                 store.emplace_back(sub[i], i);
             }
             std::sort(store.begin(), store.end());
@@ -91,11 +89,11 @@ public:
 
         if constexpr(sparse_) {
             if (my_use_sorted_subset) {
-                for (I<decltype(input.num)> s = 0; s < num; ++s) {
+                for (I<decltype(input.number)> s = 0; s < input.number; ++s) {
                     vec.emplace_back(input.value[s], my_remapping[input.index[s] - my_remap_start]);
                 }
             } else {
-                for (I<decltype(input.num)> s = 0; s < num; ++s) {
+                for (I<decltype(input.number)> s = 0; s < input.number; ++s) {
                     vec.emplace_back(input.value[s], s);
                 }
             }
@@ -118,8 +116,6 @@ public:
         std::sort(vec.begin(), vec.end());
     }
 };
-
-}
 
 }
 

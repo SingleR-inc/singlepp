@@ -25,10 +25,11 @@ double naive_score(const std::vector<double>& scaled_test, const std::vector<int
         auto col = wrk->fetch(l, buffer.data());
         tatami::copy_n(col, buffer.size(), buffer.data());
         const auto scaled_ref = quick_scaled_ranks(buffer);
-        correlations.push_back(singlepp::internal::distance_to_correlation<double>(scaled_test, scaled_ref));
+        const auto r2 = singlepp::compute_l2(scaled_test.size(), scaled_test.data(), scaled_ref.data());
+        correlations.push_back(1 - 2 * r2);
     }
 
-    return singlepp::internal::correlations_to_score(correlations, quantile);
+    return singlepp::correlations_to_score(correlations, quantile);
 }
 
 template<class Labels, class Matrix, class RefMatrix>
