@@ -37,7 +37,7 @@ private:
 
 public:
     SubsetSanitizer(const std::vector<Index_>& sub) : my_original_subset(sub) {
-        auto num_subset = sub.size();
+        const auto num_subset = sub.size();
         for (I<decltype(num_subset)> i = 1; i < num_subset; ++i) {
             if (sub[i] <= sub[i-1]) {
                 my_use_sorted_subset = true;
@@ -56,7 +56,7 @@ public:
             sanisizer::reserve(my_sorted_subset, num_subset);
             if constexpr(sparse_) {
                 my_remap_start = store.front().first;
-                sanisizer::resize(my_remapping, store.back().first - my_remap_start + 1);
+                sanisizer::resize(my_remapping, sanisizer::attest_gez(store.back().first - my_remap_start + 1));
             } else {
                 sanisizer::resize(my_original_indices, num_subset);
             }

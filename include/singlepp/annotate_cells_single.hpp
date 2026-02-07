@@ -4,6 +4,7 @@
 #include "defs.hpp"
 
 #include "tatami/tatami.hpp"
+#include "sanisizer/sanisizer.hpp"
 
 #include "Markers.hpp"
 #include "build_indices.hpp"
@@ -13,6 +14,7 @@
 #include "scaled_ranks.hpp"
 #include "correlations_to_score.hpp"
 #include "fill_labels_in_use.hpp"
+#include "utils.hpp"
 
 #include <vector>
 #include <algorithm>
@@ -22,20 +24,47 @@ namespace singlepp {
 
 namespace internal {
 
-template<typename Label_, typename Index_, typename Float_, typename Value_>
+template<bool query_sparse_, bool ref_sparse_, typename Label_, typename Index_, typename Float_, typename Value_>
 class FineTuneSingle {
 private:
     std::vector<Label_> my_labels_in_use;
 
     SubsetRemapper<Index_> my_gene_subset;
 
-    std::vector<Float_> my_scaled_left, my_scaled_right;
+    typename std::conditional<query_sparse_, SparseScaled<Index_, Float_>, std::vector<Float_> >:type my_scaled_query;
+    typename std::conditional<ref_sparse_, SparseScaled<Index_, Float_>, std::vector<Float_> >:type my_scaled_ref;
+
+    RankedVector<Value_, Index_> my_subset_query;
+    RankedVector<Index_, Index_> my_subset_ref;
 
     std::vector<Float_> my_all_correlations;
 
-    RankedVector<Value_, Index_> my_input_sub;
+public:
+    FineTuneSingle(const Index_ max_markers, const std::vector<PerLabelReference<Index_, Float_> >& ref) : my_gene_subset(max_markers) {
+        sanisizer::reserve(my_labels_in_use, ref.size());
 
-    RankedVector<Index_, Index_> my_ref_sub;
+        const auto max_markers_att = sanisizer::attest_gez(max_markers);
+        if constexpr(query_sparse_) {
+            sanisizer::reserve(my_scaled_query.nonzero, max_markers_att);
+        } else {
+            sanisizer::reserve(my_scaled_query, max_markers_att);
+        }
+
+        if constexpr(ref_sparse_) {
+            sanisizer::reserve(my_scaled_ref.nonzero, max_markers_att);
+        } else {
+            sanisizer::reserve(my_scaled_ref, max_markers_att);
+        }
+
+        sanisizer::reserve(my_subset_query, max_markers_att); 
+        sanisizer::reserve(my_subset_ref, max_markers_att); 
+
+        I<decltype(get_num_observations(ref.front()))> max_labels = 0;
+        for (const auto& curref : ref) {
+            max_labels = std::max(max_labels, get_num_observations(curref));
+        }
+        sanisizer::reserve(my_all_correlations, max_labels);
+    }
 
 public:
     std::pair<Label_, Float_> run(
@@ -44,14 +73,9 @@ public:
         const Markers<Index_>& markers,
         std::vector<Float_>& scores,
         Float_ quantile,
-        Float_ threshold)
-    {
+        Float_ threshold
+    ) {
         auto candidate = fill_labels_in_use(scores, threshold, my_labels_in_use);
-
-        // Use the input_size as a hint for the number of addressable genes.
-        // This should be exact if subset_to_markers() was used on the input,
-        // but the rest of the code is safe even if the hint isn't perfect.
-        my_gene_subset.reserve(input.size());
 
         // If there's only one top label, we don't need to do anything else.
         // We also give up if every label is in range, because any subsequent
@@ -65,15 +89,24 @@ public:
                     }
                 }
             }
+            my_gene_subset.remap(input, my_subset_query);
+            const auto nmarkers = my_gene_subset.size();
 
-            my_gene_subset.remap(input, my_input_sub);
-            my_scaled_left.resize(my_input_sub.size());
-            my_scaled_right.resize(my_input_sub.size());
-            scaled_ranks(my_input_sub, my_scaled_left.data());
+            if constexpr(query_sparse_) {
+                scaled_ranks_sparse(nmarkers, my_subset_query, my_scaled_query);
+            } else {
+                my_scaled_query.resize(nmarkers);
+                scaled_ranks_dense(my_subset_query, my_scaled_query.data());
+            }
+
+            if constexpr(ref_sparse_) {
+                my_scaled_ref.resize(nmarkers);
+            }
+
             scores.clear();
 
             auto nlabels_used = my_labels_in_use.size();
-            for (decltype(nlabels_used) i = 0; i < nlabels_used; ++i) {
+            for (I<decltype(nlabels_used)> i = 0; i < nlabels_used; ++i) {
                 auto curlab = my_labels_in_use[i];
 
                 my_all_correlations.clear();
@@ -85,10 +118,16 @@ public:
                     // subset from the previous fine-tuning iteration, but this
                     // requires us to (possibly) make a copy of the entire
                     // reference set; we can't afford to do this in each thread.
-                    my_gene_subset.remap(curref.ranked[c], my_ref_sub);
-                    scaled_ranks(my_ref_sub, my_scaled_right.data());
+                    my_gene_subset.remap(curref.ranked[c], my_subset_ref);
 
-                    Float_ cor = distance_to_correlation<Float_>(my_scaled_left, my_scaled_right);
+                    if constexpr(ref_sparse_) {
+                        scaled_ranks_sparse(nmarkers, my_subset_query, my_scaled_ref);
+                    } else {
+                        scaled_ranks_dense(my_subset_ref, my_scaled_ref.data());
+                    }
+
+                    const Float_ r2 = compute_l2(nmarkers, my_scaled_query, my_scaled_ref);
+                    const Float_ cor = 1 - 2 * r2;
                     my_all_correlations.push_back(cor);
                 }
 
@@ -164,9 +203,7 @@ void annotate_cells_single_raw(
 
         auto scaled = [&](){
             if constexpr(query_sparse_) {
-                SparseScaled<Input_, Float_> output;
-                sanisizer::reserve(output.nonzero, num_subset);
-                return output;
+                return SparseScaled<Input_, Float_>(num_subset);
             } else {
                 return sanisizer::create<std::vector<Float_> >(num_subset);
             }

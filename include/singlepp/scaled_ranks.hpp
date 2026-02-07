@@ -63,13 +63,18 @@ void scaled_ranks_dense(const RankedVector<Stat_, Index_>& collected, Output_* o
 
 template<typename Index_, typename Float_>
 struct SparseScaled {
+    SparseScaled() = default;
+    SparseScaled(const Index_ nmarkers) {
+        sanisizer::reserve(nonzero, nmarkers);
+    }
+
     std::vector<std::pair<Index_, Float_> > nonzero;
     Float_ zero = 0;
 };
 
 template<typename Stat_, typename Index_, typename Float_>
 void scaled_ranks_sparse(const Index_ num_dim, const RankedVector<Stat_, Index_>& collected, SparseScaled<Index_, Float_>& outgoing) { 
-    static_assert(std::is_floating_point<FLoat_>::value);
+    static_assert(std::is_floating_point<Float_>::value);
 
     // Computing tied ranks: before, at, and after zero.
     const auto ncollected = collected.size();
