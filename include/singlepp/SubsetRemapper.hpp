@@ -45,8 +45,8 @@ private:
 
 public:
     SubsetRemapper(const Index_ nmarkers) {
-        sanisizer::resize(my_mapping, sanisizer::attest_gez(nmarkers));
-        sanisizer::resize(my_used, sanisizer::attest_gez(nmarkers));
+        sanisizer::resize(my_mapping, nmarkers);
+        sanisizer::resize(my_used, nmarkers);
     }
 
     void add(Index_ i) {
@@ -80,6 +80,11 @@ public:
                 output.emplace_back(begin->first, target.second);
             }
         }
+    }
+
+    template<typename Stat_>
+    void remap(const RankedVector<Stat_, Index_>& input, RankedVector<Stat_, Index_>& output) const {
+        remap(input.begin(), input.end(), output);
     }
 };
 

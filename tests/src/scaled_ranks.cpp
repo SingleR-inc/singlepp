@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
 
 #include "singlepp/scaled_ranks.hpp"
-#include "tatami_stats/tatami_stats.hpp"
 #include "singlepp/correlations_to_score.hpp"
+#include "singlepp/build_reference.hpp"
+
+#include "tatami_stats/tatami_stats.hpp"
 
 #include <algorithm>
 #include <vector>
@@ -17,7 +19,7 @@ TEST(ScaledRanks, Basic) {
     std::vector<double> stuff { 0.4234, -0.12, 2.784, 0.232, 5.32, 1.1129 };
     auto ranks = fill_ranks(stuff.size(), stuff.data());
     std::vector<double> out(stuff.size());
-    singlepp::internal::scaled_ranks(ranks, out.data());
+    singlepp::scaled_ranks(stuff.size(), ranks, out.data());
 
     // Mean should be zero, variance should be... something.
     auto stats = tatami_stats::variances::direct(out.data(), out.size(), false);
@@ -41,7 +43,7 @@ TEST(ScaledRanks, NoVariance) {
     {
         auto ranks = fill_ranks(all_zeroes.size(), all_zeroes.data());
         std::vector<double> out (all_zeroes.size());
-        singlepp::internal::scaled_ranks(ranks, out.data());
+        singlepp::scaled_ranks(all_zeroes.size(), ranks, out.data());
         EXPECT_EQ(out, all_zeroes);
     }
 
@@ -49,7 +51,7 @@ TEST(ScaledRanks, NoVariance) {
         std::vector<double> all_ones(12, 1);
         auto ranks = fill_ranks(all_ones.size(), all_ones.data());
         std::vector<double> out (all_ones.size());
-        singlepp::internal::scaled_ranks(ranks, out.data());
+        singlepp::scaled_ranks(all_ones.size(), ranks, out.data());
         EXPECT_EQ(out, all_zeroes); // centered to zero, but not scaled.
     }
 }
@@ -60,7 +62,7 @@ TEST(ScaledRanks, Ties) {
 
     auto ranks = fill_ranks(original_size, stuff.data());
     std::vector<double> ref(original_size);
-    singlepp::internal::scaled_ranks(ranks, ref.data());
+    singlepp::scaled_ranks(original_size, ranks, ref.data());
 
     // Checking values aren't NA or infinite.
     auto stats = tatami_stats::variances::direct(ref.data(), ref.size(), false);
@@ -71,7 +73,7 @@ TEST(ScaledRanks, Ties) {
     stuff.push_back(stuff[0]);
     ranks = fill_ranks(stuff.size(), stuff.data());
     std::vector<double> tied(stuff.size());
-    singlepp::internal::scaled_ranks(ranks, tied.data());
+    singlepp::scaled_ranks(stuff.size(), ranks, tied.data());
   
     EXPECT_EQ(tied[0], tied.back()); // same rank
     EXPECT_NE(tied[0], ref[0]); // changes the ranks; note that this doesn't work if the first element is right in the middle.
@@ -87,7 +89,7 @@ TEST(ScaledRanks, Ties) {
     ASSERT_EQ(stuff.size(), original_size * 2);
     ranks = fill_ranks(stuff.size(), stuff.data());
     std::vector<double> dupped(stuff.size());
-    singlepp::internal::scaled_ranks(ranks, dupped.data());
+    singlepp::scaled_ranks(stuff.size(), ranks, dupped.data());
 
     auto stats3 = tatami_stats::variances::direct(dupped.data(), dupped.size(), false); 
     EXPECT_TRUE(std::abs(stats3.first) < 1e-8);
@@ -109,18 +111,18 @@ TEST(ScaledRanks, CorrelationCheck) {
 
     auto ranks = fill_ranks(left.size(), left.data());
     std::vector<double> out1(left.size());
-    singlepp::internal::scaled_ranks(ranks, out1.data());
+    singlepp::scaled_ranks(left.size(), ranks, out1.data());
 
     ranks = fill_ranks(right.size(), right.data());
     std::vector<double> out2(right.size());
-    singlepp::internal::scaled_ranks(ranks, out2.data());
+    singlepp::scaled_ranks(right.size(), ranks, out2.data());
 
-    double obs = singlepp::internal::distance_to_correlation<double>(out1, out2);
+    double obs = singlepp::l2_to_correlation(singlepp::compute_l2(out1.size(), out1, out2));
 
     // Manual calculation.
     {
-        singlepp::internal::RankedVector<double, int> ranks1(left.size());
-        singlepp::internal::RankedVector<double, int> ranks2(right.size());
+        singlepp::RankedVector<double, int> ranks1(left.size());
+        singlepp::RankedVector<double, int> ranks2(right.size());
 
         for (int it = 0; it < 2; ++it) {
             const auto& src = (it == 0 ? left : right);
@@ -153,8 +155,8 @@ TEST(SimplifyRanks, NoTies) {
     std::vector<double> no_ties { 0.72, 0.56, 0.12, 0.55, 0.50, 0.10, 0.43, 0.54, 0.18 };
     auto ranks = fill_ranks<int>(no_ties.size(), no_ties.data());
 
-    singlepp::internal::RankedVector<int, int> compacted;
-    singlepp::internal::simplify_ranks(ranks, compacted);
+    singlepp::RankedVector<int, int> compacted;
+    singlepp::simplify_ranks(ranks, compacted);
 
     for (size_t i = 0; i < compacted.size(); ++i) {
         EXPECT_EQ(ranks[i].second, compacted[i].second);
@@ -166,8 +168,8 @@ TEST(SimplifyRanks, WithTies) {
     std::vector<double> with_ties { 0.72, 0.56, 0.72, 0.55, 0.55, 0.10, 0.43, 0.10, 0.72 };
     auto ranks2 = fill_ranks<int>(with_ties.size(), with_ties.data());
 
-    singlepp::internal::RankedVector<int, int> compacted2;
-    singlepp::internal::simplify_ranks(ranks2, compacted2);
+    singlepp::RankedVector<int, int> compacted2;
+    singlepp::simplify_ranks(ranks2, compacted2);
     for (size_t i = 1; i < compacted2.size(); ++i) {
         EXPECT_TRUE(compacted2[i].first >= compacted2[i-1].first);
     }

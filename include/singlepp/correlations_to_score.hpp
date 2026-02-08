@@ -9,6 +9,11 @@
 namespace singlepp {
 
 template<typename Float_>
+Float_ l2_to_correlation(const Float_ l2) {
+    return 1 - 2 * l2;
+}
+
+template<typename Float_>
 Float_ correlations_to_score(std::vector<Float_>& correlations, Float_ quantile) {
     static_assert(std::is_floating_point<Float_>::value);
 

@@ -4,8 +4,7 @@
 #include "singlepp/SubsetRemapper.hpp"
 
 TEST(SubsetRemapper, Subsets) {
-    singlepp::internal::SubsetRemapper<int> remapper;
-    remapper.reserve(10);
+    singlepp::SubsetRemapper<int> remapper(10);
     remapper.add(1);
     remapper.add(6); 
     remapper.add(1); // duplicates are ignored.
@@ -13,12 +12,12 @@ TEST(SubsetRemapper, Subsets) {
 
     // All indices are retained.
     {
-        singlepp::internal::RankedVector<double, int> input;
+        singlepp::RankedVector<double, int> input;
         for (size_t i = 0; i < 10; ++i) {
             input.emplace_back(static_cast<double>(i) / 10, i);
         }
 
-        singlepp::internal::RankedVector<double, int> output;
+        singlepp::RankedVector<double, int> output;
         remapper.remap(input, output);
 
         EXPECT_EQ(output.size(), 3);
@@ -38,12 +37,12 @@ TEST(SubsetRemapper, Subsets) {
 
     // Only even indices are retained.
     {
-        singlepp::internal::RankedVector<double, int> input;
+        singlepp::RankedVector<double, int> input;
         for (size_t i = 0; i < 10; i += 2) {
             input.emplace_back(static_cast<double>(i) / 10, i);
         }
 
-        singlepp::internal::RankedVector<double, int> output;
+        singlepp::RankedVector<double, int> output;
         remapper.remap(input, output);
 
         EXPECT_EQ(output.size(), 2);
@@ -70,20 +69,18 @@ TEST(SubsetRemapper, Subsets) {
 TEST(SubsetRemapper, SubsetSmallType) {
     // Check that the remapper behaves correctly when the index type is smaller
     // than the mapping size.
-    singlepp::internal::SubsetRemapper<uint8_t> remapper;
-    remapper.reserve(300);
+    singlepp::SubsetRemapper<uint8_t> remapper(255);
     remapper.add(200);
     remapper.add(100); 
     remapper.add(10); 
     remapper.add(100); // ignoring duplicates again!
-    remapper.add(255); // need this to force the mapping to exceed the max index size.
 
-    singlepp::internal::RankedVector<double, uint8_t> input;
+    singlepp::RankedVector<double, uint8_t> input;
     for (size_t i = 0; i < 250; i += 10) {
         input.emplace_back(static_cast<double>(i) / 100, i);
     }
 
-    singlepp::internal::RankedVector<double, uint8_t> output;
+    singlepp::RankedVector<double, uint8_t> output;
     remapper.remap(input, output);
 
     EXPECT_EQ(output.size(), 3);

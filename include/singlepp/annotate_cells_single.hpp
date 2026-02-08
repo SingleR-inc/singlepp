@@ -90,7 +90,7 @@ public:
                     }
                 }
             }
-            my_gene_subset.remap(input.begin(), input.end(), my_subset_query);
+            my_gene_subset.remap(input, my_subset_query);
             const auto num_markers = my_gene_subset.size();
 
             if constexpr(!query_sparse_) {
@@ -127,8 +127,8 @@ public:
                     my_gene_subset.remap(curref.all_ranked.begin() + refstart, curref.all_ranked.begin() + refend, my_subset_ref);
                     scaled_ranks(num_markers, my_subset_ref, my_scaled_ref);
 
-                    const Float_ r2 = compute_l2(num_markers, my_scaled_query, my_scaled_ref);
-                    const Float_ cor = 1 - 2 * r2;
+                    const Float_ l2 = compute_l2(num_markers, my_scaled_query, my_scaled_ref);
+                    const Float_ cor = l2_to_correlation(l2);
                     my_all_correlations.push_back(cor);
                 }
 

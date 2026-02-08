@@ -2,6 +2,7 @@
 #define SINGLEPP_SUBSET_SANITIZER_HPP
 
 #include "utils.hpp"
+#include "scaled_ranks.hpp"
 
 #include "tatami/tatami.hpp"
 #include "sanisizer/sanisizer.hpp"
@@ -54,7 +55,7 @@ public:
             sanisizer::reserve(my_sorted_subset, num_subset);
             if constexpr(sparse_) {
                 my_remap_start = store.front().first;
-                sanisizer::resize(my_remapping, sanisizer::attest_gez(store.back().first - my_remap_start + 1));
+                sanisizer::resize(my_remapping, store.back().first - my_remap_start + 1);
             } else {
                 sanisizer::resize(my_original_indices, num_subset);
             }
