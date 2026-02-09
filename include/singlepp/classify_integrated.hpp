@@ -10,8 +10,7 @@
 
 #include <vector>
 #include <cstddef>
-#include <unordered_map>
-#include <unordered_set>
+#include <algorithm>
 
 /**
  * @file classify_integrated.hpp

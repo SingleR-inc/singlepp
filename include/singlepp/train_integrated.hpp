@@ -8,8 +8,6 @@
 #include "Intersection.hpp"
 
 #include <vector>
-#include <unordered_set>
-#include <unordered_map>
 #include <algorithm>
 #include <cstdint>
 #include <memory>
@@ -28,15 +26,15 @@ namespace singlepp {
  *
  * @tparam Value_ Numeric type for the matrix values.
  * @tparam Index_ Integer type for the row/column indices of the matrix.
- * @tparam Label_ Integer type for the reference labels.
+ * @tparam RefLabel_ Integer type for the reference labels.
  */
-template<typename Value_, typename Index_, typename Label_>
+template<typename Value_, typename Index_, typename RefLabel_>
 struct TrainIntegratedInput {
     /**
      * @cond
      */
     const tatami::Matrix<Value_, Index_>* ref;
-    const Label_* labels;
+    const RefLabel_* labels;
     const Markers<Index_>* ref_markers;
     const std::vector<Index_>* test_subset;
     Index_ test_nrow;
@@ -53,7 +51,7 @@ struct TrainIntegratedInput {
  *
  * @tparam Value_ Numeric type for the matrix values.
  * @tparam Index_ Integer type for the row/column indices of the matrix.
- * @tparam Label_ Integer type for the reference labels.
+ * @tparam RefLabel_ Integer type for the reference labels.
  * @tparam Float_ Floating-point type for the correlations and scores.
  *
  * @param ref Matrix containing the reference expression values, where rows are genes and columns are reference profiles.
@@ -64,13 +62,13 @@ struct TrainIntegratedInput {
  *
  * @return An opaque input object for `train_integrated()`.
  */
-template<typename Value_, typename Index_, typename Label_, typename Float_>
-TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input(
+template<typename Value_, typename Index_, typename RefLabel_, typename Float_>
+TrainIntegratedInput<Value_, Index_, RefLabel_> prepare_integrated_input(
     const tatami::Matrix<Value_, Index_>& ref,
-    const Label_* labels, 
+    const RefLabel_* labels, 
     const TrainedSingle<Index_, Float_>& trained
 ) {
-    TrainIntegratedInput<Value_, Index_, Label_> output;
+    TrainIntegratedInput<Value_, Index_, RefLabel_> output;
     output.ref = &ref;
     output.labels = labels;
 
@@ -88,7 +86,7 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input(
  *
  * @tparam Index_ Integer type for the row/column indices of the matrix.
  * @tparam Value_ Numeric type for the matrix values.
- * @tparam Label_ Integer type for the reference labels.
+ * @tparam RefLabel_ Integer type for the reference labels.
  * @tparam Float_ Floating-point type for the correlations and scores.
  *
  * @param test_nrow Number of features in the test dataset.
@@ -104,15 +102,15 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input(
  *
  * @return An opaque input object for `train_integrated()`.
  */
-template<typename Index_, typename Value_, typename Label_, typename Float_>
-TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
+template<typename Index_, typename Value_, typename RefLabel_, typename Float_>
+TrainIntegratedInput<Value_, Index_, RefLabel_> prepare_integrated_input_intersect(
     Index_ test_nrow,
     const Intersection<Index_>& intersection,
     const tatami::Matrix<Value_, Index_>& ref, 
-    const Label_* labels, 
+    const RefLabel_* labels, 
     const TrainedSingleIntersect<Index_, Float_>& trained) 
 {
-    TrainIntegratedInput<Value_, Index_, Label_> output;
+    TrainIntegratedInput<Value_, Index_, RefLabel_> output;
     output.ref = &ref;
     output.labels = labels;
 
@@ -132,7 +130,7 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
  * @tparam Index_ Integer type for the row/column indices of the matrix.
  * @tparam Id_ Type of the gene identifier. 
  * @tparam Value_ Numeric type for the matrix values.
- * @tparam Label_ Integer type for the reference labels.
+ * @tparam RefLabel_ Integer type for the reference labels.
  * @tparam Float_ Floating-point type for the correlations and scores.
  *
  * @param test_nrow Number of rows (i.e., genes) in the test dataset.
@@ -150,16 +148,16 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
  *
  * @return An opaque input object for `train_integrated()`.
  */
-template<typename Index_, typename Id_, typename Value_, typename Label_, typename Float_>
-TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
+template<typename Index_, typename Id_, typename Value_, typename RefLabel_, typename Float_>
+TrainIntegratedInput<Value_, Index_, RefLabel_> prepare_integrated_input_intersect(
     Index_ test_nrow,
     const Id_* test_id, 
     const tatami::Matrix<Value_, Index_>& ref, 
     const Id_* ref_id, 
-    const Label_* labels,
+    const RefLabel_* labels,
     const TrainedSingleIntersect<Index_, Float_>& trained
 ) {
-    TrainIntegratedInput<Value_, Index_, Label_> output;
+    TrainIntegratedInput<Value_, Index_, RefLabel_> output;
     output.ref = &ref;
     output.labels = labels;
 
@@ -237,9 +235,9 @@ struct TrainIntegratedOptions {
 /**
  * @cond
  */
-template<bool ref_sparse_, typename Value_, typename Index_, typename Label_>
+template<bool ref_sparse_, typename Value_, typename Index_, typename RefLabel_>
 void train_integrated_per_reference_simple(
-    const TrainIntegratedInput<Value_, RefLabel_, Index_>& input,
+    const TrainIntegratedInput<Value_, RefRefLabel_, Index_>& input,
     const std::vector<Index_>& universe,
     const std::vector<Index_>& remap_to_universe,
     const TrainIntegratedOptions& options,
@@ -287,9 +285,9 @@ void train_integrated_per_reference_simple(
     }, NC, options.num_threads);
 }
 
-template<bool ref_sparse_, typename Value_, typename Index_, typename Label_>
+template<bool ref_sparse_, typename Value_, typename Index_, typename RefLabel_>
 void train_integrated_per_reference_intersect(
-    const TrainIntegratedInput<Value_, RefLabel_, Index_>& input,
+    const TrainIntegratedInput<Value_, RefRefLabel_, Index_>& input,
     const std::vector<Index_>& universe,
     const std::vector<Index_>& remap_to_universe,
     const Index_ test_nrow,
@@ -360,15 +358,15 @@ void train_integrated_per_reference_intersect(
 /**
  * @tparam Value_ Numeric type for the matrix values.
  * @tparam Index_ Integer type for the row/column indices of the matrix.
- * @tparam Label_ Integer type for the reference labels.
+ * @tparam RefLabel_ Integer type for the reference labels.
  *
  * @param inputs Vector of references, typically constructed with `prepare_integrated_input()` or `prepare_integrated_input_intersect()`.
  * @param options Further options.
  *
  * @return A pre-built classifier that integrates multiple references, for use in `classify_integrated()`.
  */
-template<typename Value_, typename Index_, typename Label_>
-TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInput<Value_, Index_, Label_> >& inputs, const TrainIntegratedOptions& options) {
+template<typename Value_, typename Index_, typename RefLabel_>
+TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInput<Value_, Index_, RefLabel_> >& inputs, const TrainIntegratedOptions& options) {
     TrainedIntegrated<Index_> output;
     const auto nrefs = inputs.size();
     sanisizer::resize(output.my_references, nrefs);
@@ -408,7 +406,7 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
         output.universe.reserve(output.test_nrow);
         for (Index_ t = 0; t < output.test_nrow; ++t) {
             if (num_hits[t] == nrefs) {
-                remap_to_universe[t] = universe.size();
+                remap_to_universe[t] = output.universe.size();
                 output.universe.push_back(t);
             }
         }
@@ -416,30 +414,38 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
         output.universe.shrink_to_fit();
     }
 
+    auto is_active = sanisizer::create<std::vector<char> >(output.test_nrow);
+    std::vector<Index_> active_genes;
+    active_genes.reserve(output.test_nrow);
+
     for (I<decltype(nrefs)> r = 0; r < nrefs; ++r) {
         auto& curinput = inputs[r];
         auto& curoutput = output.my_references[r];
         const auto nlabels = curinput.markers.size();
-        const Index_ NC = input.ref->ncol();
+        const Index_ NC = curinput.ref->ncol();
         curoutput.num_samples = NC;
 
         // Assembling the per-label markers for this reference.
-        std::unordered_set<Index_> unionizer;
         for (I<decltype(nlabels)> i = 0; i < nlabels; ++i) {
-            unionizer.clear();
-            for (const auto& x : curinput.markers[i]) {
-                unionizer.insert(x.begin(), x.end());
+            for (const auto& labmark : curinput.markers[i]) {
+                for (const auto a : labmark) {
+                    if (!is_active[a]) {
+                        is_active[a] = true;
+                        active_genes.push_back(a);
+                    }
+                }
             }
 
             curoutput.markers.emplace_back();
             auto& last_markers = curoutput.markers.back();
-            last_markers.reserve(unionizer.size());
+            last_markers.reserve(active_genes.size());
 
-            for (auto u : unionizer) {
-                const auto universe_index = remap_to_universe[input.test_subset[u]];
+            for (const auto a : active_genes) {
+                const auto universe_index = remap_to_universe[curinput.test_subset[a]];
                 if (universe_index != test_nrow) {
                     last_markers.push_back(universe_index);
                 }
+                is_active[a] = false;
             }
         }
 
