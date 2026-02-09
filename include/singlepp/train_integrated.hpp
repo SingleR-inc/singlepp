@@ -196,8 +196,12 @@ public:
      * @param r Reference dataset of interest.
      * @return Number of profiles in this reference.
      */
-    Index_ num_profiles(std::size_t r) const {
-        return my_references[r].num_samples;
+    std::size_t num_profiles(std::size_t r) const {
+        std::size_t num_prof = 0;
+        for (const auto& lab : my_references[r]) {
+            num_prof += sanisizer::sum<std::size_t>(num_prof, lab.num_samples);
+        }
+        return num_prof;
     }
 
 public:
@@ -209,13 +213,13 @@ public:
     Index_ test_nrow;
     std::vector<Index_> universe; // To be used by classify_integrated() for indexed extraction.
 
-    struct PerReference {
+    struct PerLabel {
         Index_ num_samples;
-        std::vector<std::vector<Index_> > markers; // indices to 'universe'
+        std::vector<Index_> markers; // indices to 'universe'
         RankedVector<Index_, Index_> all_ranked; // .second contains indices to 'universe'
         std::optional<std::vector<std::size_t> > all_ranked_indptrs; // only required if sparse.
     };
-    std::vector<PerReference> my_references;
+    std::vector<std::vector<PerLabel> > my_references;
     /**
      * @endcond
      */
@@ -237,19 +241,22 @@ struct TrainIntegratedOptions {
  */
 template<bool ref_sparse_, typename Value_, typename Index_, typename RefLabel_>
 void train_integrated_per_reference_simple(
-    const TrainIntegratedInput<Value_, RefRefLabel_, Index_>& input,
+    const TrainIntegratedInput<Value_, RefLabel_, Index_>& input,
     const std::vector<Index_>& universe,
     const std::vector<Index_>& remap_to_universe,
     const TrainIntegratedOptions& options,
     const std::vector<Index_>& positions,
-    std::vector<RankedVector<Index_, Index_> >& out_ranked 
+    std::vector<std::vector<RankedVector<Index_, Index_> > >& out_ranked 
 ) {
+    const auto& ref = *(input.ref);
+    const auto NC = ref.ncol();
+    const auto num_universe = universe.size();
+
     // 'universe' technically refers to the row indices of the test matrix,
     // but in simple mode, the rows of the test and reference are the same, so we can use it directly here.
     tatami::VectorPtr<Index_> universe_ptr(tatami::VectorPtr<Index_>{}, &universe);
 
     tatami::parallelize([&](int, Index_ start, Index_ len) {
-        const auto num_universe = output.universe.size();
         auto vbuffer = sanisizer::create<std::vector<Value_> >(num_universe);
         auto ibuffer = [&]() {
             if constexpr(ref_sparse_) {
@@ -262,7 +269,7 @@ void train_integrated_per_reference_simple(
         RankedVector<Value_, Index_> tmp_ranked;
         tmp_ranked.reserve(num_universe);
 
-        auto ext = tatami::consecutive_extractor<ref_sparse_>(&ref, false, start, len, universe_ptr); 
+        auto ext = tatami::consecutive_extractor<ref_sparse_>(ref, false, start, len, universe_ptr); 
         for (Index_ c = start, end = start + len; c < end; ++c) {
             tmp_ranked.clear();
 
@@ -279,7 +286,7 @@ void train_integrated_per_reference_simple(
             }
 
             std::sort(tmp_ranked.begin(), tmp_ranked.end());
-            auto& final_ranked = out_ranked[curlab[c]][positions[c]];
+            auto& final_ranked = out_ranked[input.labels[c]][positions[c]];
             simplify_ranks(tmp_ranked, final_ranked);
         }
     }, NC, options.num_threads);
@@ -287,16 +294,18 @@ void train_integrated_per_reference_simple(
 
 template<bool ref_sparse_, typename Value_, typename Index_, typename RefLabel_>
 void train_integrated_per_reference_intersect(
-    const TrainIntegratedInput<Value_, RefRefLabel_, Index_>& input,
-    const std::vector<Index_>& universe,
+    const TrainIntegratedInput<Value_, RefLabel_, Index_>& input,
     const std::vector<Index_>& remap_to_universe,
     const Index_ test_nrow,
     const TrainIntegratedOptions& options,
     const std::vector<Index_>& positions,
-    typename TrainedIntegrated<Index_>::PerReference& output
+    std::vector<std::vector<RankedVector<Index_, Index_> > >& out_ranked 
 ) {
+    const auto& ref = *(input.ref);
+    const auto NC = ref.ncol();
+
     std::vector<Index_> ref_subset;
-    auto remap_ref_subset_to_universe = sanisizer::create<std::vector<Index_> >(ref->nrow());
+    auto remap_ref_subset_to_universe = sanisizer::create<std::vector<Index_> >(ref.nrow());
     for (const auto& pair : *(input.intersection)) {
         const auto rdex = remap_to_universe[pair.first];
         if (rdex != test_nrow) {
@@ -326,9 +335,9 @@ void train_integrated_per_reference_intersect(
             }
         }();
 
-        internal::RankedVector<Value_, Index_> tmp_ranked;
+        RankedVector<Value_, Index_> tmp_ranked;
         tmp_ranked.reserve(ref_subset_size);
-        auto ext = tatami::consecutive_extractor<false>(&ref, false, start, len, to_extract_ptr);
+        auto ext = tatami::consecutive_extractor<ref_sparse_>(ref, false, start, len, to_extract_ptr);
 
         for (Index_ c = start, end = start + len; c < end; ++c) {
             tmp_ranked.clear();
@@ -336,7 +345,7 @@ void train_integrated_per_reference_intersect(
             if constexpr(ref_sparse_) {
                 auto info = ext->fetch(vbuffer.data(), ibuffer.data());
                 for (I<decltype(info.number)> i = 0; i < info.number; ++i) {
-                    tmp_ranked.emplace_back(info.value[i], remap_ref_to_universe[info.index[i]]);
+                    tmp_ranked.emplace_back(info.value[i], remap_ref_subset_to_universe[info.index[i]]);
                 }
             } else {
                 auto ptr = ext->fetch(vbuffer.data());
@@ -346,7 +355,7 @@ void train_integrated_per_reference_intersect(
             }
 
             std::sort(tmp_ranked.begin(), tmp_ranked.end());
-            auto& final_ranked = cur_ranked[curlab[c]][positions[c]];
+            auto& final_ranked = out_ranked[input.labels[c]][positions[c]];
             simplify_ranks(tmp_ranked, final_ranked);
         }
     }, NC, options.num_threads);
@@ -391,7 +400,7 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
         for (const auto& in : inputs) {
             std::fill(current_used.begin(), current_used.end(), false);
 
-            for (const auto& labmrk : in.markers) {
+            for (const auto& labmrk : *(in.ref_markers)) {
                 for (const auto& mrk : labmrk) {
                     for (auto y : mrk) {
                         if (!current_used[y]) {
@@ -419,15 +428,15 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
     active_genes.reserve(output.test_nrow);
 
     for (I<decltype(nrefs)> r = 0; r < nrefs; ++r) {
-        auto& curinput = inputs[r];
-        auto& curoutput = output.my_references[r];
-        const auto nlabels = curinput.markers.size();
-        const Index_ NC = curinput.ref->ncol();
-        curoutput.num_samples = NC;
+        const auto& curinput = inputs[r];
+        const auto& currefmarkers = *(curinput.ref_markers);
+        const auto nlabels = currefmarkers.size();
+        auto& currefout = output.my_references[r];
+        sanisizer::resize(currefout, nlabels);
 
         // Assembling the per-label markers for this reference.
-        for (I<decltype(nlabels)> i = 0; i < nlabels; ++i) {
-            for (const auto& labmark : curinput.markers[i]) {
+        for (I<decltype(nlabels)> l = 0; l < nlabels; ++l) {
+            for (const auto& labmark : currefmarkers[l]) {
                 for (const auto a : labmark) {
                     if (!is_active[a]) {
                         is_active[a] = true;
@@ -436,68 +445,77 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
                 }
             }
 
-            curoutput.markers.emplace_back();
-            auto& last_markers = curoutput.markers.back();
-            last_markers.reserve(active_genes.size());
+            auto& curlabout = currefout[l];
+            curlabout.markers.reserve(active_genes.size());
 
             for (const auto a : active_genes) {
-                const auto universe_index = remap_to_universe[curinput.test_subset[a]];
-                if (universe_index != test_nrow) {
-                    last_markers.push_back(universe_index);
+                const auto universe_index = remap_to_universe[(*(curinput.test_subset))[a]];
+                if (universe_index != output.test_nrow) {
+                    curlabout.markers.push_back(universe_index);
                 }
                 is_active[a] = false;
             }
         }
 
         // Pre-allocating the ranked vectors.
-        auto out_ranked = sanisizer::create<std::vector<RankedVector<Index_, Index_> > >(nlabels);
+        auto out_ranked = sanisizer::create<std::vector<std::vector<RankedVector<Index_, Index_> > > >(nlabels);
         std::vector<Index_> positions;
+        const Index_ NC = curinput.ref->ncol();
         positions.reserve(NC);
         {
             auto samples_per_label = sanisizer::create<std::vector<Index_> >(nlabels);
             for (Index_ c = 0; c < NC; ++c) {
-                auto& pos = samples_per_label[curlab[c]];
+                auto& pos = samples_per_label[curinput.labels[c]];
                 positions.push_back(pos);
                 ++pos;
             }
 
             for (I<decltype(nlabels)> l = 0; l < nlabels; ++l) {
-                out_ranked[l].resize(samples_per_label[l]);
+                const auto num_samples = samples_per_label[l];
+                currefout[l].num_samples = num_samples;
+                sanisizer::resize(out_ranked[l], num_samples);
             }
         }
 
         if (curinput.ref->is_sparse()) {
             if (curinput.intersection) {
-                train_integrated_per_reference_direct<true, Value_>(r, curinput, universe, remap_to_universe, output.test_nrow, options, positions, out_ranked);
+                train_integrated_per_reference_intersect<true>(curinput, remap_to_universe, output.test_nrow, options, positions, out_ranked);
             } else {
-                train_integrated_per_reference_direct<true, Value_>(r, curinput, universe, remap_to_universe, options, positions, out_ranked);
+                train_integrated_per_reference_simple<true>(curinput, output.universe, remap_to_universe, options, positions, out_ranked);
             }
 
-            I<decltype(curoutput.all_ranked.size())> num_total = 0;
-            for (const auto& x : out_ranked) {
-                num_total = sanisizer::sum<I<decltype(num_total)> >(num_total, x.size());
-            }
+            for (I<decltype(nlabels)> l = 0; l < nlabels; ++l) {
+                const auto& curranked = out_ranked[l];
+                auto& curlabout = currefout[l];
+                I<decltype(curlabout.all_ranked.size())> num_total = 0;
+                for (const auto& x : curranked) {
+                    num_total = sanisizer::sum<I<decltype(num_total)> >(num_total, x.size());
+                }
 
-            curoutput.all_ranked.reserve(num_total);
-            curoutput.all_ranked_indptrs->emplace();
-            curoutput.all_ranked_indptrs->reserve(out_ranked.size());
-            curoutput.all_ranked_indptrs->push_back(0);
+                curlabout.all_ranked.reserve(num_total);
+                curlabout.all_ranked_indptrs.emplace();
+                curlabout.all_ranked_indptrs->reserve(sanisizer::sum<I<decltype(curranked.size())> >(curranked.size(), 1));
+                curlabout.all_ranked_indptrs->push_back(0);
 
-            for (const auto& x : out_ranked) {
-                curoutput.all_ranked.insert(output.all_ranked.end(), x.begin(), x.end());
-                curoutput.all_ranked_indptrs->push_back(output.all_ranked.size());
+                for (const auto& x : curranked) {
+                    curlabout.all_ranked.insert(curlabout.all_ranked.end(), x.begin(), x.end());
+                    curlabout.all_ranked_indptrs->push_back(curlabout.all_ranked.size());
+                }
             }
 
         } else {
             if (curinput.intersection) {
-                train_integrated_per_reference_direct<false, Value_>(r, curinput, universe, remap_to_universe, output.test_nrow, options, positions, out_ranked);
+                train_integrated_per_reference_intersect<false>(curinput, remap_to_universe, output.test_nrow, options, positions, out_ranked);
             } else {
-                train_integrated_per_reference_direct<false, Value_>(r, curinput, universe, remap_to_universe, options, positions, out_ranked);
+                train_integrated_per_reference_simple<false, Value_>(curinput, output.universe, remap_to_universe, options, positions, out_ranked);
             }
 
-            curoutput.all_ranked.reserve(sanisizer::product<I<decltype(output.all_ranked.size())> >(output.universe.size(), curoutput.num_samples));
-            for (const auto& x : out_ranked) {
-                curoutput.all_ranked.insert(curoutput.all_ranked.end(), x.begin(), x.end());
+            for (I<decltype(nlabels)> l = 0; l < nlabels; ++l) {
+                auto& curlabout = currefout[l];
+                curlabout.all_ranked.reserve(sanisizer::product<I<decltype(curlabout.all_ranked.size())> >(output.universe.size(), curlabout.num_samples));
+                for (const auto& x : out_ranked[l]) {
+                    curlabout.all_ranked.insert(curlabout.all_ranked.end(), x.begin(), x.end());
+                }
             }
         }
     }

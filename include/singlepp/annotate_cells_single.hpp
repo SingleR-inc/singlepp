@@ -240,7 +240,7 @@ void annotate_cells_single_raw(
                 }
             }();
             subsorted.fill_ranks(info, vec);
-            scaled_ranks(num_markers, vec, query_scaled); 
+            scaled_ranks(num_markers, vec, query_scaled);
 
             curscores.resize(num_labels);
             for (I<decltype(num_labels)> r = 0; r < num_labels; ++r) {
@@ -268,6 +268,7 @@ void annotate_cells_single_raw(
             } else {
                 chosen = ft.run(vec, ref, markers, curscores, quantile, threshold);
             }
+
             best[c] = chosen.first;
             if (delta) {
                 delta[c] = chosen.second;

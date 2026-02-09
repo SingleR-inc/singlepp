@@ -44,7 +44,6 @@ protected:
     std::vector<int> reflabels_in_use;
     std::unordered_set<int> miniverse_tmp;
     std::vector<int> miniverse;
-    singlepp::internal::PerReferenceIntegratedWorkspace<int, double, double> workspace;
     std::vector<const int*> assigned;
 
 protected:
@@ -57,20 +56,20 @@ protected:
 };
 
 TEST_F(FineTuneIntegratedTest, EdgeCases) {
-    singlepp::internal::RankedVector<double, int> placeholder; 
+    singlepp::RankedVector<double, int> placeholder; 
 
     // Check early exit conditions, when there is one clear winner or all of
     // the references are equal (i.e., no contraction of the feature space).
     {
         std::vector<double> scores { 0.2, 0.5, 0.1 };
         ASSERT_EQ(scores.size(), nrefs);
-        auto output = singlepp::internal::fine_tune_integrated(0, placeholder, scores, trained, assigned, reflabels_in_use, miniverse_tmp, miniverse, workspace, 0.8, 0.05);
+        auto output = singlepp::fine_tune_integrated(0, placeholder, scores, trained, assigned, reflabels_in_use, miniverse_tmp, miniverse, workspace, 0.8, 0.05);
         EXPECT_EQ(output.first, 1);
         EXPECT_EQ(output.second, 0.3);
 
         std::fill(scores.begin(), scores.end(), 0.5);
         scores[0] = 0.51;
-        output = singlepp::internal::fine_tune_integrated(0, placeholder, scores, trained, assigned, reflabels_in_use, miniverse_tmp, miniverse, workspace, 0.8, 0.05);
+        output = singlepp::fine_tune_integrated(0, placeholder, scores, trained, assigned, reflabels_in_use, miniverse_tmp, miniverse, workspace, 0.8, 0.05);
         EXPECT_EQ(output.first, 0); // first entry of scores is maxed.
         EXPECT_FLOAT_EQ(output.second, 0.01);
     }
@@ -78,7 +77,7 @@ TEST_F(FineTuneIntegratedTest, EdgeCases) {
     // Check edge case when there is only a single reference, based on the length of 'scores'.
     {
         std::vector<double> scores { 0.5 };
-        auto output = singlepp::internal::fine_tune_integrated(1, placeholder, scores, trained, assigned, reflabels_in_use, miniverse_tmp, miniverse, workspace, 0.8, 0.05);
+        auto output = singlepp::fine_tune_integrated(1, placeholder, scores, trained, assigned, reflabels_in_use, miniverse_tmp, miniverse, workspace, 0.8, 0.05);
         EXPECT_EQ(output.first, 0);
         EXPECT_TRUE(std::isnan(output.second));
     }
