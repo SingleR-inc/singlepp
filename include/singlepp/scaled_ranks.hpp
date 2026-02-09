@@ -153,6 +153,7 @@ void simplify_ranks(const RankedVector<Stat_, Index_>& x, RankedVector<Simple_, 
     if (x.empty()) {
         return; 
     }
+    output.reserve(x.size());
 
     Simple_ counter = 0;
     auto last = x[0].first;

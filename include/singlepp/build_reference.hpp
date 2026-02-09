@@ -665,7 +665,6 @@ BuiltReference<Index_, Float_> build_reference_raw(
 
             // Storing as a pair of ints to save space; as long as we respect ties, everything should be fine.
             auto& stored_ranks = tmp_ref_ranked[curlab][curoff];
-            stored_ranks.reserve(query_ranked.size());
             simplify_ranks(query_ranked, stored_ranks);
         }
     }, num_samples, num_threads);
