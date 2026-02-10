@@ -2,26 +2,47 @@
 
 #include "singlepp/SubsetSanitizer.hpp"
 
-TEST(SubsetSanitizer, NoOp) {
+TEST(SubsetSanitizer, DenseNoOp) {
     std::vector<int> foo{ 2, 6, 18, 23, 53, 99 };
     singlepp::SubsetSanitizer<false, int> ss(foo);
-    EXPECT_EQ(&(ss.extraction_subset()), &foo);
-    EXPECT_EQ(&ss.extraction_subset(), &foo); // exact some object, in fact.
+    EXPECT_EQ(&(ss.extraction_subset()), &foo); // exact same object, in fact.
 
-    singlepp::RankedVector<double, int> vec(foo.size());
     std::vector<double> stuff { 0.34817868, 0.24918308, 0.75879770, 0.71893282, 0.78199329, 0.09039928 };
+    singlepp::RankedVector<double, int> vec;
     ss.fill_ranks(stuff.data(), vec);
 
     EXPECT_EQ(vec.size(), foo.size());
-    double prev = -100000;
-    for (size_t i = 0; i < vec.size(); ++i) {
-        EXPECT_TRUE(vec[i].first > prev);
-        EXPECT_EQ(vec[i].first, stuff[vec[i].second]);
-        prev = vec[i].first;
+    std::vector<double> reformatted(stuff.size());
+    for (auto rr : vec) {
+        reformatted[rr.second] = rr.first;
     }
+    EXPECT_EQ(reformatted, stuff);
 }
 
-TEST(SubsetSanitizer, Resort) {
+TEST(SubsetSanitizer, SparseNoOp) {
+    std::vector<int> foo{ 2, 6, 18, 23, 53, 99 };
+    std::vector<double> vstuff{ 0.31, -0.23, 0.45 };
+    std::vector<int> istuff{ 6, 18, 99 };
+    tatami::SparseRange<double, int> stuff(3, vstuff.data(), istuff.data());
+
+    singlepp::SubsetSanitizer<true, int> ss(foo);
+    EXPECT_EQ(&(ss.extraction_subset()), &foo); // exact same object, in fact.
+    singlepp::RankedVector<double, int> vec;
+    ss.fill_ranks(stuff, vec);
+
+    singlepp::RankedVector<double, int> expected;
+    for (std::size_t i = 0; i < vstuff.size(); ++i) {
+        expected.emplace_back(vstuff[i], istuff[i]);
+    }
+    std::sort(expected.begin(), expected.end());
+    auto transformed = vec;
+    for (auto& tt : transformed) {
+        tt.second = foo[tt.second];
+    }
+    EXPECT_EQ(transformed, expected);
+}
+
+TEST(SubsetSanitizer, DenseResort) {
     std::vector<int> foo{ 5, 2, 29, 12, 23, 0 };
     singlepp::SubsetSanitizer<false, int> ss(foo);
     EXPECT_NE(&(ss.extraction_subset()), &foo);
@@ -50,30 +71,31 @@ TEST(SubsetSanitizer, Resort) {
     }
 }
 
-TEST(SubsetSanitizer, Deduplicate) {
-    std::vector<int> foo{ 1, 2, 1, 5, 2, 9, 9, 4, 1, 0 };
-    singlepp::SubsetSanitizer<false, int> ss(foo);
+TEST(SubsetSanitizer, SparseResort) {
+    std::vector<int> foo{ 16, 22, 25, 40, 47, 27, 3, 20, 23, 48 };
+    singlepp::SubsetSanitizer<true, int> ss(foo);
     EXPECT_NE(&(ss.extraction_subset()), &foo);
 
-    std::vector<int> foocopy{ 0, 1, 2, 4, 5, 9 };
+    auto foocopy = foo;
+    std::sort(foocopy.begin(), foocopy.end());
     EXPECT_EQ(ss.extraction_subset(), foocopy);
     
-    // Here, stuff corresponds to _deduplicated_ foo, i.e., foocopy,
-    // as we're extracting based on the deduplicated + sorted subsets.
-    std::vector<double> stuff { 0.5404277, 0.2643289, 0.1282597, 0.4206395, 0.5222923, 0.4991335 };
-    singlepp::RankedVector<double, int> vec(foo.size());
-    ss.fill_ranks(stuff.data(), vec); 
+    // Here, stuff corresponds to _sorted_ foo, i.e., foocopy,
+    // as we're extracting based on the sorted subsets.
+    std::vector<double> vstuff{ 0.12, -0.22, 0.6, 0.31, -0.23 };
+    std::vector<int> istuff{ 3, 22, 23, 40, 47 };
+    tatami::SparseRange<double, int> stuff(5, vstuff.data(), istuff.data());
+    singlepp::RankedVector<double, int> vec;
+    ss.fill_ranks(stuff, vec);
 
-    // Check that we get the same results as if we had done a full column
-    // extraction and then extracted the subset from the array.
-    std::vector<double> expanded(*std::max_element(foo.begin(), foo.end()) + 1);
-    for (size_t s = 0; s < foocopy.size(); ++s) {
-        expanded[foocopy[s]] = stuff[s];
+    singlepp::RankedVector<double, int> expected;
+    for (std::size_t i = 0; i < vstuff.size(); ++i) {
+        expected.emplace_back(vstuff[i], istuff[i]);
     }
-
-    EXPECT_EQ(vec.size(), foo.size());
-    for (size_t i = 0; i < vec.size(); ++i) {
-        auto s = foo[vec[i].second]; // check it was correctly reindexed back to foo.
-        EXPECT_EQ(vec[i].first, expanded[s]);
+    std::sort(expected.begin(), expected.end());
+    auto transformed = vec;
+    for (auto& tt : transformed) {
+        tt.second = foo[tt.second];
     }
+    EXPECT_EQ(transformed, expected);
 }

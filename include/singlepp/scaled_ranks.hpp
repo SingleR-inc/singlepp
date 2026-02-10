@@ -20,6 +20,9 @@ template<typename Stat_, typename Index_, typename Output_>
 void scaled_ranks(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Output_* outgoing) { 
     static_assert(std::is_floating_point<Output_>::value);
     assert(sanisizer::is_equal(num_markers, collected.size()));
+    if (num_markers == 0) {
+        return;
+    }
 
     // Computing tied ranks. 
     Index_ cur_rank = 0;
@@ -78,13 +81,17 @@ template<typename Stat_, typename Index_, typename Float_>
 void scaled_ranks(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, SparseScaled<Index_, Float_>& outgoing) { 
     static_assert(std::is_floating_point<Float_>::value);
     assert(sanisizer::is_greater_than_or_equal(num_markers, collected.size()));
+    outgoing.nonzero.clear();
+    outgoing.zero = 0;
+    if (num_markers == 0) {
+        return;
+    }
 
     // Computing tied ranks: before, at, and after zero.
     const Index_ ncollected = collected.size();
     Index_ cur_rank = 0;
     auto cIt = collected.begin();
     auto cEnd = collected.end();
-    outgoing.nonzero.clear();
 
     while (cIt != cEnd && cIt->first < 0) {
         auto copy = cIt;
@@ -127,11 +134,15 @@ void scaled_ranks(const Index_ num_markers, const RankedVector<Stat_, Index_>& c
 
     // Mean-adjusting and converting to cosine values.
     Float_ sum_squares = 0;
-    const Float_ center_rank = static_cast<Float_>(ncollected - 1) / static_cast<Float_>(2); 
+    const Float_ center_rank = static_cast<Float_>(num_markers - 1) / static_cast<Float_>(2); 
     for (auto& nz : outgoing.nonzero) {
         auto& o = nz.second;
         o -= center_rank;
         sum_squares += o * o;
+    }
+    if (num_zero) {
+        zero_rank -= center_rank;
+        sum_squares += num_zero * zero_rank * zero_rank;
     }
 
     // Special behaviour for no-variance cells; these are left as all-zero scaled ranks.

@@ -7,6 +7,7 @@
 #include <limits>
 #include <cstddef>
 #include <type_traits>
+#include <cassert>
 
 namespace singlepp {
 
@@ -52,6 +53,7 @@ public:
     }
 
     void add(Index_ i) {
+        assert(i < my_max_markers);
         if (my_mapping[i] == my_max_markers) {
             my_mapping[i] = my_counter;
             my_used.push_back(i);
