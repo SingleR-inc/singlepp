@@ -42,23 +42,23 @@ private:
 public:
     typedef typename std::conditional<ref_sparse_, SparsePerLabelReference<Index_, Float_>, DensePerLabelReference<Index_, Float_> >::type PerLabelReference;
 
-    FineTuneSingle(const Index_ max_markers, const std::vector<PerLabelReference>& ref) : my_gene_subset(max_markers) {
+    FineTuneSingle(const Index_ full_num_markers, const std::vector<PerLabelReference>& ref) : my_gene_subset(full_num_markers) {
         sanisizer::reserve(my_labels_in_use, ref.size());
 
         if constexpr(query_sparse_) {
-            sanisizer::reserve(my_scaled_query.nonzero, max_markers);
+            sanisizer::reserve(my_scaled_query.nonzero, full_num_markers);
         } else {
-            sanisizer::reserve(my_scaled_query, max_markers);
+            sanisizer::reserve(my_scaled_query, full_num_markers);
         }
 
         if constexpr(ref_sparse_) {
-            sanisizer::reserve(my_scaled_ref.nonzero, max_markers);
+            sanisizer::reserve(my_scaled_ref.nonzero, full_num_markers);
         } else {
-            sanisizer::reserve(my_scaled_ref, max_markers);
+            sanisizer::reserve(my_scaled_ref, full_num_markers);
         }
 
-        sanisizer::reserve(my_subset_query, max_markers); 
-        sanisizer::reserve(my_subset_ref, max_markers); 
+        sanisizer::reserve(my_subset_query, full_num_markers); 
+        sanisizer::reserve(my_subset_ref, full_num_markers); 
 
         I<decltype(get_num_samples(ref.front()))> max_labels = 0;
         for (const auto& curref : ref) {
@@ -87,19 +87,20 @@ public:
                 for (auto l2 : my_labels_in_use){ 
                     for (auto c : markers[l][l2]) {
                         my_gene_subset.add(c);
+                        std::cout << "Added " << c << std::endl;
                     }
                 }
             }
             my_gene_subset.remap(input, my_subset_query);
-            const auto num_markers = my_gene_subset.size();
+            const auto current_num_markers = my_gene_subset.size();
 
             if constexpr(!query_sparse_) {
-                my_scaled_query.resize(num_markers);
+                my_scaled_query.resize(current_num_markers);
             }
             if constexpr(!ref_sparse_) {
-                my_scaled_ref.resize(num_markers);
+                my_scaled_ref.resize(current_num_markers);
             }
-            scaled_ranks(num_markers, my_subset_query, my_scaled_query);
+            scaled_ranks(current_num_markers, my_subset_query, my_scaled_query);
 
             scores.clear();
             auto nlabels_used = my_labels_in_use.size();
@@ -121,13 +122,14 @@ public:
                         refstart = curref.indptrs[c];
                         refend = curref.indptrs[c + 1];
                     } else {
-                        refstart = sanisizer::product_unsafe<std::size_t>(num_markers, c);
-                        refend = refstart + num_markers;
+                        const auto full_num_markers = my_gene_subset.capacity();
+                        refstart = sanisizer::product_unsafe<std::size_t>(full_num_markers, c);
+                        refend = refstart + full_num_markers;
                     }
                     my_gene_subset.remap(curref.all_ranked.begin() + refstart, curref.all_ranked.begin() + refend, my_subset_ref);
-                    scaled_ranks(num_markers, my_subset_ref, my_scaled_ref);
+                    scaled_ranks(current_num_markers, my_subset_ref, my_scaled_ref);
 
-                    const Float_ l2 = compute_l2(num_markers, my_scaled_query, my_scaled_ref);
+                    const Float_ l2 = compute_l2(current_num_markers, my_scaled_query, my_scaled_ref);
                     const Float_ cor = l2_to_correlation(l2);
                     my_all_correlations.push_back(cor);
                 }

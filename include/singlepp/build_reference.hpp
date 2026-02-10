@@ -273,8 +273,9 @@ void select_seeds(
     // We also record the minimum distance between each sample and its assigned seed.
     auto assignment = sanisizer::create<std::vector<Index_> >(num_samples);
     auto mindist = sanisizer::create<std::vector<Float_> >(num_samples, 1);
-    auto identities = sanisizer::create<std::vector<Index_>  >(num_samples);
+    std::vector<Index_> identities;
     {
+        sanisizer::reserve(identities, num_samples);
         auto cumulative = sanisizer::create<std::vector<Float_> >(num_samples);
         std::mt19937_64 eng(/* seed = */ 6237u + num_markers * static_cast<std::size_t>(num_samples)); // making a semi-deterministic seed that depends on the input data. 
 

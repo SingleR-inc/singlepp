@@ -38,39 +38,40 @@ namespace singlepp {
 template<typename Index_>
 class SubsetRemapper {
 private:
-    Index_ my_max_markers;
+    Index_ my_capacity;
 
     // This uses a vector instead of an unordered_map for fast remap()
     // inside the inner loop of the fine-tuning iterations.
     std::vector<Index_> my_mapping;
     std::vector<Index_> my_used;
-    Index_ my_counter = 0;
 
 public:
-    SubsetRemapper(const Index_ max_markers) : my_max_markers(max_markers) {
-        sanisizer::resize(my_mapping, max_markers, max_markers);
-        sanisizer::resize(my_used, max_markers);
+    SubsetRemapper(const Index_ capacity) : my_capacity(capacity) {
+        sanisizer::resize(my_mapping, capacity, capacity);
+        sanisizer::resize(my_used, capacity);
     }
 
     void add(Index_ i) {
-        assert(i < my_max_markers);
-        if (my_mapping[i] == my_max_markers) {
-            my_mapping[i] = my_counter;
+        assert(i < my_capacity);
+        if (my_mapping[i] == my_capacity) {
+            my_mapping[i] = my_used.size();
             my_used.push_back(i);
-            ++my_counter;
         }
     }
 
     void clear() {
-        my_counter = 0;
         for (auto u : my_used) {
-            my_mapping[u] = my_max_markers;
+            my_mapping[u] = my_capacity;
         }
         my_used.clear();
     }
 
     Index_ size() const {
-        return my_counter;
+        return my_used.size();
+    }
+
+    Index_ capacity() const {
+        return my_capacity;
     }
 
 public:
@@ -79,7 +80,7 @@ public:
         output.clear();
         for (; begin != end; ++begin) {
             const auto& target = my_mapping[begin->second];
-            if (target != my_max_markers) {
+            if (target != my_capacity) {
                 output.emplace_back(begin->first, target);
             }
         }

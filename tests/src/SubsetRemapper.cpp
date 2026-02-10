@@ -5,10 +5,13 @@
 
 TEST(SubsetRemapper, Subsets) {
     singlepp::SubsetRemapper<int> remapper(10);
+    EXPECT_EQ(remapper.capacity(), 10);
+
     remapper.add(1);
     remapper.add(6); 
     remapper.add(1); // duplicates are ignored.
     remapper.add(8);
+    EXPECT_EQ(remapper.size(), 3);
 
     // All indices are retained.
     {
@@ -74,6 +77,8 @@ TEST(SubsetRemapper, SubsetSmallType) {
     remapper.add(100); 
     remapper.add(10); 
     remapper.add(100); // ignoring duplicates again!
+    EXPECT_EQ(remapper.capacity(), 255);
+    EXPECT_EQ(remapper.size(), 3);
 
     singlepp::RankedVector<double, uint8_t> input;
     for (size_t i = 0; i < 250; i += 10) {
