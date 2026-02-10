@@ -95,13 +95,13 @@ Index_ get_sparse_index(const CompressedSparseVector<Index_, Float_>& x, const I
 template<typename Index_, typename Float_>
 Index_ get_sparse_index(const SparseScaled<Index_, Float_>& x, const Index_ i) { return x.nonzero[i].first; }
 template<typename Index_, typename Float_>
-Index_ get_sparse_value(const CompressedSparseVector<Index_, Float_>& x, const Index_ i) { return x.value[i]; }
+Float_ get_sparse_value(const CompressedSparseVector<Index_, Float_>& x, const Index_ i) { return x.value[i]; }
 template<typename Index_, typename Float_>
-Index_ get_sparse_value(const SparseScaled<Index_, Float_>& x, const Index_ i) { return x.nonzero[i].second; }
+Float_ get_sparse_value(const SparseScaled<Index_, Float_>& x, const Index_ i) { return x.nonzero[i].second; }
 template<typename Index_, typename Float_>
-Index_ get_sparse_zero(const CompressedSparseVector<Index_, Float_>& x) { return x.zero; }
+Float_ get_sparse_zero(const CompressedSparseVector<Index_, Float_>& x) { return x.zero; }
 template<typename Index_, typename Float_>
-Index_ get_sparse_zero(const SparseScaled<Index_, Float_>& x) { return x.zero; }
+Float_ get_sparse_zero(const SparseScaled<Index_, Float_>& x) { return x.zero; }
 
 template<typename Index_, typename Float_, class SparseInput1_, typename SparseInput2_>
 Float_ sparse_l2(const Index_ num_markers, const SparseInput1_& vec1, const SparseInput2_& vec2) {
@@ -192,6 +192,8 @@ Float_ mixed_l2(const Index_ num_markers, const Float_* vec1, const SparseInput_
         }
         const auto delta = vec1[i] - get_sparse_value(vec2, j);
         l2 += delta * delta;
+        ++i;
+        ++j;
     }
 
     for (; i < num_markers; ++i) {

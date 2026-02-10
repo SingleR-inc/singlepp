@@ -129,9 +129,11 @@ TEST(ScaledRanks, SparseBasic) {
     for (const auto& sp : sparse_scaled.nonzero) {
         sout[sp.first] = sp.second;
     }
-
     for (int i = 0; i < num_markers; ++i) {
         EXPECT_FLOAT_EQ(sout[i], out[i]);
+    }
+    for (std::size_t i = 1; i < sparse_scaled.nonzero.size(); ++i) {
+        EXPECT_LT(sparse_scaled.nonzero[i-1].first, sparse_scaled.nonzero[i].first);
     }
 
     // Gives us the same results if we just inject the entire dense input in.
@@ -144,6 +146,9 @@ TEST(ScaledRanks, SparseBasic) {
     }
     for (int i = 0; i < num_markers; ++i) {
         EXPECT_FLOAT_EQ(sout[i], out[i]);
+    }
+    for (std::size_t i = 1; i < sparse_scaled.nonzero.size(); ++i) {
+        EXPECT_LT(sparse_scaled.nonzero[i-1].first, sparse_scaled.nonzero[i].first);
     }
 
     // Bails if empty.
@@ -173,9 +178,11 @@ TEST(ScaledRanks, SparseTies) {
     for (const auto& sp : sparse_scaled.nonzero) {
         sout[sp.first] = sp.second;
     }
-
     for (int i = 0; i < num_markers; ++i) {
         EXPECT_FLOAT_EQ(sout[i], out[i]);
+    }
+    for (std::size_t i = 1; i < sparse_scaled.nonzero.size(); ++i) {
+        EXPECT_LT(sparse_scaled.nonzero[i-1].first, sparse_scaled.nonzero[i].first);
     }
 }
 
