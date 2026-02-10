@@ -109,7 +109,10 @@ void scaled_ranks(const Index_ num_markers, const RankedVector<Stat_, Index_>& c
         cur_rank += jump;
     }
 
-    const Index_ num_zero = num_markers - ncollected;
+    Index_ num_zero = num_markers - ncollected;
+    while (cIt != cEnd && cIt->first == 0) { // sucking up any explicit zeros.
+        ++num_zero;
+    }
     Float_ zero_rank = 0; 
     if (num_zero) {
         zero_rank = cur_rank + static_cast<Float_>(num_zero - 1) / static_cast<Float_>(2);

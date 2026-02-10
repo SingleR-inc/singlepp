@@ -87,7 +87,6 @@ public:
                 for (auto l2 : my_labels_in_use){ 
                     for (auto c : markers[l][l2]) {
                         my_gene_subset.add(c);
-                        std::cout << "Added " << c << std::endl;
                     }
                 }
             }
@@ -126,15 +125,20 @@ public:
                         refstart = sanisizer::product_unsafe<std::size_t>(full_num_markers, c);
                         refend = refstart + full_num_markers;
                     }
+
                     my_gene_subset.remap(curref.all_ranked.begin() + refstart, curref.all_ranked.begin() + refend, my_subset_ref);
-                    scaled_ranks(current_num_markers, my_subset_ref, my_scaled_ref);
+                    if constexpr(ref_sparse_) {
+                        scaled_ranks(current_num_markers, my_subset_ref, curref.first_non_negative[c], my_scaled_ref);
+                    } else {
+                        scaled_ranks(current_num_markers, my_subset_ref, my_scaled_ref);
+                    }
 
                     const Float_ l2 = compute_l2(current_num_markers, my_scaled_query, my_scaled_ref);
                     const Float_ cor = l2_to_correlation(l2);
                     my_all_correlations.push_back(cor);
                 }
 
-                Float_ score = correlations_to_score(my_all_correlations, quantile);
+                const Float_ score = correlations_to_score(my_all_correlations, quantile);
                 scores.push_back(score);
             }
 
@@ -234,15 +238,15 @@ void annotate_cells_single_raw(
         std::vector<Float_> curscores(num_labels);
 
         for (Index_ c = start, end = start + length; c < end; ++c) {
-            const auto info = [&](){
-                if constexpr(query_sparse_) {
-                    return ext->fetch(vbuffer.data(), ibuffer.data());
-                } else {
-                    return ext->fetch(vbuffer.data());
-                }
-            }();
-            subsorted.fill_ranks(info, vec);
-            scaled_ranks(num_markers, vec, query_scaled);
+            if constexpr(query_sparse_) {
+                auto info = ext->fetch(vbuffer.data(), ibuffer.data());
+                subsorted.fill_ranks(info, vec);
+                scaled_ranks(num_markers, vec, static_cast<Value_>(0), query_scaled);
+            } else {
+                auto info = ext->fetch(vbuffer.data());
+                subsorted.fill_ranks(info, vec);
+                scaled_ranks(num_markers, vec, query_scaled);
+            }
 
             curscores.resize(num_labels);
             for (I<decltype(num_labels)> r = 0; r < num_labels; ++r) {
