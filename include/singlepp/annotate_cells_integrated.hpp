@@ -126,7 +126,7 @@ void annotate_cells_integrated_raw(
             std::iota(reflabels_in_use.begin(), reflabels_in_use.end(), static_cast<RefLabel_>(0));
             std::pair<Label_, Float_> candidate{ 0, 1.0 };
 
-            while (reflabels_in_use.size() > 1) {
+            while (reflabels_in_use.size() >= 1) { // >= 1 so we still compute something when there's only one reference.
                 remapper.clear();
                 for (const auto r : reflabels_in_use) {
                     const auto curassigned = assigned[r][i];
@@ -192,8 +192,8 @@ void annotate_cells_integrated_raw(
 
                         for (I<decltype(nsamples)> s = 0; s < nsamples; ++s) {
                             ref_ranked.clear();
-                            auto refstart = curlab.all_ranked.begin() + sanisizer::product_unsafe<std::size_t>(s, trained.test_nrow);
-                            auto refend = refstart + trained.test_nrow;
+                            auto refstart = curlab.all_ranked.begin() + sanisizer::product_unsafe<std::size_t>(s, num_universe);
+                            auto refend = refstart + num_universe;
                             remapper.remap(refstart, refend, ref_ranked);
                             scaled_ranks(num_markers, ref_ranked, *dense_ref_scaled);
                             const Float_ cor = l2_to_correlation(compute_l2(num_markers, test_scaled, *dense_ref_scaled));

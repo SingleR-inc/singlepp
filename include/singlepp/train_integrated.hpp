@@ -425,21 +425,21 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
     if (inputs.size()) {
         output.test_nrow = inputs.front().test_nrow;
         for (const auto& in : inputs) {
-            if (sanisizer::is_equal(in.test_nrow, output.test_nrow)) {
+            if (!sanisizer::is_equal(in.test_nrow, output.test_nrow)) {
                 throw std::runtime_error("inconsistent number of rows in the test dataset across entries of 'inputs'");
             }
         }
     }
 
-    // Identify the intersection of all marker genes as the universe.
+    // Identify the union of all marker genes as the universe, but excluding those markers that are not present in intersections.
     // Note that 'output.universe' contains sorted and unique row indices for the test matrix, where 'remap_test_to_universe[universe[i]] == i'.
     auto remap_test_to_universe = sanisizer::create<std::vector<Index_> >(output.test_nrow, output.test_nrow);
     {
-        auto num_hits = sanisizer::create<std::vector<I<decltype(nrefs)> > >(output.test_nrow);
-        auto current_used = sanisizer::create<std::vector<char> >(output.test_nrow);
+        auto present = sanisizer::create<std::vector<char> >(output.test_nrow);
+        auto count_refs = sanisizer::create<std::vector<I<decltype(nrefs)> > >(output.test_nrow);
+        output.universe.reserve(output.test_nrow);
 
         for (const auto& in : inputs) {
-            std::fill(current_used.begin(), current_used.end(), false);
             const auto& markers = *(in.ref_markers);
             const auto& test_subset = *(in.test_subset);
 
@@ -447,23 +447,37 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
                 for (const auto& mrk : labmrk) {
                     for (const auto y : mrk) {
                         const auto ty = test_subset[y];
-                        if (!current_used[ty]) {
-                            num_hits[ty] += 1;
-                            current_used[ty] = true;
+                        if (!present[ty]) {
+                            present[ty] = true;
+                            output.universe.push_back(ty);
                         }
                     }
                 }
             }
-        }
 
-        output.universe.reserve(output.test_nrow);
-        for (Index_ t = 0; t < output.test_nrow; ++t) {
-            if (num_hits[t] == nrefs) {
-                remap_test_to_universe[t] = output.universe.size();
-                output.universe.push_back(t);
+            if (in.intersection) {
+                for (const auto& pp : *(in.intersection)) {
+                    count_refs[pp.first] += 1;
+                }
+            } else {
+                for (auto& x : count_refs) {
+                    x += 1;
+                }
             }
         }
 
+        std::sort(output.universe.begin(), output.universe.end());
+        const auto num_universe = output.universe.size();
+        I<decltype(num_universe)> keep = 0;
+        for (I<decltype(num_universe)> u = 0; u < num_universe; ++u) {
+            const auto marker = output.universe[u];
+            if (count_refs[marker] == nrefs) {
+                output.universe[keep] = marker;
+                remap_test_to_universe[marker] = keep;
+                ++keep;
+            }
+        }
+        output.universe.resize(keep);
         output.universe.shrink_to_fit();
     }
 
@@ -488,11 +502,13 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
 
         // Assembling the per-label markers for this reference.
         for (I<decltype(nlabels)> l = 0; l < nlabels; ++l) {
+            active_genes.clear();
             for (const auto& labmark : currefmarkers[l]) {
-                for (const auto a : labmark) {
-                    if (!is_active[a]) {
-                        is_active[a] = true;
-                        active_genes.push_back(a);
+                for (const auto y : labmark) {
+                    const auto ty = test_subset[y];
+                    if (!is_active[ty]) {
+                        is_active[ty] = true;
+                        active_genes.push_back(ty);
                     }
                 }
             }
@@ -501,7 +517,7 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
             markers.reserve(active_genes.size());
 
             for (const auto a : active_genes) {
-                const auto universe_index = remap_test_to_universe[test_subset[a]];
+                const auto universe_index = remap_test_to_universe[a];
                 if (universe_index != output.test_nrow) { // ignoring genes not in the intersection.
                     markers.push_back(universe_index);
                 }

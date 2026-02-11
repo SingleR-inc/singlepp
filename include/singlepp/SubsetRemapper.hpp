@@ -79,6 +79,7 @@ public:
     void remap(typename RankedVector<Stat_, Index_>::const_iterator begin, typename RankedVector<Stat_, Index_>::const_iterator end, RankedVector<Stat_, Index_>& output) const {
         output.clear();
         for (; begin != end; ++begin) {
+            assert(sanisizer::is_less_than(begin->second, my_capacity));
             const auto& target = my_mapping[begin->second];
             if (target != my_capacity) {
                 output.emplace_back(begin->first, target);

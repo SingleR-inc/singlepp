@@ -46,13 +46,14 @@ protected:
         return keep;
     }
 
+    static constexpr int MISSING_TEST_ID = -2;
     static std::vector<int> simulate_test_ids(size_t ngenes, int seed) {
-        return simulate_ids(ngenes, seed, -2); // -2 => unique to the test dataset.
+        return simulate_ids(ngenes, seed, MISSING_TEST_ID); // -2 => unique to the test dataset.
     }
 
     static constexpr int MISSING_REF_ID = -1;
     static std::vector<int> simulate_ref_ids(size_t ngenes, int seed) {
-        return simulate_ids(ngenes, seed, MISSING_REF_ID); // -1 => unique to the reference.
+        return simulate_ids(ngenes, seed, MISSING_REF_ID); // -1 => unique to the reference(s), i.e., won't overlap with the test.
     }
 };
 
@@ -357,25 +358,6 @@ protected:
         return by_labels;
     }
 
-    template<class Prebuilt_>
-    static std::unordered_set<int> create_universe(size_t cell, const std::vector<Prebuilt_>& prebuilts, const std::vector<std::vector<int> >& chosen) {
-        std::unordered_set<int> tmp;
-        for (size_t r = 0; r < prebuilts.size(); ++r) {
-            const auto& pre = prebuilts[r];
-            const auto& best_markers = pre.get_markers()[chosen[r][cell]];
-            for (const auto& x : best_markers) {
-                for (auto y : x) {
-                    if constexpr(std::is_same<Prebuilt_, singlepp::TrainedSingle<int, double> >::value) {
-                        tmp.insert(pre.get_subset()[y]);
-                    } else {
-                        tmp.insert(pre.get_test_subset()[y]);
-                    }
-                }
-            }
-        }
-        return tmp;
-    }
-
     static std::vector<double> quick_scaled_ranks(const std::vector<double>& col, const std::vector<int>& universe) {
         std::vector<double> copy;
         copy.reserve(universe.size());
@@ -395,13 +377,17 @@ TEST_P(ClassifyIntegratedTest, Basic) {
     // Creating the integrated set of references.
     singlepp::TrainSingleOptions bopt;
     bopt.top = ntop;
+
     std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
+    prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
+    integrated_inputs.reserve(nrefs);
 
     for (size_t r = 0; r < nrefs; ++r) {
-        auto pre = singlepp::train_single(*(references[r]), labels[r].data(), markers[r], bopt);
-        prebuilts.push_back(std::move(pre));
-        integrated_inputs.push_back(singlepp::prepare_integrated_input(*(references[r]), labels[r].data(), prebuilts.back()));
+        const auto labptr = labels[r].data();
+        const auto& refmat = *(references[r]);
+        prebuilts.push_back(singlepp::train_single(refmat, labptr, markers[r], bopt));
+        integrated_inputs.push_back(singlepp::prepare_integrated_input(refmat, labptr, prebuilts.back()));
     }
 
     singlepp::TrainIntegratedOptions iopt;
@@ -427,8 +413,17 @@ TEST_P(ClassifyIntegratedTest, Basic) {
         std::vector<double> buffer(test->nrow());
 
         for (size_t t = 0; t < ntest; ++t) {
-            auto my_universe = create_universe(t, prebuilts, chosen);
-            std::vector<int> universe(my_universe.begin(), my_universe.end());
+            std::unordered_set<int> tmp;
+            for (size_t r = 0; r < prebuilts.size(); ++r) {
+                const auto& pre = prebuilts[r];
+                const auto& best_markers = pre.get_markers()[chosen[r][t]];
+                for (const auto& x : best_markers) {
+                    for (auto y : x) {
+                        tmp.insert(pre.get_subset()[y]);
+                    }
+                }
+            }
+            std::vector<int> universe(tmp.begin(), tmp.end());
             std::sort(universe.begin(), universe.end());
 
             auto col = wrk->fetch(t, buffer.data());
@@ -471,20 +466,26 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
 
     // Creating the integrated set of references.
     auto test_ids = simulate_test_ids(ngenes, base_seed * 20);
-
     singlepp::TrainSingleOptions bopt;
     bopt.top = ntop;
+
     std::vector<std::vector<int> > ref_ids;
+    ref_ids.reserve(nrefs);
     std::vector<singlepp::TrainedSingleIntersect<int, double> > prebuilts;
+    prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
+    integrated_inputs.reserve(nrefs);
 
     for (size_t r = 0; r < nrefs; ++r) {
         size_t seed = base_seed * 20 + r * 321;
         ref_ids.push_back(simulate_ref_ids(ngenes, seed + 3));
-        const auto& ref_id = ref_ids.back();
-        auto pre = singlepp::train_single_intersect<double, int>(ngenes, test_ids.data(), *(references[r]), ref_id.data(), labels[r].data(), markers[r], bopt);
-        prebuilts.push_back(std::move(pre));
-        integrated_inputs.push_back(singlepp::prepare_integrated_input_intersect<int>(ngenes, test_ids.data(), *(references[r]), ref_id.data(), labels[r].data(), prebuilts.back()));
+        const auto refptr = ref_ids.back().data();
+
+        const auto testptr = test_ids.data();
+        const auto labptr = labels[r].data();
+        const auto& refmat = *(references[r]);
+        prebuilts.push_back(singlepp::train_single_intersect<double, int>(ngenes, testptr, refmat, refptr, labptr, markers[r], bopt));
+        integrated_inputs.push_back(singlepp::prepare_integrated_input_intersect<int>(ngenes, testptr, refmat, refptr, labptr, prebuilts.back()));
     }
 
     singlepp::TrainIntegratedOptions iopt;
@@ -497,7 +498,7 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
         chosen_ptrs[r] = chosen[r].data();
     }
 
-    // Comparing the ClassifyIntegrated to a reference calculation.
+    // Comparing to a reference calculation.
     // This requires disabling of fine-tuning as there's no easy way to test that.
     singlepp::ClassifyIntegratedOptions<double> copt;
     copt.fine_tune = false;
@@ -506,12 +507,18 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
     auto by_labels = split_by_labels(labels);
 
     {
-        std::vector<std::unordered_map<int, int> > reverser(nrefs);
+        std::vector<singlepp::Intersection<int> > intersections;
         for (size_t r = 0; r < nrefs; ++r) {
-            const auto& ref_id = ref_ids[r];
-            for (size_t i = 0; i < ref_id.size(); ++i) {
-                if (ref_id[i] != MISSING_REF_ID) {
-                    reverser[r][ref_id[i]] = i;
+            intersections.push_back(singlepp::intersect_genes<int>(test_ids.size(), test_ids.data(), ref_ids[r].size(), ref_ids[r].data()));
+        }
+        std::unordered_map<int, std::size_t> availability;
+        for (size_t r = 0; r < nrefs; ++r) {
+            for (const auto& ii : intersections[r]) {
+                auto it = availability.find(ii.second);
+                if (it == availability.end()) {
+                    availability[ii.second] = 1;
+                } else {
+                    it->second += 1;
                 }
             }
         }
@@ -519,16 +526,38 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
         auto wrk = test->dense_column();
         std::vector<double> buffer(test->nrow());
         for (size_t t = 0; t < ntest; ++t) {
-            auto my_universe = create_universe(t, prebuilts, chosen);
+
+            // First, we find the current set of markers for the assigned labels of test sample 't',
+            // filtering it to only those genes that are present in all references.
+            std::unordered_set<int> current_markers;
+            for (std::size_t r = 0; r < nrefs; ++r) {
+                const auto& pre = prebuilts[r];
+                const auto& best_markers = pre.get_markers()[chosen[r][t]];
+                for (const auto& x : best_markers) {
+                    for (auto y : x) {
+                        const auto yref = pre.get_ref_subset()[y];
+                        const auto aIt = availability.find(yref);
+                        if (aIt != availability.end() && aIt->second == nrefs) {
+                            current_markers.insert(yref);
+                        }
+                    }
+                }
+            }
+            std::vector<int> universe_ref(current_markers.begin(), current_markers.end());
+            std::sort(universe_ref.begin(), universe_ref.end()); 
+            std::unordered_map<int, int> map_to_universe;
+            for (std::size_t u = 0; u < universe_ref.size(); ++u) {
+                map_to_universe[universe_ref[u]] = u;
+            }
 
             std::vector<double> all_scores;
-            for (size_t r = 0; r < nrefs; ++r) {
-                std::vector<int> universe_test, universe_ref;
-                for (auto s : my_universe) {
-                    auto it = reverser[r].find(s);
-                    if (it != reverser[r].end()) {
-                        universe_test.push_back(s);
-                        universe_ref.push_back(it->second);
+            for (std::size_t r = 0; r < nrefs; ++r) {
+                // Now, we traverse the intersections to figure out the test rows that we need to match universe_ref.
+                std::vector<int> universe_test(universe_ref.size());
+                for (const auto& ii : intersections[r]) {
+                    auto it = map_to_universe.find(ii.second);
+                    if (it != map_to_universe.end()) {
+                        universe_test[it->second] = ii.first;
                     }
                 }
 
@@ -573,25 +602,38 @@ TEST_P(ClassifyIntegratedTest, IntersectedComparison) {
     // The aim is to check that all the various gene indexing steps are done correctly.
     std::vector<int> test_ids(ngenes);
     std::iota(test_ids.begin(), test_ids.end(), 0);
-    std::vector<std::shared_ptr<tatami::Matrix<double, int> > > reorganized_references;
 
     singlepp::TrainSingleOptions bopt;
     bopt.top = ntop;
     std::vector<singlepp::TrainedSingleIntersect<int, double> > prebuilts;
+    prebuilts.reserve(nrefs);
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
-    std::vector<singlepp::TrainIntegratedInput<double, int, int> > reorganized_integrated_inputs;
-    std::vector<singlepp::TrainIntegratedInput<double, int, int> > shuffled_integrated_inputs;
-    std::vector<singlepp::Intersection<int> > shuffled_intersections;
-    shuffled_intersections.resize(nrefs);
+    integrated_inputs.reserve(nrefs);
+
+    std::vector<std::shared_ptr<tatami::Matrix<double, int> > > references_reorg;
+    references_reorg.reserve(nrefs);
+    std::vector<singlepp::TrainedSingle<int, double> > prebuilts_reorg;
+    prebuilts_reorg.reserve(nrefs);
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs_reorg;
+    integrated_inputs_reorg.reserve(nrefs);
+
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs_shuffled;
+    integrated_inputs_shuffled.reserve(nrefs);
+    std::vector<singlepp::Intersection<int> > intersections_shuffled;
+    intersections_shuffled.resize(nrefs);
 
     std::mt19937_64 rng(base_seed);
     for (size_t r = 0; r < nrefs; ++r) {
+        const auto& refmat = *(references[r]);
+        const auto labptr = labels[r].data();
+
+        auto testptr = test_ids.data();
         auto ref_ids = test_ids;
         std::shuffle(ref_ids.begin(), ref_ids.end(), rng);
+        auto refptr = ref_ids.data();
 
-        auto pre = singlepp::train_single_intersect<double, int>(ngenes, test_ids.data(), *(references[r]), ref_ids.data(), labels[r].data(), markers[r], bopt);
-        prebuilts.emplace_back(std::move(pre));
-        integrated_inputs.push_back(singlepp::prepare_integrated_input_intersect<int>(ngenes, test_ids.data(), *(references[r]), ref_ids.data(), labels[r].data(), prebuilts.back()));
+        prebuilts.emplace_back(singlepp::train_single_intersect<double, int>(ngenes, testptr, refmat, refptr, labptr, markers[r], bopt));
+        integrated_inputs.push_back(singlepp::prepare_integrated_input_intersect<int>(ngenes, testptr, refmat, refptr, labptr, prebuilts.back()));
 
         // Doing a reference calculation by reordering the matrix and then calling the non-intersection methods.
         std::vector<int> remapping(ngenes);
@@ -606,22 +648,21 @@ TEST_P(ClassifyIntegratedTest, IntersectedComparison) {
                 }
             }
         }
-        auto reordered_mat = tatami::make_DelayedSubset(references[r], std::move(remapping), true);
-        auto pre_reorg = singlepp::train_single(*reordered_mat, labels[r].data(), std::move(mcopy), bopt);
-        reorganized_integrated_inputs.push_back(singlepp::prepare_integrated_input(*reordered_mat, labels[r].data(), pre_reorg));
-        reorganized_references.emplace_back(std::move(reordered_mat));
+
+        references_reorg.emplace_back(tatami::make_DelayedSubset(references[r], std::move(remapping), true));
+        prebuilts_reorg.push_back(singlepp::train_single(*(references_reorg.back()), labptr, std::move(mcopy), bopt));
+        integrated_inputs_reorg.push_back(singlepp::prepare_integrated_input(*(references_reorg.back()), labptr, prebuilts_reorg.back()));
 
         // Also shuffling the intersection to check that the input order doesn't affect the results.
-        auto& intersection = shuffled_intersections[r];
-        intersection = singlepp::intersect_genes<int>(ngenes, test_ids.data(), references[r]->nrow(), ref_ids.data());
-        std::shuffle(intersection.begin(), intersection.end(), rng);
-        shuffled_integrated_inputs.push_back(singlepp::prepare_integrated_input_intersect<int>(ngenes, intersection, *(references[r]), labels[r].data(), prebuilts.back()));
+        intersections_shuffled.push_back(singlepp::intersect_genes<int>(ngenes, testptr, refmat.nrow(), refptr));
+        std::shuffle(intersections_shuffled.back().begin(), intersections_shuffled.back().end(), rng);
+        integrated_inputs_shuffled.push_back(singlepp::prepare_integrated_input_intersect<int>(ngenes, intersections_shuffled.back(), refmat, labptr, prebuilts.back()));
     }
 
     singlepp::TrainIntegratedOptions iopt;
     auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
-    auto reorganized_integrated = singlepp::train_integrated(std::move(reorganized_integrated_inputs), iopt);
-    auto shuffled_integrated = singlepp::train_integrated(std::move(shuffled_integrated_inputs), iopt);
+    auto integrated_reorg = singlepp::train_integrated(std::move(integrated_inputs_reorg), iopt);
+    auto integrated_shuffled = singlepp::train_integrated(std::move(integrated_inputs_shuffled), iopt);
 
     // Mocking up some of the best choices.
     auto chosen = mock_best_choices(ntest, prebuilts, base_seed + 2468);
@@ -635,12 +676,12 @@ TEST_P(ClassifyIntegratedTest, IntersectedComparison) {
     copt.quantile = quantile;
     auto output = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated, copt);
 
-    auto reorganized_output = singlepp::classify_integrated<int>(*test, chosen_ptrs, reorganized_integrated, copt);
+    auto reorganized_output = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated_reorg, copt);
     EXPECT_EQ(output.best, reorganized_output.best);
     EXPECT_EQ(output.scores, reorganized_output.scores);
     EXPECT_EQ(output.delta, reorganized_output.delta);
 
-    auto shuffled_output = singlepp::classify_integrated<int>(*test, chosen_ptrs, shuffled_integrated, copt);
+    auto shuffled_output = singlepp::classify_integrated<int>(*test, chosen_ptrs, integrated_shuffled, copt);
     EXPECT_EQ(output.best, shuffled_output.best);
     EXPECT_EQ(output.scores, shuffled_output.scores);
     EXPECT_EQ(output.delta, shuffled_output.delta);
@@ -666,13 +707,17 @@ protected:
 
 TEST_F(ClassifyIntegratedMismatchTest, Basic) {
     singlepp::TrainSingleOptions bopt;
+
     std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
+    prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
+    integrated_inputs.reserve(nrefs);
 
     for (size_t r = 0; r < nrefs; ++r) {
-        auto pre = singlepp::train_single(*(references[r]), labels[r].data(), markers[r], bopt);
-        prebuilts.push_back(std::move(pre));
-        integrated_inputs.push_back(singlepp::prepare_integrated_input(*(references[r]), labels[r].data(), prebuilts.back()));
+        const auto& refmat = *(references[r]);
+        const auto labptr = labels[r].data();
+        prebuilts.push_back(singlepp::train_single(refmat, labptr, markers[r], bopt));
+        integrated_inputs.push_back(singlepp::prepare_integrated_input(refmat, labptr, prebuilts.back()));
     }
 
     singlepp::TrainIntegratedOptions iopt;
