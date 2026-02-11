@@ -116,4 +116,16 @@ TEST(ComputeL2, SparseSparse) {
         EXPECT_FLOAT_EQ(singlepp::compute_l2(static_cast<int>(a2.size()), scaled_a, scaled_b), expected2);
         EXPECT_FLOAT_EQ(singlepp::compute_l2(static_cast<int>(a2.size()), scaled_b, scaled_a), expected2);
     }
+
+    // Checking what happens with empty inputs.
+    {
+        std::vector<double> empty(a.size());
+        const auto expected = singlepp::compute_l2(a.size(), a, empty);
+
+        singlepp::SparseScaled<int, double> sparse_empty;
+        EXPECT_FLOAT_EQ(singlepp::compute_l2(static_cast<int>(a.size()), a, sparse_empty), expected);
+        EXPECT_FLOAT_EQ(singlepp::compute_l2(static_cast<int>(a.size()), sparse_empty, a), expected);
+
+        EXPECT_FLOAT_EQ(singlepp::compute_l2(static_cast<int>(a.size()), sparse_empty, sparse_empty), 0);
+    }
 }

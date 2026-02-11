@@ -117,7 +117,7 @@ Float_ sparse_l2(const Index_ num_markers, const SparseInput1_& vec1, const Spar
     Index_ i1 = 0, i2 = 0;
     Index_ both = 0;
 
-    if (i1 < num1) { 
+    if (i1 < num1 && i2 < num2) { 
         while (1) {
             const auto samdex = get_sparse_index(vec1, i1);
             const auto seeddex = get_sparse_index(vec2, i2);
