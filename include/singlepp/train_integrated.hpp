@@ -502,7 +502,7 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
 
             for (const auto a : active_genes) {
                 const auto universe_index = remap_test_to_universe[test_subset[a]];
-                if (universe_index != output.test_nrow) {
+                if (universe_index != output.test_nrow) { // ignoring genes not in the intersection.
                     markers.push_back(universe_index);
                 }
                 is_active[a] = false;

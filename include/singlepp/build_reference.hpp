@@ -645,6 +645,7 @@ BuiltReference<Index_, Float_> build_reference_raw(
             const auto labcount = label_count[l];
             auto& curlab = nnrefs[l];
             curlab.data.resize(sanisizer::product<I<decltype(curlab.data.size())> >(labcount, num_markers));
+            sanisizer::resize(tmp_ref_ranked[l], labcount);
         }
     }
 

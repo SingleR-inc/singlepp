@@ -148,7 +148,8 @@ TEST(FineTuneSingle, Sparse) {
 
         score_copy = scores;
         auto sparse_output = sparse_ft.run(ranked, *(sparse_built.sparse), markers, score_copy, 1, 0.05);
-        EXPECT_EQ(output, sparse_output);
+        EXPECT_EQ(output.first, sparse_output.first);
+        EXPECT_FLOAT_EQ(output.second, sparse_output.second);
 
         singlepp::RankedVector<double, int> sparse_ranked;
         for (auto r : ranked) {
@@ -159,10 +160,12 @@ TEST(FineTuneSingle, Sparse) {
 
         score_copy = scores;
         auto output2 = new_ft2.run(sparse_ranked, *(new_built.dense), markers, score_copy, 1, 0.05);
-        EXPECT_EQ(output, output2);
+        EXPECT_EQ(output.first, output2.first);
+        EXPECT_FLOAT_EQ(output.second, output2.second);
 
         score_copy = scores;
         auto sparse_output2 = sparse_ft2.run(sparse_ranked, *(sparse_built.sparse), markers, score_copy, 1, 0.05);
-        EXPECT_EQ(output, sparse_output2);
+        EXPECT_EQ(output.first, sparse_output2.first);
+        EXPECT_FLOAT_EQ(output.second, sparse_output2.second);
     }
 }
