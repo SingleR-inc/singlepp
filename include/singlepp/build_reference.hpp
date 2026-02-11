@@ -22,7 +22,7 @@
 namespace singlepp {
 
 template<typename Index_, typename Float_>
-struct DensePerLabelReference {
+struct DensePerLabel {
     std::vector<Float_> data;
 
     // Structures for the KMKNN search.
@@ -34,14 +34,14 @@ struct DensePerLabelReference {
 };
 
 template<typename Index_, typename Float_>
-const Float_* retrieve_vector(const Index_ num_markers, const DensePerLabelReference<Index_, Float_>& ref, const Index_ col) {
+const Float_* retrieve_vector(const Index_ num_markers, const DensePerLabel<Index_, Float_>& ref, const Index_ col) {
     return ref.data.data() + sanisizer::product_unsafe<std::size_t>(num_markers, col);
 }
 
 /*** Sparse matrix constructs ***/
 
 template<typename Index_, typename Float_>
-struct SparsePerLabelReference {
+struct SparsePerLabel {
     std::vector<Float_> value;
     std::vector<Index_> index;
     std::vector<std::size_t> indptrs;
@@ -52,8 +52,8 @@ struct SparsePerLabelReference {
     std::vector<std::pair<Index_, Index_> > seed_ranges;
 
     // Concatenation of RankedVectors for all samples.
-    RankedVector<Index_, Index_> all_ranked;
-    std::vector<Index_> first_non_negative;
+    RankedVector<Index_, Index_> negative_ranked, positive_ranked;
+    std::vector<std::size_t> negative_indptrs, positive_indptrs;
 };
 
 template<typename Index_, typename Float_>
@@ -65,7 +65,7 @@ struct CompressedSparseVector {
 };
 
 template<typename Index_, typename Float_>
-CompressedSparseVector<Index_, Float_> retrieve_vector([[maybe_unused]] const Index_ num_markers, const SparsePerLabelReference<Index_, Float_>& mat, const Index_ col) {
+CompressedSparseVector<Index_, Float_> retrieve_vector([[maybe_unused]] const Index_ num_markers, const SparsePerLabel<Index_, Float_>& mat, const Index_ col) {
     CompressedSparseVector<Index_, Float_> output;
     const auto seed_start = mat.indptrs[col], seed_len = mat.indptrs[col + 1] - seed_start;
     output.number = seed_len;
@@ -250,23 +250,21 @@ Float_ compute_l2(const Index_ num_markers, const SparseScaled<Index_, Float_>& 
 /*** KMKNN building ***/ 
 
 template<typename Index_, typename Float_>
-Index_ get_num_samples(const DensePerLabelReference<Index_, Float_>& ref) {
+Index_ get_num_samples(const DensePerLabel<Index_, Float_>& ref) {
     return ref.distances.size();
 }
 
 template<typename Index_, typename Float_>
-Index_ get_num_samples(const SparsePerLabelReference<Index_, Float_>& ref) {
+Index_ get_num_samples(const SparsePerLabel<Index_, Float_>& ref) {
     return ref.distances.size();
 }
 
 template<bool ref_sparse_, typename Index_, typename Float_>
-void select_seeds(
+std::vector<Index_> select_seeds(
     const Index_ num_markers,
-    typename std::conditional<ref_sparse_, SparsePerLabelReference<Index_, Float_>, DensePerLabelReference<Index_, Float_> >::type& ref,
-    const std::vector<RankedVector<Index_, Index_> >& ranked
+    const Index_ num_samples,
+    typename std::conditional<ref_sparse_, SparsePerLabel<Index_, Float_>, DensePerLabel<Index_, Float_> >::type& ref
 ) {
-    const Index_ num_samples = ranked.size();
-
     // No need to check for overlow, num_samples >= num_seeds here.
     Index_ num_seeds = std::round(std::sqrt(num_samples));
 
@@ -415,15 +413,7 @@ void select_seeds(
         }
     }
 
-    // Populating the ranked supervector. 
-    if constexpr(ref_sparse_) {
-        sanisizer::reserve(ref.all_ranked, ref.value.size());
-    } else {
-        sanisizer::reserve(ref.all_ranked, ref.data.size());
-    }
-    for (auto sam : identities) {
-        ref.all_ranked.insert(ref.all_ranked.end(), ranked[sam].begin(), ranked[sam].end()); 
-    }
+    return identities;
 }
 
 /*** KMKNN search ***/ 
@@ -448,7 +438,7 @@ void find_closest_neighbors(
     const Index_ num_markers,
     const typename std::conditional<query_sparse_, SparseScaled<Index_, Float_>, std::vector<Float_> >::type& query,
     const Index_ k,
-    const typename std::conditional<ref_sparse_, SparsePerLabelReference<Index_, Float_>, DensePerLabelReference<Index_, Float_> >::type& ref,
+    const typename std::conditional<ref_sparse_, SparsePerLabel<Index_, Float_>, DensePerLabel<Index_, Float_> >::type& ref,
     FindClosestNeighborsWorkspace<query_sparse_, ref_sparse_, Index_, Float_>& work
 ) {
     const auto num_seeds = ref.seed_ranges.size();
@@ -577,8 +567,8 @@ std::pair<Float_, Index_> pop_furthest_neighbor(FindClosestNeighborsWorkspace<qu
 template<typename Index_, typename Float_>
 struct BuiltReference {
     Index_ num_markers = 0;
-    std::optional<std::vector<DensePerLabelReference<Index_, Float_> > > dense;
-    std::optional<std::vector<SparsePerLabelReference<Index_, Float_> > > sparse;
+    std::optional<std::vector<DensePerLabel<Index_, Float_> > > dense;
+    std::optional<std::vector<SparsePerLabel<Index_, Float_> > > sparse;
 };
 
 template<bool ref_sparse_, typename Index_, typename Float_>
@@ -590,6 +580,19 @@ auto& allocate_references(BuiltReference<Index_, Float_>& output, const std::siz
         output.dense.emplace(sanisizer::cast<I<decltype(output.dense->size())> >(num_labels));
         return *(output.dense);
     }
+}
+
+template<typename Stat_, typename Index_>
+std::pair<typename RankedVector<Stat_, Index_>::const_iterator, typename RankedVector<Stat_, Index_>::const_iterator> find_zero_ranges(
+    const typename RankedVector<Stat_, Index_>::const_iterator& begin,
+    const typename RankedVector<Stat_, Index_>::const_iterator& end
+) {
+    auto nonneg = std::lower_bound(begin, end, std::make_pair<Stat_, Index_>(0, 0));
+    auto pos = nonneg;
+    while (pos != end && pos->first == 0) { // Skipping over any explicit zeros, we only want to store positive values here.
+        ++pos;
+    }
+    return std::make_pair(nonneg, pos);
 }
 
 template<bool ref_sparse_, typename Float_, typename Value_, typename Index_, typename Label_>
@@ -614,30 +617,34 @@ BuiltReference<Index_, Float_> build_reference_raw(
         ++lcount;
     }
 
+    for (I<decltype(num_labels)> l = 0; l < num_labels; ++l) {
+        const auto labcount = label_count[l];
+        if (labcount == 0) {
+            throw std::runtime_error(std::string("no entries for label ") + std::to_string(l));
+        }
+    }
+
     BuiltReference<Index_, Float_> output;
     output.num_markers = num_markers;
     auto& nnrefs = allocate_references<ref_sparse_>(output, num_labels);
 
-    auto tmp_ref_ranked = sanisizer::create<std::vector<std::vector<RankedVector<Index_, Index_> > > >(num_labels);
-    typename std::conditional<ref_sparse_, std::vector<std::vector<Index_> >, bool>::type first_non_negative;
-    {
-        if constexpr(ref_sparse_) {
-            sanisizer::resize(first_non_negative, num_labels);
-        }
-
+    typename std::conditional<ref_sparse_, bool, std::vector<std::vector<RankedVector<Index_, Index_> > > >::type tmp_ref_ranked;
+    typename std::conditional<ref_sparse_, std::vector<std::vector<RankedVector<Index_, Index_> > >, bool>::type positive_ref_ranked, negative_ref_ranked;
+    sanisizer::cast<typename RankedVector<Index_, Index_>::size_type>(num_markers); // check that we can allocate these inside the loop.
+    if constexpr(ref_sparse_) {
+        sanisizer::resize(positive_ref_ranked, num_labels);
+        sanisizer::resize(negative_ref_ranked, num_labels);
         for (I<decltype(num_labels)> l = 0; l < num_labels; ++l) {
             const auto labcount = label_count[l];
-            if (labcount == 0) {
-                throw std::runtime_error(std::string("no entries for label ") + std::to_string(l));
-            }
-
-            sanisizer::resize(tmp_ref_ranked[l], labcount);
-            if constexpr(ref_sparse_) {
-                sanisizer::resize(first_non_negative[l], labcount);
-            } else {
-                auto& curlab = nnrefs[l];
-                curlab.data.resize(sanisizer::product<I<decltype(curlab.data.size())> >(labcount, num_markers));
-            }
+            sanisizer::resize(positive_ref_ranked[l], labcount);
+            sanisizer::resize(negative_ref_ranked[l], labcount);
+        }
+    } else {
+        sanisizer::resize(tmp_ref_ranked, num_labels);
+        for (I<decltype(num_labels)> l = 0; l < num_labels; ++l) {
+            const auto labcount = label_count[l];
+            auto& curlab = nnrefs[l];
+            curlab.data.resize(sanisizer::product<I<decltype(curlab.data.size())> >(labcount, num_markers));
         }
     }
 
@@ -657,7 +664,6 @@ BuiltReference<Index_, Float_> build_reference_raw(
 
         RankedVector<Value_, Index_> query_ranked;
         sanisizer::reserve(query_ranked, num_markers);
-        sanisizer::cast<I<decltype(tmp_ref_ranked.front().front().size())> >(num_markers);
 
         for (Index_ c = start, end = start + len; c < end; ++c) {
             const auto col = [&](){
@@ -671,14 +677,15 @@ BuiltReference<Index_, Float_> build_reference_raw(
 
             const auto curlab = labels[c];
             const auto curoff = label_offsets[c];
-            auto& stored_ranks = tmp_ref_ranked[curlab][curoff]; // Storing as a pair of ints to save space; as long as we respect ties, everything should be fine.
-            simplify_ranks(query_ranked, stored_ranks);
 
             if constexpr(ref_sparse_) {
-                // Storing the simplified rank of the first non-negative value, so we know when to insert the zeros in scaled_ranks().
-                const auto num_negative = std::lower_bound(query_ranked.begin(), query_ranked.end(), std::pair<Float_, Index_>(0, 0)) - query_ranked.begin();
-                first_non_negative[curlab][curoff] = (sanisizer::is_equal(num_negative, query_ranked.size()) ? 0 : stored_ranks[num_negative].first);
+                const auto qStart = query_ranked.begin();
+                const auto qEnd = query_ranked.end();
+                auto zero_ranges = find_zero_ranges<Value_, Index_>(qStart, qEnd);
+                simplify_ranks<Value_, Index_>(qStart, zero_ranges.first, negative_ref_ranked[curlab][curoff]);
+                simplify_ranks<Value_, Index_>(zero_ranges.second, qEnd, positive_ref_ranked[curlab][curoff]);
             } else {
+                simplify_ranks(query_ranked, tmp_ref_ranked[curlab][curoff]);
                 const auto scaled = nnrefs[curlab].data.data() + sanisizer::product_unsafe<std::size_t>(curoff, num_markers);
                 scaled_ranks(num_markers, query_ranked, scaled); 
             }
@@ -688,25 +695,30 @@ BuiltReference<Index_, Float_> build_reference_raw(
     tatami::parallelize([&](int, std::size_t start, std::size_t len) {
         for (std::size_t l = start, end = start + len; l < end; ++l) {
             auto& curlab = nnrefs[l]; 
-            auto& cur_ref_ranked = tmp_ref_ranked[l];
+            const auto labcount = label_count[l];
 
             if constexpr(ref_sparse_) {
-                std::size_t total_nzeros = 0;
-                for (const auto& x : cur_ref_ranked) {
-                    total_nzeros = sanisizer::sum<std::size_t>(total_nzeros, x.size());
+                const auto& neg_ranked = negative_ref_ranked[l];
+                const auto& pos_ranked = positive_ref_ranked[l];
+
+                std::size_t positive_nzeros = 0, negative_nzeros = 0;
+                for (const auto& x : neg_ranked) {
+                    negative_nzeros = sanisizer::sum<std::size_t>(negative_nzeros, x.size());
+                }
+                for (const auto& x : pos_ranked) {
+                    positive_nzeros = sanisizer::sum<std::size_t>(positive_nzeros, x.size());
                 }
 
+                const std::size_t total_nzeros = sanisizer::sum<std::size_t>(negative_nzeros, positive_nzeros);
                 sanisizer::reserve(curlab.value, total_nzeros);
                 sanisizer::reserve(curlab.index, total_nzeros);
-                curlab.indptrs.reserve(sanisizer::sum<I<decltype(curlab.indptrs.size())> >(cur_ref_ranked.size(), 1));
+                curlab.indptrs.reserve(sanisizer::sum<I<decltype(curlab.indptrs.size())> >(labcount, 1));
                 curlab.indptrs.push_back(0);
-                sanisizer::reserve(curlab.zeros, cur_ref_ranked.size());
+                sanisizer::reserve(curlab.zeros, labcount);
 
                 SparseScaled<Index_, Float_> scaled;
-                auto& non_neg_limits = first_non_negative[l];
-                const auto labcount = label_count[l];
                 for (Index_ c = 0; c < labcount; ++c) {
-                    scaled_ranks(num_markers, cur_ref_ranked[l], non_neg_limits[l], scaled);
+                    scaled_ranks(num_markers, neg_ranked[c], pos_ranked[c], scaled);
                     for (const auto& y : scaled.nonzero) {
                         curlab.index.push_back(y.first);
                         curlab.value.push_back(y.second);
@@ -715,12 +727,30 @@ BuiltReference<Index_, Float_> build_reference_raw(
                     curlab.zeros.push_back(scaled.zero);
                 }
 
-                curlab.first_non_negative.swap(non_neg_limits);
-            }
+                auto identities = select_seeds<ref_sparse_, Index_, Float_>(num_markers, labcount, curlab);
 
-            select_seeds<ref_sparse_, Index_, Float_>(num_markers, curlab, cur_ref_ranked);
-            cur_ref_ranked.clear();
-            cur_ref_ranked.shrink_to_fit();
+                sanisizer::reserve(curlab.negative_ranked, negative_nzeros);
+                curlab.negative_indptrs.reserve(sanisizer::sum<I<decltype(curlab.positive_indptrs.size())> >(labcount, 1));
+                curlab.negative_indptrs.push_back(0);
+                sanisizer::reserve(curlab.positive_ranked, positive_nzeros);
+                curlab.positive_indptrs.reserve(sanisizer::sum<I<decltype(curlab.positive_indptrs.size())> >(labcount, 1));
+                curlab.positive_indptrs.push_back(0);
+
+                for (auto sam : identities) {
+                    curlab.negative_ranked.insert(curlab.negative_ranked.end(), neg_ranked[sam].begin(), neg_ranked[sam].end());
+                    curlab.negative_indptrs.push_back(curlab.negative_ranked.size());
+                    curlab.positive_ranked.insert(curlab.positive_ranked.end(), pos_ranked[sam].begin(), pos_ranked[sam].end());
+                    curlab.positive_indptrs.push_back(curlab.positive_ranked.size());
+                }
+
+            } else {
+                auto identities = select_seeds<ref_sparse_, Index_, Float_>(num_markers, labcount, curlab);
+                sanisizer::reserve(curlab.all_ranked, curlab.data.size());
+                const auto& ref_ranked = tmp_ref_ranked[l];
+                for (auto sam : identities) {
+                    curlab.all_ranked.insert(curlab.all_ranked.end(), ref_ranked[sam].begin(), ref_ranked[sam].end()); 
+                }
+            }
         }
     }, num_labels, num_threads);
 

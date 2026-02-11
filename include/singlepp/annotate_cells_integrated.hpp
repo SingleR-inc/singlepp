@@ -41,24 +41,29 @@ void annotate_cells_integrated_raw(
     }
 
     bool any_ref_sparse = false, any_ref_dense = false;
-    for (const auto& ref : trained.my_references) {
-        for (const auto& lab : ref) {
-            if (lab.all_ranked_indptrs.has_value()) {
-                any_ref_sparse = true;
-            } else {
-                any_ref_dense = true;
-            }
+    for (const auto& ref : trained.references) {
+        if (ref.sparse.has_value()) {
+            any_ref_sparse = true;
+        } else {
+            any_ref_dense = true;
         }
     }
 
     tatami::parallelize([&](int, Index_ start, Index_ len) {
         const auto num_universe = trained.universe.size();
         SubsetRemapper<Index_> remapper(num_universe);
+
         RankedVector<Value_, Index_> test_ranked_full, test_ranked_sub;
         test_ranked_full.reserve(num_universe);
         test_ranked_sub.reserve(num_universe);
+
         RankedVector<Index_, Index_> ref_ranked;
         ref_ranked.reserve(num_universe);
+        std::optional<RankedVector<Index_, Index_> > ref_ranked_alt;
+        if (any_ref_sparse) {
+            ref_ranked_alt.emplace();
+            ref_ranked_alt->reserve(num_universe);
+        }
 
         auto vbuffer = sanisizer::create<std::vector<Value_> >(num_universe);
         auto ibuffer = [&](){
@@ -91,7 +96,7 @@ void annotate_cells_integrated_raw(
         }
 
         std::vector<Float_> all_correlations;
-        const auto nref = trained.my_references.size();
+        const auto nref = trained.references.size();
         std::vector<RefLabel_> reflabels_in_use;
         sanisizer::reserve(reflabels_in_use, nref);
         std::vector<Float_> all_scores;
@@ -124,20 +129,32 @@ void annotate_cells_integrated_raw(
             while (reflabels_in_use.size() > 1) {
                 remapper.clear();
                 for (const auto r : reflabels_in_use) {
-                    const auto& curref = trained.my_references[r];
                     const auto curassigned = assigned[r][i];
-                    const auto& curmarkers = curref[curassigned].markers;
-                    for (const auto& x : curmarkers) {
-                        remapper.add(x);
+                    const auto& curref = trained.references[r];
+
+                    if (curref.sparse.has_value()) {
+                        const auto& curmarkers = (*(curref.sparse))[curassigned].markers;
+                        for (const auto& x : curmarkers) {
+                            remapper.add(x);
+                        }
+                    } else {
+                        const auto& curmarkers = (*(curref.dense))[curassigned].markers;
+                        for (const auto& x : curmarkers) {
+                            remapper.add(x);
+                        }
                     }
                 }
 
                 const auto num_markers = remapper.size();
                 remapper.remap(test_ranked_full, test_ranked_sub);
-                if constexpr(!query_sparse_) {
+                if constexpr(query_sparse_) {
+                    const auto tStart = test_ranked_sub.begin(), tEnd = test_ranked_sub.end();
+                    auto zero_ranges = find_zero_ranges<Value_, Index_>(tStart, tEnd);
+                    scaled_ranks<Value_, Index_>(num_markers, tStart, zero_ranges.first, zero_ranges.second, tEnd, test_scaled);
+                } else {
                     test_scaled.resize(num_markers);
+                    scaled_ranks(num_markers, test_ranked_sub, test_scaled);
                 }
-                scaled_ranks(num_markers, test_ranked_sub, test_scaled);
 
                 if (any_ref_dense) {
                     dense_ref_scaled->resize(num_markers);
@@ -145,26 +162,34 @@ void annotate_cells_integrated_raw(
 
                 all_scores.clear();
                 for (auto r : reflabels_in_use) {
-                    const auto& curref = trained.my_references[r];
+                    const auto& curref = trained.references[r];
                     const auto curassigned = assigned[r][i];
-                    const auto& curlab = curref[curassigned];
-                    const auto nsamples = curlab.num_samples;
                     all_correlations.clear();
-                    all_correlations.reserve(nsamples);
 
-                    if (curlab.all_ranked_indptrs.has_value()) {
-                        const auto& indptrs = *(curlab.all_ranked_indptrs);
+                    if (curref.sparse.has_value()) {
+                        const auto& curlab = (*(curref.sparse))[curassigned];
+                        const auto nsamples = curlab.num_samples;
+                        all_correlations.reserve(nsamples);
+
                         for (I<decltype(nsamples)> s = 0; s < nsamples; ++s) {
                             ref_ranked.clear();
-                            auto refstart = curlab.all_ranked.begin() + indptrs[s];
-                            auto refend = curlab.all_ranked.begin() + indptrs[s + 1];
-                            remapper.remap(refstart, refend, ref_ranked);
-                            scaled_ranks(num_markers, ref_ranked, *sparse_ref_scaled);
+                            auto nStart = curlab.negative_ranked.begin();
+                            remapper.remap(nStart + curlab.negative_indptrs[s], nStart + curlab.negative_indptrs[s + 1], ref_ranked);
+
+                            ref_ranked_alt->clear();
+                            auto pStart = curlab.positive_ranked.begin();
+                            remapper.remap(pStart + curlab.positive_indptrs[s], pStart + curlab.positive_indptrs[s + 1], *ref_ranked_alt);
+
+                            scaled_ranks(num_markers, ref_ranked, *ref_ranked_alt, *sparse_ref_scaled);
                             const Float_ cor = l2_to_correlation(compute_l2(num_markers, test_scaled, *sparse_ref_scaled));
                             all_correlations.push_back(cor);
                         }
 
                     } else {
+                        const auto& curlab = (*(curref.dense))[curassigned];
+                        const auto nsamples = curlab.num_samples;
+                        all_correlations.reserve(nsamples);
+
                         for (I<decltype(nsamples)> s = 0; s < nsamples; ++s) {
                             ref_ranked.clear();
                             auto refstart = curlab.all_ranked.begin() + sanisizer::product_unsafe<std::size_t>(s, trained.test_nrow);

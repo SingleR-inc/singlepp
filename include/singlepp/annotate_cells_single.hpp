@@ -36,29 +36,30 @@ private:
 
     RankedVector<Value_, Index_> my_subset_query;
     RankedVector<Index_, Index_> my_subset_ref;
+    typename std::conditional<ref_sparse_, RankedVector<Index_, Index_>, bool>::type my_subset_ref_alt;
 
     std::vector<Float_> my_all_correlations;
 
 public:
-    typedef typename std::conditional<ref_sparse_, SparsePerLabelReference<Index_, Float_>, DensePerLabelReference<Index_, Float_> >::type PerLabelReference;
+    typedef typename std::conditional<ref_sparse_, SparsePerLabel<Index_, Float_>, DensePerLabel<Index_, Float_> >::type PerLabel;
 
-    FineTuneSingle(const Index_ full_num_markers, const std::vector<PerLabelReference>& ref) : my_gene_subset(full_num_markers) {
+    FineTuneSingle(const Index_ full_num_markers, const std::vector<PerLabel>& ref) : my_gene_subset(full_num_markers) {
         sanisizer::reserve(my_labels_in_use, ref.size());
 
+        sanisizer::reserve(my_subset_query, full_num_markers); 
         if constexpr(query_sparse_) {
             sanisizer::reserve(my_scaled_query.nonzero, full_num_markers);
         } else {
             sanisizer::reserve(my_scaled_query, full_num_markers);
         }
 
+        sanisizer::reserve(my_subset_ref, full_num_markers); 
         if constexpr(ref_sparse_) {
+            sanisizer::reserve(my_subset_ref_alt, full_num_markers); 
             sanisizer::reserve(my_scaled_ref.nonzero, full_num_markers);
         } else {
             sanisizer::reserve(my_scaled_ref, full_num_markers);
         }
-
-        sanisizer::reserve(my_subset_query, full_num_markers); 
-        sanisizer::reserve(my_subset_ref, full_num_markers); 
 
         I<decltype(get_num_samples(ref.front()))> max_labels = 0;
         for (const auto& curref : ref) {
@@ -70,7 +71,7 @@ public:
 public:
     std::pair<Label_, Float_> run(
         const RankedVector<Value_, Index_>& input, 
-        const std::vector<PerLabelReference>& ref,
+        const std::vector<PerLabel>& ref,
         const Markers<Index_>& markers,
         std::vector<Float_>& scores,
         Float_ quantile,
@@ -93,13 +94,19 @@ public:
             my_gene_subset.remap(input, my_subset_query);
             const auto current_num_markers = my_gene_subset.size();
 
-            if constexpr(!query_sparse_) {
+            if constexpr(query_sparse_) {
+                const auto substart = my_subset_query.begin();
+                const auto subend = my_subset_query.end();
+                auto zero_ranges = find_zero_ranges<Value_, Index_>(substart, subend);
+                scaled_ranks<Value_, Index_, Float_>(current_num_markers, substart, zero_ranges.first, zero_ranges.second, subend, my_scaled_query);
+            } else {
                 my_scaled_query.resize(current_num_markers);
+                scaled_ranks(current_num_markers, my_subset_query, my_scaled_query);
             }
+
             if constexpr(!ref_sparse_) {
                 my_scaled_ref.resize(current_num_markers);
             }
-            scaled_ranks(current_num_markers, my_subset_query, my_scaled_query);
 
             scores.clear();
             auto nlabels_used = my_labels_in_use.size();
@@ -116,20 +123,18 @@ public:
                     // requires us to (possibly) make a copy of the entire
                     // reference set; we can't afford to do this in each thread.
 
-                    std::size_t refstart, refend;
                     if constexpr(ref_sparse_) {
-                        refstart = curref.indptrs[c];
-                        refend = curref.indptrs[c + 1];
+                        const auto nStart = curref.negative_ranked.begin();
+                        my_gene_subset.remap(nStart + curref.negative_indptrs[c], nStart + curref.negative_indptrs[c + 1], my_subset_ref);
+                        const auto pStart = curref.positive_ranked.begin();
+                        my_gene_subset.remap(pStart + curref.positive_indptrs[c], pStart + curref.positive_indptrs[c + 1], my_subset_ref_alt);
+                        scaled_ranks(current_num_markers, my_subset_ref, my_subset_ref_alt, my_scaled_ref);
+
                     } else {
                         const auto full_num_markers = my_gene_subset.capacity();
-                        refstart = sanisizer::product_unsafe<std::size_t>(full_num_markers, c);
-                        refend = refstart + full_num_markers;
-                    }
-
-                    my_gene_subset.remap(curref.all_ranked.begin() + refstart, curref.all_ranked.begin() + refend, my_subset_ref);
-                    if constexpr(ref_sparse_) {
-                        scaled_ranks(current_num_markers, my_subset_ref, curref.first_non_negative[c], my_scaled_ref);
-                    } else {
+                        const auto refstart = curref.all_ranked.begin() + sanisizer::product_unsafe<std::size_t>(full_num_markers, c);
+                        const auto refend = refstart + full_num_markers;
+                        my_gene_subset.remap(refstart, refend, my_subset_ref);
                         scaled_ranks(current_num_markers, my_subset_ref, my_scaled_ref);
                     }
 
@@ -241,7 +246,9 @@ void annotate_cells_single_raw(
             if constexpr(query_sparse_) {
                 auto info = ext->fetch(vbuffer.data(), ibuffer.data());
                 subsorted.fill_ranks(info, vec);
-                scaled_ranks(num_markers, vec, static_cast<Value_>(0), query_scaled);
+                const auto vStart = vec.begin(), vEnd = vec.end();
+                auto zero_ranges = find_zero_ranges<Value_, Index_>(vStart, vEnd);
+                scaled_ranks<Value_, Index_, Float_>(num_markers, vStart, zero_ranges.first, zero_ranges.second, vEnd, query_scaled);
             } else {
                 auto info = ext->fetch(vbuffer.data());
                 subsorted.fill_ranks(info, vec);

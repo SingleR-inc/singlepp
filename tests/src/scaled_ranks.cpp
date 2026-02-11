@@ -114,16 +114,18 @@ TEST(ScaledRanks, SparseBasic) {
 
     auto ranks = fill_ranks(num_markers, stuff.data());
     std::vector<double> out(num_markers);
-    singlepp::scaled_ranks<double, int>(num_markers, ranks, 0, out.data());
+    singlepp::scaled_ranks<double, int>(num_markers, ranks, out.data());
 
-    singlepp::RankedVector<double, int> sparse_ranks;
+    singlepp::RankedVector<double, int> sparse_negative_ranks, sparse_positive_ranks;
     for (const auto& r : ranks) {
-        if (r.first) {
-            sparse_ranks.push_back(r);
+        if (r.first < 0) {
+            sparse_negative_ranks.push_back(r);
+        } else if (r.first > 0) {
+            sparse_positive_ranks.push_back(r);
         }
     }
     singlepp::SparseScaled<int, double> sparse_scaled;
-    singlepp::scaled_ranks<double, int>(num_markers, sparse_ranks, sparse_scaled);
+    singlepp::scaled_ranks<double, int>(num_markers, sparse_negative_ranks, sparse_positive_ranks, sparse_scaled);
 
     std::vector<double> sout(num_markers, sparse_scaled.zero);
     for (const auto& sp : sparse_scaled.nonzero) {
@@ -136,24 +138,22 @@ TEST(ScaledRanks, SparseBasic) {
         EXPECT_LT(sparse_scaled.nonzero[i-1].first, sparse_scaled.nonzero[i].first);
     }
 
-    // Gives us the same results if we just inject the entire dense input in.
-    sparse_scaled.nonzero.clear();
-    singlepp::scaled_ranks<double, int>(num_markers, ranks, 0, sparse_scaled);
-    EXPECT_EQ(sparse_scaled.zero, 0);
-    std::fill(sout.begin(), sout.end(), 0);
-    for (const auto& sp : sparse_scaled.nonzero) {
-        sout[sp.first] = sp.second;
-    }
-    for (int i = 0; i < num_markers; ++i) {
-        EXPECT_FLOAT_EQ(sout[i], out[i]);
-    }
-    for (std::size_t i = 1; i < sparse_scaled.nonzero.size(); ++i) {
-        EXPECT_LT(sparse_scaled.nonzero[i-1].first, sparse_scaled.nonzero[i].first);
-    }
+    // Same results with the overload.
+    singlepp::SparseScaled<int, double> sparse_scaled2;
+    singlepp::scaled_ranks<double, int>(
+        num_markers,
+        sparse_negative_ranks.begin(),
+        sparse_negative_ranks.end(),
+        sparse_positive_ranks.begin(),
+        sparse_positive_ranks.end(),
+        sparse_scaled2
+    );
+    EXPECT_EQ(sparse_scaled.nonzero, sparse_scaled2.nonzero);
+    EXPECT_EQ(sparse_scaled.zero, sparse_scaled2.zero);
 
     // Bails if empty.
     singlepp::RankedVector<double, int> empty_ranks;
-    singlepp::scaled_ranks(0, empty_ranks, sparse_scaled);
+    singlepp::scaled_ranks(0, empty_ranks, empty_ranks, sparse_scaled);
     EXPECT_TRUE(sparse_scaled.nonzero.empty());
 }
 
@@ -165,14 +165,16 @@ TEST(ScaledRanks, SparseTies) {
     std::vector<double> out(num_markers);
     singlepp::scaled_ranks<double, int>(num_markers, ranks, out.data());
 
-    singlepp::RankedVector<double, int> sparse_ranks;
+    singlepp::RankedVector<double, int> sparse_negative_ranks, sparse_positive_ranks;
     for (const auto& r : ranks) {
-        if (r.first) {
-            sparse_ranks.push_back(r);
+        if (r.first < 0) {
+            sparse_negative_ranks.push_back(r);
+        } else if (r.first > 0) {
+            sparse_positive_ranks.push_back(r);
         }
     }
     singlepp::SparseScaled<int, double> sparse_scaled;
-    singlepp::scaled_ranks<double, int>(num_markers, sparse_ranks, 0, sparse_scaled);
+    singlepp::scaled_ranks<double, int>(num_markers, sparse_negative_ranks, sparse_positive_ranks, sparse_scaled);
 
     std::vector<double> sout(num_markers, sparse_scaled.zero);
     for (const auto& sp : sparse_scaled.nonzero) {
@@ -189,14 +191,15 @@ TEST(ScaledRanks, SparseTies) {
 TEST(ScaledRanks, SparseNoVariance) {
     singlepp::RankedVector<double, int> empty;
     singlepp::SparseScaled<int, double> scaled;
-    singlepp::scaled_ranks(10, empty, 0, scaled);
+    singlepp::scaled_ranks(10, empty, empty, scaled);
     EXPECT_EQ(scaled.zero, 0);
     EXPECT_TRUE(scaled.nonzero.empty());
 
+    singlepp::RankedVector<double, int> allones;
     for (int i = 0; i < 10; ++i) {
-        empty.emplace_back(1, i);
+        allones.emplace_back(1, i);
     }
-    singlepp::scaled_ranks(10, empty, 0, scaled);
+    singlepp::scaled_ranks(10, empty, allones, scaled);
     EXPECT_EQ(scaled.zero, 0);
     EXPECT_TRUE(scaled.nonzero.empty());
 }
