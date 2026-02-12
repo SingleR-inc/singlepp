@@ -615,7 +615,6 @@ protected:
 
 TEST_F(ClassifyIntegratedMismatchTest, Basic) {
     singlepp::TrainSingleOptions bopt;
-
     std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
     prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;

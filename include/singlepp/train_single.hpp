@@ -43,6 +43,7 @@ struct TrainSingleOptions {
 };
 
 /**
+<<<<<<< HEAD
  * @cond
  */
 template<typename Index_, typename Float_>
@@ -191,7 +192,7 @@ TrainedSingle<Index_, Float_> train_single(
 ) {
     auto subset = internal::subset_to_markers(markers, options.top);
     auto subref = build_reference<Float_>(ref, labels, subset, options.num_threads);
-    Index_ test_nrow = ref.nrow(); // remember, test and ref are assumed to have the same features.
+    const Index_ test_nrow = ref.nrow(); // remember, test and ref are assumed to have the same features.
     return TrainedSingle<Index_, Float_>(test_nrow, std::move(markers), std::move(subset), std::move(subref));
 }
 
