@@ -121,53 +121,88 @@ TEST(FineTuneSingle, Sparse) {
         subset.push_back(i * 2);
     }
 
-    // Using a very high density to avoid issues from small numerical errors
-    // when there are very few non-zero values that cause tied correlations.
-    auto new_reference = spawn_sparse_matrix(ngenes, nprofiles, /* seed = */ 300, /* density = */ 0.8);
-    auto new_built = singlepp::build_reference<double>(*new_reference, labels.data(), subset, 1);
-    singlepp::FineTuneSingle<false, false, int, int, double, double> new_ft(nmarkers, *(new_built.dense));
-    singlepp::FineTuneSingle<true, false, int, int, double, double> new_ft2(nmarkers, *(new_built.dense));
+    // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
+    {
+        auto new_reference = spawn_sparse_matrix(ngenes, nprofiles, /* seed = */ 300, /* density = */ 0.3);
+        auto new_built = singlepp::build_reference<double>(*new_reference, labels.data(), subset, 1);
+        singlepp::FineTuneSingle<false, false, int, int, double, double> new_ft(nmarkers, *(new_built.dense));
+        singlepp::FineTuneSingle<true, false, int, int, double, double> new_ft2(nmarkers, *(new_built.dense));
 
-    auto sparse_reference = tatami::convert_to_compressed_sparse<double, int>(*new_reference, true, {});
-    auto sparse_built = singlepp::build_reference<double>(*sparse_reference, labels.data(), subset, 1);
-    singlepp::FineTuneSingle<false, true, int, int, double, double> sparse_ft(nmarkers, *(sparse_built.sparse));
-    singlepp::FineTuneSingle<true, true, int, int, double, double> sparse_ft2(nmarkers, *(sparse_built.sparse));
+        auto sparse_reference = tatami::convert_to_compressed_sparse<double, int>(*new_reference, true, {});
+        auto sparse_built = singlepp::build_reference<double>(*sparse_reference, labels.data(), subset, 1);
+        singlepp::FineTuneSingle<false, true, int, int, double, double> sparse_ft(nmarkers, *(sparse_built.sparse));
 
-    const int ntest = 100; 
-    auto new_test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ 302, /* density = */ 0.2);
+        const int ntest = 100; 
+        auto new_test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ 302, /* density = */ 0.2);
 
-    auto wrk = new_test->dense_column(subset);
-    std::vector<double> buffer(nmarkers);
-    for (int t = 0; t < ntest; ++t) {
-        auto vec = wrk->fetch(t, buffer.data()); 
-        auto ranked = fill_ranks<int>(nmarkers, vec);
+        auto wrk = new_test->dense_column(subset);
+        std::vector<double> buffer(nmarkers);
+        for (int t = 0; t < ntest; ++t) {
+            auto vec = wrk->fetch(t, buffer.data()); 
+            auto ranked = fill_ranks<int>(nmarkers, vec);
 
-        std::vector<double> scores(nlabels, 0.5);
-        scores[t % nlabels] = 0; // forcing one of the labels to be zero so that it actually does the fine-tuning.
+            std::vector<double> scores(nlabels, 0.5);
+            scores[t % nlabels] = 0; // forcing one of the labels to be zero so that it actually does the fine-tuning.
 
-        auto score_copy = scores;
-        auto output = new_ft.run(ranked, *(new_built.dense), markers, score_copy, 1, 0.05);
+            auto score_copy = scores;
+            auto expected = new_ft.run(ranked, *(new_built.dense), markers, score_copy, 1, 0.05);
 
-        score_copy = scores;
-        auto sparse_output = sparse_ft.run(ranked, *(sparse_built.sparse), markers, score_copy, 1, 0.05);
-        EXPECT_EQ(output.first, sparse_output.first);
-        EXPECT_FLOAT_EQ(output.second, sparse_output.second);
+            score_copy = scores;
+            auto dense_to_sparse = sparse_ft.run(ranked, *(sparse_built.sparse), markers, score_copy, 1, 0.05);
+            EXPECT_EQ(expected.first, dense_to_sparse.first);
+            EXPECT_EQ(expected.second, dense_to_sparse.second);
 
-        singlepp::RankedVector<double, int> sparse_ranked;
-        for (auto r : ranked) {
-            if (r.first) {
-                sparse_ranked.push_back(r);
+            singlepp::RankedVector<double, int> sparse_ranked;
+            for (auto r : ranked) {
+                if (r.first) {
+                    sparse_ranked.push_back(r);
+                }
             }
+
+            score_copy = scores;
+            auto sparse_to_dense = new_ft2.run(sparse_ranked, *(new_built.dense), markers, score_copy, 1, 0.05);
+            EXPECT_EQ(expected.first, sparse_to_dense.first);
+            EXPECT_EQ(expected.second, sparse_to_dense.second);
         }
+    }
 
-        score_copy = scores;
-        auto output2 = new_ft2.run(sparse_ranked, *(new_built.dense), markers, score_copy, 1, 0.05);
-        EXPECT_EQ(output.first, output2.first);
-        EXPECT_FLOAT_EQ(output.second, output2.second);
+    // Sparse-sparse and dense-dense only compute the exact same L2 when the density is 100%.
+    // Otherwise, slight differences can cause a different score or even a different choice for best label.
+    {
+        auto new_reference = spawn_matrix(ngenes, nprofiles, /* seed = */ 301);
+        auto new_built = singlepp::build_reference<double>(*new_reference, labels.data(), subset, 1);
+        singlepp::FineTuneSingle<false, false, int, int, double, double> new_ft(nmarkers, *(new_built.dense));
 
-        score_copy = scores;
-        auto sparse_output2 = sparse_ft2.run(sparse_ranked, *(sparse_built.sparse), markers, score_copy, 1, 0.05);
-        EXPECT_EQ(output.first, sparse_output2.first);
-        EXPECT_FLOAT_EQ(output.second, sparse_output2.second);
+        auto sparse_reference = tatami::convert_to_compressed_sparse<double, int>(*new_reference, true, {});
+        auto sparse_built = singlepp::build_reference<double>(*sparse_reference, labels.data(), subset, 1);
+        singlepp::FineTuneSingle<true, true, int, int, double, double> sparse_ft2(nmarkers, *(sparse_built.sparse));
+
+        const int ntest = 100; 
+        auto new_test = spawn_matrix(ngenes, ntest, /* seed = */ 303);
+
+        auto wrk = new_test->dense_column(subset);
+        std::vector<double> buffer(nmarkers);
+        for (int t = 0; t < ntest; ++t) {
+            auto vec = wrk->fetch(t, buffer.data()); 
+            auto ranked = fill_ranks<int>(nmarkers, vec);
+
+            std::vector<double> scores(nlabels, 0.5);
+            scores[t % nlabels] = 0; // forcing one of the labels to be zero so that it actually does the fine-tuning.
+
+            auto score_copy = scores;
+            auto expected = new_ft.run(ranked, *(new_built.dense), markers, score_copy, 1, 0.05);
+
+            singlepp::RankedVector<double, int> sparse_ranked;
+            for (auto r : ranked) {
+                if (r.first) {
+                    sparse_ranked.push_back(r);
+                }
+            }
+
+            score_copy = scores;
+            auto sparse_to_sparse = sparse_ft2.run(sparse_ranked, *(sparse_built.sparse), markers, score_copy, 1, 0.05);
+            EXPECT_EQ(expected.first, sparse_to_sparse.first);
+            EXPECT_EQ(expected.second, sparse_to_sparse.second);
+        }
     }
 }
