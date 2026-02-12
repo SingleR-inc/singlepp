@@ -26,15 +26,15 @@ namespace singlepp {
  *
  * @tparam Value_ Numeric type for the matrix values.
  * @tparam Index_ Integer type for the row/column indices of the matrix.
- * @tparam RefLabel_ Integer type for the reference labels.
+ * @tparam Label_ Integer type for the reference labels.
  */
-template<typename Value_, typename Index_, typename RefLabel_>
+template<typename Value_, typename Index_, typename Label_>
 struct TrainIntegratedInput {
     /**
      * @cond
      */
     const tatami::Matrix<Value_, Index_>* ref;
-    const RefLabel_* labels;
+    const Label_* labels;
     const Markers<Index_>* ref_markers;
     const std::vector<Index_>* test_subset;
     Index_ test_nrow;
@@ -51,7 +51,7 @@ struct TrainIntegratedInput {
  *
  * @tparam Value_ Numeric type for the matrix values.
  * @tparam Index_ Integer type for the row/column indices of the matrix.
- * @tparam RefLabel_ Integer type for the reference labels.
+ * @tparam Label_ Integer type for the labels.
  * @tparam Float_ Floating-point type for the correlations and scores.
  *
  * @param ref Matrix containing the reference expression values, where rows are genes and columns are reference profiles.
@@ -62,13 +62,13 @@ struct TrainIntegratedInput {
  *
  * @return An opaque input object for `train_integrated()`.
  */
-template<typename Value_, typename Index_, typename RefLabel_, typename Float_>
-TrainIntegratedInput<Value_, Index_, RefLabel_> prepare_integrated_input(
+template<typename Value_, typename Index_, typename Label_, typename Float_>
+TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input(
     const tatami::Matrix<Value_, Index_>& ref,
-    const RefLabel_* labels, 
+    const Label_* labels, 
     const TrainedSingle<Index_, Float_>& trained
 ) {
-    TrainIntegratedInput<Value_, Index_, RefLabel_> output;
+    TrainIntegratedInput<Value_, Index_, Label_> output;
     output.ref = &ref;
     output.labels = labels;
 
@@ -86,7 +86,7 @@ TrainIntegratedInput<Value_, Index_, RefLabel_> prepare_integrated_input(
  *
  * @tparam Index_ Integer type for the row/column indices of the matrix.
  * @tparam Value_ Numeric type for the matrix values.
- * @tparam RefLabel_ Integer type for the reference labels.
+ * @tparam Label_ Integer type for the labels.
  * @tparam Float_ Floating-point type for the correlations and scores.
  *
  * @param test_nrow Number of features in the test dataset.
@@ -102,15 +102,15 @@ TrainIntegratedInput<Value_, Index_, RefLabel_> prepare_integrated_input(
  *
  * @return An opaque input object for `train_integrated()`.
  */
-template<typename Index_, typename Value_, typename RefLabel_, typename Float_>
-TrainIntegratedInput<Value_, Index_, RefLabel_> prepare_integrated_input_intersect(
+template<typename Index_, typename Value_, typename Label_, typename Float_>
+TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
     Index_ test_nrow,
     const Intersection<Index_>& intersection,
     const tatami::Matrix<Value_, Index_>& ref, 
-    const RefLabel_* labels, 
+    const Label_* labels, 
     const TrainedSingleIntersect<Index_, Float_>& trained) 
 {
-    TrainIntegratedInput<Value_, Index_, RefLabel_> output;
+    TrainIntegratedInput<Value_, Index_, Label_> output;
     output.ref = &ref;
     output.labels = labels;
 
@@ -130,7 +130,7 @@ TrainIntegratedInput<Value_, Index_, RefLabel_> prepare_integrated_input_interse
  * @tparam Index_ Integer type for the row/column indices of the matrix.
  * @tparam Id_ Type of the gene identifier. 
  * @tparam Value_ Numeric type for the matrix values.
- * @tparam RefLabel_ Integer type for the reference labels.
+ * @tparam Label_ Integer type for the labels.
  * @tparam Float_ Floating-point type for the correlations and scores.
  *
  * @param test_nrow Number of rows (i.e., genes) in the test dataset.
@@ -148,16 +148,16 @@ TrainIntegratedInput<Value_, Index_, RefLabel_> prepare_integrated_input_interse
  *
  * @return An opaque input object for `train_integrated()`.
  */
-template<typename Index_, typename Id_, typename Value_, typename RefLabel_, typename Float_>
-TrainIntegratedInput<Value_, Index_, RefLabel_> prepare_integrated_input_intersect(
+template<typename Index_, typename Id_, typename Value_, typename Label_, typename Float_>
+TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
     Index_ test_nrow,
     const Id_* test_id, 
     const tatami::Matrix<Value_, Index_>& ref, 
     const Id_* ref_id, 
-    const RefLabel_* labels,
+    const Label_* labels,
     const TrainedSingleIntersect<Index_, Float_>& trained
 ) {
-    TrainIntegratedInput<Value_, Index_, RefLabel_> output;
+    TrainIntegratedInput<Value_, Index_, Label_> output;
     output.ref = &ref;
     output.labels = labels;
 
@@ -262,9 +262,9 @@ struct TrainIntegratedOptions {
 /**
  * @cond
  */
-template<bool ref_sparse_, typename Value_, typename Index_, typename RefLabel_>
+template<bool ref_sparse_, typename Value_, typename Index_, typename Label_>
 void train_integrated_per_reference_simple(
-    const TrainIntegratedInput<Value_, RefLabel_, Index_>& input,
+    const TrainIntegratedInput<Value_, Label_, Index_>& input,
     const std::vector<Index_>& universe,
     const std::vector<Index_>& remap_test_to_universe,
     const TrainIntegratedOptions& options,
@@ -300,7 +300,9 @@ void train_integrated_per_reference_simple(
             if constexpr(ref_sparse_) {
                 auto info = ext->fetch(vbuffer.data(), ibuffer.data());
                 for (I<decltype(info.number)> i = 0; i < info.number; ++i) {
-                    tmp_ranked.emplace_back(info.value[i], remap_test_to_universe[info.index[i]]);
+                    const auto remapped = remap_test_to_universe[info.index[i]];
+                    assert(sanisizer::is_less_than(remapped, num_universe));
+                    tmp_ranked.emplace_back(info.value[i], remapped);
                 }
             } else {
                 auto ptr = ext->fetch(vbuffer.data());
@@ -323,9 +325,9 @@ void train_integrated_per_reference_simple(
     }, NC, options.num_threads);
 }
 
-template<bool ref_sparse_, typename Value_, typename Index_, typename RefLabel_>
+template<bool ref_sparse_, typename Value_, typename Index_, typename Label_>
 void train_integrated_per_reference_intersect(
-    const TrainIntegratedInput<Value_, RefLabel_, Index_>& input,
+    const TrainIntegratedInput<Value_, Label_, Index_>& input,
     const std::vector<Index_>& remap_test_to_universe,
     const Index_ test_nrow,
     const TrainIntegratedOptions& options,
@@ -407,15 +409,15 @@ void train_integrated_per_reference_intersect(
 /**
  * @tparam Value_ Numeric type for the matrix values.
  * @tparam Index_ Integer type for the row/column indices of the matrix.
- * @tparam RefLabel_ Integer type for the reference labels.
+ * @tparam Label_ Integer type for the labels.
  *
  * @param inputs Vector of references, typically constructed with `prepare_integrated_input()` or `prepare_integrated_input_intersect()`.
  * @param options Further options.
  *
  * @return A pre-built classifier that integrates multiple references, for use in `classify_integrated()`.
  */
-template<typename Value_, typename Index_, typename RefLabel_>
-TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInput<Value_, Index_, RefLabel_> >& inputs, const TrainIntegratedOptions& options) {
+template<typename Value_, typename Index_, typename Label_>
+TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInput<Value_, Index_, Label_> >& inputs, const TrainIntegratedOptions& options) {
     TrainedIntegrated<Index_> output;
     const auto nrefs = inputs.size();
     sanisizer::resize(output.references, nrefs);
@@ -573,6 +575,7 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
 
                 curlabout.negative_ranked.reserve(num_neg);
                 curlabout.negative_indptrs.reserve(sanisizer::sum<I<decltype(curlabout.negative_indptrs.size())> >(num_samples, 1));
+                curlabout.negative_indptrs.push_back(0);
                 for (const auto& x : negative_ranked[l]) {
                     curlabout.negative_ranked.insert(curlabout.negative_ranked.end(), x.begin(), x.end());
                     curlabout.negative_indptrs.push_back(curlabout.negative_ranked.size());
@@ -580,6 +583,7 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
 
                 curlabout.positive_ranked.reserve(num_pos);
                 curlabout.positive_indptrs.reserve(sanisizer::sum<I<decltype(curlabout.positive_indptrs.size())> >(num_samples, 1));
+                curlabout.positive_indptrs.push_back(0);
                 for (const auto& x : positive_ranked[l]) {
                     curlabout.positive_ranked.insert(curlabout.positive_ranked.end(), x.begin(), x.end());
                     curlabout.positive_indptrs.push_back(curlabout.positive_ranked.size());

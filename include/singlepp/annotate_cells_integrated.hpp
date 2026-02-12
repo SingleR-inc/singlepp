@@ -49,8 +49,20 @@ void annotate_cells_integrated_raw(
         }
     }
 
+    const auto num_universe = trained.universe.size();
+    auto remap_test_to_universe = [&]() {
+        if constexpr(query_sparse_) {
+            auto remapping = sanisizer::create<std::vector<Index_> >(NR);
+            for (I<decltype(num_universe)> u = 0; u < num_universe; ++u) {
+                remapping[trained.universe[u]] = u;
+            }
+            return remapping;
+        } else {
+            return false;
+        }
+    }();
+
     tatami::parallelize([&](int, Index_ start, Index_ len) {
-        const auto num_universe = trained.universe.size();
         SubsetRemapper<Index_> remapper(num_universe);
 
         RankedVector<Value_, Index_> test_ranked_full, test_ranked_sub;
@@ -112,7 +124,7 @@ void annotate_cells_integrated_raw(
             if constexpr(query_sparse_) {
                 auto info = mat_work->fetch(vbuffer.data(), ibuffer.data());
                 for (I<decltype(info.number)> i = 0; i < info.number; ++i) {
-                    test_ranked_full.emplace_back(info.value[i], info.index[i]);
+                    test_ranked_full.emplace_back(info.value[i], remap_test_to_universe[info.index[i]]);
                 }
             } else {
                 auto ptr = mat_work->fetch(vbuffer.data());
@@ -126,7 +138,11 @@ void annotate_cells_integrated_raw(
             std::iota(reflabels_in_use.begin(), reflabels_in_use.end(), static_cast<RefLabel_>(0));
             std::pair<Label_, Float_> candidate{ 0, 1.0 };
 
-            while (reflabels_in_use.size() >= 1) { // >= 1 so we still compute something when there's only one reference.
+            // For completeness, we want to compute the scores even if there is only one reference,
+            // so we ask for a single iteration of the fine-tuning loop.
+            bool first_iteration = true;
+
+            while (reflabels_in_use.size() > 1 || first_iteration) {
                 remapper.clear();
                 for (const auto r : reflabels_in_use) {
                     const auto curassigned = assigned[r][i];
@@ -209,9 +225,11 @@ void annotate_cells_integrated_raw(
                 for (I<decltype(nref)> r = 0; r < nref; ++r) {
                     scores[r][i] = all_scores[r];
                 }
+
                 if (!fine_tune || reflabels_in_use.size() == all_scores.size()) {
                     break;
                 }
+                first_iteration = false;
             }
 
             best[i] = candidate.first;
