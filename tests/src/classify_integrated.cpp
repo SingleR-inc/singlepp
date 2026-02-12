@@ -451,17 +451,20 @@ protected:
 
 protected:
     static void SetUpTestSuite() {
+        // Using a very high density to avoid issues from small numerical errors
+        // when there are very few non-zero values that cause tied correlations.
+
         for (size_t r = 0; r < nrefs; ++r) {
             size_t seed = r * 1000;
             size_t nlabels = 3 + r;
 
-            dense_references.push_back(spawn_sparse_matrix(ngenes, nsamples, seed, /* density = */ 0.2));
+            dense_references.push_back(spawn_sparse_matrix(ngenes, nsamples, seed, /* density = */ 0.5));
             sparse_references.push_back(tatami::convert_to_compressed_sparse<double, int>(*(dense_references.back()), true, {}));
             labels.push_back(spawn_labels(nsamples, nlabels, seed * 2));
             markers.push_back(mock_markers<int>(nlabels, 50, ngenes, seed * 3));
         }
 
-        dense_test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ 69, /* density = */ 0.24);
+        dense_test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ 69, /* density = */ 0.5);
         sparse_test = tatami::convert_to_compressed_sparse<double, int>(*dense_test, true, {});
     }
 };
@@ -514,16 +517,16 @@ TEST_P(ClassifyIntegratedSparseTest, Basic) {
     EXPECT_EQ(output.best, sparse_output2.best);
 
     for (std::size_t t = 0; t < ntest; ++t) {
-        EXPECT_LT(std::abs(output.delta[t] - sparse_output.delta[t]), 1e-8);
-        EXPECT_LT(std::abs(output.delta[t] - output2.delta[t]), 1e-8);
-        EXPECT_LT(std::abs(output.delta[t] - sparse_output2.delta[t]), 1e-8);
+        EXPECT_FLOAT_EQ(output.delta[t], sparse_output.delta[t]); 
+        EXPECT_FLOAT_EQ(output.delta[t], output2.delta[t]);
+        EXPECT_FLOAT_EQ(output.delta[t], sparse_output2.delta[t]);
     }
 
     for (std::size_t l = 0; l < nrefs; ++l) {
         for (std::size_t t = 0; t < ntest; ++t) {
-            EXPECT_LT(std::abs(output.scores[l][t] - sparse_output.scores[l][t]), 1e-8);
-            EXPECT_LT(std::abs(output.scores[l][t] - output2.scores[l][t]), 1e-8);
-            EXPECT_LT(std::abs(output.scores[l][t] - sparse_output2.scores[l][t]), 1e-8);
+            EXPECT_FLOAT_EQ(output.scores[l][t], sparse_output.scores[l][t]); 
+            EXPECT_FLOAT_EQ(output.scores[l][t], output2.scores[l][t]);
+            EXPECT_FLOAT_EQ(output.scores[l][t], sparse_output2.scores[l][t]);
         }
     }
 }
@@ -581,16 +584,16 @@ TEST_P(ClassifyIntegratedSparseTest, Intersect) {
     EXPECT_EQ(output.best, sparse_output2.best);
 
     for (std::size_t t = 0; t < ntest; ++t) {
-        EXPECT_LT(std::abs(output.delta[t] - sparse_output.delta[t]), 1e-8);
-        EXPECT_LT(std::abs(output.delta[t] - output2.delta[t]), 1e-8);
-        EXPECT_LT(std::abs(output.delta[t] - sparse_output2.delta[t]), 1e-8);
+        EXPECT_FLOAT_EQ(output.delta[t], sparse_output.delta[t]); 
+        EXPECT_FLOAT_EQ(output.delta[t], output2.delta[t]);
+        EXPECT_FLOAT_EQ(output.delta[t], sparse_output2.delta[t]);
     }
 
     for (std::size_t l = 0; l < nrefs; ++l) {
         for (std::size_t t = 0; t < ntest; ++t) {
-            EXPECT_LT(std::abs(output.scores[l][t] - sparse_output.scores[l][t]), 1e-8);
-            EXPECT_LT(std::abs(output.scores[l][t] - output2.scores[l][t]), 1e-8);
-            EXPECT_LT(std::abs(output.scores[l][t] - sparse_output2.scores[l][t]), 1e-8);
+            EXPECT_FLOAT_EQ(output.scores[l][t], sparse_output.scores[l][t]); 
+            EXPECT_FLOAT_EQ(output.scores[l][t], output2.scores[l][t]);
+            EXPECT_FLOAT_EQ(output.scores[l][t], sparse_output2.scores[l][t]);
         }
     }
 }

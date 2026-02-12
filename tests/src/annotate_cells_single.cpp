@@ -121,7 +121,9 @@ TEST(FineTuneSingle, Sparse) {
         subset.push_back(i * 2);
     }
 
-    auto new_reference = spawn_sparse_matrix(ngenes, nprofiles, /* seed = */ 300, /* density = */ 0.2);
+    // Using a very high density to avoid issues from small numerical errors
+    // when there are very few non-zero values that cause tied correlations.
+    auto new_reference = spawn_sparse_matrix(ngenes, nprofiles, /* seed = */ 300, /* density = */ 0.8);
     auto new_built = singlepp::build_reference<double>(*new_reference, labels.data(), subset, 1);
     singlepp::FineTuneSingle<false, false, int, int, double, double> new_ft(nmarkers, *(new_built.dense));
     singlepp::FineTuneSingle<true, false, int, int, double, double> new_ft2(nmarkers, *(new_built.dense));
