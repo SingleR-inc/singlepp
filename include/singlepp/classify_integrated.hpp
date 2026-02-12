@@ -10,8 +10,7 @@
 
 #include <vector>
 #include <cstddef>
-#include <unordered_map>
-#include <unordered_set>
+#include <algorithm>
 
 /**
  * @file classify_integrated.hpp
@@ -131,10 +130,10 @@ void classify_integrated(
     ClassifyIntegratedBuffers<RefLabel_, Float_>& buffers,
     const ClassifyIntegratedOptions<Float_>& options)
 {
-    if (trained.test_nrow != static_cast<Index_>(-1) && trained.test_nrow != test.nrow()) {
+    if (!sanisizer::is_equal(trained.test_nrow, test.nrow())) {
         throw std::runtime_error("number of rows in 'test' is not the same as that used to build 'trained'");
     }
-    internal::annotate_cells_integrated(
+    annotate_cells_integrated(
         test,
         trained,
         assigned,

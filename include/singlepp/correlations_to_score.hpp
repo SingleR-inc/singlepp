@@ -8,7 +8,10 @@
 
 namespace singlepp {
 
-namespace internal {
+template<typename Float_>
+Float_ l2_to_correlation(const Float_ l2) {
+    return 1 - 2 * l2;
+}
 
 template<typename Float_>
 Float_ correlations_to_score(std::vector<Float_>& correlations, Float_ quantile) {
@@ -48,21 +51,6 @@ Float_ correlations_to_score(std::vector<Float_>& correlations, Float_ quantile)
     const Float_ rightweight = prod - left;
 
     return rightval * rightweight + leftval * leftweight;
-}
-
-template<typename Float_, typename Stat_>
-Float_ distance_to_correlation(const std::vector<Stat_>& p1, const std::vector<Stat_>& p2) {
-    static_assert(std::is_floating_point<Float_>::value);
-    auto n = p1.size();
-
-    Float_ d2 = 0;
-    for (decltype(n) i = 0; i < n; ++i) {
-        auto tmp = static_cast<Float_>(p1[i]) - static_cast<Float_>(p2[i]);
-        d2 += tmp * tmp;
-    }
-    return 1 - 2 * d2;
-}
-
 }
 
 }

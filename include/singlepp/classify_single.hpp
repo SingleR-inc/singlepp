@@ -138,10 +138,10 @@ void classify_single(
     if (trained.get_test_nrow() != test.nrow()) {
         throw std::runtime_error("number of rows in 'test' is not the same as that used to build 'trained'");
     }
-    internal::annotate_cells_single(
+    annotate_cells_single(
         test, 
         trained.get_subset(),
-        trained.get_references(), 
+        trained.get_built(), 
         trained.get_markers(), 
         options.quantile, 
         options.fine_tune, 
@@ -179,10 +179,10 @@ void classify_single_intersect(
     if (trained.get_test_nrow() != static_cast<Index_>(-1) && trained.get_test_nrow() != test.nrow()) {
         throw std::runtime_error("number of rows in 'test' is not the same as that used to build 'trained'");
     }
-    internal::annotate_cells_single(
+    annotate_cells_single(
         test, 
         trained.get_test_subset(),
-        trained.get_references(), 
+        trained.get_built(), 
         trained.get_markers(), 
         options.quantile, 
         options.fine_tune, 
@@ -277,7 +277,7 @@ ClassifySingleResults<Label_, Float_> classify_single(
     const TrainedSingle<Index_, Float_>& trained,
     const ClassifySingleOptions<Float_>& options) 
 {
-    ClassifySingleResults<Label_, Float_> output(test.ncol(), trained.get_references().size());
+    ClassifySingleResults<Label_, Float_> output(test.ncol(), trained.num_labels());
     auto buffers = internal::results_to_buffers(output);
     classify_single(test, trained, buffers, options);
     return output;
@@ -304,7 +304,7 @@ ClassifySingleResults<Label_, Float_> classify_single_intersect(
     const TrainedSingleIntersect<Index_, Float_>& trained,
     const ClassifySingleOptions<Float_>& options) 
 {
-    ClassifySingleResults<Label_, Float_> output(test.ncol(), trained.get_references().size());
+    ClassifySingleResults<Label_, Float_> output(test.ncol(), trained.num_labels());
     auto buffers = internal::results_to_buffers(output);
     classify_single_intersect(test, trained, buffers, options);
     return output;

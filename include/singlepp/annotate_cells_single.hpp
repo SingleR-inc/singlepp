@@ -4,54 +4,80 @@
 #include "defs.hpp"
 
 #include "tatami/tatami.hpp"
+#include "sanisizer/sanisizer.hpp"
 
 #include "Markers.hpp"
-#include "build_indices.hpp"
+#include "build_reference.hpp"
 #include "SubsetSanitizer.hpp"
 #include "SubsetRemapper.hpp"
 #include "find_best_and_delta.hpp"
 #include "scaled_ranks.hpp"
 #include "correlations_to_score.hpp"
 #include "fill_labels_in_use.hpp"
+#include "utils.hpp"
 
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <cassert>
+#include <type_traits>
 
 namespace singlepp {
 
-namespace internal {
-
-template<typename Label_, typename Index_, typename Float_, typename Value_>
+template<bool query_sparse_, bool ref_sparse_, typename Label_, typename Index_, typename Float_, typename Value_>
 class FineTuneSingle {
 private:
     std::vector<Label_> my_labels_in_use;
 
     SubsetRemapper<Index_> my_gene_subset;
 
-    std::vector<Float_> my_scaled_left, my_scaled_right;
+    typename std::conditional<query_sparse_, SparseScaled<Index_, Float_>, std::vector<Float_> >::type my_scaled_query;
+    typename std::conditional<ref_sparse_, SparseScaled<Index_, Float_>, std::vector<Float_> >::type my_scaled_ref;
+
+    RankedVector<Value_, Index_> my_subset_query;
+    RankedVector<Index_, Index_> my_subset_ref;
+    typename std::conditional<ref_sparse_, RankedVector<Index_, Index_>, bool>::type my_subset_ref_alt;
 
     std::vector<Float_> my_all_correlations;
 
-    RankedVector<Value_, Index_> my_input_sub;
+public:
+    typedef typename std::conditional<ref_sparse_, SparsePerLabel<Index_, Float_>, DensePerLabel<Index_, Float_> >::type PerLabel;
 
-    RankedVector<Index_, Index_> my_ref_sub;
+    FineTuneSingle(const Index_ full_num_markers, const std::vector<PerLabel>& ref) : my_gene_subset(full_num_markers) {
+        sanisizer::reserve(my_labels_in_use, ref.size());
+
+        sanisizer::reserve(my_subset_query, full_num_markers); 
+        if constexpr(query_sparse_) {
+            sanisizer::reserve(my_scaled_query.nonzero, full_num_markers);
+        } else {
+            sanisizer::reserve(my_scaled_query, full_num_markers);
+        }
+
+        sanisizer::reserve(my_subset_ref, full_num_markers); 
+        if constexpr(ref_sparse_) {
+            sanisizer::reserve(my_subset_ref_alt, full_num_markers); 
+            sanisizer::reserve(my_scaled_ref.nonzero, full_num_markers);
+        } else {
+            sanisizer::reserve(my_scaled_ref, full_num_markers);
+        }
+
+        I<decltype(get_num_samples(ref.front()))> max_labels = 0;
+        for (const auto& curref : ref) {
+            max_labels = std::max(max_labels, get_num_samples(curref));
+        }
+        sanisizer::reserve(my_all_correlations, max_labels);
+    }
 
 public:
     std::pair<Label_, Float_> run(
         const RankedVector<Value_, Index_>& input, 
-        const std::vector<PerLabelReference<Index_, Float_> >& ref,
+        const std::vector<PerLabel>& ref,
         const Markers<Index_>& markers,
         std::vector<Float_>& scores,
         Float_ quantile,
-        Float_ threshold)
-    {
+        Float_ threshold
+    ) {
         auto candidate = fill_labels_in_use(scores, threshold, my_labels_in_use);
-
-        // Use the input_size as a hint for the number of addressable genes.
-        // This should be exact if subset_to_markers() was used on the input,
-        // but the rest of the code is safe even if the hint isn't perfect.
-        my_gene_subset.reserve(input.size());
 
         // If there's only one top label, we don't need to do anything else.
         // We also give up if every label is in range, because any subsequent
@@ -65,15 +91,26 @@ public:
                     }
                 }
             }
+            my_gene_subset.remap(input, my_subset_query);
+            const auto current_num_markers = my_gene_subset.size();
 
-            my_gene_subset.remap(input, my_input_sub);
-            my_scaled_left.resize(my_input_sub.size());
-            my_scaled_right.resize(my_input_sub.size());
-            scaled_ranks(my_input_sub, my_scaled_left.data());
+            if constexpr(query_sparse_) {
+                const auto substart = my_subset_query.begin();
+                const auto subend = my_subset_query.end();
+                auto zero_ranges = find_zero_ranges<Value_, Index_>(substart, subend);
+                scaled_ranks<Value_, Index_, Float_>(current_num_markers, substart, zero_ranges.first, zero_ranges.second, subend, my_scaled_query);
+            } else {
+                my_scaled_query.resize(current_num_markers);
+                scaled_ranks(current_num_markers, my_subset_query, my_scaled_query);
+            }
+
+            if constexpr(!ref_sparse_) {
+                my_scaled_ref.resize(current_num_markers);
+            }
+
             scores.clear();
-
             auto nlabels_used = my_labels_in_use.size();
-            for (decltype(nlabels_used) i = 0; i < nlabels_used; ++i) {
+            for (I<decltype(nlabels_used)> i = 0; i < nlabels_used; ++i) {
                 auto curlab = my_labels_in_use[i];
 
                 my_all_correlations.clear();
@@ -85,14 +122,28 @@ public:
                     // subset from the previous fine-tuning iteration, but this
                     // requires us to (possibly) make a copy of the entire
                     // reference set; we can't afford to do this in each thread.
-                    my_gene_subset.remap(curref.ranked[c], my_ref_sub);
-                    scaled_ranks(my_ref_sub, my_scaled_right.data());
 
-                    Float_ cor = distance_to_correlation<Float_>(my_scaled_left, my_scaled_right);
+                    if constexpr(ref_sparse_) {
+                        const auto nStart = curref.negative_ranked.begin();
+                        my_gene_subset.remap(nStart + curref.negative_indptrs[c], nStart + curref.negative_indptrs[c + 1], my_subset_ref);
+                        const auto pStart = curref.positive_ranked.begin();
+                        my_gene_subset.remap(pStart + curref.positive_indptrs[c], pStart + curref.positive_indptrs[c + 1], my_subset_ref_alt);
+                        scaled_ranks(current_num_markers, my_subset_ref, my_subset_ref_alt, my_scaled_ref);
+
+                    } else {
+                        const auto full_num_markers = my_gene_subset.capacity();
+                        const auto refstart = curref.all_ranked.begin() + sanisizer::product_unsafe<std::size_t>(full_num_markers, c);
+                        const auto refend = refstart + full_num_markers;
+                        my_gene_subset.remap(refstart, refend, my_subset_ref);
+                        scaled_ranks(current_num_markers, my_subset_ref, my_scaled_ref);
+                    }
+
+                    const Float_ l2 = compute_l2(current_num_markers, my_scaled_query, my_scaled_ref);
+                    const Float_ cor = l2_to_correlation(l2);
                     my_all_correlations.push_back(cor);
                 }
 
-                Float_ score = correlations_to_score(my_all_correlations, quantile);
+                const Float_ score = correlations_to_score(my_all_correlations, quantile);
                 scores.push_back(score);
             }
 
@@ -103,11 +154,24 @@ public:
     }
 };
 
-template<typename Value_, typename Index_, typename Float_, typename Label_>
-void annotate_cells_single(
+template<bool ref_sparse_, typename Index_, typename Float_>
+const auto& get_per_label_references(const BuiltReference<Index_, Float_>& built) {
+    if constexpr(ref_sparse_) {
+        assert(built.sparse.has_value());
+        assert(!built.dense.has_value());
+        return *(built.sparse);
+    } else {
+        assert(!built.sparse.has_value());
+        assert(built.dense.has_value());
+        return *(built.dense);
+    }
+}
+
+template<bool query_sparse_, bool ref_sparse_, typename Value_, typename Index_, typename Float_, typename Label_>
+void annotate_cells_single_raw(
     const tatami::Matrix<Value_, Index_>& test,
-    const std::vector<Index_> subset,
-    const std::vector<PerLabelReference<Index_, Float_> >& ref,
+    const std::vector<Index_>& subset,
+    const BuiltReference<Index_, Float_>& built,
     const Markers<Index_>& markers,
     Float_ quantile,
     bool fine_tune,
@@ -115,14 +179,18 @@ void annotate_cells_single(
     Label_* best, 
     const std::vector<Float_*>& scores,
     Float_* delta,
-    int num_threads)
-{
+    int num_threads
+) {
+    assert(sanisizer::is_equal(built.num_markers, subset.size()));
+    const auto num_markers = built.num_markers;
+    const auto& ref = get_per_label_references<ref_sparse_>(built);
+
     // Figuring out how many neighbors to keep and how to compute the quantiles.
-    auto num_labels = ref.size();
+    const auto num_labels = ref.size();
     std::vector<Index_> search_k(num_labels);
     std::vector<std::pair<Float_, Float_> > coeffs(num_labels);
 
-    for (decltype(num_labels) r = 0; r < num_labels; ++r) {
+    for (I<decltype(num_labels)> r = 0; r < num_labels; ++r) {
         const Float_ denom = get_num_samples(ref[r]) - 1;
         const Float_  prod = denom * (1 - quantile);
         auto k = std::ceil(prod) + 1;
@@ -137,35 +205,60 @@ void annotate_cells_single(
         coeffs[r].second = prod - static_cast<Float_>(k - 2);
     }
 
-    SubsetSanitizer<Index_> subsorted(subset);
+    SubsetSanitizer<query_sparse_, Index_> subsorted(subset);
     tatami::VectorPtr<Index_> subset_ptr(tatami::VectorPtr<Index_>{}, &(subsorted.extraction_subset()));
 
     tatami::parallelize([&](int, Index_ start, Index_ length) {
-        auto ext = tatami::consecutive_extractor<false>(&test, false, start, length, subset_ptr);
+        auto ext = tatami::consecutive_extractor<query_sparse_>(&test, false, start, length, subset_ptr);
 
-        auto num_subset = subset.size();
-        std::vector<Value_> buffer(num_subset);
+        auto vbuffer = sanisizer::create<std::vector<Value_> >(num_markers);
+        auto ibuffer = [&](){
+            if constexpr(query_sparse_) {
+                return sanisizer::create<std::vector<Index_> >(num_markers);
+            } else {
+                return false;
+            }
+        }();
+
         RankedVector<Value_, Index_> vec;
-        vec.reserve(num_subset);
+        vec.reserve(num_markers);
 
-        std::vector<FindClosestWorkspace<Index_, Float_> > workspaces;
+        std::vector<FindClosestNeighborsWorkspace<query_sparse_, ref_sparse_, Index_, Float_> > workspaces;
         workspaces.reserve(num_labels);
         for (I<decltype(num_labels)> r = 0; r < num_labels; ++r) {
-            workspaces.emplace_back(get_num_samples(ref[r]));
+            workspaces.emplace_back(num_markers, get_num_samples(ref[r]));
         }
 
-        FineTuneSingle<Label_, Index_, Float_, Value_> ft;
+        auto query_scaled = [&](){
+            if constexpr(query_sparse_) {
+                SparseScaled<Index_, Float_> output;
+                sanisizer::reserve(output.nonzero, num_markers);
+                return output;
+            } else {
+                return sanisizer::create<std::vector<Float_> >(num_markers);
+            }
+        }();
+
+        FineTuneSingle<query_sparse_, ref_sparse_, Label_, Index_, Float_, Value_> ft(num_markers, ref);
         std::vector<Float_> curscores(num_labels);
 
         for (Index_ c = start, end = start + length; c < end; ++c) {
-            auto ptr = ext->fetch(buffer.data());
-            subsorted.fill_ranks(ptr, vec);
-            scaled_ranks(vec, buffer.data()); // 'buffer' can be re-used for output here, as all data is already extracted to 'vec'.
+            if constexpr(query_sparse_) {
+                auto info = ext->fetch(vbuffer.data(), ibuffer.data());
+                subsorted.fill_ranks(info, vec);
+                const auto vStart = vec.begin(), vEnd = vec.end();
+                auto zero_ranges = find_zero_ranges<Value_, Index_>(vStart, vEnd);
+                scaled_ranks<Value_, Index_, Float_>(num_markers, vStart, zero_ranges.first, zero_ranges.second, vEnd, query_scaled);
+            } else {
+                auto info = ext->fetch(vbuffer.data());
+                subsorted.fill_ranks(info, vec);
+                scaled_ranks(num_markers, vec, query_scaled);
+            }
 
             curscores.resize(num_labels);
-            for (decltype(num_labels) r = 0; r < num_labels; ++r) {
+            for (I<decltype(num_labels)> r = 0; r < num_labels; ++r) {
                 const auto k = search_k[r];
-                find_closest(buffer.data(), k, ref[r], workspaces[r]);
+                find_closest_neighbors<query_sparse_, ref_sparse_>(num_markers, query_scaled, k, ref[r], workspaces[r]);
 
                 const Float_ last_squared = pop_furthest_neighbor(workspaces[r]).first;
                 const Float_ last = 1 - 2 * last_squared;
@@ -188,6 +281,7 @@ void annotate_cells_single(
             } else {
                 chosen = ft.run(vec, ref, markers, curscores, quantile, threshold);
             }
+
             best[c] = chosen.first;
             if (delta) {
                 delta[c] = chosen.second;
@@ -198,6 +292,34 @@ void annotate_cells_single(
     return;
 }
 
+template<typename Value_, typename Index_, typename Float_, typename Label_>
+void annotate_cells_single(
+    const tatami::Matrix<Value_, Index_>& test,
+    const std::vector<Index_>& subset,
+    const BuiltReference<Index_, Float_>& ref,
+    const Markers<Index_>& markers,
+    Float_ quantile,
+    bool fine_tune,
+    Float_ threshold,
+    Label_* best, 
+    const std::vector<Float_*>& scores,
+    Float_* delta,
+    int num_threads
+) {
+    const auto ref_sparse = ref.sparse.has_value();
+    if (test.is_sparse()) {
+        if (ref_sparse) {
+            annotate_cells_single_raw<true, true>(test, subset, ref, markers, quantile, fine_tune, threshold, best, scores, delta, num_threads);
+        } else {
+            annotate_cells_single_raw<true, false>(test, subset, ref, markers, quantile, fine_tune, threshold, best, scores, delta, num_threads);
+        }
+    } else {
+        if (ref_sparse) {
+            annotate_cells_single_raw<false, true>(test, subset, ref, markers, quantile, fine_tune, threshold, best, scores, delta, num_threads);
+        } else {
+            annotate_cells_single_raw<false, false>(test, subset, ref, markers, quantile, fine_tune, threshold, best, scores, delta, num_threads);
+        }
+    }
 }
 
 }

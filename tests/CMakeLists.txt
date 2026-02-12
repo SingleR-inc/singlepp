@@ -25,9 +25,10 @@ add_executable(
     src/Intersection.cpp
     src/subset_to_markers.cpp
     src/SubsetSanitizer.cpp
+    src/build_reference.cpp
     src/fill_labels_in_use.cpp
     src/annotate_cells_single.cpp
-    src/annotate_cells_integrated.cpp
+#    src/annotate_cells_integrated.cpp
     src/classify_integrated.cpp
 )
 

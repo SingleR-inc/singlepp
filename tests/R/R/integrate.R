@@ -1,14 +1,25 @@
 #' @export
-naive_integrate <- function(test, results, refs, labels, markers, quantile = 0.8, fine.tune = TRUE, tune.thresh = 0.05) {
+naive_integrate <- function(test, results, refs, labels, markers, quantile = 0.8, fine.tune = TRUE, tune.thresh = 0.05, check.rownames=FALSE) {
     scores <- matrix(0, ncol(test), length(results))
     best <- integer(ncol(test))
     delta <- numeric(ncol(test))
+
+    if (check.rownames) {
+        global.universe <- Reduce(intersect, lapply(refs, rownames))
+    } else {
+        stopifnot(all(nrow(test) == vapply(refs, nrow, FUN.VALUE=0L)))
+    }
 
     for (i in seq_len(ncol(test))) {
         cur.markers <- vector("list", length(refs))
         for (r in seq_along(refs)) {
             curbest <- results[[r]][i]
-            cur.markers[[r]] <- sort(unique(unlist(markers[[r]][[curbest]])))
+            label.markers <- sort(unique(unlist(markers[[r]][[curbest]])))
+            if (check.rownames) {
+                cur.markers[[r]] <- intersect(global.universe, label.markers)
+            } else {
+                cur.markers[[r]] <- label.markers
+            }
         }
 
         common <- sort(unique(unlist(cur.markers)))
@@ -33,13 +44,8 @@ naive_integrate <- function(test, results, refs, labels, markers, quantile = 0.8
             tuned <- which(collected >= max(collected) - tune.thresh)
 
             while (length(tuned) > 1 && length(tuned) < length(collected)) {
-                cur.markers <- vector("list", length(tuned))
-                for (r in tuned) {
-                    curbest <- results[[r]][i]
-                    cur.markers[[r]] <- sort(unique(unlist(markers[[r]][[curbest]])))
-                }
-
-                common <- sort(unique(unlist(cur.markers)))
+                tune.markers <- cur.markers[tuned]
+                common <- sort(unique(unlist(tune.markers)))
                 curtest <- superslice(test, common, i, drop=TRUE)
                 collected <- numeric(length(tuned))
 

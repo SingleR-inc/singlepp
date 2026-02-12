@@ -71,6 +71,70 @@ TEST_P(ClassifySingleSimpleTest, Simple) {
     }
 }
 
+TEST_P(ClassifySingleSimpleTest, Sparse) {
+    auto param = GetParam();
+    int top = std::get<0>(param);
+    double quantile = std::get<1>(param);
+
+    size_t ngenes = 250;
+    size_t nlabels = 4;
+    auto markers = mock_markers<int>(nlabels, 50, ngenes, /* seed = */ 69 * quantile + top); 
+
+    // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
+    {
+        int ntest = 11;
+        auto test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ 42 * quantile + top, /* density = */ 0.24);
+        auto stest = tatami::convert_to_compressed_sparse<double, int>(*test, true, {});
+     
+        size_t nrefs = 31;
+        auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 1000 * quantile + top);
+        auto refs = spawn_sparse_matrix(ngenes, nrefs, /* seed = */ 100 * quantile + top, /* density = */ 0.26);
+        auto srefs = tatami::convert_to_compressed_sparse<double, int>(*refs, true, {});
+
+        auto trained = singlepp::train_single(*refs, labels.data(), markers, {});
+        auto expected = singlepp::classify_single<int>(*test, trained, {});
+
+        auto sparse_to_dense = singlepp::classify_single<int>(*stest, trained, {});
+        EXPECT_EQ(expected.best, sparse_to_dense.best);
+        EXPECT_EQ(expected.delta, sparse_to_dense.delta);
+        for (size_t l = 0; l < nlabels; ++l) {
+            EXPECT_EQ(expected.scores[l], sparse_to_dense.scores[l]);
+        }
+
+        auto sparse_trained = singlepp::train_single(*srefs, labels.data(), markers, {});
+        auto dense_to_sparse = singlepp::classify_single<int>(*test, sparse_trained, {});
+        EXPECT_EQ(expected.best, dense_to_sparse.best);
+        EXPECT_EQ(expected.delta, dense_to_sparse.delta);
+        for (size_t l = 0; l < nlabels; ++l) {
+            EXPECT_EQ(expected.scores[l], dense_to_sparse.scores[l]);
+        }
+    }
+
+    // Sparse-sparse and dense-dense only compute the exact same L2 when the density is 100%.
+    // Otherwise, slight differences can cause a different score or even a different choice for best label.
+    {
+        int ntest = 13;
+        auto test = spawn_matrix(ngenes, ntest, /* seed = */ 42 * quantile + top);
+        auto stest = tatami::convert_to_compressed_sparse<double, int>(*test, true, {});
+
+        size_t nrefs = 31;
+        auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 1000 * quantile + top);
+        auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 100 * quantile + top);
+        auto srefs = tatami::convert_to_compressed_sparse<double, int>(*refs, true, {});
+
+        auto trained = singlepp::train_single(*refs, labels.data(), markers, {});
+        auto expected = singlepp::classify_single<int>(*test, trained, {});
+
+        auto sparse_trained = singlepp::train_single(*srefs, labels.data(), markers, {});
+        auto sparse_to_sparse = singlepp::classify_single<int>(*test, sparse_trained, {});
+        EXPECT_EQ(expected.best, sparse_to_sparse.best);
+        EXPECT_EQ(expected.delta, sparse_to_sparse.delta);
+        for (size_t l = 0; l < nlabels; ++l) {
+            EXPECT_EQ(expected.scores[l], sparse_to_sparse.scores[l]);
+        }
+    }
+}
+
 INSTANTIATE_TEST_SUITE_P(
     ClassifySingle,
     ClassifySingleSimpleTest,
@@ -80,7 +144,28 @@ INSTANTIATE_TEST_SUITE_P(
     )
 );
 
-class ClassifySingleIntersectTest : public ::testing::TestWithParam<std::tuple<int, double, double> > {};
+class ClassifySingleIntersectTest : public ::testing::TestWithParam<std::tuple<int, double, double> > {
+protected:
+    std::pair<std::vector<int>, std::vector<int> > generate_ids(std::size_t ngenes, double prop_keep, int seed) {
+        std::mt19937_64 rng(seed);
+        std::vector<int> left, right;
+        std::uniform_real_distribution<> dist;
+
+        for (size_t x = 0; x < ngenes; ++x) {
+            if (dist(rng) < prop_keep) { 
+                left.push_back(x);
+            }
+            if (dist(rng) < prop_keep) { 
+                right.push_back(x);
+            }
+        }
+
+        std::shuffle(left.begin(), left.end(), rng);
+        std::shuffle(right.begin(), right.end(), rng);
+        return std::make_pair(std::move(left), std::move(right));
+    }
+
+};
 
 TEST_P(ClassifySingleIntersectTest, Intersect) {
     auto param = GetParam();
@@ -90,18 +175,9 @@ TEST_P(ClassifySingleIntersectTest, Intersect) {
 
     // Creating overlapping ID vectors.
     size_t ngenes = 200;
-    std::mt19937_64 rng(top * quantile * prop);
-    std::vector<int> left, right;
-    for (size_t x = 0; x < ngenes; ++x) {
-        if (rng() % 100 < 100 * prop) { 
-            left.push_back(x);
-        }
-        if (rng() % 100 < 100 * prop) { 
-            right.push_back(x);
-        }
-    }
-    std::shuffle(left.begin(), left.end(), rng);
-    std::shuffle(right.begin(), right.end(), rng);
+    auto ids = generate_ids(ngenes, prop, top + 100 * quantile + 1000 * prop);
+    const auto& left = ids.first;
+    const auto& right = ids.second;
 
     // Mocking up the test and references.
     auto mat = spawn_matrix(left.size(), 5, 42);
@@ -169,6 +245,7 @@ TEST_P(ClassifySingleIntersectTest, Intersect) {
     // Using the shuffled intersection to check that the order doesn't matter.
     {
         auto intersection = singlepp::intersect_genes<int>(left.size(), left.data(), right.size(), right.data());
+        std::mt19937_64 rng(top + quantile * 3123 + prop * 452);
         std::shuffle(intersection.begin(), intersection.end(), rng);
         auto trained2 = singlepp::train_single_intersect<double, int>(left.size(), intersection, *refs, labels.data(), markers, bopt);
 
@@ -193,6 +270,76 @@ TEST_P(ClassifySingleIntersectTest, Intersect) {
         EXPECT_EQ(result2.scores[0], result.scores[0]);
         EXPECT_EQ(result2.best, result.best);
         EXPECT_EQ(result2.delta, result.delta);
+    }
+}
+
+TEST_P(ClassifySingleIntersectTest, Sparse) {
+    auto param = GetParam();
+    int top = std::get<0>(param);
+    double quantile = std::get<1>(param);
+    double prop = std::get<2>(param);
+
+    // Creating overlapping ID vectors.
+    size_t ngenes = 300;
+    const auto ids = generate_ids(ngenes, prop, top + 100 * quantile + 1000 * prop);
+    const auto& left = ids.first;
+    const auto& right = ids.second;
+
+    size_t nlabels = 5;
+    auto markers = mock_markers<int>(nlabels, 20, right.size(), /* seed = */ 69 * quantile + top); 
+
+    // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
+    {
+        int ntest = 11;
+        auto test = spawn_sparse_matrix(left.size(), ntest, /* seed = */ 42 * quantile + top, /* density = */ 0.24);
+        auto stest = tatami::convert_to_compressed_sparse<double, int>(*test, true, {});
+     
+        size_t nrefs = 23;
+        auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 1000 * quantile + top);
+        auto refs = spawn_sparse_matrix(right.size(), nrefs, /* seed = */ 100 * quantile + top, /* density = */ 0.26);
+        auto srefs = tatami::convert_to_compressed_sparse<double, int>(*refs, true, {});
+
+        auto trained = singlepp::train_single_intersect<double, int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, {});
+        auto expected = singlepp::classify_single_intersect<int>(*test, trained, {});
+
+        auto sparse_to_dense = singlepp::classify_single_intersect<int>(*stest, trained, {});
+        EXPECT_EQ(expected.best, sparse_to_dense.best);
+        EXPECT_EQ(expected.delta, sparse_to_dense.delta);
+        for (size_t l = 0; l < nlabels; ++l) {
+            EXPECT_EQ(expected.scores[l], sparse_to_dense.scores[l]);
+        }
+
+        auto sparse_trained = singlepp::train_single_intersect<double, int>(left.size(), left.data(), *srefs, right.data(), labels.data(), markers, {});
+        auto dense_to_sparse = singlepp::classify_single_intersect<int>(*test, sparse_trained, {});
+        EXPECT_EQ(expected.best, dense_to_sparse.best);
+        EXPECT_EQ(expected.delta, dense_to_sparse.delta);
+        for (size_t l = 0; l < nlabels; ++l) {
+            EXPECT_EQ(expected.scores[l], dense_to_sparse.scores[l]);
+        }
+    }
+
+    // Sparse-sparse and dense-dense only compute the exact same L2 when the density is 100%.
+    // Otherwise, slight differences can cause a different score or even a different choice for best label.
+    {
+        int ntest = 13;
+        auto test = spawn_matrix(left.size(), ntest, /* seed = */ 42 * quantile + top);
+        auto stest = tatami::convert_to_compressed_sparse<double, int>(*test, true, {});
+
+        size_t nrefs = 31;
+        auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 1000 * quantile + top);
+        auto refs = spawn_matrix(right.size(), nrefs, /* seed = */ 100 * quantile + top);
+        auto srefs = tatami::convert_to_compressed_sparse<double, int>(*refs, true, {});
+
+        auto trained = singlepp::train_single_intersect<double, int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, {});
+        auto expected = singlepp::classify_single_intersect<int>(*test, trained, {});
+
+        auto sparse_trained = singlepp::train_single_intersect<double, int>(left.size(), left.data(), *srefs, right.data(), labels.data(), markers, {});
+        auto sparse_to_sparse = singlepp::classify_single_intersect<int>(*test, sparse_trained, {});
+        EXPECT_EQ(expected.best, sparse_to_sparse.best);
+        EXPECT_EQ(expected.delta, sparse_to_sparse.delta);
+        for (size_t l = 0; l < nlabels; ++l) {
+            EXPECT_EQ(expected.scores[l], sparse_to_sparse.scores[l]);
+        }
     }
 }
 

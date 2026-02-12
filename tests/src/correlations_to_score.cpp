@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "singlepp/correlations_to_score.hpp"
+#include "singlepp/build_reference.hpp"
 
 #include <algorithm>
 #include <vector>
@@ -10,7 +11,7 @@
 // Deliberately creating a copy to avoid modifying the input vector so much
 // that it eventually becomes sorted.
 static double correlations_to_score(std::vector<double> correlations, double quantile) {
-    return singlepp::internal::correlations_to_score(correlations, quantile);
+    return singlepp::correlations_to_score(correlations, quantile);
 }
 
 TEST(CorrelationsToScore, Basic) {
@@ -43,20 +44,20 @@ TEST(CorrelationsToScore, Ties) {
     EXPECT_FLOAT_EQ(correlations_to_score(correlations, 1.0), 0.3);
 }
 
-TEST(DistanceToCorrelation, Basic) {
+TEST(L2ToCorrelation, Basic) {
     std::vector<double> values { -0.1, 0.2, -0.3, 0.4, -0.5, 0.6, 0 };
     auto scaled = quick_scaled_ranks(values);
-    EXPECT_FLOAT_EQ(singlepp::internal::distance_to_correlation<double>(scaled, scaled), 1);
+    EXPECT_FLOAT_EQ(singlepp::l2_to_correlation(singlepp::compute_l2(scaled.size(), scaled, scaled)), 1);
 
     auto neg = scaled;
     for (auto& x : neg) {
         x *= -1;
     }
-    EXPECT_FLOAT_EQ(singlepp::internal::distance_to_correlation<double>(scaled, neg), -1);
+    EXPECT_FLOAT_EQ(singlepp::l2_to_correlation(singlepp::compute_l2(scaled.size(), scaled, neg)), -1);
 
     // Compare to R code:
     // > cor(c(-0.1, 0.2, -0.3, 0.4, -0.5, 0.6, 0), 1:7, method="spearman")
     std::vector<double> values2 { 1, 2, 3, 4, 5, 6, 7 };
     auto scaled2 = quick_scaled_ranks(values2);
-    EXPECT_FLOAT_EQ(singlepp::internal::distance_to_correlation<double>(scaled, scaled2), 0.2142857);
+    EXPECT_FLOAT_EQ(singlepp::l2_to_correlation(singlepp::compute_l2(scaled.size(), scaled, scaled2)), 0.2142857);
 }

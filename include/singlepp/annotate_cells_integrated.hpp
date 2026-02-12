@@ -11,139 +11,235 @@
 #include "find_best_and_delta.hpp"
 #include "fill_labels_in_use.hpp"
 #include "correlations_to_score.hpp"
+#include "build_reference.hpp"
 
 #include <vector>
 #include <algorithm>
+#include <numeric>
 #include <cmath>
-#include <unordered_set>
+#include <cstddef>
+#include <optional>
 
 namespace singlepp {
 
-namespace internal {
-
-// All data structures in the Workspace can contain anything on input, as they
-// are cleared and filled by compute_single_reference_score_integrated(). They
-// are only persisted to reduce the number of new allocations when looping
-// across cells and references.
-template<typename Index_, typename Value_, typename Float_>
-struct PerReferenceIntegratedWorkspace {
-    SubsetRemapper<Index_> intersect_mapping;
-    bool direct_mapping_filled;
-    SubsetRemapper<Index_> direct_mapping;
-
-    RankedVector<Value_, Index_> test_ranked;
-    RankedVector<Index_, Index_> ref_ranked;
-
-    std::vector<Float_> test_scaled;
-    std::vector<Float_> ref_scaled;
-    std::vector<Float_> all_correlations;
-};
-
-template<typename RefLabel_, typename Label_, typename Index_, typename Value_, typename Float_>
-Float_ compute_single_reference_score_integrated(
-    RefLabel_ ref_i,
-    Label_ best,
-    RankedVector<Value_, Index_> test_ranked_full,
-    const TrainedIntegrated<Index_>& trained,
-    const std::vector<Index_>& miniverse,
-    PerReferenceIntegratedWorkspace<Index_, Value_, Float_>& workspace,
-    Float_ quantile)
-{
-    // Further subsetting to the intersection of markers that are
-    // actual present in this particular reference.
-    const SubsetRemapper<Index_>* mapping;
-    if (trained.check_availability[ref_i]) {
-        const auto& cur_available = trained.available[ref_i];
-        workspace.intersect_mapping.clear();
-        workspace.intersect_mapping.reserve(miniverse.size());
-        for (auto c : miniverse) {
-            if (cur_available.find(c) != cur_available.end()) {
-                workspace.intersect_mapping.add(c);
-            }
-        }
-        mapping = &(workspace.intersect_mapping);
-
-    } else {
-        // If we don't need to check availability of genes, we only need to
-        // populate the direct mapping once per reference, because it will be
-        // the same for all references that don't need an availability check.
-        if (!workspace.direct_mapping_filled) {
-            workspace.direct_mapping.clear();
-            workspace.direct_mapping.reserve(miniverse.size());
-            for (auto c : miniverse) {
-                workspace.direct_mapping.add(c);
-            }
-            workspace.direct_mapping_filled = true;
-        }
-        mapping = &(workspace.direct_mapping);
-    } 
-
-    mapping->remap(test_ranked_full, workspace.test_ranked);
-    workspace.test_scaled.resize(workspace.test_ranked.size());
-    scaled_ranks(workspace.test_ranked, workspace.test_scaled.data());
-
-    // Now actually calculating the score for the best group for
-    // this cell in this reference. This assumes that
-    // 'ranked' already contains sorted pairs where the
-    // indices refer to the rows of the original data matrix.
-    const auto& best_ranked = trained.ranked[ref_i][best];
-    auto nranked = best_ranked.size();
-    workspace.all_correlations.clear();
-    workspace.ref_scaled.resize(workspace.test_scaled.size());
-
-    for (decltype(nranked) s = 0; s < nranked; ++s) {
-        workspace.ref_ranked.clear();
-        mapping->remap(best_ranked[s], workspace.ref_ranked);
-        scaled_ranks(workspace.ref_ranked, workspace.ref_scaled.data());
-        Float_ cor = distance_to_correlation<Float_>(workspace.test_scaled, workspace.ref_scaled);
-        workspace.all_correlations.push_back(cor);
-    }
-
-    return correlations_to_score(workspace.all_correlations, quantile);
-}
-
-template<typename Index_, typename Label_, typename Float_, typename RefLabel_, typename Value_>
-std::pair<RefLabel_, Float_> fine_tune_integrated(
-    Index_ i,
-    RankedVector<Value_, Index_> test_ranked_full,
-    std::vector<Float_>& all_scores,
+template<bool query_sparse_, typename Value_, typename Index_, typename Label_, typename Float_, typename RefLabel_>
+void annotate_cells_integrated_raw(
+    const tatami::Matrix<Value_, Index_>& test,
     const TrainedIntegrated<Index_>& trained,
     const std::vector<const Label_*>& assigned,
-    std::vector<RefLabel_>& reflabels_in_use, // workspace data structure: input value is ignored, output value should not be used.
-    std::unordered_set<Index_>& miniverse_tmp, // workspace data structure: input value is ignored, output value should not be used.
-    std::vector<Index_>& miniverse, // workspace data structure: input value is ignored, output value should not be used.
-    PerReferenceIntegratedWorkspace<Index_, Value_, Float_>& workspace, // collection of workspace data structures, obviously.
     Float_ quantile,
-    Float_ threshold)
-{
-    auto candidate = fill_labels_in_use(all_scores, threshold, reflabels_in_use);
-
-    // We skip fine-tuning if all or only one labels are selected. If all
-    // labels are chosen, there is no contraction of the marker space, and the
-    // scores will not change; if only one label is chosen, then that's that.
-    while (reflabels_in_use.size() > 1 && reflabels_in_use.size() != all_scores.size()) {
-        miniverse_tmp.clear();
-        for (auto r : reflabels_in_use) {
-            auto curassigned = assigned[r][i];
-            const auto& curmarkers = trained.markers[r][curassigned];
-            miniverse_tmp.insert(curmarkers.begin(), curmarkers.end());
-        }
-
-        miniverse.clear();
-        miniverse.insert(miniverse.end(), miniverse_tmp.begin(), miniverse_tmp.end());
-        std::sort(miniverse.begin(), miniverse.end()); // sorting for consistency in floating-point summation within scaled_ranks().
-
-        all_scores.clear();
-        workspace.direct_mapping_filled = false;
-        for (auto r : reflabels_in_use) {
-            auto score = compute_single_reference_score_integrated(r, assigned[r][i], test_ranked_full, trained, miniverse, workspace, quantile);
-            all_scores.push_back(score);
-        }
-
-        candidate = update_labels_in_use(all_scores, threshold, reflabels_in_use); 
+    bool fine_tune,
+    Float_ threshold,
+    RefLabel_* best, 
+    const std::vector<Float_*>& scores,
+    Float_* delta,
+    int num_threads
+) {
+    const auto NR = test.nrow();
+    if (!sanisizer::is_equal(NR, trained.test_nrow)) {
+        throw std::runtime_error("number of rows in 'test' do not match up with those expected by 'trained'");
     }
 
-    return candidate;
+    bool any_ref_sparse = false, any_ref_dense = false;
+    for (const auto& ref : trained.references) {
+        if (ref.sparse.has_value()) {
+            any_ref_sparse = true;
+        } else {
+            any_ref_dense = true;
+        }
+    }
+
+    const auto num_universe = trained.universe.size();
+    auto remap_test_to_universe = [&]() {
+        if constexpr(query_sparse_) {
+            auto remapping = sanisizer::create<std::vector<Index_> >(NR);
+            for (I<decltype(num_universe)> u = 0; u < num_universe; ++u) {
+                remapping[trained.universe[u]] = u;
+            }
+            return remapping;
+        } else {
+            return false;
+        }
+    }();
+
+    tatami::parallelize([&](int, Index_ start, Index_ len) {
+        SubsetRemapper<Index_> remapper(num_universe);
+
+        RankedVector<Value_, Index_> test_ranked_full, test_ranked_sub;
+        test_ranked_full.reserve(num_universe);
+        test_ranked_sub.reserve(num_universe);
+
+        RankedVector<Index_, Index_> ref_ranked;
+        ref_ranked.reserve(num_universe);
+        std::optional<RankedVector<Index_, Index_> > ref_ranked_alt;
+        if (any_ref_sparse) {
+            ref_ranked_alt.emplace();
+            ref_ranked_alt->reserve(num_universe);
+        }
+
+        auto vbuffer = sanisizer::create<std::vector<Value_> >(num_universe);
+        auto ibuffer = [&](){
+            if constexpr(query_sparse_) {
+                return sanisizer::create<std::vector<Index_> >(num_universe);
+            } else {
+                return false;
+            }
+        }();
+
+        auto test_scaled = [&]() {
+            if constexpr(query_sparse_) {
+                SparseScaled<Index_, Float_> output;
+                output.nonzero.reserve(num_universe);
+                return output;
+            } else {
+                return sanisizer::create<std::vector<Float_> >(num_universe);
+            }
+        }();
+
+        std::optional<SparseScaled<Index_, Float_> > sparse_ref_scaled;
+        if (any_ref_sparse) {
+            sparse_ref_scaled.emplace();
+            sanisizer::reserve(sparse_ref_scaled->nonzero, num_universe);
+        }
+        std::optional<std::vector<Float_> > dense_ref_scaled;
+        if (any_ref_dense) {
+            dense_ref_scaled.emplace();
+            sanisizer::reserve(*dense_ref_scaled, num_universe);
+        }
+
+        std::vector<Float_> all_correlations;
+        const auto nref = trained.references.size();
+        std::vector<RefLabel_> reflabels_in_use;
+        sanisizer::reserve(reflabels_in_use, nref);
+        std::vector<Float_> all_scores;
+        sanisizer::reserve(all_scores, nref);
+
+        // We perform an indexed extraction, so all subsequent indices
+        // will refer to indices into this subset (i.e., 'universe').
+        tatami::VectorPtr<Index_> universe_ptr(tatami::VectorPtr<Index_>{}, &(trained.universe));
+        auto mat_work = tatami::consecutive_extractor<query_sparse_>(&test, false, start, len, universe_ptr);
+
+        for (Index_ i = start, end = start + len; i < end; ++i) {
+            test_ranked_full.clear();
+            if constexpr(query_sparse_) {
+                auto info = mat_work->fetch(vbuffer.data(), ibuffer.data());
+                for (I<decltype(info.number)> i = 0; i < info.number; ++i) {
+                    test_ranked_full.emplace_back(info.value[i], remap_test_to_universe[info.index[i]]);
+                }
+            } else {
+                auto ptr = mat_work->fetch(vbuffer.data());
+                for (I<decltype(num_universe)> i = 0; i < num_universe; ++i) {
+                    test_ranked_full.emplace_back(ptr[i],  i);
+                }
+            }
+            std::sort(test_ranked_full.begin(), test_ranked_full.end());
+
+            reflabels_in_use.resize(nref);
+            std::iota(reflabels_in_use.begin(), reflabels_in_use.end(), static_cast<RefLabel_>(0));
+            std::pair<Label_, Float_> candidate{ 0, 1.0 };
+
+            // For completeness, we want to compute the scores even if there is only one reference,
+            // so we ask for a single iteration of the fine-tuning loop.
+            bool first_iteration = true;
+
+            while (reflabels_in_use.size() > 1 || first_iteration) {
+                remapper.clear();
+                for (const auto r : reflabels_in_use) {
+                    const auto curassigned = assigned[r][i];
+                    const auto& curref = trained.references[r];
+
+                    if (curref.sparse.has_value()) {
+                        const auto& curmarkers = (*(curref.sparse))[curassigned].markers;
+                        for (const auto& x : curmarkers) {
+                            remapper.add(x);
+                        }
+                    } else {
+                        const auto& curmarkers = (*(curref.dense))[curassigned].markers;
+                        for (const auto& x : curmarkers) {
+                            remapper.add(x);
+                        }
+                    }
+                }
+
+                const auto num_markers = remapper.size();
+                remapper.remap(test_ranked_full, test_ranked_sub);
+                if constexpr(query_sparse_) {
+                    const auto tStart = test_ranked_sub.begin(), tEnd = test_ranked_sub.end();
+                    auto zero_ranges = find_zero_ranges<Value_, Index_>(tStart, tEnd);
+                    scaled_ranks<Value_, Index_>(num_markers, tStart, zero_ranges.first, zero_ranges.second, tEnd, test_scaled);
+                } else {
+                    test_scaled.resize(num_markers);
+                    scaled_ranks(num_markers, test_ranked_sub, test_scaled);
+                }
+
+                if (any_ref_dense) {
+                    dense_ref_scaled->resize(num_markers);
+                }
+
+                all_scores.clear();
+                for (auto r : reflabels_in_use) {
+                    const auto& curref = trained.references[r];
+                    const auto curassigned = assigned[r][i];
+                    all_correlations.clear();
+
+                    if (curref.sparse.has_value()) {
+                        const auto& curlab = (*(curref.sparse))[curassigned];
+                        const auto nsamples = curlab.num_samples;
+                        all_correlations.reserve(nsamples);
+
+                        for (I<decltype(nsamples)> s = 0; s < nsamples; ++s) {
+                            ref_ranked.clear();
+                            auto nStart = curlab.negative_ranked.begin();
+                            remapper.remap(nStart + curlab.negative_indptrs[s], nStart + curlab.negative_indptrs[s + 1], ref_ranked);
+
+                            ref_ranked_alt->clear();
+                            auto pStart = curlab.positive_ranked.begin();
+                            remapper.remap(pStart + curlab.positive_indptrs[s], pStart + curlab.positive_indptrs[s + 1], *ref_ranked_alt);
+
+                            scaled_ranks(num_markers, ref_ranked, *ref_ranked_alt, *sparse_ref_scaled);
+                            const Float_ cor = l2_to_correlation(compute_l2(num_markers, test_scaled, *sparse_ref_scaled));
+                            all_correlations.push_back(cor);
+                        }
+
+                    } else {
+                        const auto& curlab = (*(curref.dense))[curassigned];
+                        const auto nsamples = curlab.num_samples;
+                        all_correlations.reserve(nsamples);
+
+                        for (I<decltype(nsamples)> s = 0; s < nsamples; ++s) {
+                            ref_ranked.clear();
+                            auto refstart = curlab.all_ranked.begin() + sanisizer::product_unsafe<std::size_t>(s, num_universe);
+                            auto refend = refstart + num_universe;
+                            remapper.remap(refstart, refend, ref_ranked);
+                            scaled_ranks(num_markers, ref_ranked, *dense_ref_scaled);
+                            const Float_ cor = l2_to_correlation(compute_l2(num_markers, test_scaled, *dense_ref_scaled));
+                            all_correlations.push_back(cor);
+                        }
+                    }
+
+                    const auto score = correlations_to_score(all_correlations, quantile);
+                    all_scores.push_back(score);
+                }
+
+                candidate = update_labels_in_use(all_scores, threshold, reflabels_in_use);
+                if (first_iteration) {
+                    first_iteration = false;
+                    for (I<decltype(nref)> r = 0; r < nref; ++r) {
+                        scores[r][i] = all_scores[r];
+                    }
+                }
+
+                if (!fine_tune || reflabels_in_use.size() == all_scores.size()) {
+                    break;
+                }
+            }
+
+            best[i] = candidate.first;
+            if (delta) {
+                delta[i] = candidate.second;
+            }
+        }
+    }, test.ncol(), num_threads);
 }
 
 template<typename Value_, typename Index_, typename Label_, typename Float_, typename RefLabel_>
@@ -157,97 +253,13 @@ void annotate_cells_integrated(
     RefLabel_* best, 
     const std::vector<Float_*>& scores,
     Float_* delta,
-    int num_threads)
-{
-    auto NR = test.nrow();
-    auto nref = trained.markers.size();
-    tatami::VectorPtr<Index_> universe_ptr(tatami::VectorPtr<Index_>{}, &(trained.universe));
-
-    tatami::parallelize([&](int, Index_ start, Index_ len) {
-        std::unordered_set<Index_> miniverse_tmp;
-        std::vector<Index_> miniverse;
-
-        RankedVector<Value_, Index_> test_ranked_full;
-        test_ranked_full.reserve(NR);
-        std::vector<Value_> buffer(trained.universe.size());
-
-        PerReferenceIntegratedWorkspace<Index_, Value_, Float_> workspace;
-        workspace.test_ranked.reserve(NR);
-        workspace.ref_ranked.reserve(NR);
-
-        std::vector<Float_> all_scores;
-        std::vector<RefLabel_> reflabels_in_use;
-
-        // We perform an indexed extraction, so all subsequent indices
-        // will refer to indices into this subset (i.e., 'universe').
-        auto mat_work = tatami::consecutive_extractor<false>(&test, false, start, len, universe_ptr);
-
-        for (Index_ i = start, end = start + len; i < end; ++i) {
-            // Extracting only the markers of the best labels for this cell.
-            miniverse_tmp.clear();
-            for (decltype(nref) r = 0; r < nref; ++r) {
-                auto curassigned = assigned[r][i];
-                const auto& curmarkers = trained.markers[r][curassigned];
-                miniverse_tmp.insert(curmarkers.begin(), curmarkers.end());
-            }
-
-            miniverse.clear();
-            miniverse.insert(miniverse.end(), miniverse_tmp.begin(), miniverse_tmp.end());
-            std::sort(miniverse.begin(), miniverse.end()); // sorting for consistency in floating-point summation within scaled_ranks().
-
-            test_ranked_full.clear();
-            auto ptr = mat_work->fetch(buffer.data());
-            for (auto u : miniverse) {
-                test_ranked_full.emplace_back(ptr[u], u);
-            }
-            std::sort(test_ranked_full.begin(), test_ranked_full.end());
-
-            // Scanning through each reference and computing the score for the best group.
-            all_scores.clear();
-            workspace.direct_mapping_filled = false;
-            for (decltype(nref) r = 0; r < nref; ++r) {
-                auto score = compute_single_reference_score_integrated(
-                    r,
-                    assigned[r][i],
-                    test_ranked_full,
-                    trained,
-                    miniverse,
-                    workspace,
-                    quantile
-                );
-                all_scores.push_back(score);
-                if (scores[r]) {
-                    scores[r][i] = score;
-                }
-            }
-
-            std::pair<Label_, Float_> candidate;
-            if (!fine_tune) {
-                candidate = find_best_and_delta<Label_>(all_scores);
-            } else {
-                candidate = fine_tune_integrated(
-                    i,
-                    test_ranked_full,
-                    all_scores,
-                    trained,
-                    assigned,
-                    reflabels_in_use,
-                    miniverse_tmp,
-                    miniverse,
-                    workspace,
-                    quantile,
-                    threshold
-                );
-            }
-
-            best[i] = candidate.first;
-            if (delta) {
-                delta[i] = candidate.second;
-            }
-        }
-    }, test.ncol(), num_threads);
-}
-
+    int num_threads
+) {
+    if (test.is_sparse()) {
+        annotate_cells_integrated_raw<true>(test, trained, assigned, quantile, fine_tune, threshold, best, scores, delta, num_threads);
+    } else {
+        annotate_cells_integrated_raw<false>(test, trained, assigned, quantile, fine_tune, threshold, best, scores, delta, num_threads);
+    }
 }
 
 }
