@@ -42,10 +42,14 @@ Rcpp::List classify_integrate(
 
     singlepp::TrainSingleOptions bopt;
     bopt.top = -1; // use all markers.
+    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
+    prebuilts.reserve(nrefs);
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > inputs; 
+    inputs.reserve(nrefs);
+
     for (size_t r = 0; r < nrefs; ++r) {
-        auto built = singlepp::train_single(*(rematrices[r]), relabels[r].data(), setup_markers(markers[r]), bopt);
-        inputs.push_back(singlepp::prepare_integrated_input(*(rematrices[r]), relabels[r].data(), built));
+        prebuilts.push_back(singlepp::train_single(*(rematrices[r]), relabels[r].data(), setup_markers(markers[r]), bopt));
+        inputs.push_back(singlepp::prepare_integrated_input(*(rematrices[r]), relabels[r].data(), prebuilts.back()));
     }
     singlepp::TrainIntegratedOptions iopt;
     auto itrained = singlepp::train_integrated(std::move(inputs), iopt);

@@ -222,14 +222,16 @@ void annotate_cells_integrated_raw(
                 }
 
                 candidate = update_labels_in_use(all_scores, threshold, reflabels_in_use);
-                for (I<decltype(nref)> r = 0; r < nref; ++r) {
-                    scores[r][i] = all_scores[r];
+                if (first_iteration) {
+                    first_iteration = false;
+                    for (I<decltype(nref)> r = 0; r < nref; ++r) {
+                        scores[r][i] = all_scores[r];
+                    }
                 }
 
                 if (!fine_tune || reflabels_in_use.size() == all_scores.size()) {
                     break;
                 }
-                first_iteration = false;
             }
 
             best[i] = candidate.first;
