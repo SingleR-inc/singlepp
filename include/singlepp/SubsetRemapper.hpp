@@ -48,7 +48,7 @@ private:
 public:
     SubsetRemapper(const Index_ capacity) : my_capacity(capacity) {
         sanisizer::resize(my_mapping, capacity, capacity);
-        sanisizer::resize(my_used, capacity);
+        sanisizer::reserve(my_used, capacity);
     }
 
     void add(Index_ i) {
