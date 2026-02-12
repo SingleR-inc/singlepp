@@ -127,7 +127,7 @@ test_that("integrated references, intersection", {
         results[[i]] <- sample(nlabels, ncol(mat), replace=TRUE)
     }
 
-    ref <- naive_integrate(mat, results, refs, labels, named.markers)
+    ref <- naive_integrate(mat, results, refs, labels, named.markers, check.rownames=TRUE)
     obs <- intersect_integrate(mat, rownames(mat), results, refs, lapply(refs, rownames), labels, markers)
 
     expect_identical(ref$best, obs$best)
