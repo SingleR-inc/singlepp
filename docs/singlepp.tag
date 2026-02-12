@@ -541,13 +541,6 @@
       <arglist>(const std::vector&lt; TrainIntegratedInput&lt; Value_, Index_, Label_ &gt; &gt; &amp;inputs, const TrainIntegratedOptions &amp;options)</arglist>
     </member>
     <member kind="function">
-      <type>TrainedIntegrated&lt; Index_ &gt;</type>
-      <name>train_integrated</name>
-      <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>a82e0dfffaed84685432ad2a39cc12a97</anchor>
-      <arglist>(std::vector&lt; TrainIntegratedInput&lt; Value_, Index_, Label_ &gt; &gt; &amp;&amp;inputs, const TrainIntegratedOptions &amp;options)</arglist>
-    </member>
-    <member kind="function">
       <type>Intersection&lt; Index_ &gt;</type>
       <name>intersect_genes</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
