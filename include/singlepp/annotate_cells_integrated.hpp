@@ -221,7 +221,7 @@ void annotate_cells_integrated_raw(
     }
 
     const auto details = interrogate_trained_integrated(trained);
-    SubsetSanitizer<query_sparse_, Index_> subsorted(trained.universe);
+    SubsetNoop<query_sparse_, Index_> subsorted(trained.universe);
     const auto num_universe = details.num_universe;
 
     tatami::parallelize([&](int, Index_ start, Index_ len) {

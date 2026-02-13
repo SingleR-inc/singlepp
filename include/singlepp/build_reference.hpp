@@ -649,11 +649,21 @@ BuiltReference<Index_, Float_> build_reference_raw(
         }
     }
 
-    SubsetSanitizer<ref_sparse_, Index_> subsorter(subset);
-    tatami::VectorPtr<Index_> subset_ptr(tatami::VectorPtr<Index_>{}, &(subsorter.extraction_subset()));
+    std::optional<SubsetNoop<ref_sparse_, Index_> > subnoop;
+    std::optional<SubsetSanitizer<ref_sparse_, Index_> > subsorted;
+    const std::vector<Index_>* subptr;
+    const bool subset_noop = is_subset_sorted_unique(subset);
+    if (subset_noop) {
+        subnoop.emplace(subset);
+        subptr = &(subnoop->extraction_subset());
+    } else {
+        subsorted.emplace(subset);
+        subptr = &(subsorted->extraction_subset());
+    }
 
     tatami::parallelize([&](int, Index_ start, Index_ len) {
-        auto ext = tatami::consecutive_extractor<ref_sparse_>(ref, false, start, len, subset_ptr);
+        tatami::VectorPtr<Index_> subset_ptr(tatami::VectorPtr<Index_>{}, subptr);
+        auto ext = tatami::consecutive_extractor<ref_sparse_>(ref, false, start, len, std::move(subset_ptr));
         auto vbuffer = sanisizer::create<std::vector<Value_> >(num_markers);
         auto ibuffer = [&](){
             if constexpr(ref_sparse_) {
@@ -674,7 +684,12 @@ BuiltReference<Index_, Float_> build_reference_raw(
                     return ext->fetch(vbuffer.data());
                 }
             }();
-            subsorter.fill_ranks(col, query_ranked); 
+
+            if (subset_noop) {
+                subnoop->fill_ranks(col, query_ranked); 
+            } else {
+                subsorted->fill_ranks(col, query_ranked); 
+            }
 
             const auto curlab = labels[c];
             const auto curoff = label_offsets[c];

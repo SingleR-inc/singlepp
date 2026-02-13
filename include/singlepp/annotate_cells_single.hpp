@@ -205,7 +205,7 @@ void annotate_cells_single_raw(
         coeffs[r].second = prod - static_cast<Float_>(k - 2);
     }
 
-    SubsetSanitizer<query_sparse_, Index_> subsorted(subset);
+    SubsetNoop<query_sparse_, Index_> subsorted(subset);
     tatami::VectorPtr<Index_> subset_ptr(tatami::VectorPtr<Index_>{}, &(subsorted.extraction_subset()));
 
     tatami::parallelize([&](int, Index_ start, Index_ length) {
