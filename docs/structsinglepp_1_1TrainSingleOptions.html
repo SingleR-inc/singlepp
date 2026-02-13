@@ -146,8 +146,8 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Number of top markers to use from each pairwise comparison between labels. Larger values improve the stability of the correlations at the cost of increasing noise and computational work.</p>
-<p>For <code><a class="el" href="namespacesinglepp.html#ae9aef6aa0694cdeef9d111f8a66f8b05">train_single_intersect()</a></code>, the specified number of top markers is taken from the intersection of features. This avoids that some markers will be selected even if not all genes in <code>markers</code> are present in the test dataset.</p>
-<p>Setting this to a negative value will instruct <code><a class="el" href="namespacesinglepp.html#a5f8f8106b91cfe79435b20c9b38e500c">train_single()</a></code> and <code><a class="el" href="namespacesinglepp.html#ae9aef6aa0694cdeef9d111f8a66f8b05">train_single_intersect()</a></code> to use all supplied markers. This is useful in situations where the supplied markers have already been curated. </p>
+<p>When the test and reference datasets do not have the same features, the specified number of top markers is taken from the intersection of features. This avoids that some markers will be selected even if not all genes in <code>markers</code> are present in the test dataset.</p>
+<p>Setting this to a negative value will instruct <code><a class="el" href="namespacesinglepp.html#a5f8f8106b91cfe79435b20c9b38e500c">train_single()</a></code> to use all supplied markers. This is useful in situations where the supplied markers have already been curated. </p>
 
 </div>
 </div>

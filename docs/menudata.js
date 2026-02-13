@@ -38,7 +38,7 @@ var menudata={children:[
 {text:"b",url:"functions.html#index_b"},
 {text:"d",url:"functions.html#index_d"},
 {text:"f",url:"functions.html#index_f"},
-{text:"g",url:"functions.html#index_g"},
+{text:"m",url:"functions.html#index_m"},
 {text:"n",url:"functions.html#index_n"},
 {text:"q",url:"functions.html#index_q"},
 {text:"s",url:"functions.html#index_s"},

@@ -15,5 +15,5 @@ var searchData=
   ['singler_12',['C++ port of SingleR',['../index.html',1,'']]],
   ['subpar_13',['subpar',['https://tatami-inc.github.io/tatami/namespacesubpar.html',1,'']]],
   ['subpar_2ehpp_14',['subpar.hpp',['https://tatami-inc.github.io/tatami/subpar_8hpp.html',1,'']]],
-  ['subset_15',['subset',['../classsinglepp_1_1TrainedIntegrated.html#acfe4e0e076c698cc58dd820e8fcd884b',1,'singlepp::TrainedIntegrated']]]
+  ['subset_15',['subset',['../classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a',1,'singlepp::TrainedSingle::subset()'],['../classsinglepp_1_1TrainedIntegrated.html#acfe4e0e076c698cc58dd820e8fcd884b',1,'singlepp::TrainedIntegrated::subset()']]]
 ];

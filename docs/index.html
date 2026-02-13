@@ -152,7 +152,7 @@ $(function(){ initResizable(false); });
 <div class="line">);</div>
 <div class="ttc" id="astructsinglepp_1_1TrainSingleOptions_html_a8cf88a1fd176fb330c3d3a57cccda477"><div class="ttname"><a href="structsinglepp_1_1TrainSingleOptions.html#a8cf88a1fd176fb330c3d3a57cccda477">singlepp::TrainSingleOptions::top</a></div><div class="ttdeci">int top</div><div class="ttdef"><b>Definition</b> train_single.hpp:36</div></div>
 </div><!-- fragment --><h1>Intersecting feature sets</h1>
-<p>Often the reference dataset will not have the same genes as the test dataset. To handle this case, users should call <code>train_single_intersect()</code> with the row identifiers of the reference and test matrices. If a gene is not in the intersection of reference/test identifiers, it will be ignored in the rest of the analysis, even if it was specifically requested in <code>ref_markers</code>.</p>
+<p>Often the reference dataset will not have the same genes as the test dataset. To handle this case, users should call <code>train_single()</code> with the row identifiers of the reference and test matrices. If a gene is not in the intersection of reference/test identifiers, it will be ignored in the rest of the analysis, even if it was specifically requested in <code>ref_markers</code>.</p>
 <div class="fragment"><div class="line">test_names; <span class="comment">// vector of feature IDs for the test data</span></div>
 <div class="line">ref_names; <span class="comment">// vector of feature IDs for the reference data</span></div>
 <div class="line"> </div>
@@ -160,23 +160,26 @@ $(function(){ initResizable(false); });
 <div class="line"><span class="comment">// discarding any genes that are not present in the test matrix. </span></div>
 <div class="line">train_opt.<a class="code hl_variable" href="structsinglepp_1_1TrainSingleOptions.html#a8cf88a1fd176fb330c3d3a57cccda477">top</a> = 20;</div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">auto</span> trained_intersect = <a class="code hl_function" href="namespacesinglepp.html#ae9aef6aa0694cdeef9d111f8a66f8b05">singlepp::train_single_intersect</a>(</div>
+<div class="line"><span class="comment">// Optionally, we can collect the subset of genes in the reference matrix</span></div>
+<div class="line"><span class="comment">// that will be used as markers during classification.</span></div>
+<div class="line">std::vector&lt;int&gt; ref_markers;</div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">auto</span> trained_intersect = <a class="code hl_function" href="namespacesinglepp.html#a5f8f8106b91cfe79435b20c9b38e500c">singlepp::train_single</a>(</div>
 <div class="line">    test_mat.nrow(),</div>
 <div class="line">    test_names.data(),</div>
 <div class="line">    ref_mat,</div>
 <div class="line">    ref_names.data(),</div>
 <div class="line">    ref_labels.data(), </div>
 <div class="line">    ref_markers,</div>
+<div class="line">    &amp;ref_subset,</div>
 <div class="line">    train_opt</div>
 <div class="line">);</div>
-<div class="ttc" id="anamespacesinglepp_html_ae9aef6aa0694cdeef9d111f8a66f8b05"><div class="ttname"><a href="namespacesinglepp.html#ae9aef6aa0694cdeef9d111f8a66f8b05">singlepp::train_single_intersect</a></div><div class="ttdeci">TrainedSingleIntersect&lt; Index_, Float_ &gt; train_single_intersect(Index_ test_nrow, const Intersection&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, Markers&lt; Index_ &gt; markers, const TrainSingleOptions &amp;options)</div><div class="ttdef"><b>Definition</b> train_single.hpp:327</div></div>
-</div><!-- fragment --><p>Then, <code>classify_single_intersect()</code> will perform classification using only the intersection of genes between the two datasets:</p>
-<div class="fragment"><div class="line"><span class="keyword">auto</span> res_intersect = <a class="code hl_function" href="namespacesinglepp.html#ad7d214a5da53597d24dec5cec59e3beb">singlepp::classify_single_intersect</a>(</div>
+</div><!-- fragment --><p>Then, <code>classify_single()</code> will perform classification using only the intersection of genes between the two datasets:</p>
+<div class="fragment"><div class="line"><span class="keyword">auto</span> res_intersect = <a class="code hl_function" href="namespacesinglepp.html#ae8772734badf4a09d6c285b9b98295ec">singlepp::classify_single</a>(</div>
 <div class="line">    test_mat,</div>
 <div class="line">    trained_intersect,</div>
 <div class="line">    class_opt</div>
 <div class="line">);</div>
-<div class="ttc" id="anamespacesinglepp_html_ad7d214a5da53597d24dec5cec59e3beb"><div class="ttname"><a href="namespacesinglepp.html#ad7d214a5da53597d24dec5cec59e3beb">singlepp::classify_single_intersect</a></div><div class="ttdeci">void classify_single_intersect(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;test, const TrainedSingleIntersect&lt; Index_, Float_ &gt; &amp;trained, const ClassifySingleBuffers&lt; Label_, Float_ &gt; &amp;buffers, const ClassifySingleOptions&lt; Float_ &gt; &amp;options)</div><div class="ttdef"><b>Definition</b> classify_single.hpp:173</div></div>
 </div><!-- fragment --><p>The gene identifiers can be anything that can be hashed and compared. These are most commonly <code>std::string</code>s but can also be integers (e.g., for Entrez IDs).</p>
 <h1>Integrating results across references</h1>
 <p>To combine results from multiple references, we first need to perform classification within each reference. Let's say we have two references A and B:</p>
@@ -189,8 +192,8 @@ $(function(){ initResizable(false); });
 <div class="fragment"><div class="line">std::vector&lt;singlepp::TrainIntegratedInput&lt;&gt; &gt; inputs;</div>
 <div class="line">inputs.push_back(<a class="code hl_function" href="namespacesinglepp.html#a280f3bfb8b5a2e7e51233bc7382a8db1">singlepp::prepare_integrated_input</a>(refA_mat, refA_labels.data(), preA));</div>
 <div class="line">inputs.push_back(<a class="code hl_function" href="namespacesinglepp.html#a280f3bfb8b5a2e7e51233bc7382a8db1">singlepp::prepare_integrated_input</a>(refB_mat, refB_labels.data(), preB));</div>
-<div class="line"><span class="comment">// If the genes are different between the test and reference datasets, use</span></div>
-<div class="line"><span class="comment">// prepare_integrated_input_intersect() instead.</span></div>
+<div class="line"><span class="comment">// If the genes are different between the test and reference datasets, </span></div>
+<div class="line"><span class="comment">// supply the row IDs to prepare_integrated_input() like we do for train_single().</span></div>
 <div class="line"> </div>
 <div class="line"><a class="code hl_struct" href="structsinglepp_1_1TrainIntegratedOptions.html">singlepp::TrainIntegratedOptions</a> ti_opt;</div>
 <div class="line"><span class="keyword">auto</span> train_integrated = <a class="code hl_function" href="namespacesinglepp.html#af198ad22e020701691c9bb8326401a46">singlepp::train_integrated</a>(inputs, ti_opt);</div>
