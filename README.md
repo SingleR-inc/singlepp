@@ -86,7 +86,7 @@ auto trained20 = singlepp::train_single(
 ## Intersecting feature sets
 
 Often the reference dataset will not have the same genes as the test dataset.
-To handle this case, users should call `train_single_intersect()` with the row identifiers of the reference and test matrices.
+To handle this case, users should call `train_single()` with the row identifiers of the reference and test matrices.
 If a gene is not in the intersection of reference/test identifiers, it will be ignored in the rest of the analysis, even if it was specifically requested in `ref_markers`.
 
 ```cpp
@@ -97,21 +97,26 @@ ref_names; // vector of feature IDs for the reference data
 // discarding any genes that are not present in the test matrix. 
 train_opt.top = 20;
 
-auto trained_intersect = singlepp::train_single_intersect(
+// Optionally, we can collect the subset of genes in the reference matrix
+// that will be used as markers during classification.
+std::vector<int> ref_markers;
+
+auto trained_intersect = singlepp::train_single(
     test_mat.nrow(),
     test_names.data(),
     ref_mat,
     ref_names.data(),
     ref_labels.data(), 
     ref_markers,
+    &ref_subset,
     train_opt
 );
 ```
 
-Then, `classify_single_intersect()` will perform classification using only the intersection of genes between the two datasets:
+Then, `classify_single()` will perform classification using only the intersection of genes between the two datasets:
 
 ```cpp
-auto res_intersect = singlepp::classify_single_intersect(
+auto res_intersect = singlepp::classify_single(
     test_mat,
     trained_intersect,
     class_opt
@@ -140,8 +145,8 @@ We build the integrated classifier:
 std::vector<singlepp::TrainIntegratedInput<> > inputs;
 inputs.push_back(singlepp::prepare_integrated_input(refA_mat, refA_labels.data(), preA));
 inputs.push_back(singlepp::prepare_integrated_input(refB_mat, refB_labels.data(), preB));
-// If the genes are different between the test and reference datasets, use
-// prepare_integrated_input_intersect() instead.
+// If the genes are different between the test and reference datasets, 
+// supply the row IDs to prepare_integrated_input() like we do for train_single().
 
 singlepp::TrainIntegratedOptions ti_opt;
 auto train_integrated = singlepp::train_integrated(inputs, ti_opt);

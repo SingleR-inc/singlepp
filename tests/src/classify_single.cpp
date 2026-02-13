@@ -33,7 +33,7 @@ TEST_P(ClassifySingleSimpleTest, Simple) {
     singlepp::TrainSingleOptions bopt;
     bopt.top = top;
     auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
-    EXPECT_EQ(trained.get_test_nrow(), 200);
+    EXPECT_EQ(trained.test_nrow(), 200);
 
     singlepp::ClassifySingleOptions<double> copt;
     copt.fine_tune = false;
@@ -191,14 +191,15 @@ TEST_P(ClassifySingleIntersectTest, Intersect) {
     // Computing the observed result.
     singlepp::TrainSingleOptions bopt;
     bopt.top = top;
-    auto trained = singlepp::train_single_intersect<double, int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, bopt);
-    EXPECT_EQ(trained.get_test_nrow(), left.size());
-    EXPECT_EQ(trained.get_ref_subset().size(), trained.get_test_subset().size());
-    EXPECT_GE(trained.get_test_subset().size(), 10); // should be, on average, 'ngenes * prop^2' overlapping genes.
+    std::vector<int> ref_subset;
+    auto trained = singlepp::train_single<double, int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, &ref_subset, bopt);
+    EXPECT_EQ(trained.test_nrow(), left.size());
+    EXPECT_EQ(ref_subset.size(), trained.subset().size());
+    EXPECT_GE(trained.subset().size(), 10); // should be, on average, 'ngenes * prop^2' overlapping genes.
 
     singlepp::ClassifySingleOptions<double> copt;
     copt.quantile = quantile;
-    auto result = singlepp::classify_single_intersect<int>(*mat, trained, copt);
+    auto result = singlepp::classify_single<int>(*mat, trained, copt);
 
     // Computing the reference result using the classify_single() function,
     // after effectively subsetting the input matrices and reindexing the markers.
@@ -247,25 +248,11 @@ TEST_P(ClassifySingleIntersectTest, Intersect) {
         auto intersection = singlepp::intersect_genes<int>(left.size(), left.data(), right.size(), right.data());
         std::mt19937_64 rng(top + quantile * 3123 + prop * 452);
         std::shuffle(intersection.begin(), intersection.end(), rng);
-        auto trained2 = singlepp::train_single_intersect<double, int>(left.size(), intersection, *refs, labels.data(), markers, bopt);
+        auto trained2 = singlepp::train_single<double, int>(left.size(), intersection, *refs, labels.data(), markers, NULL, bopt);
 
         singlepp::ClassifySingleOptions<double> copt;
         copt.quantile = quantile;
-        auto result2 = singlepp::classify_single_intersect<int>(*mat, trained, copt);
-
-        EXPECT_EQ(result2.scores[0], result.scores[0]);
-        EXPECT_EQ(result2.best, result.best);
-        EXPECT_EQ(result2.delta, result.delta);
-    }
-
-    // Back-compatibility check for the soft-deprecated intersection method.
-    {
-        auto intersection = singlepp::intersect_genes<int>(left.size(), left.data(), right.size(), right.data());
-        auto trained2 = singlepp::train_single_intersect<double, int>(intersection, *refs, labels.data(), markers, bopt);
-
-        singlepp::ClassifySingleOptions<double> copt;
-        copt.quantile = quantile;
-        auto result2 = singlepp::classify_single_intersect<int>(*mat, trained, copt);
+        auto result2 = singlepp::classify_single<int>(*mat, trained, copt);
 
         EXPECT_EQ(result2.scores[0], result.scores[0]);
         EXPECT_EQ(result2.best, result.best);
@@ -299,18 +286,18 @@ TEST_P(ClassifySingleIntersectTest, Sparse) {
         auto refs = spawn_sparse_matrix(right.size(), nrefs, /* seed = */ 100 * quantile + top, /* density = */ 0.26);
         auto srefs = tatami::convert_to_compressed_sparse<double, int>(*refs, true, {});
 
-        auto trained = singlepp::train_single_intersect<double, int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, {});
-        auto expected = singlepp::classify_single_intersect<int>(*test, trained, {});
+        auto trained = singlepp::train_single<double, int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, NULL, {});
+        auto expected = singlepp::classify_single<int>(*test, trained, {});
 
-        auto sparse_to_dense = singlepp::classify_single_intersect<int>(*stest, trained, {});
+        auto sparse_to_dense = singlepp::classify_single<int>(*stest, trained, {});
         EXPECT_EQ(expected.best, sparse_to_dense.best);
         EXPECT_EQ(expected.delta, sparse_to_dense.delta);
         for (size_t l = 0; l < nlabels; ++l) {
             EXPECT_EQ(expected.scores[l], sparse_to_dense.scores[l]);
         }
 
-        auto sparse_trained = singlepp::train_single_intersect<double, int>(left.size(), left.data(), *srefs, right.data(), labels.data(), markers, {});
-        auto dense_to_sparse = singlepp::classify_single_intersect<int>(*test, sparse_trained, {});
+        auto sparse_trained = singlepp::train_single<double, int>(left.size(), left.data(), *srefs, right.data(), labels.data(), markers, NULL, {});
+        auto dense_to_sparse = singlepp::classify_single<int>(*test, sparse_trained, {});
         EXPECT_EQ(expected.best, dense_to_sparse.best);
         EXPECT_EQ(expected.delta, dense_to_sparse.delta);
         for (size_t l = 0; l < nlabels; ++l) {
@@ -330,11 +317,11 @@ TEST_P(ClassifySingleIntersectTest, Sparse) {
         auto refs = spawn_matrix(right.size(), nrefs, /* seed = */ 100 * quantile + top);
         auto srefs = tatami::convert_to_compressed_sparse<double, int>(*refs, true, {});
 
-        auto trained = singlepp::train_single_intersect<double, int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, {});
-        auto expected = singlepp::classify_single_intersect<int>(*test, trained, {});
+        auto trained = singlepp::train_single<double, int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, NULL, {});
+        auto expected = singlepp::classify_single<int>(*test, trained, {});
 
-        auto sparse_trained = singlepp::train_single_intersect<double, int>(left.size(), left.data(), *srefs, right.data(), labels.data(), markers, {});
-        auto sparse_to_sparse = singlepp::classify_single_intersect<int>(*test, sparse_trained, {});
+        auto sparse_trained = singlepp::train_single<double, int>(left.size(), left.data(), *srefs, right.data(), labels.data(), markers, NULL, {});
+        auto sparse_to_sparse = singlepp::classify_single<int>(*test, sparse_trained, {});
         EXPECT_EQ(expected.best, sparse_to_sparse.best);
         EXPECT_EQ(expected.delta, sparse_to_sparse.delta);
         for (size_t l = 0; l < nlabels; ++l) {
@@ -395,12 +382,13 @@ TEST(ClassifySingleTest, NoShared) {
 
     singlepp::TrainSingleOptions bopt;
     bopt.top = 20;
-    auto trained = singlepp::train_single_intersect<double, int>(ngenes, left.data(), *refs, right.data(), labels.data(), markers, bopt);
-    EXPECT_EQ(trained.get_test_subset().size(), 0);
-    EXPECT_EQ(trained.get_ref_subset().size(), 0);
+    std::vector<int> ref_subset;
+    auto trained = singlepp::train_single<double, int>(ngenes, left.data(), *refs, right.data(), labels.data(), markers, &ref_subset, bopt);
+    EXPECT_EQ(trained.subset().size(), 0);
+    EXPECT_EQ(ref_subset.size(), 0);
 
     singlepp::ClassifySingleOptions<double> copt;
-    auto output = singlepp::classify_single_intersect<int>(*mat, trained, copt);
+    auto output = singlepp::classify_single<int>(*mat, trained, copt);
     for (const auto& curscore : output.scores) {
         for (auto s : curscore) {
             EXPECT_EQ(s, 1); // distance of zero when there are no genes ==> correlation of 1.
@@ -476,7 +464,7 @@ TEST(ClassifySingleTest, IntersectMismatch) {
     std::vector<int> ids(ngenes);
     std::iota(ids.begin(), ids.end(), 0);
     singlepp::TrainSingleOptions bopt;
-    auto trained = singlepp::train_single_intersect<double, int>(ngenes, ids.data(), *refs, ids.data(), labels.data(), markers, bopt);
+    auto trained = singlepp::train_single<double, int>(ngenes, ids.data(), *refs, ids.data(), labels.data(), markers, NULL, bopt);
 
     auto test = spawn_matrix(ngenes + 10, nrefs, 100);
     singlepp::ClassifySingleOptions<double> copt;
@@ -484,7 +472,7 @@ TEST(ClassifySingleTest, IntersectMismatch) {
 
     bool failed = false;
     try {
-        singlepp::classify_single_intersect<int>(*test, trained, copt);
+        singlepp::classify_single<int>(*test, trained, copt);
     } catch (std::exception& e) {
         failed = true;
         EXPECT_TRUE(std::string(e.what()).find("number of rows") != std::string::npos);

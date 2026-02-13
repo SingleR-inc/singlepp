@@ -41,13 +41,13 @@ Rcpp::List intersect_single(
     // Running everything.
     singlepp::TrainSingleOptions bopt;
     bopt.top = top;
-    auto trained = singlepp::train_single_intersect(parsed_test.nrow(), test_ids.data(), parsed_ref, ref_ids.data(), labels2.data(), std::move(markers2), bopt);
+    auto trained = singlepp::train_single<double, int>(parsed_test.nrow(), test_ids.data(), parsed_ref, ref_ids.data(), labels2.data(), std::move(markers2), NULL, bopt);
 
     singlepp::ClassifySingleOptions<double> copt;
     copt.quantile = quantile;
     copt.fine_tune = fine_tune;
     copt.fine_tune_threshold = tune_thresh;
-    singlepp::classify_single_intersect(parsed_test, trained, buffers, copt);
+    singlepp::classify_single(parsed_test, trained, buffers, copt);
 
     for (auto& o : output_best) {
         ++o; // 1-based indexing.

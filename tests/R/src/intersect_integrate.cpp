@@ -52,13 +52,13 @@ Rcpp::List intersect_integrate(
     // Building the integrated classifier.
     singlepp::TrainSingleOptions bopt;
     bopt.top = -1; // use all markers.
-    std::vector<singlepp::TrainedSingleIntersect<int, double> > prebuilts; 
+    std::vector<singlepp::TrainedSingle<int, double> > prebuilts; 
     prebuilts.reserve(nrefs);
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > inputs; 
     inputs.reserve(nrefs);
     for (size_t r = 0; r < nrefs; ++r) {
-        prebuilts.push_back(singlepp::train_single_intersect(test.nrow(), test_ids.data(), *(rematrices[r]), reids[r].data(), relabels[r].data(), setup_markers(markers[r]), bopt));
-        inputs.push_back(singlepp::prepare_integrated_input_intersect(test.nrow(), test_ids.data(), *(rematrices[r]), reids[r].data(), relabels[r].data(), prebuilts.back()));
+        prebuilts.push_back(singlepp::train_single<double, int>(test.nrow(), test_ids.data(), *(rematrices[r]), reids[r].data(), relabels[r].data(), setup_markers(markers[r]), NULL, bopt));
+        inputs.push_back(singlepp::prepare_integrated_input(test.nrow(), test_ids.data(), *(rematrices[r]), reids[r].data(), relabels[r].data(), prebuilts.back()));
     }
     singlepp::TrainIntegratedOptions iopt;
     auto itrained = singlepp::train_integrated(std::move(inputs), iopt);

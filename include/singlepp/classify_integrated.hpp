@@ -114,7 +114,7 @@ struct ClassifyIntegratedBuffers {
  * 
  * @param test Expression matrix of the test dataset, where rows are genes and columns are cells.
  * The identity of the rows should be consistent with the reference datasets used to construct `trained`,
- * see `prepare_integrated_input()` and `prepare_integrated_input_intersect()` for details.
+ * see `prepare_integrated_input()` for details.
  * @param[in] assigned Vector of pointers of length equal to the number of references.
  * Each pointer should point to an array of length equal to the number of columns in `test`,
  * containing the assigned label for each column in each reference.
@@ -192,7 +192,7 @@ struct ClassifyIntegratedResults {
  *
  * @param test Expression matrix of the test dataset, where rows are genes and columns are cells.
  * The identity of the rows should be consistent with the reference datasets used to construct `trained`,
- * see `prepare_integrated_input()` and `prepare_integrated_input_intersect()` for details.
+ * see `prepare_integrated_input()` for details.
  * @param[in] assigned Vector of pointers of length equal to the number of references.
  * Each pointer should point to an array of length equal to the number of columns in `mat`,
  * containing the assigned label for each column in each reference.

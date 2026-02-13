@@ -22,7 +22,7 @@ namespace singlepp {
 /**
  * @brief Input to `train_integrated()`.
  *
- * Instances of this class should not be manually created, but instead returned by `prepare_integrated_input()` and `prepare_integrated_input_intersect()`.
+ * Instances of this class should not be manually created but instead returned by `prepare_integrated_input()`. 
  *
  * @tparam Value_ Numeric type for the matrix values.
  * @tparam Index_ Integer type for the row/column indices of the matrix.
@@ -72,8 +72,8 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input(
     output.ref = &ref;
     output.labels = labels;
 
-    output.ref_markers = &(trained.get_markers());
-    output.test_subset = &(trained.get_subset());
+    output.ref_markers = &(trained.markers());
+    output.test_subset = &(trained.subset());
 
     output.test_nrow = ref.nrow(); // remember, test and ref are assumed to have the same features.
     return output;
@@ -98,24 +98,24 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input(
  * The number and identity of genes should be consistent with `intersection`.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
  * Values should be integers in \f$[0, L)\f$ where \f$L\f$ is the number of unique labels.
- * @param trained Classifier created by calling `train_single_intersect()` on `test_nrow`, `intersection`, `ref` and `labels`.
+ * @param trained Classifier created by calling `train_single()` on `test_nrow`, `intersection`, `ref` and `labels`.
  *
  * @return An opaque input object for `train_integrated()`.
  */
 template<typename Index_, typename Value_, typename Label_, typename Float_>
-TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
+TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input(
     Index_ test_nrow,
     const Intersection<Index_>& intersection,
     const tatami::Matrix<Value_, Index_>& ref, 
     const Label_* labels, 
-    const TrainedSingleIntersect<Index_, Float_>& trained) 
-{
+    const TrainedSingle<Index_, Float_>& trained
+) {
     TrainIntegratedInput<Value_, Index_, Label_> output;
     output.ref = &ref;
     output.labels = labels;
 
-    output.ref_markers = &(trained.get_markers());
-    output.test_subset = &(trained.get_test_subset());
+    output.ref_markers = &(trained.markers());
+    output.test_subset = &(trained.subset());
 
     output.test_nrow = test_nrow;
     output.intersection = std::shared_ptr<const Intersection<Index_> >(std::shared_ptr<Intersection<Index_> >{}, &intersection);
@@ -144,25 +144,25 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
  * If any duplicate IDs are present, only the first occurrence is used.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
  * Values should be integers in \f$[0, L)\f$ where \f$L\f$ is the number of unique labels.
- * @param trained Classifier created by calling `train_single_intersect()` on `test_nrow`, `test_id`, `ref`, `ref_id` and `labels`.
+ * @param trained Classifier created by calling `train_single()` on `test_nrow`, `test_id`, `ref`, `ref_id` and `labels`.
  *
  * @return An opaque input object for `train_integrated()`.
  */
 template<typename Index_, typename Id_, typename Value_, typename Label_, typename Float_>
-TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
+TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input(
     Index_ test_nrow,
     const Id_* test_id, 
     const tatami::Matrix<Value_, Index_>& ref, 
     const Id_* ref_id, 
     const Label_* labels,
-    const TrainedSingleIntersect<Index_, Float_>& trained
+    const TrainedSingle<Index_, Float_>& trained
 ) {
     TrainIntegratedInput<Value_, Index_, Label_> output;
     output.ref = &ref;
     output.labels = labels;
 
-    output.ref_markers = &(trained.get_markers());
-    output.test_subset = &(trained.get_test_subset());
+    output.ref_markers = &(trained.markers());
+    output.test_subset = &(trained.subset());
 
     output.test_nrow = test_nrow;
     auto intersection = intersect_genes(test_nrow, test_id, ref.nrow(), ref_id);
@@ -443,7 +443,7 @@ void train_integrated_per_reference_intersect(
  * @tparam Index_ Integer type for the row/column indices of the matrix.
  * @tparam Label_ Integer type for the labels.
  *
- * @param inputs Vector of references, typically constructed with `prepare_integrated_input()` or `prepare_integrated_input_intersect()`.
+ * @param inputs Vector of references, each of which is typically constructed with `prepare_integrated_input()`.
  * @param options Further options.
  *
  * @return A pre-built classifier that integrates multiple references, for use in `classify_integrated()`.

@@ -27,10 +27,10 @@ struct TrainSingleOptions {
      * Number of top markers to use from each pairwise comparison between labels.
      * Larger values improve the stability of the correlations at the cost of increasing noise and computational work.
      *
-     * For `train_single_intersect()`, the specified number of top markers is taken from the intersection of features.
+     * When the test and reference datasets do not have the same features, the specified number of top markers is taken from the intersection of features.
      * This avoids that some markers will be selected even if not all genes in `markers` are present in the test dataset.
      *
-     * Setting this to a negative value will instruct `train_single()` and `train_single_intersect()` to use all supplied markers.
+     * Setting this to a negative value will instruct `train_single()` to use all supplied markers.
      * This is useful in situations where the supplied markers have already been curated.
      */
     int top = -1;
@@ -43,7 +43,6 @@ struct TrainSingleOptions {
 };
 
 /**
-<<<<<<< HEAD
  * @cond
  */
 template<typename Index_, typename Float_>
@@ -113,25 +112,26 @@ public:
     /**
      * @return Number of rows that should be present in the test dataset.
      */
-    Index_ get_test_nrow() const {
+    Index_ test_nrow() const {
         return my_test_nrow;
     }
 
     /**
      * @return A vector of vectors of vectors of ranked marker genes to be used in the classification.
-     * In the innermost vectors, each value is an index into the subset vector (see `get_subset()`),
-     * e.g., `get_subset()[get_markers()[2][1].front()]` is the row index of the first marker of the third label over the first label.
-     * The set of marker genes is a subset of the input `markers` used in `train_single()`.
+     * In the innermost vectors, each value is an index into the subset vector (see `subset()`),
+     * e.g., `subset()[markers()[2][1].front()]` is the row index of the first marker of the third label over the first label.
+     * The set of marker genes is a subset of the input `markers` used in `train_single()`. 
      */
-    const Markers<Index_>& get_markers() const {
+    const Markers<Index_>& markers() const {
         return my_markers;
     }
 
     /**
-     * @return The subset of genes in the test/reference datasets that were used in the classification.
-     * Each value is a row index into either matrix.
+     * @return The subset of genes in the test dataset that were used in the classification.
+     * Each value is a row index into the test matrix.
+     * Values are sorted and unique.
      */
-    const std::vector<Index_>& get_subset() const {
+    const std::vector<Index_>& subset() const {
         return my_subset;
     }
 
@@ -152,7 +152,7 @@ public:
     /**
      * @cond
      */
-    const auto& get_built() const {
+    const auto& built() const {
         return my_built;
     }
     /**
@@ -167,7 +167,7 @@ public:
  * We also construct neighbor search indices for rapid calculation of the classification score.
  *
  * The classifier returned by this function should only be used in `classify_single()` with a test dataset that has the same genes as the reference dataset.
- * If the test dataset has different genes, consider using `train_single_intersect()` instead.
+ * If the test dataset has different genes, use the `train_single()` overloads that accept the intersection of genes between the test and reference dataset.
  * 
  * @tparam Value_ Numeric type for the matrix values.
  * @tparam Index_ Integer type for the row/column indices of the matrix.
@@ -197,117 +197,16 @@ TrainedSingle<Index_, Float_> train_single(
 }
 
 /**
- * @brief Classifier built from an intersection of genes.
+ * Overload of `train_single()` that uses a pre-computed intersection of genes between the reference dataset and an as-yet-unspecified test dataset.
+ * Most users will prefer to use the other `train_single()` overload that accepts `test_id` and `ref_id` and computes the intersection automatically.
  *
- * Instances of this class should not be directly constructed, but instead returned by calling `train_single_intersect()`.
- * This uses the intersection of genes between the test dataset and those of the reference dataset.
- * Each instance can be used in `classify_single_intersect()` with a test dataset that has the specified genes.
- * 
- * @tparam Index_ Integer type for the row/column indices of the matrix.
- * @tparam Float_ Floating-point type for the correlations and scores.
- */
-template<typename Index_, typename Float_>
-class TrainedSingleIntersect {
-public:
-    /**
-     * @cond
-     */
-    TrainedSingleIntersect(
-        Index_ test_nrow,
-        Markers<Index_> markers,
-        std::vector<Index_> test_subset,
-        std::vector<Index_> ref_subset,
-        BuiltReference<Index_, Float_> built
-    ) :
-        my_test_nrow(test_nrow),
-        my_markers(std::move(markers)),
-        my_test_subset(std::move(test_subset)),
-        my_ref_subset(std::move(ref_subset)),
-        my_built(std::move(built)) 
-    {}
-    /**
-     * @endcond
-     */
-
-private:
-    Index_ my_test_nrow;
-    Markers<Index_> my_markers;
-    std::vector<Index_> my_test_subset;
-    std::vector<Index_> my_ref_subset;
-    BuiltReference<Index_, Float_> my_built;
-
-public:
-    /**
-     * @return Number of rows that should be present in the test dataset.
-     */
-    Index_ get_test_nrow() const {
-        return my_test_nrow;
-    }
-
-    /**
-     * @return A vector of vectors of ranked marker genes to be used in the classification.
-     * In the innermost vectors, each value is an index into the subset vectors (see `get_test_subset()` and `get_ref_subset()`).
-     * e.g., `get_test_subset()[get_markers()[2][1].front()]` is the test matrix row index of the first marker of the third label over the first label.
-     * The set of marker genes is a subset of those in the input `markers` in `train_single_intersect()`.
-     */
-    const Markers<Index_>& get_markers() const {
-        return my_markers;
-    }
-
-    /**
-     * @return Subset of genes in the intersection for the test dataset.
-     * These are unique indices into the `test_id` array supplied to `train_single_intersect()`, and can be assumed to represent row indices into the test matrix.
-     * This has the same length as the subset vector returned by `get_ref_subset()`, where corresponding entries refer to the same genes in the respective datasets.
-     */
-    const std::vector<Index_>& get_test_subset() const {
-        return my_test_subset;
-    }
-
-    /**
-     * @return Subset of genes in the intersection for the test dataset.
-     * These are unique indices into the `ref_id` matrix supplied to `train_single_intersect()`, and can be assumed to represent row indices into the reference matrix.
-     * This has the same length as the subset vector returned by `get_test_subset()`, where corresponding entries refer to the same genes in the respective datasets.
-     */
-    const std::vector<Index_>& get_ref_subset() const {
-        return my_ref_subset;
-    }
-
-    /**
-     * @return Number of labels in this reference.
-     */
-    std::size_t num_labels() const {
-        return get_num_labels_from_built(my_built);
-    }
-
-    /**
-     * @return Number of profiles in this reference.
-     */
-    std::size_t num_profiles() const {
-        return get_num_profiles_from_built(my_built);
-    }
-
-    /**
-     * @cond
-     */
-    const auto& get_built() const {
-        return my_built;
-    }
-    /**
-     * @endcond
-     */
-};
-
-/**
- * Variant of `train_single()` that uses a pre-computed intersection of genes between the reference dataset and an as-yet-unspecified test dataset.
- * Most users will prefer to use the other `train_single_intersect()` overload that accepts `test_id` and `ref_id` and computes the intersection automatically.
- *
- * The classifier returned by this function should only be used in `classify_single_intersect()` with a test dataset that is compatible with the mappings in `intersection`.
+ * The classifier returned by this function should only be used in `classify_single()` with a test dataset that is compatible with the mappings in `intersection`.
  * That is, the gene in the `intersection[i].first`-th row of the test dataset should correspond to the `intersection[i].second`-th row of the reference dataset.
  *
+ * @tparam Float_ Floating-point type for the correlations and scores.
  * @tparam Index_ Integer type for the row/column indices of the matrix.
  * @tparam Value_ Numeric type for the matrix values.
  * @tparam Label_ Integer type for the reference labels.
- * @tparam Float_ Floating-point type for the correlations and scores.
  *
  * @param test_nrow Number of features in the test dataset.
  * @param intersection Vector defining the intersection of genes between the test and reference datasets.
@@ -319,54 +218,44 @@ public:
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each reference profile.
  * Labels should be integers in \f$[0, L)\f$ where \f$L\f$ is the total number of unique labels.
  * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `singlepp::Markers` for more details.
+ * @param[out] ref_subset Pointer to a vector in which to store the subset of rows of `ref` that contains the markers to be used for classification.
+ * On output, the vector is filled with unique (but not necessarily sorted) row indices of length equal to `TrainedSingle::subset()`,
+ * where each value contains the reference row that matches the test row indexed by the corresponding entry of `TrainedSingle::subset()`.
+ * If `NULL`, the rows of the reference matrix are not returned.
  * @param options Further options.
  *
- * @return A pre-built classifier that can be used in `classify_single_intersect()`. 
+ * @return A pre-built classifier that can be used in `classify_single()`. 
  */
 template<typename Float_ = double, typename Index_, typename Value_, typename Label_>
-TrainedSingleIntersect<Index_, Float_> train_single_intersect(
+TrainedSingle<Index_, Float_> train_single(
     Index_ test_nrow,
     const Intersection<Index_>& intersection,
     const tatami::Matrix<Value_, Index_>& ref, 
     const Label_* labels,
     Markers<Index_> markers,
-    const TrainSingleOptions& options)
-{
+    std::vector<Index_>* ref_subset,
+    const TrainSingleOptions& options
+) {
     auto pairs = internal::subset_to_markers(intersection, markers, options.top);
     auto subref = build_reference<Float_>(ref, labels, pairs.second, options.num_threads);
-    return TrainedSingleIntersect<Index_, Float_>(test_nrow, std::move(markers), std::move(pairs.first), std::move(pairs.second), std::move(subref));
+    if (ref_subset) {
+        *ref_subset = std::move(pairs.second);
+    }
+    return TrainedSingle<Index_, Float_>(test_nrow, std::move(markers), std::move(pairs.first), std::move(subref));
 }
 
 /**
- * @cond
- */
-// For back-compatibility only.
-template<typename Float_, typename Index_, typename Value_, typename Label_>
-TrainedSingleIntersect<Index_, Float_> train_single_intersect(
-    const Intersection<Index_>& intersection,
-    const tatami::Matrix<Value_, Index_>& ref, 
-    const Label_* labels,
-    Markers<Index_> markers,
-    const TrainSingleOptions& options)
-{
-    return train_single_intersect<Float_, Index_, Value_, Label_>(-1, intersection, ref, labels, std::move(markers), options);
-}
-/**
- * @endcond
- */
-
-/**
- * Variant of `train_single()` that uses the intersection of genes between the reference dataset and a (future) test dataset.
+ * Overload of `train_single()` that uses the intersection of genes between the reference dataset and a (future) test dataset.
  * This is useful when the genes are not in the same order and number across the test and reference datasets.
  *
- * The classifier returned by this function should only be used in `classify_single_intersect()` with a test dataset
+ * The classifier returned by this function should only be used in `classify_single()` with a test dataset
  * that has `test_nrow` rows with the same order and identity of genes as in `test_id`.
  *
+ * @tparam Float_ Floating-point type for the correlations and scores.
  * @tparam Index_ Integer type for the row/column indices of the matrix.
  * @tparam Id_ Type of the gene identifier for each row, typically integer or string.
  * @tparam Value_ Numeric type for the matrix values.
  * @tparam Label_ Integer type for the reference labels.
- * @tparam Float_ Floating-point type for the correlations and scores.
  *
  * @param test_nrow Number of rows (genes) in the test dataset.
  * @param[in] test_id Pointer to an array of length equal to `test_nrow`, containing a gene identifier for each row of the test dataset.
@@ -379,22 +268,27 @@ TrainedSingleIntersect<Index_, Float_> train_single_intersect(
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each reference profile.
  * Labels should be integers in \f$[0, L)\f$ where \f$L\f$ is the total number of unique labels.
  * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `singlepp::Markers` for more details.
+ * @param[out] ref_subset Pointer to a vector in which to store the subset of rows of `ref` that contains the markers to be used for classification.
+ * On output, the vector is filled with unique (but not necessarily sorted) row indices of length equal to `TrainedSingle::subset()`,
+ * where each value contains the reference row that matches the test row indexed by the corresponding entry of `TrainedSingle::subset()`.
+ * If `NULL`, the rows of the reference matrix are not returned.
  * @param options Further options.
  *
- * @return A pre-built classifier that can be used in `classify_single_intersect()`.
+ * @return A pre-built classifier that can be used in `classify_single()`.
  */
 template<typename Float_ = double, typename Index_, typename Id_, typename Value_, typename Label_>
-TrainedSingleIntersect<Index_, Float_> train_single_intersect(
+TrainedSingle<Index_, Float_> train_single(
     Index_ test_nrow,
     const Id_* test_id, 
     const tatami::Matrix<Value_, Index_>& ref, 
     const Id_* ref_id, 
     const Label_* labels,
     Markers<Index_> markers,
-    const TrainSingleOptions& options)
-{
+    std::vector<Index_>* ref_subset,
+    const TrainSingleOptions& options
+) {
     auto intersection = intersect_genes(test_nrow, test_id, ref.nrow(), ref_id);
-    return train_single_intersect(test_nrow, intersection, ref, labels, std::move(markers), options);
+    return train_single(test_nrow, intersection, ref, labels, std::move(markers), ref_subset, options);
 }
 
 }
