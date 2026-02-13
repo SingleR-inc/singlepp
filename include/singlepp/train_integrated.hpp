@@ -171,60 +171,10 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input_intersect(
 }
 
 /**
- * @brief Classifier that integrates multiple reference datasets.
- * @tparam Index_ Integer type for the row/column indices of the matrix.
+ * @cond
  */
 template<typename Index_>
-class TrainedIntegrated {
-public:
-    /**
-     * @return Number of reference datasets.
-     */
-    std::size_t num_references() const {
-        return references.size();
-    }
-
-    /**
-     * @param r Reference dataset of interest.
-     * @return Number of labels in this reference.
-     */
-    std::size_t num_labels(std::size_t r) const {
-        const auto& ref = references[r];
-        if (ref.dense.has_value()) {
-            return ref.dense->size();
-        } else {
-            return ref.sparse->size();
-        }
-    }
-
-    /**
-     * @param r Reference dataset of interest.
-     * @return Number of profiles in this reference.
-     */
-    std::size_t num_profiles(std::size_t r) const {
-        std::size_t num_prof = 0;
-        const auto& ref = references[r];
-        if (ref.dense.has_value()) {
-            for (const auto& lab : *(ref.dense)) {
-                num_prof += sanisizer::sum<std::size_t>(num_prof, lab.num_samples);
-            }
-        } else {
-            for (const auto& lab : *(ref.sparse)) {
-                num_prof += sanisizer::sum<std::size_t>(num_prof, lab.num_samples);
-            }
-        }
-        return num_prof;
-    }
-
-public: // Technically this should be private, but it's a pain to add templated friend functions, so I can't be bothered.
-    /**
-     * @cond
-     */
-    Index_ test_nrow;
-
-    // This contains sorted and unique indices for the test matrix, to be used by classify_integrated() for indexed extraction.
-    std::vector<Index_> universe;
-
+struct IntegratedReference {
     struct DensePerLabel {
         Index_ num_samples;
         std::vector<Index_> markers; // indices to 'universe'
@@ -238,14 +188,96 @@ public: // Technically this should be private, but it's a pain to add templated 
         std::vector<std::size_t> negative_indptrs, positive_indptrs; 
     };
 
-    struct Reference {
-        std::optional<std::vector<DensePerLabel> > dense;
-        std::optional<std::vector<SparsePerLabel> > sparse;
-    };
-    std::vector<Reference> references;
+    std::optional<std::vector<DensePerLabel> > dense;
+    std::optional<std::vector<SparsePerLabel> > sparse;
+};
+/**
+ * @endcond
+ */
+
+/**
+ * @brief Classifier that integrates multiple reference datasets.
+ * @tparam Index_ Integer type for the row/column indices of the matrix.
+ */
+template<typename Index_>
+class TrainedIntegrated {
+public:
+    /**
+     * @cond
+     */
+    TrainedIntegrated(Index_ test_nrow, std::vector<Index_> universe, std::vector<IntegratedReference<Index_> > references) :
+        my_test_nrow(test_nrow),
+        my_universe(std::move(universe)),
+        my_references(std::move(references))
+    {}
+
+    const auto& references() const {
+        return my_references;
+    }
     /**
      * @endcond
      */
+
+private:
+    Index_ my_test_nrow;
+    std::vector<Index_> my_universe;
+    std::vector<IntegratedReference<Index_> > my_references;
+
+public:
+    /**
+     * @return Number of reference datasets.
+     */
+    std::size_t num_references() const {
+        return my_references.size();
+    }
+
+    /**
+     * @return Number of rows that should be present in the test dataset.
+     */
+    Index_ test_nrow() const {
+        return my_test_nrow;
+    }
+
+    /**
+     * @return The subset of genes in the test dataset to be used for classification.
+     * Each value is a row index into the test matrix.
+     * Values are sorted and unique.
+     */
+    const std::vector<Index_>& subset() const {
+        return my_universe;
+    }
+
+    /**
+     * @param r Reference dataset of interest.
+     * @return Number of labels in this reference.
+     */
+    std::size_t num_labels(std::size_t r) const {
+        const auto& ref = my_references[r];
+        if (ref.dense.has_value()) {
+            return ref.dense->size();
+        } else {
+            return ref.sparse->size();
+        }
+    }
+
+    /**
+     * @param r Reference dataset of interest.
+     * @return Number of profiles in this reference.
+     */
+    std::size_t num_profiles(std::size_t r) const {
+        std::size_t num_prof = 0;
+        const auto& ref = my_references[r];
+        if (ref.dense.has_value()) {
+            for (const auto& lab : *(ref.dense)) {
+                num_prof += sanisizer::sum<std::size_t>(num_prof, lab.num_samples);
+            }
+        } else {
+            for (const auto& lab : *(ref.sparse)) {
+                num_prof += sanisizer::sum<std::size_t>(num_prof, lab.num_samples);
+            }
+        }
+        return num_prof;
+    }
 };
 
 /**
@@ -418,28 +450,28 @@ void train_integrated_per_reference_intersect(
  */
 template<typename Value_, typename Index_, typename Label_>
 TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInput<Value_, Index_, Label_> >& inputs, const TrainIntegratedOptions& options) {
-    TrainedIntegrated<Index_> output;
+    std::vector<Index_> universe;
     const auto nrefs = inputs.size();
-    sanisizer::resize(output.references, nrefs);
+    auto references = sanisizer::create<std::vector<IntegratedReference<Index_> > >(nrefs);
 
     // Checking that the number of genes in the test dataset are consistent.
-    output.test_nrow = 0;
+    Index_ test_nrow = 0;
     if (inputs.size()) {
-        output.test_nrow = inputs.front().test_nrow;
+        test_nrow = inputs.front().test_nrow;
         for (const auto& in : inputs) {
-            if (!sanisizer::is_equal(in.test_nrow, output.test_nrow)) {
+            if (!sanisizer::is_equal(in.test_nrow, test_nrow)) {
                 throw std::runtime_error("inconsistent number of rows in the test dataset across entries of 'inputs'");
             }
         }
     }
 
     // Identify the union of all marker genes as the universe, but excluding those markers that are not present in intersections.
-    // Note that 'output.universe' contains sorted and unique row indices for the test matrix, where 'remap_test_to_universe[universe[i]] == i'.
-    auto remap_test_to_universe = sanisizer::create<std::vector<Index_> >(output.test_nrow, output.test_nrow);
+    // Note that 'universe' contains sorted and unique row indices for the test matrix, where 'remap_test_to_universe[universe[i]] == i'.
+    auto remap_test_to_universe = sanisizer::create<std::vector<Index_> >(test_nrow, test_nrow);
     {
-        auto present = sanisizer::create<std::vector<char> >(output.test_nrow);
-        auto count_refs = sanisizer::create<std::vector<I<decltype(nrefs)> > >(output.test_nrow);
-        output.universe.reserve(output.test_nrow);
+        auto present = sanisizer::create<std::vector<char> >(test_nrow);
+        auto count_refs = sanisizer::create<std::vector<I<decltype(nrefs)> > >(test_nrow);
+        universe.reserve(test_nrow);
 
         for (const auto& in : inputs) {
             const auto& markers = *(in.ref_markers);
@@ -451,7 +483,7 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
                         const auto ty = test_subset[y];
                         if (!present[ty]) {
                             present[ty] = true;
-                            output.universe.push_back(ty);
+                            universe.push_back(ty);
                         }
                     }
                 }
@@ -468,31 +500,31 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
             }
         }
 
-        std::sort(output.universe.begin(), output.universe.end());
-        const auto num_universe = output.universe.size();
+        std::sort(universe.begin(), universe.end());
+        const auto num_universe = universe.size();
         I<decltype(num_universe)> keep = 0;
         for (I<decltype(num_universe)> u = 0; u < num_universe; ++u) {
-            const auto marker = output.universe[u];
+            const auto marker = universe[u];
             if (count_refs[marker] == nrefs) {
-                output.universe[keep] = marker;
+                universe[keep] = marker;
                 remap_test_to_universe[marker] = keep;
                 ++keep;
             }
         }
-        output.universe.resize(keep);
-        output.universe.shrink_to_fit();
+        universe.resize(keep);
+        universe.shrink_to_fit();
     }
 
-    auto is_active = sanisizer::create<std::vector<char> >(output.test_nrow);
+    auto is_active = sanisizer::create<std::vector<char> >(test_nrow);
     std::vector<Index_> active_genes;
-    active_genes.reserve(output.test_nrow);
+    active_genes.reserve(test_nrow);
 
     for (I<decltype(nrefs)> r = 0; r < nrefs; ++r) {
         const auto& curinput = inputs[r];
         const auto& currefmarkers = *(curinput.ref_markers);
         const auto& test_subset = *(curinput.test_subset);
         const auto nlabels = currefmarkers.size();
-        auto& currefout = output.references[r];
+        auto& currefout = references[r];
 
         const Index_ NC = curinput.ref->ncol();
         const bool is_sparse = curinput.ref->is_sparse();
@@ -520,7 +552,7 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
 
             for (const auto a : active_genes) {
                 const auto universe_index = remap_test_to_universe[a];
-                if (universe_index != output.test_nrow) { // ignoring genes not in the intersection.
+                if (universe_index != test_nrow) { // ignoring genes not in the intersection.
                     markers.push_back(universe_index);
                 }
                 is_active[a] = false;
@@ -553,9 +585,9 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
             }
 
             if (curinput.intersection) {
-                train_integrated_per_reference_intersect<true>(curinput, remap_test_to_universe, output.test_nrow, options, positions, negative_ranked, positive_ranked);
+                train_integrated_per_reference_intersect<true>(curinput, remap_test_to_universe, test_nrow, options, positions, negative_ranked, positive_ranked);
             } else {
-                train_integrated_per_reference_simple<true, Value_>(curinput, output.universe, remap_test_to_universe, options, positions, negative_ranked, positive_ranked);
+                train_integrated_per_reference_simple<true, Value_>(curinput, universe, remap_test_to_universe, options, positions, negative_ranked, positive_ranked);
             }
 
             for (I<decltype(nlabels)> l = 0; l < nlabels; ++l) {
@@ -598,15 +630,15 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
             }
 
             if (curinput.intersection) {
-                train_integrated_per_reference_intersect<false>(curinput, remap_test_to_universe, output.test_nrow, options, positions, out_ranked, true);
+                train_integrated_per_reference_intersect<false>(curinput, remap_test_to_universe, test_nrow, options, positions, out_ranked, true);
             } else {
-                train_integrated_per_reference_simple<false, Value_>(curinput, output.universe, remap_test_to_universe, options, positions, out_ranked, true);
+                train_integrated_per_reference_simple<false, Value_>(curinput, universe, remap_test_to_universe, options, positions, out_ranked, true);
             }
 
             for (I<decltype(nlabels)> l = 0; l < nlabels; ++l) {
                 auto& curlabout = (*(currefout.dense))[l];
                 curlabout.num_samples = samples_per_label[l];
-                curlabout.all_ranked.reserve(sanisizer::product<I<decltype(curlabout.all_ranked.size())> >(output.universe.size(), curlabout.num_samples));
+                curlabout.all_ranked.reserve(sanisizer::product<I<decltype(curlabout.all_ranked.size())> >(universe.size(), curlabout.num_samples));
                 for (const auto& x : out_ranked[l]) {
                     curlabout.all_ranked.insert(curlabout.all_ranked.end(), x.begin(), x.end());
                 }
@@ -614,7 +646,7 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
         }
     }
 
-    return output;
+    return TrainedIntegrated<Index_>(test_nrow, std::move(universe), std::move(references));
 }
 
 }

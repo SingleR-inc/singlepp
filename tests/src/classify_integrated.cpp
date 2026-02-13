@@ -800,7 +800,7 @@ TEST_F(ClassifyIntegratedOtherTest, FineTune) {
                 auto ptr = ext->fetch(c, buffer.data());
                 query_ranked.clear();
                 int counter = 0;
-                for (auto r : integrated.universe) {
+                for (auto r : integrated.subset()) {
                     query_ranked.emplace_back(ptr[r], counter);
                     ++counter;
                 }

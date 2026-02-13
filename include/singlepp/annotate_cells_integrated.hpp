@@ -33,9 +33,9 @@ struct TrainedIntegratedDetails {
 template<typename Index_>
 TrainedIntegratedDetails<Index_> interrogate_trained_integrated(const TrainedIntegrated<Index_>& trained) {
     TrainedIntegratedDetails<Index_> output;
-    output.num_universe = trained.universe.size(); // safety of cast is implicit as universe is a subset of all rows in the various tatami::Matrix objects.
+    output.num_universe = trained.subset().size(); // safety of cast is implicit as universe is a subset of all rows in the various tatami::Matrix objects.
 
-    for (const auto& ref : trained.references) {
+    for (const auto& ref : trained.references()) {
         if (ref.sparse.has_value()) {
             output.any_sparse = true;
             for (const auto& lab : *(ref.sparse)) {
@@ -107,10 +107,12 @@ public:
         std::vector<Float_>& scores,
         Float_ quantile
     ) {
+        const auto& references = trained.references();
+
         my_remapper.clear();
         for (const auto r : reflabels_in_use) {
             const auto curassigned = assigned[r][query_index];
-            const auto& curref = trained.references[r];
+            const auto& curref = references[r];
 
             if (curref.sparse.has_value()) {
                 const auto& curmarkers = (*(curref.sparse))[curassigned].markers;
@@ -142,7 +144,7 @@ public:
 
         scores.clear();
         for (const auto r : reflabels_in_use) {
-            const auto& curref = trained.references[r];
+            const auto& curref = references[r];
             const auto curassigned = assigned[r][query_index];
             my_all_correlations.clear();
 
@@ -216,12 +218,13 @@ void annotate_cells_integrated_raw(
     int num_threads
 ) {
     const auto NR = test.nrow();
-    if (!sanisizer::is_equal(NR, trained.test_nrow)) {
+    if (!sanisizer::is_equal(NR, trained.test_nrow())) {
         throw std::runtime_error("number of rows in 'test' do not match up with those expected by 'trained'");
     }
 
     const auto details = interrogate_trained_integrated(trained);
-    SubsetNoop<query_sparse_, Index_> subsorted(trained.universe);
+    const auto& subset = trained.subset();
+    SubsetNoop<query_sparse_, Index_> subsorted(subset);
     const auto num_universe = details.num_universe;
 
     tatami::parallelize([&](int, Index_ start, Index_ len) {
@@ -238,7 +241,7 @@ void annotate_cells_integrated_raw(
             }
         }();
 
-        const auto nref = trained.references.size();
+        const auto nref = trained.references().size();
         std::vector<RefLabel_> reflabels_in_use;
         sanisizer::reserve(reflabels_in_use, nref);
         std::vector<Float_> all_scores;
@@ -246,7 +249,7 @@ void annotate_cells_integrated_raw(
 
         // We perform an indexed extraction, so all subsequent indices
         // will refer to indices into this subset (i.e., 'universe').
-        tatami::VectorPtr<Index_> universe_ptr(tatami::VectorPtr<Index_>{}, &(trained.universe));
+        tatami::VectorPtr<Index_> universe_ptr(tatami::VectorPtr<Index_>{}, &subset);
         auto mat_work = tatami::consecutive_extractor<query_sparse_>(&test, false, start, len, std::move(universe_ptr));
 
         for (Index_ i = start, end = start + len; i < end; ++i) {
