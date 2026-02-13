@@ -685,14 +685,14 @@ INSTANTIATE_TEST_SUITE_P(
 
 /********************************************/
 
-class ClassifyIntegratedMismatchTest : public ::testing::Test, public IntegratedTestCore {
+class ClassifyIntegratedOtherTest : public ::testing::Test, public IntegratedTestCore {
 protected:
     static void SetUpTestSuite() {
         assemble();
     }
 };
 
-TEST_F(ClassifyIntegratedMismatchTest, Basic) {
+TEST_F(ClassifyIntegratedOtherTest, Mismatch) {
     singlepp::TrainSingleOptions bopt;
     std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
     prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
@@ -730,4 +730,92 @@ TEST_F(ClassifyIntegratedMismatchTest, Basic) {
         failed = true;
     }
     EXPECT_TRUE(failed);
+}
+
+TEST_F(ClassifyIntegratedOtherTest, FineTune) {
+    singlepp::TrainSingleOptions bopt;
+    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
+    prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
+    integrated_inputs.reserve(nrefs);
+
+    for (size_t r = 0; r < nrefs; ++r) {
+        const auto& refmat = *(references[r]);
+        const auto labptr = labels[r].data();
+        prebuilts.push_back(singlepp::train_single(refmat, labptr, markers[r], bopt));
+        integrated_inputs.push_back(singlepp::prepare_integrated_input(refmat, labptr, prebuilts.back()));
+    }
+
+    singlepp::TrainIntegratedOptions iopt;
+    auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
+
+    singlepp::FineTuneIntegrated<false, int, double, double> ft(integrated);
+    singlepp::RankedVector<double, int> query_ranked;
+
+    // We need at least 3 references to have any kind of fine-tuning.
+    ASSERT_GE(nrefs, 3);
+
+    // Checking that we abort early in various circumstances.
+    {
+        std::vector<int> dummy_assigned(1);
+        std::vector<const int*> assigned_ptrs(nrefs, dummy_assigned.data());
+
+        std::vector<double> scores(nrefs, 0.5);
+        scores[1] = 0.7;
+        std::vector<int> reflabels_in_use;
+        auto out = ft.run_all(0, query_ranked, integrated, assigned_ptrs, reflabels_in_use, scores, 0.8, 0.05);
+        EXPECT_EQ(out.first, 1);
+        EXPECT_FLOAT_EQ(out.second, 0.2);
+
+        scores[1] = 0.5;
+        scores[nrefs - 1] = 0.51;
+        out = ft.run_all(0, query_ranked, integrated, assigned_ptrs, reflabels_in_use, scores, 0.8, 0.05);
+        EXPECT_EQ(out.first, nrefs - 1);
+        EXPECT_FLOAT_EQ(out.second, 0.01);
+    }
+
+    // Checking that we get the expected result.
+    {
+        std::vector<double> scores(nrefs);
+        std::vector<int> reflabels_in_use;
+
+        for (size_t r = 0; r < nrefs; ++r) {
+            const auto& refmat = *(references[r]);
+            const int NC = refmat.ncol();
+            const int NR = refmat.nrow();
+            auto ext = refmat.dense_column();
+            std::vector<double> buffer(NR);
+
+            std::vector<int> dummy_assigned(NC);
+            std::vector<const int*> assigned_ptrs(nrefs);
+            for (size_t r2 = 0; r2 < nrefs; ++r2) {
+                if (r2 == r) {
+                    assigned_ptrs[r2] = labels[r2].data();
+                } else {
+                    assigned_ptrs[r2] = dummy_assigned.data();
+                }
+            }
+
+            for (int c = 0; c < NC; ++c) {
+                auto ptr = ext->fetch(c, buffer.data());
+                query_ranked.clear();
+                int counter = 0;
+                for (auto r : integrated.universe) {
+                    query_ranked.emplace_back(ptr[r], counter);
+                    ++counter;
+                }
+                std::sort(query_ranked.begin(), query_ranked.end());
+
+                // Mock up the scores to have two labels, to force it to go through one fine-tuning iteration. 
+                scores.clear();
+                scores.resize(nrefs);
+                scores[r] = 0.5;
+                scores[(r + 1) % nrefs] = 0.51;
+
+                // Use a quantile of 1 so that an exact match is respected with the maximum correlation.
+                auto out = ft.run_all(c, query_ranked, integrated, assigned_ptrs, reflabels_in_use, scores, 1, 0.05);
+                EXPECT_EQ(out.first, r);
+            }
+        }
+    }
 }
