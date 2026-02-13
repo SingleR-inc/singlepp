@@ -113,6 +113,10 @@ $(function(){ initResizable(false); });
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a5a0e980d87d8d47e2a319558b11aeec7" id="r_a5a0e980d87d8d47e2a319558b11aeec7"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5a0e980d87d8d47e2a319558b11aeec7">num_references</a> () const</td></tr>
 <tr class="separator:a5a0e980d87d8d47e2a319558b11aeec7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a02d3ec196329e9b41907905f14f2b302" id="r_a02d3ec196329e9b41907905f14f2b302"><td class="memItemLeft" align="right" valign="top">Index_&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a02d3ec196329e9b41907905f14f2b302">test_nrow</a> () const</td></tr>
+<tr class="separator:a02d3ec196329e9b41907905f14f2b302"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acfe4e0e076c698cc58dd820e8fcd884b" id="r_acfe4e0e076c698cc58dd820e8fcd884b"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; Index_ &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acfe4e0e076c698cc58dd820e8fcd884b">subset</a> () const</td></tr>
+<tr class="separator:acfe4e0e076c698cc58dd820e8fcd884b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af7e28abc4fc7c9b1f2645af46db94e8c" id="r_af7e28abc4fc7c9b1f2645af46db94e8c"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af7e28abc4fc7c9b1f2645af46db94e8c">num_labels</a> (std::size_t r) const</td></tr>
 <tr class="separator:af7e28abc4fc7c9b1f2645af46db94e8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adf3bc8f97fc1d012dae31e24b3c5d19a" id="r_adf3bc8f97fc1d012dae31e24b3c5d19a"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adf3bc8f97fc1d012dae31e24b3c5d19a">num_profiles</a> (std::size_t r) const</td></tr>
@@ -221,6 +225,62 @@ template&lt;typename Index_ &gt; </div>
 </table>
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>Number of reference datasets. </dd></dl>
+
+</div>
+</div>
+<a id="acfe4e0e076c698cc58dd820e8fcd884b" name="acfe4e0e076c698cc58dd820e8fcd884b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acfe4e0e076c698cc58dd820e8fcd884b">&#9670;&#160;</a></span>subset()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Index_ &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt; Index_ &gt; &amp; <a class="el" href="classsinglepp_1_1TrainedIntegrated.html">singlepp::TrainedIntegrated</a>&lt; Index_ &gt;::subset </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>The subset of genes in the test dataset to be used for classification. Each value is a row index into the test matrix. Values are sorted and unique. </dd></dl>
+
+</div>
+</div>
+<a id="a02d3ec196329e9b41907905f14f2b302" name="a02d3ec196329e9b41907905f14f2b302"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a02d3ec196329e9b41907905f14f2b302">&#9670;&#160;</a></span>test_nrow()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Index_ &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">Index_ <a class="el" href="classsinglepp_1_1TrainedIntegrated.html">singlepp::TrainedIntegrated</a>&lt; Index_ &gt;::test_nrow </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>Number of rows that should be present in the test dataset. </dd></dl>
 
 </div>
 </div>

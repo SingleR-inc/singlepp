@@ -246,6 +246,20 @@
       <arglist>() const</arglist>
     </member>
     <member kind="function">
+      <type>Index_</type>
+      <name>test_nrow</name>
+      <anchorfile>classsinglepp_1_1TrainedIntegrated.html</anchorfile>
+      <anchor>a02d3ec196329e9b41907905f14f2b302</anchor>
+      <arglist>() const</arglist>
+    </member>
+    <member kind="function">
+      <type>const std::vector&lt; Index_ &gt; &amp;</type>
+      <name>subset</name>
+      <anchorfile>classsinglepp_1_1TrainedIntegrated.html</anchorfile>
+      <anchor>acfe4e0e076c698cc58dd820e8fcd884b</anchor>
+      <arglist>() const</arglist>
+    </member>
+    <member kind="function">
       <type>std::size_t</type>
       <name>num_labels</name>
       <anchorfile>classsinglepp_1_1TrainedIntegrated.html</anchorfile>
