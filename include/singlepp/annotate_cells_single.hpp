@@ -206,10 +206,10 @@ void annotate_cells_single_raw(
     }
 
     SubsetNoop<query_sparse_, Index_> subsorted(subset);
-    tatami::VectorPtr<Index_> subset_ptr(tatami::VectorPtr<Index_>{}, &(subsorted.extraction_subset()));
 
     tatami::parallelize([&](int, Index_ start, Index_ length) {
-        auto ext = tatami::consecutive_extractor<query_sparse_>(&test, false, start, length, subset_ptr);
+        tatami::VectorPtr<Index_> subset_ptr(tatami::VectorPtr<Index_>{}, &subset);
+        auto ext = tatami::consecutive_extractor<query_sparse_>(&test, false, start, length, std::move(subset_ptr));
 
         auto vbuffer = sanisizer::create<std::vector<Value_> >(num_markers);
         auto ibuffer = [&](){

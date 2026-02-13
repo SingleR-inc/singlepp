@@ -216,14 +216,14 @@ public:
         return num_prof;
     }
 
-public:
+public: // Technically this should be private, but it's a pain to add templated friend functions, so I can't be bothered.
     /**
      * @cond
      */
-    // Technically this should be private, but it's a pain to add
-    // templated friend functions, so I can't be bothered.
     Index_ test_nrow;
-    std::vector<Index_> universe; // To be used by classify_integrated() for indexed extraction.
+
+    // This contains sorted and unique indices for the test matrix, to be used by classify_integrated() for indexed extraction.
+    std::vector<Index_> universe;
 
     struct DensePerLabel {
         Index_ num_samples;
@@ -276,10 +276,6 @@ void train_integrated_per_reference_simple(
     const auto NC = ref.ncol();
     const auto num_universe = universe.size();
 
-    // 'universe' technically refers to the row indices of the test matrix,
-    // but in simple mode, the rows of the test and reference are the same, so we can use it directly here.
-    tatami::VectorPtr<Index_> universe_ptr(tatami::VectorPtr<Index_>{}, &universe);
-
     tatami::parallelize([&](int, Index_ start, Index_ len) {
         auto vbuffer = sanisizer::create<std::vector<Value_> >(num_universe);
         auto ibuffer = [&](){
@@ -293,7 +289,11 @@ void train_integrated_per_reference_simple(
         RankedVector<Value_, Index_> tmp_ranked;
         tmp_ranked.reserve(num_universe);
 
-        auto ext = tatami::consecutive_extractor<ref_sparse_>(ref, false, start, len, universe_ptr); 
+        // 'universe' technically refers to the row indices of the test matrix,
+        // but in simple mode, the rows of the test and reference are the same, so we can use it directly here.
+        tatami::VectorPtr<Index_> universe_ptr(tatami::VectorPtr<Index_>{}, &universe);
+        auto ext = tatami::consecutive_extractor<ref_sparse_>(ref, false, start, len, std::move(universe_ptr)); 
+
         for (Index_ c = start, end = start + len; c < end; ++c) {
             tmp_ranked.clear();
 
@@ -358,7 +358,6 @@ void train_integrated_per_reference_intersect(
         }
     }
 
-    tatami::VectorPtr<Index_> to_extract_ptr(tatami::VectorPtr<Index_>{}, &ref_subset);
     tatami::parallelize([&](int, Index_ start, Index_ len) {
         const auto ref_subset_size = ref_subset.size();
         auto vbuffer = sanisizer::create<std::vector<Value_> >(ref_subset_size);
@@ -372,7 +371,8 @@ void train_integrated_per_reference_intersect(
 
         RankedVector<Value_, Index_> tmp_ranked;
         tmp_ranked.reserve(ref_subset_size);
-        auto ext = tatami::consecutive_extractor<ref_sparse_>(ref, false, start, len, to_extract_ptr);
+        tatami::VectorPtr<Index_> to_extract_ptr(tatami::VectorPtr<Index_>{}, &ref_subset);
+        auto ext = tatami::consecutive_extractor<ref_sparse_>(ref, false, start, len, std::move(to_extract_ptr));
 
         for (Index_ c = start, end = start + len; c < end; ++c) {
             tmp_ranked.clear();

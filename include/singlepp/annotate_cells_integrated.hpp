@@ -247,7 +247,7 @@ void annotate_cells_integrated_raw(
         // We perform an indexed extraction, so all subsequent indices
         // will refer to indices into this subset (i.e., 'universe').
         tatami::VectorPtr<Index_> universe_ptr(tatami::VectorPtr<Index_>{}, &(trained.universe));
-        auto mat_work = tatami::consecutive_extractor<query_sparse_>(&test, false, start, len, universe_ptr);
+        auto mat_work = tatami::consecutive_extractor<query_sparse_>(&test, false, start, len, std::move(universe_ptr));
 
         for (Index_ i = start, end = start + len; i < end; ++i) {
             const auto info = [&](){
