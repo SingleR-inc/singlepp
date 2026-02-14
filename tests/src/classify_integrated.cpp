@@ -717,8 +717,7 @@ TEST_F(ClassifyIntegratedOtherTest, Mismatch) {
     size_t ntest = 20;
     auto test = spawn_matrix(ngenes * 2, ntest, 69); // more genes than expected.
 
-    int base_seed = 70;
-    auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ base_seed);
+    auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ 70);
     std::vector<const int*> chosen_ptrs(nrefs);
     for (size_t r = 0; r < nrefs; ++r) {
         chosen_ptrs[r] = chosen[r].data();
@@ -736,7 +735,7 @@ TEST_F(ClassifyIntegratedOtherTest, Mismatch) {
     EXPECT_TRUE(failed);
 }
 
-TEST_F(ClassifyIntegratedOtherTest, FineTune) {
+TEST_F(ClassifyIntegratedOtherTest, FineTuneEdgeCase) {
     singlepp::TrainSingleOptions bopt;
     std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
     prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
@@ -760,66 +759,258 @@ TEST_F(ClassifyIntegratedOtherTest, FineTune) {
     ASSERT_GE(nrefs, 3);
 
     // Checking that we abort early in various circumstances.
-    {
-        std::vector<int> dummy_assigned(1);
-        std::vector<const int*> assigned_ptrs(nrefs, dummy_assigned.data());
+    std::vector<int> dummy_assigned(1);
+    std::vector<const int*> assigned_ptrs(nrefs, dummy_assigned.data());
 
-        std::vector<double> scores(nrefs, 0.5);
-        scores[1] = 0.7;
-        std::vector<int> reflabels_in_use;
-        auto out = ft.run_all(0, query_ranked, integrated, assigned_ptrs, reflabels_in_use, scores, 0.8, 0.05);
-        EXPECT_EQ(out.first, 1);
-        EXPECT_FLOAT_EQ(out.second, 0.2);
+    std::vector<double> scores(nrefs, 0.5);
+    scores[1] = 0.7;
+    std::vector<int> reflabels_in_use;
+    auto out = ft.run_all(0, query_ranked, integrated, assigned_ptrs, reflabels_in_use, scores, 0.8, 0.05);
+    EXPECT_EQ(out.first, 1);
+    EXPECT_FLOAT_EQ(out.second, 0.2);
 
-        scores[1] = 0.5;
-        scores[nrefs - 1] = 0.51;
-        out = ft.run_all(0, query_ranked, integrated, assigned_ptrs, reflabels_in_use, scores, 0.8, 0.05);
-        EXPECT_EQ(out.first, nrefs - 1);
-        EXPECT_FLOAT_EQ(out.second, 0.01);
+    scores[1] = 0.5;
+    scores[nrefs - 1] = 0.51;
+    out = ft.run_all(0, query_ranked, integrated, assigned_ptrs, reflabels_in_use, scores, 0.8, 0.05);
+    EXPECT_EQ(out.first, nrefs - 1);
+    EXPECT_FLOAT_EQ(out.second, 0.01);
+}
+
+TEST_F(ClassifyIntegratedOtherTest, FineTuneExactRecovery) {
+    singlepp::TrainSingleOptions bopt;
+    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
+    prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
+    integrated_inputs.reserve(nrefs);
+
+    for (size_t r = 0; r < nrefs; ++r) {
+        const auto& refmat = *(references[r]);
+        const auto labptr = labels[r].data();
+        prebuilts.push_back(singlepp::train_single(refmat, labptr, markers[r], bopt));
+        integrated_inputs.push_back(singlepp::prepare_integrated_input(refmat, labptr, prebuilts.back()));
     }
 
-    // Checking that we get the expected result.
+    singlepp::TrainIntegratedOptions iopt;
+    auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
+
+    singlepp::FineTuneIntegrated<false, int, double, double> ft(integrated);
+    singlepp::RankedVector<double, int> query_ranked;
+
+    // We need at least 3 references to have any kind of fine-tuning.
+    ASSERT_GE(nrefs, 3);
+
+    std::vector<double> scores(nrefs);
+    std::vector<int> reflabels_in_use;
+
+    for (size_t r = 0; r < nrefs; ++r) {
+        const auto& refmat = *(references[r]);
+        const int NC = refmat.ncol();
+        const int NR = refmat.nrow();
+        auto ext = refmat.dense_column();
+        std::vector<double> buffer(NR);
+
+        std::vector<int> dummy_assigned(NC);
+        std::vector<const int*> assigned_ptrs(nrefs);
+        for (size_t r2 = 0; r2 < nrefs; ++r2) {
+            if (r2 == r) {
+                assigned_ptrs[r2] = labels[r2].data();
+            } else {
+                assigned_ptrs[r2] = dummy_assigned.data();
+            }
+        }
+
+        for (int c = 0; c < NC; ++c) {
+            auto ptr = ext->fetch(c, buffer.data());
+            query_ranked.clear();
+            int counter = 0;
+            for (auto r : integrated.subset()) {
+                query_ranked.emplace_back(ptr[r], counter);
+                ++counter;
+            }
+            std::sort(query_ranked.begin(), query_ranked.end());
+
+            // Mock up the scores to have two labels, to force it to go through one fine-tuning iteration. 
+            scores.clear();
+            scores.resize(nrefs);
+            scores[r] = 0.5;
+            scores[(r + 1) % nrefs] = 0.51;
+
+            // Use a quantile of 1 so that an exact match is respected with the maximum correlation.
+            auto out = ft.run_all(c, query_ranked, integrated, assigned_ptrs, reflabels_in_use, scores, 1, 0.05);
+            EXPECT_EQ(out.first, r);
+        }
+    }
+}
+
+/********************************************/
+
+TEST(ClassifyIntegrated, FineTuneSparse) {
+    size_t ngenes = 1000;
+    size_t nsamples = 50;
+    size_t nrefs = 4; // Needs at least 3 references for fine-tuning to actually happen.
+
+    std::vector<std::vector<int> > labels;
+    std::vector<singlepp::Markers<int> > markers;
+    labels.reserve(nrefs);
+    markers.reserve(nrefs);
+
+    for (size_t r = 0; r < nrefs; ++r) {
+        size_t seed = r * 1000;
+        size_t nlabels = 3 + r;
+        labels.push_back(spawn_labels(nsamples, nlabels, seed * 2));
+        markers.push_back(mock_markers<int>(nlabels, 50, ngenes, seed * 3));
+    }
+
+    std::vector<std::shared_ptr<tatami::Matrix<double, int> > > dense_references, sparse_references;
+    dense_references.reserve(nrefs);
+    sparse_references.reserve(nrefs);
+
+    // Creating the integrated set of references.
+    singlepp::TrainSingleOptions bopt;
+    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
+    prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > dense_integrated_inputs, sparse_integrated_inputs;
+    dense_integrated_inputs.reserve(nrefs);
+    sparse_integrated_inputs.reserve(nrefs);
+
+    // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
     {
-        std::vector<double> scores(nrefs);
-        std::vector<int> reflabels_in_use;
-
         for (size_t r = 0; r < nrefs; ++r) {
-            const auto& refmat = *(references[r]);
-            const int NC = refmat.ncol();
-            const int NR = refmat.nrow();
-            auto ext = refmat.dense_column();
-            std::vector<double> buffer(NR);
+            size_t seed = r * 2000;
+            dense_references.push_back(spawn_sparse_matrix(ngenes, nsamples, seed, /* density = */ 0.3));
+            sparse_references.push_back(tatami::convert_to_compressed_sparse<double, int>(*(dense_references.back()), true, {}));
 
-            std::vector<int> dummy_assigned(NC);
-            std::vector<const int*> assigned_ptrs(nrefs);
-            for (size_t r2 = 0; r2 < nrefs; ++r2) {
-                if (r2 == r) {
-                    assigned_ptrs[r2] = labels[r2].data();
-                } else {
-                    assigned_ptrs[r2] = dummy_assigned.data();
+            const auto labptr = labels[r].data();
+            const auto& refmat = *(dense_references[r]);
+            prebuilts.push_back(singlepp::train_single(refmat, labptr, markers[r], bopt));
+            dense_integrated_inputs.push_back(singlepp::prepare_integrated_input(refmat, labptr, prebuilts.back()));
+
+            const auto& spmat = *(sparse_references[r]);
+            sparse_integrated_inputs.push_back(singlepp::prepare_integrated_input(spmat, labptr, prebuilts.back()));
+        }
+
+        singlepp::TrainIntegratedOptions iopt;
+        auto dense_integrated = singlepp::train_integrated(dense_integrated_inputs, iopt);
+        auto sparse_integrated = singlepp::train_integrated(sparse_integrated_inputs, iopt);
+
+        const int ntest = 100; 
+        auto new_test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ 302, /* density = */ 0.2);
+
+        // Mocking up some of the best choices.
+        auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ 88);
+        std::vector<const int*> chosen_ptrs(nrefs);
+        for (size_t r = 0; r < nrefs; ++r) {
+            chosen_ptrs[r] = chosen[r].data();
+        }
+
+        singlepp::FineTuneIntegrated<false, int, double, double> dense_ft(dense_integrated);
+        singlepp::FineTuneIntegrated<true, int, double, double> dense_ft2(dense_integrated);
+        singlepp::FineTuneIntegrated<false, int, double, double> sparse_ft(sparse_integrated);
+
+        const auto nmarkers = dense_integrated.subset().size();
+        auto wrk = new_test->dense_column(dense_integrated.subset());
+        std::vector<double> buffer(nmarkers);
+        std::vector<int> refs_in_use;
+
+        for (int t = 0; t < ntest; ++t) {
+            auto vec = wrk->fetch(t, buffer.data()); 
+            auto ranked = fill_ranks<int>(nmarkers, vec);
+
+            std::vector<double> scores(nrefs, 0.5);
+            const auto empty = t % nrefs;
+            scores[empty] = 0; // forcing one of the labels to be zero so that it actually does the fine-tuning.
+
+            auto score_copy = scores;
+            auto expected = dense_ft.run_all(t, ranked, dense_integrated, chosen_ptrs, refs_in_use, score_copy, 0.8, 0.05);
+            EXPECT_NE(expected.first, empty);
+
+            score_copy = scores;
+            auto dense_to_sparse = sparse_ft.run_all(t, ranked, sparse_integrated, chosen_ptrs, refs_in_use, score_copy, 0.8, 0.05);
+            EXPECT_EQ(expected.first, dense_to_sparse.first);
+            EXPECT_EQ(expected.second, dense_to_sparse.second);
+
+            singlepp::RankedVector<double, int> sparse_ranked;
+            for (auto r : ranked) {
+                if (r.first) {
+                    sparse_ranked.push_back(r);
                 }
             }
 
-            for (int c = 0; c < NC; ++c) {
-                auto ptr = ext->fetch(c, buffer.data());
-                query_ranked.clear();
-                int counter = 0;
-                for (auto r : integrated.subset()) {
-                    query_ranked.emplace_back(ptr[r], counter);
-                    ++counter;
+            score_copy = scores;
+            auto sparse_to_dense = dense_ft2.run_all(t, sparse_ranked, dense_integrated, chosen_ptrs, refs_in_use, score_copy, 0.8, 0.05);
+            EXPECT_EQ(expected.first, sparse_to_dense.first);
+            EXPECT_EQ(expected.second, sparse_to_dense.second);
+        }
+    }
+
+    prebuilts.clear();
+    dense_references.clear();
+    sparse_references.clear();
+    dense_integrated_inputs.clear();
+    sparse_integrated_inputs.clear();
+
+    // Sparse-sparse and dense-dense only compute the exact same L2 when the density is 100%.
+    // Otherwise, slight differences can cause a different score or even a different choice for best label.
+    {
+        for (size_t r = 0; r < nrefs; ++r) {
+            size_t seed = r * 3000;
+            dense_references.push_back(spawn_matrix(ngenes, nsamples, seed));
+            sparse_references.push_back(tatami::convert_to_compressed_sparse<double, int>(*(dense_references.back()), true, {}));
+
+            const auto labptr = labels[r].data();
+            const auto& refmat = *(dense_references[r]);
+            prebuilts.push_back(singlepp::train_single(refmat, labptr, markers[r], bopt));
+            dense_integrated_inputs.push_back(singlepp::prepare_integrated_input(refmat, labptr, prebuilts.back()));
+
+            const auto& spmat = *(sparse_references[r]);
+            sparse_integrated_inputs.push_back(singlepp::prepare_integrated_input(spmat, labptr, prebuilts.back()));
+        }
+
+        singlepp::TrainIntegratedOptions iopt;
+        auto dense_integrated = singlepp::train_integrated(dense_integrated_inputs, iopt);
+        auto sparse_integrated = singlepp::train_integrated(sparse_integrated_inputs, iopt);
+
+        const int ntest = 100; 
+        auto new_test = spawn_matrix(ngenes, ntest, /* seed = */ 303);
+
+        // Mocking up some of the best choices.
+        auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ 99);
+        std::vector<const int*> chosen_ptrs(nrefs);
+        for (size_t r = 0; r < nrefs; ++r) {
+            chosen_ptrs[r] = chosen[r].data();
+        }
+
+        singlepp::FineTuneIntegrated<false, int, double, double> dense_ft(dense_integrated);
+        singlepp::FineTuneIntegrated<true, int, double, double> sparse_ft2(sparse_integrated);
+
+        const auto nmarkers = dense_integrated.subset().size();
+        auto wrk = new_test->dense_column(dense_integrated.subset());
+        std::vector<double> buffer(nmarkers);
+        std::vector<int> refs_in_use;
+
+        for (int t = 0; t < ntest; ++t) {
+            auto vec = wrk->fetch(t, buffer.data()); 
+            auto ranked = fill_ranks<int>(nmarkers, vec);
+
+            std::vector<double> scores(nrefs, 0.5);
+            const auto empty = t % nrefs;
+            scores[empty] = 0; // forcing one of the labels to be zero so that it actually does the fine-tuning.
+
+            auto score_copy = scores;
+            auto expected = dense_ft.run_all(t, ranked, dense_integrated, chosen_ptrs, refs_in_use, score_copy, 0.8, 0.05);
+            EXPECT_NE(expected.first, empty);
+
+            singlepp::RankedVector<double, int> sparse_ranked;
+            for (auto r : ranked) {
+                if (r.first) {
+                    sparse_ranked.push_back(r);
                 }
-                std::sort(query_ranked.begin(), query_ranked.end());
-
-                // Mock up the scores to have two labels, to force it to go through one fine-tuning iteration. 
-                scores.clear();
-                scores.resize(nrefs);
-                scores[r] = 0.5;
-                scores[(r + 1) % nrefs] = 0.51;
-
-                // Use a quantile of 1 so that an exact match is respected with the maximum correlation.
-                auto out = ft.run_all(c, query_ranked, integrated, assigned_ptrs, reflabels_in_use, scores, 1, 0.05);
-                EXPECT_EQ(out.first, r);
             }
+
+            score_copy = scores;
+            auto sparse_to_sparse = sparse_ft2.run_all(t, sparse_ranked, sparse_integrated, chosen_ptrs, refs_in_use, score_copy, 0.8, 0.05);
+            EXPECT_EQ(expected.first, sparse_to_sparse.first);
+            EXPECT_EQ(expected.second, sparse_to_sparse.second);
         }
     }
 }

@@ -27,8 +27,6 @@ add_executable(
     src/SubsetSanitizer.cpp
     src/build_reference.cpp
     src/fill_labels_in_use.cpp
-    src/annotate_cells_single.cpp
-#    src/annotate_cells_integrated.cpp
     src/classify_integrated.cpp
 )
 

@@ -7,7 +7,7 @@
 #include "sanisizer/sanisizer.hpp"
 
 #include "Markers.hpp"
-#include "build_reference.hpp"
+#include "train_single.hpp"
 #include "SubsetSanitizer.hpp"
 #include "SubsetRemapper.hpp"
 #include "find_best_and_delta.hpp"
@@ -23,6 +23,19 @@
 #include <type_traits>
 
 namespace singlepp {
+
+template<bool ref_sparse_, typename Index_, typename Float_>
+const auto& get_per_label_references(const BuiltReference<Index_, Float_>& built) {
+    if constexpr(ref_sparse_) {
+        assert(built.sparse.has_value());
+        assert(!built.dense.has_value());
+        return *(built.sparse);
+    } else {
+        assert(!built.sparse.has_value());
+        assert(built.dense.has_value());
+        return *(built.dense);
+    }
+}
 
 template<bool query_sparse_, bool ref_sparse_, typename Label_, typename Index_, typename Float_, typename Value_>
 class FineTuneSingle {
@@ -68,16 +81,22 @@ public:
         sanisizer::reserve(my_all_correlations, max_labels);
     }
 
+    // For testing only.
+    FineTuneSingle(const TrainedSingle<Index_, Float_>& trained) : 
+        FineTuneSingle(trained.subset().size(), get_per_label_references<ref_sparse_>(trained.built()))
+    {}
+
 public:
     std::pair<Label_, Float_> run(
         const RankedVector<Value_, Index_>& input, 
-        const std::vector<PerLabel>& ref,
-        const Markers<Index_>& markers,
+        const TrainedSingle<Index_, Float_>& trained,
         std::vector<Float_>& scores,
         Float_ quantile,
         Float_ threshold
     ) {
         auto candidate = fill_labels_in_use(scores, threshold, my_labels_in_use);
+        const auto& ref = get_per_label_references<ref_sparse_>(trained.built());
+        const auto& markers = trained.markers();
 
         // If there's only one top label, we don't need to do anything else.
         // We also give up if every label is in range, because any subsequent
@@ -154,25 +173,10 @@ public:
     }
 };
 
-template<bool ref_sparse_, typename Index_, typename Float_>
-const auto& get_per_label_references(const BuiltReference<Index_, Float_>& built) {
-    if constexpr(ref_sparse_) {
-        assert(built.sparse.has_value());
-        assert(!built.dense.has_value());
-        return *(built.sparse);
-    } else {
-        assert(!built.sparse.has_value());
-        assert(built.dense.has_value());
-        return *(built.dense);
-    }
-}
-
 template<bool query_sparse_, bool ref_sparse_, typename Value_, typename Index_, typename Float_, typename Label_>
 void annotate_cells_single_raw(
     const tatami::Matrix<Value_, Index_>& test,
-    const std::vector<Index_>& subset,
-    const BuiltReference<Index_, Float_>& built,
-    const Markers<Index_>& markers,
+    const TrainedSingle<Index_, Float_>& trained,
     Float_ quantile,
     bool fine_tune,
     Float_ threshold,
@@ -181,8 +185,10 @@ void annotate_cells_single_raw(
     Float_* delta,
     int num_threads
 ) {
-    assert(sanisizer::is_equal(built.num_markers, subset.size()));
-    const auto num_markers = built.num_markers;
+    const auto& subset = trained.subset();
+    const auto& built = trained.built();
+
+    const Index_ num_markers = subset.size(); // cast it safe as 'subset' is a unique subset of the rows of the reference matrix.
     const auto& ref = get_per_label_references<ref_sparse_>(built);
 
     // Figuring out how many neighbors to keep and how to compute the quantiles.
@@ -261,12 +267,12 @@ void annotate_cells_single_raw(
                 find_closest_neighbors<query_sparse_, ref_sparse_>(num_markers, query_scaled, k, ref[r], workspaces[r]);
 
                 const Float_ last_squared = pop_furthest_neighbor(workspaces[r]).first;
-                const Float_ last = 1 - 2 * last_squared;
+                const Float_ last = l2_to_correlation(last_squared);
                 if (k == 1) {
                     curscores[r] = last;
                 } else {
                     const Float_ next_squared = pop_furthest_neighbor(workspaces[r]).first;
-                    const Float_ next = 1 - 2 * next_squared;
+                    const Float_ next = l2_to_correlation(next_squared);
                     curscores[r] = coeffs[r].first * next + coeffs[r].second * last;
                 }
 
@@ -279,7 +285,7 @@ void annotate_cells_single_raw(
             if (!fine_tune) {
                 chosen = find_best_and_delta<Label_>(curscores);
             } else {
-                chosen = ft.run(vec, ref, markers, curscores, quantile, threshold);
+                chosen = ft.run(vec, trained, curscores, quantile, threshold);
             }
 
             best[c] = chosen.first;
@@ -295,9 +301,7 @@ void annotate_cells_single_raw(
 template<typename Value_, typename Index_, typename Float_, typename Label_>
 void annotate_cells_single(
     const tatami::Matrix<Value_, Index_>& test,
-    const std::vector<Index_>& subset,
-    const BuiltReference<Index_, Float_>& ref,
-    const Markers<Index_>& markers,
+    const TrainedSingle<Index_, Float_>& trained,
     Float_ quantile,
     bool fine_tune,
     Float_ threshold,
@@ -306,18 +310,18 @@ void annotate_cells_single(
     Float_* delta,
     int num_threads
 ) {
-    const auto ref_sparse = ref.sparse.has_value();
+    const auto ref_sparse = trained.built().sparse.has_value();
     if (test.is_sparse()) {
         if (ref_sparse) {
-            annotate_cells_single_raw<true, true>(test, subset, ref, markers, quantile, fine_tune, threshold, best, scores, delta, num_threads);
+            annotate_cells_single_raw<true, true>(test, trained, quantile, fine_tune, threshold, best, scores, delta, num_threads);
         } else {
-            annotate_cells_single_raw<true, false>(test, subset, ref, markers, quantile, fine_tune, threshold, best, scores, delta, num_threads);
+            annotate_cells_single_raw<true, false>(test, trained, quantile, fine_tune, threshold, best, scores, delta, num_threads);
         }
     } else {
         if (ref_sparse) {
-            annotate_cells_single_raw<false, true>(test, subset, ref, markers, quantile, fine_tune, threshold, best, scores, delta, num_threads);
+            annotate_cells_single_raw<false, true>(test, trained, quantile, fine_tune, threshold, best, scores, delta, num_threads);
         } else {
-            annotate_cells_single_raw<false, false>(test, subset, ref, markers, quantile, fine_tune, threshold, best, scores, delta, num_threads);
+            annotate_cells_single_raw<false, false>(test, trained, quantile, fine_tune, threshold, best, scores, delta, num_threads);
         }
     }
 }

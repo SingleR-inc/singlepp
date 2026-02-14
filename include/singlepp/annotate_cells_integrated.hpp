@@ -94,7 +94,10 @@ public:
         }
     }
 
-    FineTuneIntegrated(const TrainedIntegrated<Index_>& trained) : FineTuneIntegrated(interrogate_trained_integrated(trained)) {}
+    // For testing only.
+    FineTuneIntegrated(const TrainedIntegrated<Index_>& trained) : 
+        FineTuneIntegrated(interrogate_trained_integrated(trained))
+    {}
 
 public:
     template<typename Label_, typename RefLabel_>

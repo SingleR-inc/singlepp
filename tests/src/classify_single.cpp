@@ -144,6 +144,8 @@ INSTANTIATE_TEST_SUITE_P(
     )
 );
 
+/********************************************/
+
 class ClassifySingleIntersectTest : public ::testing::TestWithParam<std::tuple<int, double, double> > {
 protected:
     std::pair<std::vector<int>, std::vector<int> > generate_ids(std::size_t ngenes, double prop_keep, int seed) {
@@ -340,7 +342,218 @@ INSTANTIATE_TEST_SUITE_P(
     )
 );
 
-TEST(ClassifySingleTest, Simple) {
+/********************************************/
+
+TEST(FineTuneSingle, EdgeCases) {
+    size_t ngenes = 200;
+    size_t nlabels = 3;
+    size_t nprofiles = 50;
+
+    auto markers = mock_markers<int>(nlabels, 10, ngenes); 
+    auto reference = spawn_matrix(ngenes, nprofiles, /* seed = */ 200);
+    auto labels = spawn_labels(nprofiles, nlabels, /* seed = */ 2000);
+
+    // Performing classification without fine-tuning for a reference comparison.
+    auto trained = singlepp::train_single(*reference, labels.data(), markers, {});
+    singlepp::FineTuneSingle<false, false, int, int, double, double> ft(trained);
+    singlepp::RankedVector<double, int> placeholder;
+
+    // Check early exit conditions, when there is one clear winner or all of
+    // the labels are equal (i.e., no contraction of the feature space).
+    {
+        std::vector<double> scores { 0.2, 0.5, 0.1 };
+        auto output = ft.run(placeholder, trained, scores, 0.8, 0.05);
+        EXPECT_EQ(output.first, 1);
+        EXPECT_EQ(output.second, 0.3);
+
+        std::fill(scores.begin(), scores.end(), 0.5);
+        scores[0] = 0.51;
+        output = ft.run(placeholder, trained, scores, 1, 0.05);
+        EXPECT_EQ(output.first, 0); // first entry of scores is maxed.
+        EXPECT_FLOAT_EQ(output.second, 0.01);
+    }
+
+    // Check edge case when there is only a single label, based on the length of 'scores'.
+    {
+        std::vector<double> scores { 0.5 };
+        auto output = ft.run(placeholder, trained, scores, 0.8, 0.05);
+        EXPECT_EQ(output.first, 0);
+        EXPECT_TRUE(std::isnan(output.second));
+    }
+}
+
+TEST(FineTuneSingle, ExactRecovery) {
+    size_t ngenes = 200;
+    size_t nlabels = 3;
+    size_t nprofiles = 50;
+
+    auto markers = mock_markers<int>(nlabels, 10, ngenes); 
+    auto reference = spawn_matrix(ngenes, nprofiles, /* seed = */ 300);
+    auto labels = spawn_labels(nprofiles, nlabels, /* seed = */ 3000);
+
+    auto trained = singlepp::train_single(*reference, labels.data(), markers, {});
+    singlepp::FineTuneSingle<false, false, int, int, double, double> ft(trained);
+
+    // Checking that we eventually pick up the reference, if the input profile
+    // is identical to one of the profiles. We set the quantile to 1 to
+    // guarantee a score of 1 from a correlation of 1.
+    const auto nmarkers = trained.subset().size();
+    auto wrk = reference->dense_column(trained.subset());
+    std::vector<double> buffer(nmarkers);
+
+    for (size_t r = 0; r < nprofiles; ++r) {
+        auto vec = wrk->fetch(r, buffer.data());
+        auto ranked = fill_ranks<int>(nmarkers, vec);
+
+        std::vector<double> scores { 0.5, 0.49, 0.48 };
+        scores[(labels[r] + 1) % nlabels] = 0; // forcing another label to be zero so that it actually does the fine-tuning.
+        auto output = ft.run(ranked, trained, scores, 1, 0.05);
+        EXPECT_EQ(output.first, labels[r]);
+
+        scores = std::vector<double>{ 0.5, 0.5, 0.5 };
+        scores[labels[r]] = 0; // forcing it to match to some other label. 
+        auto output2 = ft.run(ranked, trained, scores, 1, 0.05);
+        EXPECT_NE(output2.first, labels[r]);
+    }
+}
+
+TEST(FineTuneSingle, Diagonal) {
+    size_t ngenes = 200;
+    size_t nlabels = 3;
+    size_t nprofiles = 50;
+
+    // This time there are only markers on the diagonals.
+    auto markers = mock_markers_diagonal<int>(nlabels, 10, ngenes); 
+    auto reference = spawn_matrix(ngenes, nprofiles, /* seed = */ 400);
+    auto labels = spawn_labels(nprofiles, nlabels, /* seed = */ 4000);
+
+    auto trained = singlepp::train_single(*reference, labels.data(), markers, {});
+    singlepp::FineTuneSingle<false, false, int, int, double, double> ft(trained);
+
+    const auto nmarkers = trained.subset().size();
+    auto wrk = reference->dense_column(trained.subset());
+    std::vector<double> buffer(nmarkers);
+
+    for (size_t r = 0; r < nprofiles; ++r) {
+        auto vec = wrk->fetch(r, buffer.data()); 
+        auto ranked = fill_ranks<int>(nmarkers, vec);
+
+        std::vector<double> scores { 0.49, 0.5, 0.48 };
+        scores[(labels[r] + 1) % nlabels] = 0; // forcing another label to be zero so that it actually does the fine-tuning.
+        auto output = ft.run(ranked, trained, scores, 1, 0.05);
+
+        // The key point here is that the diagonals are actually used,
+        // so we don't end up with an empty ranking vector and NaN scores.
+        EXPECT_EQ(output.first, labels[r]);
+        EXPECT_TRUE(output.second > 0);
+    }
+}
+
+TEST(FineTuneSingle, Sparse) {
+    size_t ngenes = 213;
+    size_t nlabels = 4;
+    size_t nprofiles = 50;
+
+    auto markers = mock_markers<int>(nlabels, 10, ngenes); 
+    auto labels = spawn_labels(nprofiles, nlabels, /* seed = */ 2000);
+
+    // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
+    {
+        auto new_reference = spawn_sparse_matrix(ngenes, nprofiles, /* seed = */ 300, /* density = */ 0.3);
+        auto new_trained = singlepp::train_single<double>(*new_reference, labels.data(), markers, {});
+        singlepp::FineTuneSingle<false, false, int, int, double, double> new_ft(new_trained);
+        singlepp::FineTuneSingle<true, false, int, int, double, double> new_ft2(new_trained);
+
+        auto sparse_reference = tatami::convert_to_compressed_sparse<double, int>(*new_reference, true, {});
+        auto sparse_trained = singlepp::train_single<double>(*sparse_reference, labels.data(), markers, {});
+        singlepp::FineTuneSingle<false, true, int, int, double, double> sparse_ft(sparse_trained);
+
+        const int ntest = 100; 
+        auto new_test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ 302, /* density = */ 0.2);
+
+        const auto nmarkers = new_trained.subset().size();
+        auto wrk = new_test->dense_column(new_trained.subset());
+        std::vector<double> buffer(nmarkers);
+
+        for (int t = 0; t < ntest; ++t) {
+            auto vec = wrk->fetch(t, buffer.data()); 
+            auto ranked = fill_ranks<int>(nmarkers, vec);
+
+            std::vector<double> scores(nlabels, 0.5);
+            const auto empty = t % nlabels;
+            scores[empty] = 0; // forcing one of the labels to be zero so that it actually does the fine-tuning.
+
+            auto score_copy = scores;
+            auto expected = new_ft.run(ranked, new_trained, score_copy, 0.8, 0.05);
+            EXPECT_NE(expected.first, empty);
+
+            score_copy = scores;
+            auto dense_to_sparse = sparse_ft.run(ranked, sparse_trained, score_copy, 0.8, 0.05);
+            EXPECT_EQ(expected.first, dense_to_sparse.first);
+            EXPECT_EQ(expected.second, dense_to_sparse.second);
+
+            singlepp::RankedVector<double, int> sparse_ranked;
+            for (auto r : ranked) {
+                if (r.first) {
+                    sparse_ranked.push_back(r);
+                }
+            }
+
+            score_copy = scores;
+            auto sparse_to_dense = new_ft2.run(sparse_ranked, new_trained, score_copy, 0.8, 0.05);
+            EXPECT_EQ(expected.first, sparse_to_dense.first);
+            EXPECT_EQ(expected.second, sparse_to_dense.second);
+        }
+    }
+
+    // Sparse-sparse and dense-dense only compute the exact same L2 when the density is 100%.
+    // Otherwise, slight differences can cause a different score or even a different choice for best label.
+    {
+        auto new_reference = spawn_matrix(ngenes, nprofiles, /* seed = */ 301);
+        auto new_trained = singlepp::train_single<double>(*new_reference, labels.data(), markers, {});
+        singlepp::FineTuneSingle<false, false, int, int, double, double> new_ft(new_trained);
+
+        auto sparse_reference = tatami::convert_to_compressed_sparse<double, int>(*new_reference, true, {});
+        auto sparse_trained = singlepp::train_single<double>(*sparse_reference, labels.data(), markers, {});
+        singlepp::FineTuneSingle<true, true, int, int, double, double> sparse_ft2(sparse_trained);
+
+        const int ntest = 100; 
+        auto new_test = spawn_matrix(ngenes, ntest, /* seed = */ 303);
+
+        const auto nmarkers = new_trained.subset().size();
+        auto wrk = new_test->dense_column(new_trained.subset());
+        std::vector<double> buffer(nmarkers);
+
+        for (int t = 0; t < ntest; ++t) {
+            auto vec = wrk->fetch(t, buffer.data()); 
+            auto ranked = fill_ranks<int>(nmarkers, vec);
+
+            std::vector<double> scores(nlabels, 0.5);
+            const auto empty = t % nlabels;
+            scores[empty] = 0; // forcing one of the labels to be zero so that it actually does the fine-tuning.
+
+            auto score_copy = scores;
+            auto expected = new_ft.run(ranked, new_trained, score_copy, 0.8, 0.05);
+            EXPECT_NE(expected.first, empty);
+
+            singlepp::RankedVector<double, int> sparse_ranked;
+            for (auto r : ranked) {
+                if (r.first) {
+                    sparse_ranked.push_back(r);
+                }
+            }
+
+            score_copy = scores;
+            auto sparse_to_sparse = sparse_ft2.run(sparse_ranked, sparse_trained, score_copy, 0.8, 0.05);
+            EXPECT_EQ(expected.first, sparse_to_sparse.first);
+            EXPECT_EQ(expected.second, sparse_to_sparse.second);
+        }
+    }
+}
+
+/********************************************/
+
+TEST(ClassifySingle, Simple) {
     // Mocking up the references.
     size_t ngenes = 200;
  
@@ -366,7 +579,7 @@ TEST(ClassifySingleTest, Simple) {
     }
 }
 
-TEST(ClassifySingleTest, NoShared) {
+TEST(ClassifySingle, NoShared) {
     size_t ngenes = 100;
     size_t nlabels = 3;
     size_t nrefs = 50;
@@ -398,7 +611,7 @@ TEST(ClassifySingleTest, NoShared) {
     EXPECT_EQ(output.delta, std::vector<double>(mat->ncol())); // all-zeros, no differences between first and second.
 }
 
-TEST(ClassifySingleTest, Nulls) {
+TEST(ClassifySingle, Nulls) {
     // Mocking up the test and references.
     size_t ngenes = 200;
     auto mat = spawn_matrix(ngenes, 5, 42);
@@ -426,7 +639,7 @@ TEST(ClassifySingleTest, Nulls) {
     EXPECT_EQ(best, full.best);
 }
 
-TEST(ClassifySingleTest, SimpleMismatch) {
+TEST(ClassifySingle, Mismatch) {
     size_t ngenes = 200;
     size_t nlabels = 3;
     size_t nrefs = 50;
@@ -437,34 +650,6 @@ TEST(ClassifySingleTest, SimpleMismatch) {
 
     singlepp::TrainSingleOptions bopt;
     auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
-
-    auto test = spawn_matrix(ngenes + 10, nrefs, 100);
-    singlepp::ClassifySingleOptions<double> copt;
-    copt.quantile = 1;
-
-    bool failed = false;
-    try {
-        singlepp::classify_single<int>(*test, trained, copt);
-    } catch (std::exception& e) {
-        failed = true;
-        EXPECT_TRUE(std::string(e.what()).find("number of rows") != std::string::npos);
-    }
-    EXPECT_TRUE(failed);
-}
-
-TEST(ClassifySingleTest, IntersectMismatch) {
-    size_t ngenes = 200;
-    size_t nlabels = 3;
-    size_t nrefs = 50;
-
-    auto refs = spawn_matrix(ngenes, nrefs, 100);
-    auto labels = spawn_labels(nrefs, nlabels, 1000);
-    auto markers = mock_markers<int>(nlabels, 50, ngenes); 
-
-    std::vector<int> ids(ngenes);
-    std::iota(ids.begin(), ids.end(), 0);
-    singlepp::TrainSingleOptions bopt;
-    auto trained = singlepp::train_single<double, int>(ngenes, ids.data(), *refs, ids.data(), labels.data(), markers, NULL, bopt);
 
     auto test = spawn_matrix(ngenes + 10, nrefs, 100);
     singlepp::ClassifySingleOptions<double> copt;

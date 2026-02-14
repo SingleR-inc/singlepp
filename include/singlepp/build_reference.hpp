@@ -566,7 +566,6 @@ std::pair<Float_, Index_> pop_furthest_neighbor(FindClosestNeighborsWorkspace<qu
 
 template<typename Index_, typename Float_>
 struct BuiltReference {
-    Index_ num_markers = 0;
     std::optional<std::vector<DensePerLabel<Index_, Float_> > > dense;
     std::optional<std::vector<SparsePerLabel<Index_, Float_> > > sparse;
 };
@@ -625,7 +624,6 @@ BuiltReference<Index_, Float_> build_reference_raw(
     }
 
     BuiltReference<Index_, Float_> output;
-    output.num_markers = num_markers;
     auto& nnrefs = allocate_references<ref_sparse_>(output, num_labels);
 
     typename std::conditional<ref_sparse_, bool, std::vector<std::vector<RankedVector<Index_, Index_> > > >::type tmp_ref_ranked;

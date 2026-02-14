@@ -140,9 +140,7 @@ void classify_single(
     }
     annotate_cells_single(
         test, 
-        trained.subset(),
-        trained.built(), 
-        trained.markers(), 
+        trained,
         options.quantile, 
         options.fine_tune, 
         options.fine_tune_threshold, 
