@@ -2,8 +2,11 @@
 #define MOCK_MARKERS_H
 
 #include "singlepp/subset_to_markers.hpp"
+
 #include <random>
 #include <algorithm>
+#include <numeric>
+#include <cstddef>
 
 template<typename Index_, class Engine_>
 void fill_markers(std::vector<Index_>& source, size_t len, size_t universe, Engine_& rng) {
@@ -16,7 +19,7 @@ void fill_markers(std::vector<Index_>& source, size_t len, size_t universe, Engi
 }
 
 template<typename Index_>
-singlepp::Markers<Index_> mock_markers(size_t nlabels, size_t len, size_t universe, int seed = 42) {
+singlepp::Markers<Index_> mock_markers(size_t nlabels, size_t len, size_t universe, unsigned long long seed) {
     singlepp::Markers<Index_> output(nlabels);    
     std::mt19937_64 rng(seed);
     for (size_t i = 0; i < nlabels; ++i) {
@@ -31,7 +34,7 @@ singlepp::Markers<Index_> mock_markers(size_t nlabels, size_t len, size_t univer
 }
 
 template<typename Index_>
-singlepp::Markers<Index_> mock_markers_diagonal(size_t nlabels, size_t len, size_t universe, int seed = 42) {
+singlepp::Markers<Index_> mock_markers_diagonal(size_t nlabels, size_t len, size_t universe, unsigned long long seed) {
     singlepp::Markers<Index_> output(nlabels);    
     std::mt19937_64 rng(seed);
     for (size_t i = 0; i < nlabels; ++i) {
@@ -42,7 +45,7 @@ singlepp::Markers<Index_> mock_markers_diagonal(size_t nlabels, size_t len, size
 }
 
 template<typename Index_>
-singlepp::Intersection<Index_> mock_intersection(size_t n1, size_t n2, size_t shared, int seed = 999) {
+singlepp::Intersection<Index_> mock_intersection(size_t n1, size_t n2, size_t shared, unsigned long long seed) {
     std::mt19937_64 rng(seed);
 
     auto choose = [&](size_t n, size_t s) -> auto {

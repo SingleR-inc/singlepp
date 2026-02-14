@@ -17,17 +17,18 @@ TEST_P(ClassifySingleSimpleTest, Simple) {
     auto param = GetParam();
     int top = std::get<0>(param);
     double quantile = std::get<1>(param);
+    unsigned long long base_seed = top + quantile * 987;
 
     // Mocking up the test and references.
     size_t ngenes = 200;
-    auto mat = spawn_matrix(ngenes, 5, 42);
+    auto mat = spawn_matrix(ngenes, 5, /* seed = */ base_seed + 42);
  
     size_t nlabels = 3;
     size_t nrefs = 50;
-    auto refs = spawn_matrix(ngenes, nrefs, 100);
-    auto labels = spawn_labels(nrefs, nlabels, 1000);
+    auto refs = spawn_matrix(ngenes, nrefs, /* seed= */ base_seed + 100);
+    auto labels = spawn_labels(nrefs, nlabels, /* seed = */ base_seed + 1000);
 
-    auto markers = mock_markers<int>(nlabels, 50, ngenes); 
+    auto markers = mock_markers<int>(nlabels, 50, ngenes, /* seed = */ base_seed + 789); 
 
     // Performing classification without fine-tuning for a reference comparison.
     singlepp::TrainSingleOptions bopt;
@@ -75,20 +76,21 @@ TEST_P(ClassifySingleSimpleTest, Sparse) {
     auto param = GetParam();
     int top = std::get<0>(param);
     double quantile = std::get<1>(param);
+    unsigned long long base_seed = top + quantile * 1000;
 
     size_t ngenes = 250;
     size_t nlabels = 4;
-    auto markers = mock_markers<int>(nlabels, 50, ngenes, /* seed = */ 69 * quantile + top); 
+    auto markers = mock_markers<int>(nlabels, 50, ngenes, /* seed = */ base_seed + 69); 
 
     // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
     {
         int ntest = 11;
-        auto test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ 42 * quantile + top, /* density = */ 0.24);
+        auto test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ base_seed + 42, /* density = */ 0.24);
         auto stest = tatami::convert_to_compressed_sparse<double, int>(*test, true, {});
      
         size_t nrefs = 31;
-        auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 1000 * quantile + top);
-        auto refs = spawn_sparse_matrix(ngenes, nrefs, /* seed = */ 100 * quantile + top, /* density = */ 0.26);
+        auto labels = spawn_labels(nrefs, nlabels, /* seed = */ base_seed + 1000);
+        auto refs = spawn_sparse_matrix(ngenes, nrefs, /* seed = */ base_seed + 100, /* density = */ 0.26);
         auto srefs = tatami::convert_to_compressed_sparse<double, int>(*refs, true, {});
 
         auto trained = singlepp::train_single(*refs, labels.data(), markers, {});
@@ -114,12 +116,12 @@ TEST_P(ClassifySingleSimpleTest, Sparse) {
     // Otherwise, slight differences can cause a different score or even a different choice for best label.
     {
         int ntest = 13;
-        auto test = spawn_matrix(ngenes, ntest, /* seed = */ 42 * quantile + top);
+        auto test = spawn_matrix(ngenes, ntest, /* seed = */ base_seed + 666);
         auto stest = tatami::convert_to_compressed_sparse<double, int>(*test, true, {});
 
         size_t nrefs = 31;
-        auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 1000 * quantile + top);
-        auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 100 * quantile + top);
+        auto labels = spawn_labels(nrefs, nlabels, /* seed = */ base_seed * 2);
+        auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ base_seed + 23);
         auto srefs = tatami::convert_to_compressed_sparse<double, int>(*refs, true, {});
 
         auto trained = singlepp::train_single(*refs, labels.data(), markers, {});
@@ -148,7 +150,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 class ClassifySingleIntersectTest : public ::testing::TestWithParam<std::tuple<int, double, double> > {
 protected:
-    std::pair<std::vector<int>, std::vector<int> > generate_ids(std::size_t ngenes, double prop_keep, int seed) {
+    static std::pair<std::vector<int>, std::vector<int> > generate_ids(std::size_t ngenes, double prop_keep, unsigned long long seed) {
         std::mt19937_64 rng(seed);
         std::vector<int> left, right;
         std::uniform_real_distribution<> dist;
@@ -166,7 +168,6 @@ protected:
         std::shuffle(right.begin(), right.end(), rng);
         return std::make_pair(std::move(left), std::move(right));
     }
-
 };
 
 TEST_P(ClassifySingleIntersectTest, Intersect) {
@@ -174,21 +175,22 @@ TEST_P(ClassifySingleIntersectTest, Intersect) {
     int top = std::get<0>(param);
     double quantile = std::get<1>(param);
     double prop = std::get<2>(param);
+    unsigned long long base_seed = top + 123 * quantile + 456 * prop; 
 
     // Creating overlapping ID vectors.
     size_t ngenes = 200;
-    auto ids = generate_ids(ngenes, prop, top + 100 * quantile + 1000 * prop);
+    auto ids = generate_ids(ngenes, prop, /* seed = */ base_seed);
     const auto& left = ids.first;
     const auto& right = ids.second;
 
     // Mocking up the test and references.
-    auto mat = spawn_matrix(left.size(), 5, 42);
+    auto mat = spawn_matrix(left.size(), 5, /* seed = */ base_seed + 42);
 
     size_t nlabels = 3;
     size_t nrefs = 50;
-    auto refs = spawn_matrix(right.size(), nrefs, 100);
-    auto labels = spawn_labels(nrefs, nlabels, 1000);
-    auto markers = mock_markers<int>(nlabels, 50, right.size()); 
+    auto refs = spawn_matrix(right.size(), nrefs, /* seed = */ base_seed + 888);
+    auto labels = spawn_labels(nrefs, nlabels, /* seed = */ base_seed + 999);
+    auto markers = mock_markers<int>(nlabels, 50, right.size(), /* seed = */ base_seed + 69); 
 
     // Computing the observed result.
     singlepp::TrainSingleOptions bopt;
@@ -248,7 +250,7 @@ TEST_P(ClassifySingleIntersectTest, Intersect) {
     // Using the shuffled intersection to check that the order doesn't matter.
     {
         auto intersection = singlepp::intersect_genes<int>(left.size(), left.data(), right.size(), right.data());
-        std::mt19937_64 rng(top + quantile * 3123 + prop * 452);
+        std::mt19937_64 rng(base_seed * 3);
         std::shuffle(intersection.begin(), intersection.end(), rng);
         auto trained2 = singlepp::train_single<double, int>(left.size(), intersection, *refs, labels.data(), markers, NULL, bopt);
 
@@ -267,25 +269,26 @@ TEST_P(ClassifySingleIntersectTest, Sparse) {
     int top = std::get<0>(param);
     double quantile = std::get<1>(param);
     double prop = std::get<2>(param);
+    unsigned long long base_seed = top + 12 * quantile + 3456 * prop; 
 
     // Creating overlapping ID vectors.
     size_t ngenes = 300;
-    const auto ids = generate_ids(ngenes, prop, top + 100 * quantile + 1000 * prop);
+    const auto ids = generate_ids(ngenes, prop, /* seed = */ base_seed);
     const auto& left = ids.first;
     const auto& right = ids.second;
 
     size_t nlabels = 5;
-    auto markers = mock_markers<int>(nlabels, 20, right.size(), /* seed = */ 69 * quantile + top); 
+    auto markers = mock_markers<int>(nlabels, 20, right.size(), /* seed = */ base_seed + 69);
 
     // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
     {
         int ntest = 11;
-        auto test = spawn_sparse_matrix(left.size(), ntest, /* seed = */ 42 * quantile + top, /* density = */ 0.24);
+        auto test = spawn_sparse_matrix(left.size(), ntest, /* seed = */ base_seed + 4242, /* density = */ 0.24);
         auto stest = tatami::convert_to_compressed_sparse<double, int>(*test, true, {});
      
         size_t nrefs = 23;
-        auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 1000 * quantile + top);
-        auto refs = spawn_sparse_matrix(right.size(), nrefs, /* seed = */ 100 * quantile + top, /* density = */ 0.26);
+        auto labels = spawn_labels(nrefs, nlabels, /* seed = */ base_seed + 1111);
+        auto refs = spawn_sparse_matrix(right.size(), nrefs, /* seed = */ base_seed + 23232, /* density = */ 0.26);
         auto srefs = tatami::convert_to_compressed_sparse<double, int>(*refs, true, {});
 
         auto trained = singlepp::train_single<double, int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, NULL, {});
@@ -311,12 +314,12 @@ TEST_P(ClassifySingleIntersectTest, Sparse) {
     // Otherwise, slight differences can cause a different score or even a different choice for best label.
     {
         int ntest = 13;
-        auto test = spawn_matrix(left.size(), ntest, /* seed = */ 42 * quantile + top);
+        auto test = spawn_matrix(left.size(), ntest, /* seed = */ base_seed + 423);
         auto stest = tatami::convert_to_compressed_sparse<double, int>(*test, true, {});
 
         size_t nrefs = 31;
-        auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 1000 * quantile + top);
-        auto refs = spawn_matrix(right.size(), nrefs, /* seed = */ 100 * quantile + top);
+        auto labels = spawn_labels(nrefs, nlabels, /* seed = */ base_seed + 1999);
+        auto refs = spawn_matrix(right.size(), nrefs, /* seed = */ base_seed + 2312);
         auto srefs = tatami::convert_to_compressed_sparse<double, int>(*refs, true, {});
 
         auto trained = singlepp::train_single<double, int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, NULL, {});
@@ -349,7 +352,7 @@ TEST(FineTuneSingle, EdgeCases) {
     size_t nlabels = 3;
     size_t nprofiles = 50;
 
-    auto markers = mock_markers<int>(nlabels, 10, ngenes); 
+    auto markers = mock_markers<int>(nlabels, 10, ngenes, /* seed = */ 20); 
     auto reference = spawn_matrix(ngenes, nprofiles, /* seed = */ 200);
     auto labels = spawn_labels(nprofiles, nlabels, /* seed = */ 2000);
 
@@ -387,7 +390,7 @@ TEST(FineTuneSingle, ExactRecovery) {
     size_t nlabels = 3;
     size_t nprofiles = 50;
 
-    auto markers = mock_markers<int>(nlabels, 10, ngenes); 
+    auto markers = mock_markers<int>(nlabels, 10, ngenes, /* seed = */ 30); 
     auto reference = spawn_matrix(ngenes, nprofiles, /* seed = */ 300);
     auto labels = spawn_labels(nprofiles, nlabels, /* seed = */ 3000);
 
@@ -423,7 +426,7 @@ TEST(FineTuneSingle, Diagonal) {
     size_t nprofiles = 50;
 
     // This time there are only markers on the diagonals.
-    auto markers = mock_markers_diagonal<int>(nlabels, 10, ngenes); 
+    auto markers = mock_markers_diagonal<int>(nlabels, 10, ngenes, /* seed = */ 40); 
     auto reference = spawn_matrix(ngenes, nprofiles, /* seed = */ 400);
     auto labels = spawn_labels(nprofiles, nlabels, /* seed = */ 4000);
 
@@ -454,12 +457,12 @@ TEST(FineTuneSingle, Sparse) {
     size_t nlabels = 4;
     size_t nprofiles = 50;
 
-    auto markers = mock_markers<int>(nlabels, 10, ngenes); 
-    auto labels = spawn_labels(nprofiles, nlabels, /* seed = */ 2000);
+    auto markers = mock_markers<int>(nlabels, 10, ngenes, /* seed = */ 4060); 
+    auto labels = spawn_labels(nprofiles, nlabels, /* seed = */ 4070);
 
     // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
     {
-        auto new_reference = spawn_sparse_matrix(ngenes, nprofiles, /* seed = */ 300, /* density = */ 0.3);
+        auto new_reference = spawn_sparse_matrix(ngenes, nprofiles, /* seed = */ 4080, /* density = */ 0.3);
         auto new_trained = singlepp::train_single<double>(*new_reference, labels.data(), markers, {});
         singlepp::FineTuneSingle<false, false, int, int, double, double> new_ft(new_trained);
         singlepp::FineTuneSingle<true, false, int, int, double, double> new_ft2(new_trained);
@@ -469,7 +472,7 @@ TEST(FineTuneSingle, Sparse) {
         singlepp::FineTuneSingle<false, true, int, int, double, double> sparse_ft(sparse_trained);
 
         const int ntest = 100; 
-        auto new_test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ 302, /* density = */ 0.2);
+        auto new_test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ 5060, /* density = */ 0.2);
 
         const auto nmarkers = new_trained.subset().size();
         auto wrk = new_test->dense_column(new_trained.subset());
@@ -509,7 +512,7 @@ TEST(FineTuneSingle, Sparse) {
     // Sparse-sparse and dense-dense only compute the exact same L2 when the density is 100%.
     // Otherwise, slight differences can cause a different score or even a different choice for best label.
     {
-        auto new_reference = spawn_matrix(ngenes, nprofiles, /* seed = */ 301);
+        auto new_reference = spawn_matrix(ngenes, nprofiles, /* seed = */ 5070);
         auto new_trained = singlepp::train_single<double>(*new_reference, labels.data(), markers, {});
         singlepp::FineTuneSingle<false, false, int, int, double, double> new_ft(new_trained);
 
@@ -518,7 +521,7 @@ TEST(FineTuneSingle, Sparse) {
         singlepp::FineTuneSingle<true, true, int, int, double, double> sparse_ft2(sparse_trained);
 
         const int ntest = 100; 
-        auto new_test = spawn_matrix(ngenes, ntest, /* seed = */ 303);
+        auto new_test = spawn_matrix(ngenes, ntest, /* seed = */ 5080);
 
         const auto nmarkers = new_trained.subset().size();
         auto wrk = new_test->dense_column(new_trained.subset());
@@ -559,10 +562,10 @@ TEST(ClassifySingle, Simple) {
  
     size_t nlabels = 3;
     size_t nrefs = 50;
-    auto refs = spawn_matrix(ngenes, nrefs, 100);
-    auto labels = spawn_labels(nrefs, nlabels, 1000);
+    auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 11);
+    auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 111);
 
-    auto markers = mock_markers<int>(nlabels, 50, ngenes); 
+    auto markers = mock_markers<int>(nlabels, 50, ngenes, /* seed = */ 1111); 
 
     // Checking that we get an exact match when we use the references
     // directly for annotation. We set quantile = 1 so that a perfect
@@ -584,10 +587,10 @@ TEST(ClassifySingle, NoShared) {
     size_t nlabels = 3;
     size_t nrefs = 50;
 
-    auto mat = spawn_matrix(ngenes, 10, 100);
-    auto refs = spawn_matrix(ngenes, nrefs, 100);
-    auto labels = spawn_labels(nrefs, nlabels, 1000);
-    auto markers = mock_markers<int>(nlabels, 50, ngenes); 
+    auto mat = spawn_matrix(ngenes, 10, /* seed = */ 100);
+    auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 101);
+    auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 102);
+    auto markers = mock_markers<int>(nlabels, 50, ngenes, /* seed = */ 103); 
 
     std::vector<int> left(ngenes), right(ngenes);
     std::iota(left.begin(), left.end(), 0);
@@ -614,14 +617,14 @@ TEST(ClassifySingle, NoShared) {
 TEST(ClassifySingle, Nulls) {
     // Mocking up the test and references.
     size_t ngenes = 200;
-    auto mat = spawn_matrix(ngenes, 5, 42);
+    auto mat = spawn_matrix(ngenes, 5, /* seed = */ 42);
  
     size_t nlabels = 3;
     size_t nrefs = 50;
-    auto refs = spawn_matrix(ngenes, nrefs, 100);
-    auto labels = spawn_labels(nrefs, nlabels, 1000);
+    auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 43);
+    auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 44);
 
-    auto markers = mock_markers<int>(nlabels, 50, ngenes); 
+    auto markers = mock_markers<int>(nlabels, 50, ngenes,  /* seed = */ 45); 
 
     singlepp::TrainSingleOptions bopt;
     auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
@@ -644,14 +647,14 @@ TEST(ClassifySingle, Mismatch) {
     size_t nlabels = 3;
     size_t nrefs = 50;
 
-    auto refs = spawn_matrix(ngenes, nrefs, 100);
-    auto labels = spawn_labels(nrefs, nlabels, 1000);
-    auto markers = mock_markers<int>(nlabels, 50, ngenes); 
+    auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 22);
+    auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 23);
+    auto markers = mock_markers<int>(nlabels, 50, ngenes, /* seed = */ 24); 
 
     singlepp::TrainSingleOptions bopt;
     auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
 
-    auto test = spawn_matrix(ngenes + 10, nrefs, 100);
+    auto test = spawn_matrix(ngenes + 10, nrefs, /* seed = */ 25);
     singlepp::ClassifySingleOptions<double> copt;
     copt.quantile = 1;
 

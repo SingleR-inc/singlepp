@@ -21,13 +21,13 @@ protected:
         if (references.size()) { 
             return;
         }
-        for (size_t r = 0; r < nrefs; ++r) {
-            size_t seed = r * 1000;
-            size_t nlabels = 3 + r;
 
-            references.push_back(spawn_matrix(ngenes, nsamples, seed));
-            labels.push_back(spawn_labels(nsamples, nlabels, seed * 2));
-            markers.push_back(mock_markers<int>(nlabels, 50, ngenes, seed * 3));
+        for (std::size_t r = 0; r < nrefs; ++r) {
+            unsigned long long seed = r * 1000u;
+            std::size_t nlabels = 3 + r;
+            references.push_back(spawn_matrix(ngenes, nsamples, /* seed = */ seed));
+            labels.push_back(spawn_labels(nsamples, nlabels, /* seed = */ seed * 2));
+            markers.push_back(mock_markers<int>(nlabels, 50, ngenes, /* seed = */ seed * 3));
         }
     }
 
@@ -58,14 +58,14 @@ protected:
 };
 
 template<class Prebuilt_>
-static std::vector<std::vector<int> > mock_best_choices(size_t ntest, const std::vector<Prebuilt_>& prebuilts, size_t seed) {
-    size_t nrefs = prebuilts.size();
+static std::vector<std::vector<int> > mock_best_choices(std::size_t ntest, const std::vector<Prebuilt_>& prebuilts, unsigned long long seed) {
+    const auto nrefs = prebuilts.size();
     std::vector<std::vector<int> > chosen(nrefs);
 
     std::mt19937_64 rng(seed);
-    for (size_t r = 0; r < nrefs; ++r) {
-        size_t nlabels = prebuilts[r].markers().size();
-        for (size_t t = 0; t < ntest; ++t) {
+    for (std::size_t r = 0; r < nrefs; ++r) {
+        const auto nlabels = prebuilts[r].markers().size();
+        for (std::size_t t = 0; t < ntest; ++t) {
             chosen[r].push_back(rng() % nlabels);
         }
     }
@@ -79,7 +79,7 @@ class ClassifyIntegratedTest : public ::testing::TestWithParam<std::tuple<int, d
 protected:
     static void SetUpTestSuite() {
         assemble();
-        test = spawn_matrix(ngenes, ntest, 69);
+        test = spawn_matrix(ngenes, ntest, /* seed = */ 69);
     }
 
     inline static size_t ntest = 20;
@@ -110,7 +110,7 @@ TEST_P(ClassifyIntegratedTest, Basic) {
     auto param = GetParam();
     int ntop = std::get<0>(param);
     double quantile = std::get<1>(param);
-    int base_seed = ntop + quantile * 50;
+    unsigned long long base_seed = ntop + quantile * 50u;
 
     // Creating the integrated set of references.
     singlepp::TrainSingleOptions bopt;
@@ -203,7 +203,7 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
     int base_seed = ntop + quantile * 50;
 
     // Creating the integrated set of references.
-    auto test_ids = simulate_test_ids(ngenes, base_seed * 20);
+    auto test_ids = simulate_test_ids(ngenes, /* seed = */ base_seed * 20);
     singlepp::TrainSingleOptions bopt;
     bopt.top = ntop;
 
@@ -231,7 +231,7 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
     auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
 
     // Mocking up some of the best choices.
-    auto chosen = mock_best_choices(ntest, prebuilts, base_seed + 2468);
+    auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ base_seed + 2468);
     std::vector<const int*> chosen_ptrs(nrefs);
     for (size_t r = 0; r < nrefs; ++r) {
         chosen_ptrs[r] = chosen[r].data();
@@ -337,7 +337,7 @@ TEST_P(ClassifyIntegratedTest, IntersectedComparison) {
     auto param = GetParam();
     int ntop = std::get<0>(param);
     double quantile = std::get<1>(param);
-    int base_seed = ntop + quantile * 50;
+    unsigned long long base_seed = ntop + quantile * 50;
 
     // Creating the integrated set of references with intersection, along with
     // a comparison to the simple method where we do the reorganization externally.
@@ -407,7 +407,7 @@ TEST_P(ClassifyIntegratedTest, IntersectedComparison) {
     auto integrated_shuffled = singlepp::train_integrated(std::move(integrated_inputs_shuffled), iopt);
 
     // Mocking up some of the best choices.
-    auto chosen = mock_best_choices(ntest, prebuilts, base_seed + 2468);
+    auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ base_seed + 1379);
     std::vector<const int*> chosen_ptrs(nrefs);
     for (size_t r = 0; r < nrefs; ++r) {
         chosen_ptrs[r] = chosen[r].data();
@@ -456,24 +456,24 @@ protected:
 
 protected:
     static void SetUpTestSuite() {
-        for (size_t r = 0; r < nrefs; ++r) {
-            size_t seed = r * 1000;
-            size_t nlabels = 3 + r;
+        for (std::size_t r = 0; r < nrefs; ++r) {
+            unsigned long long seed = r * 123u;
+            std::size_t nlabels = 3 + r;
 
-            dense_references.push_back(spawn_sparse_matrix(ngenes, nsamples, seed, /* density = */ 0.3));
+            dense_references.push_back(spawn_sparse_matrix(ngenes, nsamples, /* seed = */ seed, /* density = */ 0.3));
             sparse_references.push_back(tatami::convert_to_compressed_sparse<double, int>(*(dense_references.back()), true, {}));
 
             super_dense_references.push_back(spawn_matrix(ngenes, nsamples, seed));
             super_sparse_references.push_back(tatami::convert_to_compressed_sparse<double, int>(*(super_dense_references.back()), true, {}));
 
-            labels.push_back(spawn_labels(nsamples, nlabels, seed * 2));
-            markers.push_back(mock_markers<int>(nlabels, 50, ngenes, seed * 3));
+            labels.push_back(spawn_labels(nsamples, nlabels, /* seed = */ seed * 2));
+            markers.push_back(mock_markers<int>(nlabels, 50, ngenes, /* seed = */ seed * 3));
         }
 
-        dense_test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ 69, /* density = */ 0.3);
+        dense_test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ 6969, /* density = */ 0.3);
         sparse_test = tatami::convert_to_compressed_sparse<double, int>(*dense_test, true, {});
 
-        super_dense_test = spawn_matrix(ngenes, ntest, /* seed = */ 69);
+        super_dense_test = spawn_matrix(ngenes, ntest, /* seed = */ 4242);
         super_sparse_test = tatami::convert_to_compressed_sparse<double, int>(*super_dense_test, true, {});
     }
 };
@@ -482,7 +482,7 @@ TEST_P(ClassifyIntegratedSparseTest, Basic) {
     auto param = GetParam();
     int ntop = std::get<0>(param);
     double quantile = std::get<1>(param);
-    int base_seed = ntop + quantile * 50;
+    unsigned long long base_seed = ntop + quantile * 50;
 
     // Creating the integrated set of references.
     singlepp::TrainSingleOptions bopt;
@@ -579,7 +579,7 @@ TEST_P(ClassifyIntegratedSparseTest, Intersect) {
     auto param = GetParam();
     int ntop = std::get<0>(param);
     double quantile = std::get<1>(param);
-    int base_seed = ntop + quantile * 50;
+    unsigned long long base_seed = ntop + quantile * 50;
 
     // Creating the integrated set of references.
     singlepp::TrainSingleOptions bopt;
@@ -588,7 +588,7 @@ TEST_P(ClassifyIntegratedSparseTest, Intersect) {
     std::vector<singlepp::Intersection<int> > intersections;
     intersections.reserve(nrefs);
     for (size_t r = 0; r < nrefs; ++r) {
-        intersections.push_back(mock_intersection<int>(ngenes, ngenes, ngenes * 0.75, /* seed */ 1000 + r));
+        intersections.push_back(mock_intersection<int>(ngenes, ngenes, ngenes * 0.75, /* seed = */ base_seed + r));
     }
 
     std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
@@ -715,7 +715,7 @@ TEST_F(ClassifyIntegratedOtherTest, Mismatch) {
 
     // Mocking up the test dataset and its choices.
     size_t ntest = 20;
-    auto test = spawn_matrix(ngenes * 2, ntest, 69); // more genes than expected.
+    auto test = spawn_matrix(ngenes * 2, ntest, /* seed = */ 69); // more genes than expected.
 
     auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ 70);
     std::vector<const int*> chosen_ptrs(nrefs);
@@ -854,11 +854,11 @@ TEST(ClassifyIntegrated, FineTuneSparse) {
     labels.reserve(nrefs);
     markers.reserve(nrefs);
 
-    for (size_t r = 0; r < nrefs; ++r) {
-        size_t seed = r * 1000;
-        size_t nlabels = 3 + r;
-        labels.push_back(spawn_labels(nsamples, nlabels, seed * 2));
-        markers.push_back(mock_markers<int>(nlabels, 50, ngenes, seed * 3));
+    for (std::size_t r = 0; r < nrefs; ++r) {
+        unsigned long long seed = r * 1055u;
+        std::size_t nlabels = 3 + r;
+        labels.push_back(spawn_labels(nsamples, nlabels, /* seed = */ seed * 10));
+        markers.push_back(mock_markers<int>(nlabels, 50, ngenes, /* seed = */ seed * 20));
     }
 
     std::vector<std::shared_ptr<tatami::Matrix<double, int> > > dense_references, sparse_references;
@@ -875,9 +875,9 @@ TEST(ClassifyIntegrated, FineTuneSparse) {
 
     // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
     {
-        for (size_t r = 0; r < nrefs; ++r) {
-            size_t seed = r * 2000;
-            dense_references.push_back(spawn_sparse_matrix(ngenes, nsamples, seed, /* density = */ 0.3));
+        for (std::size_t r = 0; r < nrefs; ++r) {
+            std::size_t seed = r * 456;
+            dense_references.push_back(spawn_sparse_matrix(ngenes, nsamples, /* seed = */ seed, /* density = */ 0.3));
             sparse_references.push_back(tatami::convert_to_compressed_sparse<double, int>(*(dense_references.back()), true, {}));
 
             const auto labptr = labels[r].data();
@@ -952,9 +952,9 @@ TEST(ClassifyIntegrated, FineTuneSparse) {
     // Sparse-sparse and dense-dense only compute the exact same L2 when the density is 100%.
     // Otherwise, slight differences can cause a different score or even a different choice for best label.
     {
-        for (size_t r = 0; r < nrefs; ++r) {
-            size_t seed = r * 3000;
-            dense_references.push_back(spawn_matrix(ngenes, nsamples, seed));
+        for (std::size_t r = 0; r < nrefs; ++r) {
+            std::size_t seed = r * 9000u;
+            dense_references.push_back(spawn_matrix(ngenes, nsamples, /* seed = */ seed));
             sparse_references.push_back(tatami::convert_to_compressed_sparse<double, int>(*(dense_references.back()), true, {}));
 
             const auto labptr = labels[r].data();
@@ -974,7 +974,7 @@ TEST(ClassifyIntegrated, FineTuneSparse) {
         auto new_test = spawn_matrix(ngenes, ntest, /* seed = */ 303);
 
         // Mocking up some of the best choices.
-        auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ 99);
+        auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ 199);
         std::vector<const int*> chosen_ptrs(nrefs);
         for (size_t r = 0; r < nrefs; ++r) {
             chosen_ptrs[r] = chosen[r].data();

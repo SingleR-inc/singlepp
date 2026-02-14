@@ -11,7 +11,7 @@
 TEST(SubsetToMarkers, Simple) {
     size_t nlabels = 4;
     size_t ngenes = 100;
-    auto markers = mock_markers<int>(nlabels, 20, ngenes);
+    auto markers = mock_markers<int>(nlabels, 20, ngenes, /* seed = */ 42);
     auto copy = markers;
     int top = 5;
     auto subs = singlepp::internal::subset_to_markers(copy, top);
@@ -61,7 +61,7 @@ TEST(SubsetToMarkers, Simple) {
 TEST(SubsetToMarkers, TooLargeTop) {
     size_t nlabels = 5;
     size_t ngenes = 123;
-    auto markers = mock_markers<int>(nlabels, 20, ngenes);
+    auto markers = mock_markers<int>(nlabels, 20, ngenes, /* seed = */ 69);
     auto copy = markers;
     int top = 50;
     auto subs = singlepp::internal::subset_to_markers(copy, top);
@@ -81,7 +81,7 @@ TEST(SubsetToMarkers, TooLargeTop) {
 TEST(SubsetToMarkers, NoTop) {
     size_t nlabels = 4;
     size_t ngenes = 100;
-    auto markers = mock_markers<int>(nlabels, 20, ngenes);
+    auto markers = mock_markers<int>(nlabels, 20, ngenes, /* seed = */ 67);
     auto copy = markers;
 
     auto subs = singlepp::internal::subset_to_markers(copy, -1);
@@ -101,7 +101,7 @@ TEST(SubsetToMarkers, NoTop) {
 TEST(SubsetToMarkers, DiagonalOnly) {
     size_t nlabels = 4;
     size_t ngenes = 100;
-    auto markers = mock_markers_diagonal<int>(nlabels, 20, ngenes);
+    auto markers = mock_markers_diagonal<int>(nlabels, 20, ngenes, /* seed = */ 666);
 
     auto copy = markers;
     int top = 5;
@@ -126,8 +126,8 @@ TEST(SubsetToMarkers, DiagonalOnly) {
 TEST(SubsetToMarkers, Intersect) {
     size_t nlabels = 4;
     size_t ngenes = 100;
-    auto markers = mock_markers<int>(nlabels, 20, ngenes);
-    auto inter = mock_intersection<int>(ngenes, ngenes, 40);
+    auto markers = mock_markers<int>(nlabels, 20, ngenes, /* seed = */ 1337);
+    auto inter = mock_intersection<int>(ngenes, ngenes, 40, /* seed = */ 13);
 
     int top = 5;
     auto mcopy = markers;
@@ -175,8 +175,8 @@ TEST(SubsetToMarkers, Intersect) {
 TEST(SubsetToMarkers, IntersectTooLargeTop) {
     size_t nlabels = 4;
     size_t ngenes = 100;
-    auto markers = mock_markers<int>(nlabels, 20, ngenes);
-    auto inter = mock_intersection<int>(ngenes, ngenes, 40);
+    auto markers = mock_markers<int>(nlabels, 20, ngenes, /* seed = */ 112358);
+    auto inter = mock_intersection<int>(ngenes, ngenes, 40, /* seed = */ 14);
 
     int top = 50;
     auto mcopy = markers;
@@ -207,8 +207,8 @@ TEST(SubsetToMarkers, IntersectTooLargeTop) {
 TEST(SubsetToMarkers, IntersectNoTop) {
     size_t nlabels = 4;
     size_t ngenes = 100;
-    auto markers = mock_markers<int>(nlabels, 20, ngenes);
-    auto inter = mock_intersection<int>(ngenes, ngenes, 40);
+    auto markers = mock_markers<int>(nlabels, 20, ngenes, /* seed = */ 94080);
+    auto inter = mock_intersection<int>(ngenes, ngenes, 40, /* seed = */ 15); 
 
     auto mcopy = markers;
     auto unzipped = singlepp::internal::subset_to_markers(inter, mcopy, -1);
@@ -229,8 +229,8 @@ TEST(SubsetToMarkers, IntersectNoTop) {
 TEST(SubsetToMarkers, IntersectShuffle) {
     size_t nlabels = 4;
     size_t ngenes = 100;
-    auto markers = mock_markers<int>(nlabels, 20, ngenes);
-    auto inter = mock_intersection<int>(ngenes, ngenes, ngenes); // all genes are used.
+    auto markers = mock_markers<int>(nlabels, 20, ngenes, /* seed = */ 94103);
+    auto inter = mock_intersection<int>(ngenes, ngenes, ngenes, /* seed = */ 21938); // all genes are used.
 
     int top = 5;
     auto mcopy = markers;
@@ -272,8 +272,8 @@ TEST(SubsetToMarkers, IntersectShuffle) {
 TEST(SubsetToMarkers, IntersectDiagonal) {
     size_t nlabels = 4;
     size_t ngenes = 100;
-    auto markers = mock_markers_diagonal<int>(nlabels, 20, ngenes);
-    auto inter = mock_intersection<int>(ngenes, ngenes, 40);
+    auto markers = mock_markers_diagonal<int>(nlabels, 20, ngenes, /* seed = */ 94025);
+    auto inter = mock_intersection<int>(ngenes, ngenes, 40, /* seed= */ 123908);
 
     auto mcopy = markers;
     int top = 5;
