@@ -25,7 +25,7 @@ double naive_score(const std::vector<double>& scaled_test, const std::vector<int
         auto col = wrk->fetch(l, buffer.data());
         tatami::copy_n(col, buffer.size(), buffer.data());
         const auto scaled_ref = quick_scaled_ranks(buffer);
-        const auto r2 = singlepp::compute_l2(scaled_test.size(), scaled_test.data(), scaled_ref.data());
+        const auto r2 = singlepp::dense_l2(scaled_test.size(), scaled_test.data(), scaled_ref.data());
         correlations.push_back(1 - 2 * r2);
     }
 

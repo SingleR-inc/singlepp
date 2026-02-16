@@ -165,7 +165,6 @@ void scaled_ranks(
         for (auto& nz : outgoing.nonzero) {
             nz.second *= denom;
         }
-        std::sort(outgoing.nonzero.begin(), outgoing.nonzero.end());
         outgoing.zero = zero_rank * denom;
     }
 }

@@ -10,6 +10,7 @@
 #include "utils.hpp"
 #include "scaled_ranks.hpp"
 #include "SubsetSanitizer.hpp"
+#include "l2.hpp"
 
 #include <vector>
 #include <memory>
@@ -62,6 +63,7 @@ struct CompressedSparseVector {
     const Float_* value;
     const Index_* index;
     Float_ zero;
+    Float_* remapping = NULL;
 };
 
 template<typename Index_, typename Float_>
@@ -75,177 +77,20 @@ CompressedSparseVector<Index_, Float_> retrieve_vector([[maybe_unused]] const In
     return output;
 }
 
-/*** L2 calculation methods ***/
-
-template<typename Index_, typename Float_>
-Float_ compute_l2(const Index_ num_markers, const Float_* vec1, const Float_* vec2) {
-    Float_ l2 = 0;
-    for (Index_ d = 0; d < num_markers; ++d) {
-        const Float_ delta = vec1[d] - vec2[d]; 
-        l2 += delta * delta;
-    }
-    return l2;
-}
-
 template<typename Index_, typename Float_>
 Index_ get_sparse_num(const CompressedSparseVector<Index_, Float_>& x) { return x.number; }
-template<typename Index_, typename Float_>
-Index_ get_sparse_num(const SparseScaled<Index_, Float_>& x) { return x.nonzero.size(); }
+
 template<typename Index_, typename Float_>
 Index_ get_sparse_index(const CompressedSparseVector<Index_, Float_>& x, const Index_ i) { return x.index[i]; }
-template<typename Index_, typename Float_>
-Index_ get_sparse_index(const SparseScaled<Index_, Float_>& x, const Index_ i) { return x.nonzero[i].first; }
+
 template<typename Index_, typename Float_>
 Float_ get_sparse_value(const CompressedSparseVector<Index_, Float_>& x, const Index_ i) { return x.value[i]; }
-template<typename Index_, typename Float_>
-Float_ get_sparse_value(const SparseScaled<Index_, Float_>& x, const Index_ i) { return x.nonzero[i].second; }
+
 template<typename Index_, typename Float_>
 Float_ get_sparse_zero(const CompressedSparseVector<Index_, Float_>& x) { return x.zero; }
-template<typename Index_, typename Float_>
-Float_ get_sparse_zero(const SparseScaled<Index_, Float_>& x) { return x.zero; }
-
-template<typename Index_, typename Float_, class SparseInput1_, typename SparseInput2_>
-Float_ sparse_l2(const Index_ num_markers, const SparseInput1_& vec1, const SparseInput2_& vec2) {
-    const auto num1 = get_sparse_num(vec1);
-    const auto zero1 = get_sparse_zero(vec1);
-    const auto num2 = get_sparse_num(vec2);
-    const auto zero2 = get_sparse_zero(vec2);
-    assert(sanisizer::is_greater_than_or_equal(num_markers, num1));
-    assert(sanisizer::is_greater_than_or_equal(num_markers, num2));
-
-    Float_ l2 = 0;
-    Index_ i1 = 0, i2 = 0;
-    Index_ both = 0;
-
-    if (i1 < num1 && i2 < num2) { 
-        while (1) {
-            const auto samdex = get_sparse_index(vec1, i1);
-            const auto seeddex = get_sparse_index(vec2, i2);
-            if (samdex < seeddex) {
-                const Float_ delta = get_sparse_value(vec1, i1) - zero2;
-                l2 += delta * delta;
-                ++i1;
-                if (i1 == num1) {
-                    break;
-                }
-            } else if (samdex > seeddex) {
-                const Float_ delta = get_sparse_value(vec2, i2) - zero1;
-                l2 += delta * delta;
-                ++i2;
-                if (i2 == num2) {
-                    break;
-                }
-            } else {
-                const Float_ delta = get_sparse_value(vec1, i1) - get_sparse_value(vec2, i2);
-                l2 += delta * delta;
-                ++i1;
-                ++i2;
-                ++both;
-                if (i1 == num1 || i2 == num2) {
-                    break;
-                }
-            }
-        }
-    }
-
-    for (; i1 < num1; ++i1) { 
-        const Float_ delta = get_sparse_value(vec1, i1) - zero2;
-        l2 += delta * delta;
-    }
-    for (; i2 < num2; ++i2) { 
-        const Float_ delta = get_sparse_value(vec2, i2) - zero1;
-        l2 += delta * delta;
-    }
-
-    const Float_ delta = zero1 - zero2;
-    l2 += (num_markers - num1 - (num2 - both)) * (delta * delta);
-    return l2;
-}
 
 template<typename Index_, typename Float_>
-Float_ compute_l2(const Index_ num_markers, const CompressedSparseVector<Index_, Float_>& vec1, const CompressedSparseVector<Index_, Float_>& vec2) {
-    return sparse_l2<Index_, Float_>(num_markers, vec1, vec2);
-}
-
-template<typename Index_, typename Float_>
-Float_ compute_l2(const Index_ num_markers, const SparseScaled<Index_, Float_>& vec1, const CompressedSparseVector<Index_, Float_>& vec2) {
-    return sparse_l2<Index_, Float_>(num_markers, vec1, vec2);
-}
-
-template<typename Index_, typename Float_>
-Float_ compute_l2(const Index_ num_markers, const SparseScaled<Index_, Float_>& vec1, const SparseScaled<Index_, Float_>& vec2) {
-    return sparse_l2<Index_, Float_>(num_markers, vec1, vec2);
-}
-
-template<typename Index_, typename Float_, typename SparseInput_>
-Float_ mixed_l2(const Index_ num_markers, const Float_* vec1, const SparseInput_& vec2) {
-    Float_ l2 = 0;
-    Index_ i = 0, j = 0;
-    const auto num2 = get_sparse_num(vec2);
-    const auto zero2 = get_sparse_zero(vec2);
-    assert(sanisizer::is_greater_than_or_equal(num_markers, num2));
-
-    while (j < num2) {
-        const auto limit = get_sparse_index(vec2, j);
-        for (; i < limit; ++i) {
-            const auto delta = vec1[i] - zero2;
-            l2 += delta * delta;
-        }
-        const auto delta = vec1[i] - get_sparse_value(vec2, j);
-        l2 += delta * delta;
-        ++i;
-        ++j;
-    }
-
-    for (; i < num_markers; ++i) {
-        const auto delta = vec1[i] - zero2;
-        l2 += delta * delta;
-    }
-
-    return l2;
-}
-
-template<typename Index_, typename Float_>
-Float_ compute_l2(const Index_ num_markers, const Float_* vec1, const CompressedSparseVector<Index_, Float_>& vec2) {
-    return mixed_l2(num_markers, vec1, vec2);
-}
-
-template<typename Index_, typename Float_>
-Float_ compute_l2(const Index_ num_markers, const SparseScaled<Index_, Float_>& vec1, const Float_* vec2) {
-    return mixed_l2(num_markers, vec2, vec1);
-}
-
-// Overloads for vectors.
-template<typename Index_, typename Float_>
-Float_ compute_l2(const Index_ num_markers, const std::vector<Float_>& vec1, const Float_* vec2) {
-    assert(sanisizer::is_equal(num_markers, vec1.size()));
-    return compute_l2(num_markers, vec1.data(), vec2);
-}
-
-template<typename Index_, typename Float_>
-Float_ compute_l2(const Index_ num_markers, const std::vector<Float_>& vec1, const std::vector<Float_>& vec2) {
-    assert(sanisizer::is_equal(num_markers, vec1.size()));
-    assert(sanisizer::is_equal(num_markers, vec2.size()));
-    return compute_l2(num_markers, vec1.data(), vec2.data());
-}
-
-template<typename Index_, typename Float_>
-Float_ compute_l2(const Index_ num_markers, const std::vector<Float_>& vec1, const SparseScaled<Index_, Float_>& vec2) {
-    assert(sanisizer::is_equal(num_markers, vec1.size()));
-    return compute_l2(num_markers, vec2, vec1.data());
-}
-
-template<typename Index_, typename Float_>
-Float_ compute_l2(const Index_ num_markers, const std::vector<Float_>& vec1, const CompressedSparseVector<Index_, Float_>& vec2) {
-    assert(sanisizer::is_equal(num_markers, vec1.size()));
-    return compute_l2(num_markers, vec1.data(), vec2);
-}
-
-template<typename Index_, typename Float_>
-Float_ compute_l2(const Index_ num_markers, const SparseScaled<Index_, Float_>& vec1, const std::vector<Float_>& vec2) {
-    assert(sanisizer::is_equal(num_markers, vec2.size()));
-    return compute_l2(num_markers, vec1, vec2.data());
-}
+Float_ get_sparse_remapping(const CompressedSparseVector<Index_, Float_>& x) { return x.remapping; }
 
 /*** KMKNN building ***/ 
 
@@ -277,6 +122,13 @@ std::vector<Index_> select_seeds(
         sanisizer::reserve(identities, num_samples);
         auto cumulative = sanisizer::create<std::vector<Float_> >(num_samples);
         std::mt19937_64 eng(/* seed = */ 6237u + num_markers * static_cast<std::size_t>(num_samples)); // making a semi-deterministic seed that depends on the input data. 
+        auto seed_remapping = [&](){
+            if constexpr(ref_sparse_) {
+                return sanisizer::create<std::vector<Float_> >(num_markers);
+            } else {
+                return false;
+            }
+        }();
 
         for (Index_ se = 0; se < num_seeds; ++se) {
             cumulative[0] = mindist[0];
@@ -306,6 +158,10 @@ std::vector<Index_> select_seeds(
 
             // Now updating the distances and assignments of all observations based on the new seed.
             const auto seed_info = retrieve_vector(num_markers, ref, chosen_id);
+            if constexpr(ref_sparse_) {
+                setup_sparse_l2_remapping(num_markers, seed_info, seed_remapping);
+            }
+
             for (Index_ sam = 0; sam < num_samples; ++sam) {
                 auto& mdist = mindist[sam];
                 if (mdist == 0) {
@@ -313,7 +169,14 @@ std::vector<Index_> select_seeds(
                 }
 
                 const auto sam_info = retrieve_vector(num_markers, ref, sam);
-                const auto l2 = compute_l2(num_markers, sam_info, seed_info);
+                const auto l2 = [&](){
+                    if constexpr(ref_sparse_) {
+                        return sparse_l2(num_markers, seed_info, seed_remapping, sam_info);
+                    } else {
+                        return dense_l2(num_markers, seed_info, sam_info);
+                    }
+                }();
+
                 if (se == 0) {
                     mdist = l2;
                 } else if (l2 < mdist) {
@@ -423,14 +286,14 @@ struct FindClosestNeighborsWorkspace {
     FindClosestNeighborsWorkspace(Index_ num_markers, Index_ num_samples) {
         sanisizer::reserve(seed_distances, num_samples);
         sanisizer::reserve(closest_neighbors, num_samples);
-        if constexpr(!ref_sparse_ && query_sparse_) {
+        if constexpr(ref_sparse_ || query_sparse_) {
             sanisizer::resize(dense_buffer, num_markers);
         }
     }
 
     std::vector<std::pair<Float_, Index_> > seed_distances;
     std::vector<std::pair<Float_, Index_> > closest_neighbors;
-    typename std::conditional<query_sparse_ && !ref_sparse_, std::vector<Float_>, bool>::type dense_buffer;
+    typename std::conditional<query_sparse_ || ref_sparse_, std::vector<Float_>, bool>::type dense_buffer;
 };
 
 template<bool query_sparse_, bool ref_sparse_, typename Index_, typename Float_>
@@ -446,19 +309,29 @@ void find_closest_neighbors(
 
     if constexpr(!ref_sparse_) {
         if constexpr(query_sparse_) {
-            std::fill(work.dense_buffer.begin(), work.dense_buffer.end(), query.zero);
-            for (const auto& p : query.nonzero) {
-                work.dense_buffer[p.first] = p.second;
-            }
+            densify_sparse_vector(num_markers, query, work.dense_buffer);
+        }
+    } else {
+        if constexpr(query_sparse_) {
+            setup_sparse_l2_remapping(num_markers, query, work.dense_buffer);
         }
     }
 
     auto compute_distance = [&](Index_ se) -> Float_ {
         const auto refinfo = retrieve_vector(num_markers, ref, se);
-        if constexpr(!ref_sparse_ && query_sparse_) {
-            return compute_l2(num_markers, work.dense_buffer.data(), refinfo);
+        if constexpr(ref_sparse_) {
+            if constexpr(query_sparse_) {
+                return sparse_l2(num_markers, query, work.dense_buffer, refinfo);
+            } else {
+                densify_sparse_vector(num_markers, refinfo, work.dense_buffer);
+                return dense_l2(num_markers, query.data(), work.dense_buffer.data());
+            }
         } else {
-            return compute_l2(num_markers, query, refinfo);
+            if constexpr(query_sparse_) {
+                return dense_l2(num_markers, work.dense_buffer.data(), refinfo);
+            } else {
+                return dense_l2(num_markers, query.data(), refinfo);
+            }
         }
     };
 

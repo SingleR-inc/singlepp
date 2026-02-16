@@ -20,12 +20,12 @@ add_executable(
     libtest 
     src/classify_single.cpp
     src/scaled_ranks.cpp
+    src/l2.cpp
     src/SubsetRemapper.cpp
     src/correlations_to_score.cpp
     src/Intersection.cpp
     src/subset_to_markers.cpp
     src/SubsetSanitizer.cpp
-    src/build_reference.cpp
     src/fill_labels_in_use.cpp
     src/classify_integrated.cpp
 )

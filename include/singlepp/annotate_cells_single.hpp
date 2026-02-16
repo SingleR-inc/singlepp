@@ -46,6 +46,7 @@ private:
 
     typename std::conditional<query_sparse_, SparseScaled<Index_, Float_>, std::vector<Float_> >::type my_scaled_query;
     typename std::conditional<ref_sparse_, SparseScaled<Index_, Float_>, std::vector<Float_> >::type my_scaled_ref;
+    typename std::conditional<query_sparse_ || ref_sparse_, std::vector<Float_>, bool>::type my_dense_buffer;
 
     RankedVector<Value_, Index_> my_subset_query;
     RankedVector<Index_, Index_> my_subset_ref;
@@ -79,6 +80,10 @@ public:
             max_labels = std::max(max_labels, get_num_samples(curref));
         }
         sanisizer::reserve(my_all_correlations, max_labels);
+
+        if constexpr(query_sparse_ || ref_sparse_) {
+            sanisizer::resize(my_dense_buffer, full_num_markers);
+        }
     }
 
     // For testing only.
@@ -118,6 +123,11 @@ public:
                 const auto subend = my_subset_query.end();
                 auto zero_ranges = find_zero_ranges<Value_, Index_>(substart, subend);
                 scaled_ranks<Value_, Index_, Float_>(current_num_markers, substart, zero_ranges.first, zero_ranges.second, subend, my_scaled_query);
+                if constexpr(ref_sparse_) {
+                    setup_sparse_l2_remapping(current_num_markers, my_scaled_query, my_dense_buffer);
+                } else {
+                    densify_sparse_vector(current_num_markers, my_scaled_query, my_dense_buffer);
+                }
             } else {
                 my_scaled_query.resize(current_num_markers);
                 scaled_ranks(current_num_markers, my_subset_query, my_scaled_query);
@@ -148,7 +158,6 @@ public:
                         const auto pStart = curref.positive_ranked.begin();
                         my_gene_subset.remap(pStart + curref.positive_indptrs[c], pStart + curref.positive_indptrs[c + 1], my_subset_ref_alt);
                         scaled_ranks(current_num_markers, my_subset_ref, my_subset_ref_alt, my_scaled_ref);
-
                     } else {
                         const auto full_num_markers = my_gene_subset.capacity();
                         const auto refstart = curref.all_ranked.begin() + sanisizer::product_unsafe<std::size_t>(full_num_markers, c);
@@ -157,7 +166,23 @@ public:
                         scaled_ranks(current_num_markers, my_subset_ref, my_scaled_ref);
                     }
 
-                    const Float_ l2 = compute_l2(current_num_markers, my_scaled_query, my_scaled_ref);
+                    const Float_ l2 = [&](){
+                        if constexpr(query_sparse_) {
+                            if constexpr(ref_sparse_) {
+                                return sparse_l2(current_num_markers, my_scaled_query, my_dense_buffer, my_scaled_ref);
+                            } else {
+                                return dense_l2(current_num_markers, my_dense_buffer.data(), my_scaled_ref.data());
+                            }
+                        } else {
+                            if constexpr(ref_sparse_) {
+                                densify_sparse_vector(current_num_markers, my_scaled_ref, my_dense_buffer);
+                                return dense_l2(current_num_markers, my_scaled_query.data(), my_dense_buffer.data());
+                            } else {
+                                return dense_l2(current_num_markers, my_scaled_query.data(), my_scaled_ref.data());
+                            }
+                        }
+                    }();
+
                     const Float_ cor = l2_to_correlation(l2);
                     my_all_correlations.push_back(cor);
                 }

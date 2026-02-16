@@ -47,17 +47,17 @@ TEST(CorrelationsToScore, Ties) {
 TEST(L2ToCorrelation, Basic) {
     std::vector<double> values { -0.1, 0.2, -0.3, 0.4, -0.5, 0.6, 0 };
     auto scaled = quick_scaled_ranks(values);
-    EXPECT_FLOAT_EQ(singlepp::l2_to_correlation(singlepp::compute_l2(scaled.size(), scaled, scaled)), 1);
+    EXPECT_FLOAT_EQ(singlepp::l2_to_correlation(singlepp::dense_l2(scaled.size(), scaled.data(), scaled.data())), 1);
 
     auto neg = scaled;
     for (auto& x : neg) {
         x *= -1;
     }
-    EXPECT_FLOAT_EQ(singlepp::l2_to_correlation(singlepp::compute_l2(scaled.size(), scaled, neg)), -1);
+    EXPECT_FLOAT_EQ(singlepp::l2_to_correlation(singlepp::dense_l2(scaled.size(), scaled.data(), neg.data())), -1);
 
     // Compare to R code:
     // > cor(c(-0.1, 0.2, -0.3, 0.4, -0.5, 0.6, 0), 1:7, method="spearman")
     std::vector<double> values2 { 1, 2, 3, 4, 5, 6, 7 };
     auto scaled2 = quick_scaled_ranks(values2);
-    EXPECT_FLOAT_EQ(singlepp::l2_to_correlation(singlepp::compute_l2(scaled.size(), scaled, scaled2)), 0.2142857);
+    EXPECT_FLOAT_EQ(singlepp::l2_to_correlation(singlepp::dense_l2(scaled.size(), scaled.data(), scaled2.data())), 0.2142857);
 }

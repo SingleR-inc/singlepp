@@ -66,6 +66,8 @@ private:
     std::optional<SparseScaled<Index_, Float_> > my_scaled_ref_sparse;
     std::optional<std::vector<Float_> > my_scaled_ref_dense;
 
+    std::optional<std::vector<Float_> > my_sparse_remapping, my_densified_buffer;
+
     std::vector<Float_> my_all_correlations;
 
 public:
@@ -91,6 +93,22 @@ public:
             my_scaled_query.nonzero.reserve(my_num_universe);
         } else {
             sanisizer::resize(my_scaled_query, my_num_universe);
+        }
+
+        if constexpr(query_sparse_) {
+            if (details.any_dense) {
+                my_densified_buffer.emplace();
+                sanisizer::resize(*my_densified_buffer, my_num_universe);
+            }
+            if (details.any_sparse) {
+                my_sparse_remapping.emplace();
+                sanisizer::resize(*my_sparse_remapping, my_num_universe);
+            }
+        } else {
+            if (details.any_sparse) {
+                my_densified_buffer.emplace();
+                sanisizer::resize(*my_densified_buffer, my_num_universe);
+            }
         }
     }
 
@@ -136,6 +154,11 @@ public:
             const auto sStart = my_subset_query.begin(), sEnd = my_subset_query.end();
             auto zero_ranges = find_zero_ranges<Value_, Index_>(sStart, sEnd);
             scaled_ranks<Value_, Index_>(num_markers, sStart, zero_ranges.first, zero_ranges.second, sEnd, my_scaled_query);
+            if (my_scaled_ref_dense.has_value()) {
+                densify_sparse_vector(num_markers, my_scaled_query, *my_densified_buffer);
+            } else {
+                setup_sparse_l2_remapping(num_markers, my_scaled_query, *my_sparse_remapping);
+            }
         } else {
             my_scaled_query.resize(num_markers);
             scaled_ranks(num_markers, my_subset_query, my_scaled_query);
@@ -163,7 +186,16 @@ public:
                     my_remapper.remap(pStart + curlab.positive_indptrs[s], pStart + curlab.positive_indptrs[s + 1], *my_subset_ref_positive);
 
                     scaled_ranks(num_markers, my_subset_ref, *my_subset_ref_positive, *my_scaled_ref_sparse);
-                    const Float_ cor = l2_to_correlation(compute_l2(num_markers, my_scaled_query, *my_scaled_ref_sparse));
+                    const Float_ l2 = [&](){
+                        if constexpr(query_sparse_) {
+                            return sparse_l2(num_markers, my_scaled_query, *my_sparse_remapping, *my_scaled_ref_sparse);
+                        } else {
+                            densify_sparse_vector(num_markers, *my_scaled_ref_sparse, *my_densified_buffer);
+                            return dense_l2(num_markers, my_scaled_query.data(), my_densified_buffer->data());
+                        }
+                    }();
+
+                    const Float_ cor = l2_to_correlation(l2);
                     my_all_correlations.push_back(cor);
                 }
 
@@ -176,7 +208,15 @@ public:
                     my_remapper.remap(refstart, refend, my_subset_ref);
 
                     scaled_ranks(num_markers, my_subset_ref, *my_scaled_ref_dense);
-                    const Float_ cor = l2_to_correlation(compute_l2(num_markers, my_scaled_query, *my_scaled_ref_dense));
+                    const Float_ l2 = [&](){
+                        if constexpr(query_sparse_) {
+                            return dense_l2(num_markers, my_densified_buffer->data(), my_scaled_ref_dense->data());
+                        } else {
+                            return dense_l2(num_markers, my_scaled_query.data(), my_scaled_ref_dense->data());
+                        }
+                    }();
+
+                    const Float_ cor = l2_to_correlation(l2);
                     my_all_correlations.push_back(cor);
                 }
             }

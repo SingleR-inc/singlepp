@@ -134,8 +134,11 @@ TEST(ScaledRanks, SparseBasic) {
     for (int i = 0; i < num_markers; ++i) {
         EXPECT_FLOAT_EQ(sout[i], out[i]);
     }
-    for (std::size_t i = 1; i < sparse_scaled.nonzero.size(); ++i) {
-        EXPECT_LT(sparse_scaled.nonzero[i-1].first, sparse_scaled.nonzero[i].first);
+
+    auto scaled_copy = sparse_scaled;
+    std::sort(scaled_copy.nonzero.begin(), scaled_copy.nonzero.end());
+    for (std::size_t i = 1; i < scaled_copy.nonzero.size(); ++i) {
+        EXPECT_LT(scaled_copy.nonzero[i - 1].first, scaled_copy.nonzero[i].first);
     }
 
     // Same results with the overload.
@@ -183,8 +186,11 @@ TEST(ScaledRanks, SparseTies) {
     for (int i = 0; i < num_markers; ++i) {
         EXPECT_FLOAT_EQ(sout[i], out[i]);
     }
-    for (std::size_t i = 1; i < sparse_scaled.nonzero.size(); ++i) {
-        EXPECT_LT(sparse_scaled.nonzero[i-1].first, sparse_scaled.nonzero[i].first);
+
+    auto scaled_copy = sparse_scaled;
+    std::sort(scaled_copy.nonzero.begin(), scaled_copy.nonzero.end());
+    for (std::size_t i = 1; i < scaled_copy.nonzero.size(); ++i) {
+        EXPECT_LT(scaled_copy.nonzero[i - 1].first, scaled_copy.nonzero[i].first);
     }
 }
 
@@ -217,7 +223,7 @@ TEST(ScaledRanks, CorrelationCheck) {
     std::vector<double> out2(right.size());
     singlepp::scaled_ranks(right.size(), ranks, out2.data());
 
-    double obs = singlepp::l2_to_correlation(singlepp::compute_l2(out1.size(), out1, out2));
+    double obs = singlepp::l2_to_correlation(singlepp::dense_l2(out1.size(), out1.data(), out2.data()));
 
     // Manual calculation.
     {
