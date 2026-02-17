@@ -4,8 +4,6 @@
 
 TEST(SubsetSanitizer, DenseNoOp) {
     std::vector<int> foo{ 2, 6, 18, 23, 53, 99 };
-    EXPECT_TRUE(singlepp::is_subset_sorted_unique(foo));
-
     singlepp::SubsetNoop<false, int> ss(foo);
     EXPECT_EQ(&(ss.extraction_subset()), &foo); // exact same object, in fact.
 
@@ -23,7 +21,7 @@ TEST(SubsetSanitizer, DenseNoOp) {
 
 TEST(SubsetSanitizer, SparseNoOp) {
     std::vector<int> foo{ 2, 6, 18, 23, 53, 99 };
-    EXPECT_TRUE(singlepp::is_subset_sorted_unique(foo));
+    EXPECT_TRUE(singlepp::is_sorted_unique(foo.size(), foo.data()));
 
     std::vector<double> vstuff{ 0.31, -0.23, 0.45 };
     std::vector<int> istuff{ 6, 18, 99 };
@@ -48,8 +46,6 @@ TEST(SubsetSanitizer, SparseNoOp) {
 
 TEST(SubsetSanitizer, DenseResort) {
     std::vector<int> foo{ 5, 2, 29, 12, 23, 0 };
-    EXPECT_FALSE(singlepp::is_subset_sorted_unique(foo));
-
     singlepp::SubsetSanitizer<false, int> ss(foo);
     EXPECT_NE(&(ss.extraction_subset()), &foo);
 
@@ -79,8 +75,6 @@ TEST(SubsetSanitizer, DenseResort) {
 
 TEST(SubsetSanitizer, SparseResort) {
     std::vector<int> foo{ 16, 22, 25, 40, 47, 27, 3, 20, 23, 48 };
-    EXPECT_FALSE(singlepp::is_subset_sorted_unique(foo));
-
     singlepp::SubsetSanitizer<true, int> ss(foo);
     EXPECT_NE(&(ss.extraction_subset()), &foo);
 

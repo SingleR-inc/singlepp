@@ -123,6 +123,11 @@ public:
                 const auto subend = my_subset_query.end();
                 auto zero_ranges = find_zero_ranges<Value_, Index_>(substart, subend);
                 scaled_ranks<Value_, Index_, Float_>(current_num_markers, substart, zero_ranges.first, zero_ranges.second, subend, my_scaled_query);
+
+                // Sorting for a better chance of accessing contiguous memory during iterations.
+                // Indices are unique so we should not need to consider the second element of each pair.
+                sort_by_first(my_scaled_query.nonzero);
+
                 if constexpr(ref_sparse_) {
                     setup_sparse_l2_remapping(current_num_markers, my_scaled_query, my_dense_buffer);
                 } else {

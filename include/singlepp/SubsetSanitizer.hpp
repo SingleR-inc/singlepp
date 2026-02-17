@@ -14,17 +14,6 @@
 
 namespace singlepp {
 
-template<typename Index_>
-bool is_subset_sorted_unique(const std::vector<Index_>& sub) {
-    const auto num_subset = sub.size();
-    for (I<decltype(num_subset)> i = 1; i < num_subset; ++i) {
-        if (sub[i] <= sub[i-1]) {
-            return false;
-        }
-    }
-    return true;
-}
-
 template<bool sparse_, typename Index_>
 class SubsetNoop {
 private:
@@ -34,7 +23,7 @@ private:
 
 public:
     SubsetNoop(const std::vector<Index_>& sub) : my_original_subset(sub) {
-        assert(is_subset_sorted_unique(sub));
+        assert(is_sorted_unique(sub.size(), sub.data()));
         if constexpr(sparse_) {
             const auto num_subset = sub.size();
             if (num_subset) {
@@ -101,7 +90,9 @@ public:
         for (I<decltype(num_subset)> i = 0; i < num_subset; ++i) {
             store.emplace_back(sub[i], i);
         }
-        std::sort(store.begin(), store.end());
+
+        // No need to consider the second element, as all elements of 'sub' should be unique.
+        sort_by_first(store);
 
         sanisizer::reserve(my_sorted_subset, num_subset);
         if constexpr(sparse_) {

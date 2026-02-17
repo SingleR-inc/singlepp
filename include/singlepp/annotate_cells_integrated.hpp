@@ -154,6 +154,11 @@ public:
             const auto sStart = my_subset_query.begin(), sEnd = my_subset_query.end();
             auto zero_ranges = find_zero_ranges<Value_, Index_>(sStart, sEnd);
             scaled_ranks<Value_, Index_>(num_markers, sStart, zero_ranges.first, zero_ranges.second, sEnd, my_scaled_query);
+
+            // Sorting for a better chance of accessing contiguous memory during iterations.
+            // Indices are unique so we should not need to consider the second element of each pair.
+            sort_by_first(my_scaled_query.nonzero);
+
             if (my_scaled_ref_dense.has_value()) {
                 densify_sparse_vector(num_markers, my_scaled_query, *my_densified_buffer);
             } else {

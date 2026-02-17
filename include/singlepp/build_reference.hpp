@@ -90,7 +90,7 @@ template<typename Index_, typename Float_>
 Float_ get_sparse_zero(const CompressedSparseVector<Index_, Float_>& x) { return x.zero; }
 
 template<typename Index_, typename Float_>
-Float_ get_sparse_remapping(const CompressedSparseVector<Index_, Float_>& x) { return x.remapping; }
+void check_sparse_index_sorted_and_unique(const CompressedSparseVector<Index_, Float_>& x) { assert(is_sorted_unique(x.number, x.index)); }
 
 /*** KMKNN building ***/ 
 
@@ -523,7 +523,7 @@ BuiltReference<Index_, Float_> build_reference_raw(
     std::optional<SubsetNoop<ref_sparse_, Index_> > subnoop;
     std::optional<SubsetSanitizer<ref_sparse_, Index_> > subsorted;
     const std::vector<Index_>* subptr;
-    const bool subset_noop = is_subset_sorted_unique(subset);
+    const bool subset_noop = is_sorted_unique(subset.size(), subset.data());
     if (subset_noop) {
         subnoop.emplace(subset);
         subptr = &(subnoop->extraction_subset());
@@ -606,6 +606,7 @@ BuiltReference<Index_, Float_> build_reference_raw(
                 SparseScaled<Index_, Float_> scaled;
                 for (Index_ c = 0; c < labcount; ++c) {
                     scaled_ranks(num_markers, neg_ranked[c], pos_ranked[c], scaled);
+                    sort_by_first(scaled.nonzero); 
                     for (const auto& y : scaled.nonzero) {
                         curlab.index.push_back(y.first);
                         curlab.value.push_back(y.second);

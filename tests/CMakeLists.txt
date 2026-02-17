@@ -28,6 +28,7 @@ add_executable(
     src/SubsetSanitizer.cpp
     src/fill_labels_in_use.cpp
     src/classify_integrated.cpp
+    src/utils.cpp
 )
 
 target_link_libraries(libtest gtest_main singlepp tatami_stats)
