@@ -428,11 +428,13 @@ void find_closest_neighbors(
 }
 
 template<bool query_sparse_, bool ref_sparse_, typename Index_, typename Float_>
-std::pair<Float_, Index_> pop_furthest_neighbor(FindClosestNeighborsWorkspace<query_sparse_, ref_sparse_, Index_, Float_>& work) {
-    auto output = work.closest_neighbors.front();
+const std::pair<Float_, Index_>& get_furthest_neighbor(FindClosestNeighborsWorkspace<query_sparse_, ref_sparse_, Index_, Float_>& work) {
+    return work.closest_neighbors.front();
+}
+
+template<bool query_sparse_, bool ref_sparse_, typename Index_, typename Float_>
+void pop_furthest_neighbor(FindClosestNeighborsWorkspace<query_sparse_, ref_sparse_, Index_, Float_>& work) {
     std::pop_heap(work.closest_neighbors.begin(), work.closest_neighbors.end());
-    work.closest_neighbors.pop_back();
-    return output;
 }
 
 /*** Overlord function ***/ 

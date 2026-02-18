@@ -53,7 +53,7 @@ TrainedIntegratedDetails<Index_> interrogate_trained_integrated(const TrainedInt
 }
 
 template<bool query_sparse_, typename Index_, typename Value_, typename Float_>
-class FineTuneIntegrated {
+class AnnotateIntegrated {
 private:
     Index_ my_num_universe; 
     SubsetRemapper<Index_> my_remapper;
@@ -71,7 +71,7 @@ private:
     std::vector<Float_> my_all_correlations;
 
 public:
-    FineTuneIntegrated(const TrainedIntegratedDetails<Index_>& details) : my_num_universe(details.num_universe), my_remapper(my_num_universe) {
+    AnnotateIntegrated(const TrainedIntegratedDetails<Index_>& details) : my_num_universe(details.num_universe), my_remapper(my_num_universe) {
         sanisizer::reserve(my_subset_query, my_num_universe);
         sanisizer::reserve(my_subset_ref, my_num_universe);
 
@@ -86,8 +86,6 @@ public:
             my_scaled_ref_dense.emplace();
             sanisizer::reserve(*my_scaled_ref_dense, my_num_universe);
         }
-
-        sanisizer::reserve(my_all_correlations, details.max_num_samples);
 
         if constexpr(query_sparse_) {
             my_scaled_query.nonzero.reserve(my_num_universe);
@@ -110,30 +108,47 @@ public:
                 sanisizer::resize(*my_densified_buffer, my_num_universe);
             }
         }
+
+        sanisizer::reserve(my_all_correlations, details.max_num_samples);
     }
 
     // For testing only.
-    FineTuneIntegrated(const TrainedIntegrated<Index_>& trained) : 
-        FineTuneIntegrated(interrogate_trained_integrated(trained))
+    AnnotateIntegrated(const TrainedIntegrated<Index_>& trained) :
+        AnnotateIntegrated(interrogate_trained_integrated(trained))
     {}
 
-public:
-    template<typename Label_, typename RefLabel_>
-    void run_once(
+private:
+    template<bool first_, typename Label_, class RefLabelsInUse_>
+    void run_internal(
         const Index_ query_index,
         const RankedVector<Value_, Index_>& query_ranked, 
         const TrainedIntegrated<Index_>& trained,
         const std::vector<const Label_*>& assigned,
-        const std::vector<RefLabel_>& reflabels_in_use,
-        std::vector<Float_>& scores,
-        Float_ quantile
+        const RefLabelsInUse_& reflabels_in_use,
+        const Float_ quantile,
+        std::vector<Float_>& scores
     ) {
         const auto& references = trained.references();
+        const auto num_refs = [&](){
+            if constexpr(first_) {
+                return references.size();
+            } else {
+                return reflabels_in_use.size();
+            }
+        }();
 
         my_remapper.clear();
-        for (const auto r : reflabels_in_use) {
-            const auto curassigned = assigned[r][query_index];
-            const auto& curref = references[r];
+        for (I<decltype(num_refs)> r = 0; r < num_refs; ++r) {
+            const auto ref_index = [&](){
+                if constexpr(first_) {
+                    return r;
+                } else {
+                    return reflabels_in_use[r];
+                }
+            }();
+
+            const auto curassigned = assigned[ref_index][query_index];
+            const auto& curref = references[ref_index];
 
             if (curref.sparse.has_value()) {
                 const auto& curmarkers = (*(curref.sparse))[curassigned].markers;
@@ -174,9 +189,17 @@ public:
         }
 
         scores.clear();
-        for (const auto r : reflabels_in_use) {
-            const auto& curref = references[r];
-            const auto curassigned = assigned[r][query_index];
+        for (I<decltype(num_refs)> r = 0; r < num_refs; ++r) {
+            const auto ref_index = [&](){
+                if constexpr(first_) {
+                    return r;
+                } else {
+                    return reflabels_in_use[r];
+                }
+            }();
+
+            const auto& curref = references[ref_index];
+            const auto curassigned = assigned[ref_index][query_index];
             my_all_correlations.clear();
 
             if (curref.sparse.has_value()) {
@@ -232,20 +255,32 @@ public:
     }
 
 public:
-    template<typename Label_, typename RefLabel_>
-    std::pair<RefLabel_, Float_> run_all(
+    template<typename Label_>
+    void run_first(
         const Index_ query_index,
         const RankedVector<Value_, Index_>& query_ranked, 
         const TrainedIntegrated<Index_>& trained,
         const std::vector<const Label_*>& assigned,
-        std::vector<RefLabel_>& reflabels_in_use,
+        const Float_ quantile,
+        std::vector<Float_>& scores
+    ) {
+        run_internal<true>(query_index, query_ranked, trained, assigned, false, quantile, scores);
+    }
+
+    template<typename Label_, typename RefLabel_>
+    std::pair<RefLabel_, Float_> run_fine(
+        const Index_ query_index,
+        const RankedVector<Value_, Index_>& query_ranked, 
+        const TrainedIntegrated<Index_>& trained,
+        const std::vector<const Label_*>& assigned,
+        const Float_ quantile,
+        const Float_ threshold,
         std::vector<Float_>& scores,
-        Float_ quantile,
-        Float_ threshold
+        std::vector<RefLabel_>& reflabels_in_use
     ) {
         auto candidate = fill_labels_in_use(scores, threshold, reflabels_in_use);
         while (reflabels_in_use.size() > 1 && reflabels_in_use.size() < scores.size()) {
-            run_once(query_index, query_ranked, trained, assigned, reflabels_in_use, scores, quantile);
+            run_internal<false>(query_index, query_ranked, trained, assigned, reflabels_in_use, quantile, scores);
             candidate = update_labels_in_use(scores, threshold, reflabels_in_use);
         }
         return candidate;
@@ -270,13 +305,17 @@ void annotate_cells_integrated_raw(
         throw std::runtime_error("number of rows in 'test' do not match up with those expected by 'trained'");
     }
 
-    const auto details = interrogate_trained_integrated(trained);
     const auto& subset = trained.subset();
     SubsetNoop<query_sparse_, Index_> subsorted(subset);
+
+    const auto details = interrogate_trained_integrated(trained);
     const auto num_universe = details.num_universe;
 
+    const auto nref = trained.references().size();
+    sanisizer::cast<RefLabel_>(nref); // checking that it'll fit in the output.
+
     tatami::parallelize([&](int, Index_ start, Index_ len) {
-        FineTuneIntegrated<query_sparse_, Index_, Value_, Float_> ft(details);
+        AnnotateIntegrated<query_sparse_, Index_, Value_, Float_> ft(details);
         RankedVector<Value_, Index_> test_ranked_full;
         test_ranked_full.reserve(num_universe);
 
@@ -289,11 +328,13 @@ void annotate_cells_integrated_raw(
             }
         }();
 
-        const auto nref = trained.references().size();
-        std::vector<RefLabel_> reflabels_in_use;
-        sanisizer::reserve(reflabels_in_use, nref);
         std::vector<Float_> all_scores;
         sanisizer::reserve(all_scores, nref);
+        std::optional<std::vector<RefLabel_> > reflabels_in_use;
+        if (fine_tune) {
+            reflabels_in_use.emplace();
+            sanisizer::reserve(*reflabels_in_use, nref);
+        }
 
         // We perform an indexed extraction, so all subsequent indices
         // will refer to indices into this subset (i.e., 'universe').
@@ -310,17 +351,14 @@ void annotate_cells_integrated_raw(
             }();
             subsorted.fill_ranks(info, test_ranked_full);
 
-            reflabels_in_use.resize(nref);
-            std::iota(reflabels_in_use.begin(), reflabels_in_use.end(), static_cast<RefLabel_>(0));
-            ft.run_once(i, test_ranked_full, trained, assigned, reflabels_in_use, all_scores, quantile);
-
+            ft.run_first(i, test_ranked_full, trained, assigned, quantile, all_scores);
             for (I<decltype(nref)> r = 0; r < nref; ++r) {
                 scores[r][i] = all_scores[r];
             }
 
             std::pair<RefLabel_, Float_> candidate;
             if (fine_tune) {
-                candidate = ft.run_all(i, test_ranked_full, trained, assigned, reflabels_in_use, all_scores, quantile, threshold);
+                candidate = ft.run_fine(i, test_ranked_full, trained, assigned, quantile, threshold, all_scores, *reflabels_in_use);
             } else {
                 candidate = find_best_and_delta<RefLabel_>(all_scores);
             }

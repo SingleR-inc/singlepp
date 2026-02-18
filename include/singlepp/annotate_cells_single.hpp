@@ -95,9 +95,9 @@ public:
     std::pair<Label_, Float_> run(
         const RankedVector<Value_, Index_>& input, 
         const TrainedSingle<Index_, Float_>& trained,
-        std::vector<Float_>& scores,
-        Float_ quantile,
-        Float_ threshold
+        const Float_ quantile,
+        const Float_ threshold,
+        std::vector<Float_>& scores
     ) {
         auto candidate = fill_labels_in_use(scores, threshold, my_labels_in_use);
         const auto& ref = get_per_label_references<ref_sparse_>(trained.built());
@@ -216,9 +216,8 @@ void annotate_cells_single_raw(
     int num_threads
 ) {
     const auto& subset = trained.subset();
+    const Index_ num_markers = subset.size(); // cast is safe as 'subset' is a unique subset of the rows of the reference matrix.
     const auto& built = trained.built();
-
-    const Index_ num_markers = subset.size(); // cast it safe as 'subset' is a unique subset of the rows of the reference matrix.
     const auto& ref = get_per_label_references<ref_sparse_>(built);
 
     // Figuring out how many neighbors to keep and how to compute the quantiles.
@@ -259,11 +258,11 @@ void annotate_cells_single_raw(
         RankedVector<Value_, Index_> vec;
         vec.reserve(num_markers);
 
-        std::vector<FindClosestNeighborsWorkspace<query_sparse_, ref_sparse_, Index_, Float_> > workspaces;
-        workspaces.reserve(num_labels);
+        Index_ max_num_samples = 0;
         for (I<decltype(num_labels)> r = 0; r < num_labels; ++r) {
-            workspaces.emplace_back(num_markers, get_num_samples(ref[r]));
+            max_num_samples = std::max(max_num_samples, get_num_samples(ref[r]));
         }
+        FindClosestNeighborsWorkspace<query_sparse_, ref_sparse_, Index_, Float_> find_work(num_markers, max_num_samples);
 
         auto query_scaled = [&](){
             if constexpr(query_sparse_) {
@@ -294,14 +293,15 @@ void annotate_cells_single_raw(
             curscores.resize(num_labels);
             for (I<decltype(num_labels)> r = 0; r < num_labels; ++r) {
                 const auto k = search_k[r];
-                find_closest_neighbors<query_sparse_, ref_sparse_>(num_markers, query_scaled, k, ref[r], workspaces[r]);
+                find_closest_neighbors<query_sparse_, ref_sparse_>(num_markers, query_scaled, k, ref[r], find_work);
 
-                const Float_ last_squared = pop_furthest_neighbor(workspaces[r]).first;
+                const Float_ last_squared = get_furthest_neighbor(find_work).first;
                 const Float_ last = l2_to_correlation(last_squared);
                 if (k == 1) {
                     curscores[r] = last;
                 } else {
-                    const Float_ next_squared = pop_furthest_neighbor(workspaces[r]).first;
+                    pop_furthest_neighbor(find_work);
+                    const Float_ next_squared = get_furthest_neighbor(find_work).first;
                     const Float_ next = l2_to_correlation(next_squared);
                     curscores[r] = coeffs[r].first * next + coeffs[r].second * last;
                 }
@@ -315,7 +315,7 @@ void annotate_cells_single_raw(
             if (!fine_tune) {
                 chosen = find_best_and_delta<Label_>(curscores);
             } else {
-                chosen = ft.run(vec, trained, curscores, quantile, threshold);
+                chosen = ft.run(vec, trained, quantile, threshold, curscores);
             }
 
             best[c] = chosen.first;

@@ -358,13 +358,13 @@ TEST(FineTuneSingle, EdgeCases) {
     // the labels are equal (i.e., no contraction of the feature space).
     {
         std::vector<double> scores { 0.2, 0.5, 0.1 };
-        auto output = ft.run(placeholder, trained, scores, 0.8, 0.05);
+        auto output = ft.run(placeholder, trained, 0.8, 0.05, scores);
         EXPECT_EQ(output.first, 1);
         EXPECT_EQ(output.second, 0.3);
 
         std::fill(scores.begin(), scores.end(), 0.5);
         scores[0] = 0.51;
-        output = ft.run(placeholder, trained, scores, 1, 0.05);
+        output = ft.run(placeholder, trained, 1, 0.05, scores);
         EXPECT_EQ(output.first, 0); // first entry of scores is maxed.
         EXPECT_FLOAT_EQ(output.second, 0.01);
     }
@@ -372,7 +372,7 @@ TEST(FineTuneSingle, EdgeCases) {
     // Check edge case when there is only a single label, based on the length of 'scores'.
     {
         std::vector<double> scores { 0.5 };
-        auto output = ft.run(placeholder, trained, scores, 0.8, 0.05);
+        auto output = ft.run(placeholder, trained, 0.8, 0.05, scores);
         EXPECT_EQ(output.first, 0);
         EXPECT_TRUE(std::isnan(output.second));
     }
@@ -403,12 +403,12 @@ TEST(FineTuneSingle, ExactRecovery) {
 
         std::vector<double> scores { 0.5, 0.49, 0.48 };
         scores[(labels[r] + 1) % nlabels] = 0; // forcing another label to be zero so that it actually does the fine-tuning.
-        auto output = ft.run(ranked, trained, scores, 1, 0.05);
+        auto output = ft.run(ranked, trained, 1, 0.05, scores);
         EXPECT_EQ(output.first, labels[r]);
 
         scores = std::vector<double>{ 0.5, 0.5, 0.5 };
         scores[labels[r]] = 0; // forcing it to match to some other label. 
-        auto output2 = ft.run(ranked, trained, scores, 1, 0.05);
+        auto output2 = ft.run(ranked, trained, 1, 0.05, scores);
         EXPECT_NE(output2.first, labels[r]);
     }
 }
@@ -436,7 +436,7 @@ TEST(FineTuneSingle, Diagonal) {
 
         std::vector<double> scores { 0.49, 0.5, 0.48 };
         scores[(labels[r] + 1) % nlabels] = 0; // forcing another label to be zero so that it actually does the fine-tuning.
-        auto output = ft.run(ranked, trained, scores, 1, 0.05);
+        auto output = ft.run(ranked, trained, 1, 0.05, scores);
 
         // The key point here is that the diagonals are actually used,
         // so we don't end up with an empty ranking vector and NaN scores.
@@ -479,14 +479,14 @@ TEST(FineTuneSingle, Sparse) {
         scores[empty] = 0; // forcing one of the labels to be zero so that it actually does the fine-tuning.
 
         auto score_copy = scores;
-        auto expected = new_ft.run(ranked, new_trained, score_copy, 0.8, 0.05);
+        auto expected = new_ft.run(ranked, new_trained, 0.8, 0.05, score_copy);
         EXPECT_NE(expected.first, empty);
 
         // Due to differences in numerical precision between dense/sparse calculations, comparisons may not be exact.
         // This results in different 'best' labels in the presence of near-ties, so if there's a mismatch,
         // we check that the delta is indeed near-zero, i.e., there is a near-tie. 
         score_copy = scores;
-        auto dense_to_sparse = sparse_ft.run(ranked, sparse_trained, score_copy, 0.8, 0.05);
+        auto dense_to_sparse = sparse_ft.run(ranked, sparse_trained, 0.8, 0.05, score_copy);
         check_almost_equal_assignment(expected.first, expected.second, dense_to_sparse.first, dense_to_sparse.second);
 
         singlepp::RankedVector<double, int> sparse_ranked;
@@ -497,11 +497,11 @@ TEST(FineTuneSingle, Sparse) {
         }
 
         score_copy = scores;
-        auto sparse_to_dense = new_ft2.run(sparse_ranked, new_trained, score_copy, 0.8, 0.05);
+        auto sparse_to_dense = new_ft2.run(sparse_ranked, new_trained, 0.8, 0.05, score_copy);
         check_almost_equal_assignment(expected.first, expected.second, sparse_to_dense.first, sparse_to_dense.second);
 
         score_copy = scores;
-        auto sparse_to_sparse = sparse_ft2.run(sparse_ranked, sparse_trained, score_copy, 0.8, 0.05);
+        auto sparse_to_sparse = sparse_ft2.run(sparse_ranked, sparse_trained, 0.8, 0.05, score_copy);
         check_almost_equal_assignment(expected.first, expected.second, sparse_to_sparse.first, sparse_to_sparse.second);
     }
 }
