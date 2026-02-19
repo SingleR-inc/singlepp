@@ -30,6 +30,9 @@ TEST(CorrelationsToScore, Basic) {
 
     std::vector<double> empty;
     EXPECT_TRUE(std::isnan(correlations_to_score(empty, 0.0)));
+
+    std::vector<double> solo{10};
+    EXPECT_EQ(correlations_to_score(solo, 0.5), 10);
 }
 
 TEST(CorrelationsToScore, Ties) {

@@ -222,22 +222,22 @@ void annotate_cells_single_raw(
 
     // Figuring out how many neighbors to keep and how to compute the quantiles.
     const auto num_labels = ref.size();
-    std::vector<Index_> search_k(num_labels);
-    std::vector<std::pair<Float_, Float_> > coeffs(num_labels);
+    struct SearchDetails {
+        Index_ k;
+        bool interpolate;
+        Float_ upper_prop;
+    };
+    auto search_deets = sanisizer::create<std::vector<SearchDetails> >(num_labels);
 
     for (I<decltype(num_labels)> r = 0; r < num_labels; ++r) {
         const Float_ denom = get_num_samples(ref[r]) - 1;
         const Float_  prod = denom * (1 - quantile);
-        auto k = std::ceil(prod) + 1;
-        search_k[r] = k;
+        const auto left = std::floor(prod), right = std::ceil(prod);
 
-        // `(1 - quantile) - (k - 2) / denom` represents the gap to the smaller quantile,
-        // while `(k - 1) / denom - (1 - quantile)` represents the gap from the larger quantile.
-        // The size of the gap is used as the weight for the _other_ quantile, i.e., 
-        // the closer you are to a quantile, the higher the weight.
-        // We convert these into proportions by dividing by their sum, i.e., `1/denom`.
-        coeffs[r].first = static_cast<Float_>(k - 1) - prod;
-        coeffs[r].second = prod - static_cast<Float_>(k - 2);
+        auto& output = search_deets[r];
+        output.k = right + 1; // cast should be safe as k < num_samples.
+        output.interpolate = (left != right);
+        output.upper_prop = right - prod; // mimics logic in correlation_to_score(), except that that 'left' is the smaller distance => larger correlation.
     }
 
     SubsetNoop<query_sparse_, Index_> subsorted(subset);
@@ -292,18 +292,18 @@ void annotate_cells_single_raw(
 
             curscores.resize(num_labels);
             for (I<decltype(num_labels)> r = 0; r < num_labels; ++r) {
-                const auto k = search_k[r];
-                find_closest_neighbors<query_sparse_, ref_sparse_>(num_markers, query_scaled, k, ref[r], find_work);
+                const auto& sdeets = search_deets[r];
+                find_closest_neighbors<query_sparse_, ref_sparse_>(num_markers, query_scaled, sdeets.k, ref[r], find_work);
 
-                const Float_ last_squared = get_furthest_neighbor(find_work).first;
-                const Float_ last = l2_to_correlation(last_squared);
-                if (k == 1) {
-                    curscores[r] = last;
+                const Float_ last_l2 = get_furthest_neighbor(find_work).first;
+                const Float_ lower_cor = l2_to_correlation(last_l2);
+                if (!sdeets.interpolate) {
+                    curscores[r] = lower_cor;
                 } else {
                     pop_furthest_neighbor(find_work);
-                    const Float_ next_squared = get_furthest_neighbor(find_work).first;
-                    const Float_ next = l2_to_correlation(next_squared);
-                    curscores[r] = coeffs[r].first * next + coeffs[r].second * last;
+                    const Float_ next_l2 = get_furthest_neighbor(find_work).first;
+                    const Float_ upper_cor = l2_to_correlation(next_l2);
+                    curscores[r] = lower_cor + (upper_cor - lower_cor) * sdeets.upper_prop; // see correlation_to_score() for more details.
                 }
 
                 if (scores[r]) {

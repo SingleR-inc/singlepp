@@ -6,6 +6,8 @@
 #include <limits>
 #include <cmath>
 
+#include "utils.hpp"
+
 namespace singlepp {
 
 template<typename Float_>
@@ -17,40 +19,36 @@ template<typename Float_>
 Float_ correlations_to_score(std::vector<Float_>& correlations, Float_ quantile) {
     static_assert(std::is_floating_point<Float_>::value);
 
-    auto ncells = correlations.size();
-    if (ncells == 0) {
+    const auto num = correlations.size();
+    if (num == 0) {
         return std::numeric_limits<Float_>::quiet_NaN();
     }
 
-    if (quantile == 1 || ncells == 1) {
+    if (quantile == 1 || num == 1) {
         return *std::max_element(correlations.begin(), correlations.end());
     }
-    
-    const Float_ denom = ncells - 1; 
-    const Float_ prod = denom * quantile;
-    const decltype(ncells) left = std::floor(prod);
-    const decltype(ncells) right = std::ceil(prod);
 
-    std::nth_element(correlations.begin(), correlations.begin() + right, correlations.end());
-    const Float_ rightval = correlations[right];
-    if (right == left) {
-        return rightval;
+    const Float_ denom = num - 1; 
+    const Float_ prod = denom * quantile;
+    const I<decltype(num)> lower_index = std::floor(prod);
+    const I<decltype(num)> upper_index = std::ceil(prod);
+
+    std::nth_element(correlations.begin(), correlations.begin() + upper_index, correlations.end());
+    const Float_ upper_val = correlations[upper_index];
+    if (upper_index == lower_index) {
+        return upper_val;
     }
 
-    // After nth_element(), all elements before 'right' are now less than or
-    // equal to the value at 'right'. So if we want to get 'left', we can just
-    // find the maximum value rather than sorting again.
-    const Float_ leftval = *std::max_element(correlations.begin(), correlations.begin() + right);
+    // After nth_element(), all elements before 'upper_index' are now less than or equal to the value at 'upper_index'.
+    // So if we want to get the value at 'lower_index', we can just find the maximum value rather than sorting again.
+    const Float_ lower_val = *std::max_element(correlations.begin(), correlations.begin() + upper_index);
 
-    // `quantile - left / denom` represents the gap to the smaller quantile,
-    // while `right / denom - quantile` represents the gap from the larger quantile.
-    // The size of the gap is used as the weight for the _other_ quantile, i.e., 
-    // the closer you are to a quantile, the higher the weight.
-    // We convert these into proportions by dividing by their sum, i.e., `1/denom`.
-    const Float_ leftweight = right - prod;
-    const Float_ rightweight = prod - left;
+    // Here we compute the type 7 quantile, as done by default in R's stats::quantile() function.
+    // This basically interpolates between the two observations flanking the quantile.
+    const Float_ upper_prop = prod - lower_index;
 
-    return rightval * rightweight + leftval * leftweight;
+    // a.k.a. upper_prop * upper_val + (1 - upper_prop) * lower_val 
+    return lower_val + (upper_val - lower_val) * upper_prop;
 }
 
 }
