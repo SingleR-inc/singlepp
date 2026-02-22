@@ -106,7 +106,6 @@ TEST_P(ClassifySingleSimpleTest, Sparse) {
     size_t nlabels = 4;
     auto markers = mock_markers<int>(nlabels, 50, ngenes, /* seed = */ base_seed + 69); 
 
-    // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
     int ntest = 11;
     auto test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ base_seed + 42, /* density = */ 0.24);
     auto stest = tatami::convert_to_compressed_sparse<double, int>(*test, true, {});
@@ -274,58 +273,27 @@ TEST_P(ClassifySingleIntersectTest, Sparse) {
     auto markers = mock_markers<int>(nlabels, 20, right.size(), /* seed = */ base_seed + 69);
 
     // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
-    {
-        int ntest = 11;
-        auto test = spawn_sparse_matrix(left.size(), ntest, /* seed = */ base_seed + 4242, /* density = */ 0.24);
-        auto stest = tatami::convert_to_compressed_sparse<double, int>(*test, true, {});
-     
-        size_t nrefs = 23;
-        auto labels = spawn_labels(nrefs, nlabels, /* seed = */ base_seed + 1111);
-        auto refs = spawn_sparse_matrix(right.size(), nrefs, /* seed = */ base_seed + 23232, /* density = */ 0.26);
-        auto srefs = tatami::convert_to_compressed_sparse<double, int>(*refs, true, {});
+    int ntest = 11;
+    auto test = spawn_sparse_matrix(left.size(), ntest, /* seed = */ base_seed + 4242, /* density = */ 0.24);
+    auto stest = tatami::convert_to_compressed_sparse<double, int>(*test, true, {});
+ 
+    size_t nrefs = 23;
+    auto labels = spawn_labels(nrefs, nlabels, /* seed = */ base_seed + 1111);
+    auto refs = spawn_sparse_matrix(right.size(), nrefs, /* seed = */ base_seed + 23232, /* density = */ 0.26);
+    auto srefs = tatami::convert_to_compressed_sparse<double, int>(*refs, true, {});
 
-        auto trained = singlepp::train_single<double, int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, NULL, {});
-        auto expected = singlepp::classify_single<int>(*test, trained, {});
+    auto trained = singlepp::train_single<double, int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, NULL, {});
+    auto expected = singlepp::classify_single<int>(*test, trained, {});
 
-        auto sparse_to_dense = singlepp::classify_single<int>(*stest, trained, {});
-        EXPECT_EQ(expected.best, sparse_to_dense.best);
-        EXPECT_EQ(expected.delta, sparse_to_dense.delta);
-        for (size_t l = 0; l < nlabels; ++l) {
-            EXPECT_EQ(expected.scores[l], sparse_to_dense.scores[l]);
-        }
+    auto sparse_to_dense = singlepp::classify_single<int>(*stest, trained, {});
+    check_almost_equal_sparse_results(ntest, nlabels, expected, sparse_to_dense);
 
-        auto sparse_trained = singlepp::train_single<double, int>(left.size(), left.data(), *srefs, right.data(), labels.data(), markers, NULL, {});
-        auto dense_to_sparse = singlepp::classify_single<int>(*test, sparse_trained, {});
-        EXPECT_EQ(expected.best, dense_to_sparse.best);
-        EXPECT_EQ(expected.delta, dense_to_sparse.delta);
-        for (size_t l = 0; l < nlabels; ++l) {
-            EXPECT_EQ(expected.scores[l], dense_to_sparse.scores[l]);
-        }
-    }
+    auto sparse_trained = singlepp::train_single<double, int>(left.size(), left.data(), *srefs, right.data(), labels.data(), markers, NULL, {});
+    auto dense_to_sparse = singlepp::classify_single<int>(*test, sparse_trained, {});
+    check_almost_equal_sparse_results(ntest, nlabels, expected, dense_to_sparse);
 
-    // Sparse-sparse and dense-dense only compute the exact same L2 when the density is 100%.
-    // Otherwise, slight differences can cause a different score or even a different choice for best label.
-    {
-        int ntest = 13;
-        auto test = spawn_matrix(left.size(), ntest, /* seed = */ base_seed + 423);
-        auto stest = tatami::convert_to_compressed_sparse<double, int>(*test, true, {});
-
-        size_t nrefs = 31;
-        auto labels = spawn_labels(nrefs, nlabels, /* seed = */ base_seed + 1999);
-        auto refs = spawn_matrix(right.size(), nrefs, /* seed = */ base_seed + 2312);
-        auto srefs = tatami::convert_to_compressed_sparse<double, int>(*refs, true, {});
-
-        auto trained = singlepp::train_single<double, int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, NULL, {});
-        auto expected = singlepp::classify_single<int>(*test, trained, {});
-
-        auto sparse_trained = singlepp::train_single<double, int>(left.size(), left.data(), *srefs, right.data(), labels.data(), markers, NULL, {});
-        auto sparse_to_sparse = singlepp::classify_single<int>(*test, sparse_trained, {});
-        EXPECT_EQ(expected.best, sparse_to_sparse.best);
-        EXPECT_EQ(expected.delta, sparse_to_sparse.delta);
-        for (size_t l = 0; l < nlabels; ++l) {
-            EXPECT_EQ(expected.scores[l], sparse_to_sparse.scores[l]);
-        }
-    }
+    auto sparse_to_sparse = singlepp::classify_single<int>(*test, sparse_trained, {});
+    check_almost_equal_sparse_results(ntest, nlabels, expected, sparse_to_sparse);
 }
 
 INSTANTIATE_TEST_SUITE_P(
