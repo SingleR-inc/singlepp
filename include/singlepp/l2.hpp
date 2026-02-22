@@ -23,9 +23,9 @@ Float_ dense_l2(const Index_ num_markers, const Float_* vec1, const Float_* vec2
 }
 
 template<typename Index_, typename Float_, typename Stat_>
-Float_ scaled_ranks_to_dense_l2(const Index_ num_markers, const Float_* query, const RankedVector<Stat_, Index_>& collected, Float_* buffer) {
+Float_ scaled_ranks_dense_l2(const Index_ num_markers, const Float_* query, const RankedVector<Stat_, Index_>& collected, Float_* buffer) {
     Float_ l2 = 0;
-    scaled_ranks(
+    scaled_ranks_dense(
         num_markers,
         collected,
         buffer,
@@ -56,8 +56,6 @@ Float_ sparse_l2(const Index_ num_markers, const Float_* query, const bool query
     assert(sanisizer::is_greater_than_or_equal(num_markers, num_ref));
 
     Float_ sum = 0;
-    Index_ both = 0;
-
     for (Index_ ir = 0; ir < num_ref; ++ir) {
         const auto val_ref = get_sparse_value(ref_vec, ir);
         const auto augmented = val_ref - zero_ref;
@@ -69,7 +67,7 @@ Float_ sparse_l2(const Index_ num_markers, const Float_* query, const bool query
 }
 
 template<typename Index_, typename Float_, typename Stat_>
-Float_ scaled_ranks_to_sparse_l2(
+Float_ scaled_ranks_sparse_l2(
     const Index_ num_markers,
     const Float_* query,
     const bool query_has_nonzero,
@@ -80,7 +78,7 @@ Float_ scaled_ranks_to_sparse_l2(
     Float_ zero_rank;
     Float_ sum = 0;
 
-    scaled_ranks(
+    scaled_ranks_sparse<Index_, Stat_, Float_>(
         num_markers,
         static_cast<Index_>(negative_ref.size()),
         negative_ref.begin(),
@@ -94,7 +92,7 @@ Float_ scaled_ranks_to_sparse_l2(
         },
         /* non-zero processing */ [&](std::pair<Index_, Float_>& pair, const Float_ val) -> void {
             const auto augmented = val - zero_rank;
-            const auto val_query = my_scaled_query[pair.first];
+            const auto val_query = query[pair.first];
             sum += augmented * (augmented - 2 * val_query);
         }
     );

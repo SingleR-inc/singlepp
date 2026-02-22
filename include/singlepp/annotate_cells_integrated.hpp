@@ -151,8 +151,8 @@ private:
         if constexpr(query_sparse_) {
             const auto sStart = my_subset_query.begin(), sEnd = my_subset_query.end();
             auto zero_ranges = find_zero_ranges<Value_, Index_>(sStart, sEnd);
-            query_has_nonzero = scaled_ranks<Value_, Index_, Float_>(
-                current_num_markers,
+            query_has_nonzero = scaled_ranks_sparse<Index_, Value_, Float_>(
+                num_markers,
                 sStart,
                 zero_ranges.first,
                 zero_ranges.second,
@@ -161,8 +161,8 @@ private:
                 my_scaled_query.data()
             );
         } else {
-            query_has_nonzero = scaled_ranks<Value_, Index_, Float_>(
-                current_num_markers,
+            query_has_nonzero = scaled_ranks_dense(
+                num_markers,
                 my_subset_query,
                 my_scaled_query.data()
             );
@@ -197,17 +197,13 @@ private:
                     auto pStart = curlab.positive_ranked.begin();
                     my_remapper.remap(pStart + curlab.positive_indptrs[s], pStart + curlab.positive_indptrs[s + 1], *my_subset_ref_positive);
 
-                    const auto l2 = scaled_rank_to_sparse_l2(
+                    const auto l2 = scaled_ranks_sparse_l2(
                         num_markers,
                         my_scaled_query.data(),
                         query_has_nonzero,
-                        my_subset_ref.size(),
-                        my_subset_ref.begin(),
-                        my_subset_ref.end(),
-                        my_subset_ref_positive->size(),
-                        my_subset_ref_positive->begin(),
-                        my_subset_ref_positive->end(),
-                        my_scaled_ref
+                        my_subset_ref,
+                        *my_subset_ref_positive,
+                        *my_scaled_ref_sparse
                     );
 
                     const Float_ cor = l2_to_correlation(l2);
@@ -222,11 +218,11 @@ private:
                     auto refend = refstart + my_num_universe;
                     my_remapper.remap(refstart, refend, my_subset_ref);
 
-                    const auto l2 = scaled_rank_to_dense_l2(
-                        current_num_markers,
+                    const auto l2 = scaled_ranks_dense_l2(
+                        num_markers,
                         my_scaled_query.data(),
                         my_subset_ref,
-                        my_scaled_ref.data()
+                        my_scaled_ref_dense->data()
                     );
 
                     const Float_ cor = l2_to_correlation(l2);

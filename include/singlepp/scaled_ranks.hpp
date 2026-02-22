@@ -17,8 +17,8 @@ template<typename Stat_, typename Index_>
 using RankedVector = std::vector<std::pair<Stat_, Index_> >;
 
 // Return value is whether there are any non-zero values in the scaled ranks.
-template<typename Stat_, typename Index_, typename Float_, class Process_>
-bool scaled_ranks(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Float_* buffer, Process_ process) { 
+template<typename Index_, typename Stat_, typename Float_, class Process_>
+bool scaled_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Float_* buffer, Process_ process) { 
     static_assert(std::is_floating_point<Float_>::value);
     assert(sanisizer::is_equal(num_markers, collected.size()));
     if (num_markers == 0) {
@@ -42,7 +42,7 @@ bool scaled_ranks(const Index_ num_markers, const RankedVector<Stat_, Index_>& c
         const Float_ jump = copy - cIt;
         const Float_ mean_rank = cur_rank + static_cast<Float_>(jump - 1) / static_cast<Float_>(2) - center_rank;
         while (cIt != copy) {
-            outgoing[cIt->second] = mean_rank;
+            buffer[cIt->second] = mean_rank;
             ++cIt;
         }
 
@@ -60,15 +60,14 @@ bool scaled_ranks(const Index_ num_markers, const RankedVector<Stat_, Index_>& c
 
     const Float_ denom = 0.5 / std::sqrt(sum_squares);
     for (Index_ i = 0; i < num_markers; ++i) {
-        process(i, outgoing[i] * denom);
-        return true;
+        process(i, buffer[i] * denom);
     }
+    return true;
 }
 
-template<typename Stat_, typename Index_, typename Float_>
-bool scaled_ranks(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Float_* outgoing) { 
-    assert(sanisizer::is_equal(num_markers, outgoing.size()));
-    return scaled_ranks(
+template<typename Index_, typename Stat_, typename Float_>
+bool scaled_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Float_* outgoing) { 
+    return scaled_ranks_dense(
         num_markers,
         collected, 
         outgoing, 
@@ -79,8 +78,8 @@ bool scaled_ranks(const Index_ num_markers, const RankedVector<Stat_, Index_>& c
 }
 
 // Return value is whether there are any non-zero values in the scaled ranks.
-template<typename Stat_, typename Index_, typename Float_, class ZeroProcess_, class NonzeroProcess_>
-bool scaled_ranks(
+template<typename Index_, typename Stat_, typename Float_, class ZeroProcess_, class NonzeroProcess_>
+bool scaled_ranks_sparse(
     const Index_ num_markers,
     const Index_ num_negative,
     const typename RankedVector<Stat_, Index_>::const_iterator negative_start,
@@ -155,6 +154,7 @@ bool scaled_ranks(
 
     // Special behaviour for no-variance cells; these are left as all-zero scaled ranks.
     if (sum_squares == 0) {
+        buffer.clear();
         zprocess(0);
         return false;
     }
@@ -168,73 +168,17 @@ bool scaled_ranks(
     return true;
 }
 
-template<typename Index_, typename Float_>
-struct SparseScaled {
-    std::vector<std::pair<Index_, Float_> > nonzero;
-    Float_ zero = 0;
-};
-
-template<typename Stat_, typename Index_, typename Float_, class ZeroProcess_, class NonzeroProcess_>
-bool scaled_ranks(
-    const Index_ num_markers,
-    const Index_ num_negative,
-    const typename RankedVector<Stat_, Index_>::const_iterator negative_start,
-    const typename RankedVector<Stat_, Index_>::const_iterator negative_end,
-    const Index_ num_positive,
-    const typename RankedVector<Stat_, Index_>::const_iterator positive_start,
-    const typename RankedVector<Stat_, Index_>::const_iterator positive_end,
-    SparseScaled<Index_, Float_>& outgoing
-) {
-    return scaled_ranks(
-        num_markers,
-        num_negative,
-        negative_start,
-        negative_end,
-        num_positive,
-        positive_start,
-        positive_end,
-        outgoing.nonzero,
-        [&](const Float_ zval) -> void {
-            outgoing.zero = zval;
-        },
-        [&](std::pair<Index_, Float_>& pair, const Float_ val) -> void {
-            pair.second = val;
-        }
-    );
-}
-
-template<typename Stat_, typename Index_, typename Float_>
-bool scaled_ranks(
+template<typename Index_, typename Stat_, typename Float_>
+bool scaled_ranks_sparse(
     const Index_ num_markers,
     const typename RankedVector<Stat_, Index_>::const_iterator negative_start,
     const typename RankedVector<Stat_, Index_>::const_iterator negative_end,
     const typename RankedVector<Stat_, Index_>::const_iterator positive_start,
     const typename RankedVector<Stat_, Index_>::const_iterator positive_end,
-    SparseScaled<Index_, Float_>& outgoing
-) { 
-    return scaled_ranks<Stat_, Index_, Float_>(
-        num_markers,
-        negative_end - negative_start,
-        negative_start,
-        negative_end,
-        positive_end - positive_start,
-        positive_start,
-        positive_end,
-        outgoing
-    );
-}
-
-template<typename Stat_, typename Index_, typename Float_>
-bool scaled_ranks(
-    const Index_ num_markers,
-    const typename RankedVector<Stat_, Index_>::const_iterator negative_start,
-    const typename RankedVector<Stat_, Index_>::const_iterator negative_end,
-    const typename RankedVector<Stat_, Index_>::const_iterator positive_start,
-    const typename RankedVector<Stat_, Index_>::const_iterator positive_end,
-    SparseScaled<Index_, Float_>& buffer,
+    std::vector<std::pair<Index_, Float_> >& buffer,
     Float_* output
 ) { 
-    return scaled_ranks(
+    return scaled_ranks_sparse<Index_, Stat_, Float_>(
         num_markers,
         negative_end - negative_start,
         negative_start,
@@ -252,14 +196,20 @@ bool scaled_ranks(
     );
 }
 
-template<typename Stat_, typename Index_, typename Float_>
-bool scaled_ranks(
+template<typename Index_, typename Float_>
+struct SparseScaled {
+    std::vector<std::pair<Index_, Float_> > nonzero;
+    Float_ zero = 0;
+};
+
+template<typename Index_, typename Stat_, typename Float_>
+bool scaled_ranks_sparse(
     const Index_ num_markers,
     const RankedVector<Stat_, Index_>& negative,
     const RankedVector<Stat_, Index_>& positive,
-    SparseScaled<Index_, Float_>& outgoing
+    SparseScaled<Index_, Float_>& output
 ) { 
-    return scaled_ranks<Stat_, Index_, Float_>(
+    return scaled_ranks_sparse<Index_, Stat_, Float_>(
         num_markers,
         negative.size(),
         negative.begin(),
@@ -267,7 +217,13 @@ bool scaled_ranks(
         positive.size(),
         positive.begin(),
         positive.end(),
-        outgoing
+        output.nonzero,
+        [&](const Float_ zval) -> void {
+            output.zero = zval;
+        },
+        [&](std::pair<Index_, Float_>& pair, const Float_ val) -> void {
+            pair.second = val;
+        }
     );
 }
 

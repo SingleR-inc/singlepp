@@ -21,7 +21,7 @@ template<typename Stat_>
 std::vector<Stat_> quick_scaled_ranks(const std::vector<Stat_>& values) {
     auto vec = fill_ranks(values.size(), values.data());
     std::vector<Stat_> scaled(values.size());
-    singlepp::scaled_ranks(values.size(), vec, scaled.data());
+    singlepp::scaled_ranks_dense(values.size(), vec, scaled.data());
     return scaled;
 }
 

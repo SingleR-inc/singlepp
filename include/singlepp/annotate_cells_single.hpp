@@ -116,7 +116,7 @@ public:
                 const auto substart = my_subset_query.begin();
                 const auto subend = my_subset_query.end();
                 auto zero_ranges = find_zero_ranges<Value_, Index_>(substart, subend);
-                query_has_nonzero = scaled_ranks<Value_, Index_, Float_>(
+                query_has_nonzero = scaled_ranks_sparse<Index_, Value_, Float_>(
                     current_num_markers,
                     substart,
                     zero_ranges.first,
@@ -126,7 +126,7 @@ public:
                     my_scaled_query.data()
                 );
             } else {
-                query_has_nonzero = scaled_ranks(
+                query_has_nonzero = scaled_ranks_dense(
                     current_num_markers,
                     my_subset_query,
                     my_scaled_query.data()
@@ -159,16 +159,12 @@ public:
                         const auto pStart = curref.positive_ranked.begin();
                         my_gene_subset.remap(pStart + curref.positive_indptrs[c], pStart + curref.positive_indptrs[c + 1], my_subset_ref_alt);
 
-                        l2 = scaled_rank_to_sparse_l2(
+                        l2 = scaled_ranks_sparse_l2(
                             current_num_markers,
                             my_scaled_query.data(),
                             query_has_nonzero,
-                            my_subset_ref.size(),
-                            my_subset_ref.begin(),
-                            my_subset_ref.end(),
-                            my_subset_ref_alt.size(),
-                            my_subset_ref_alt.begin(),
-                            my_subset_ref_alt.end(),
+                            my_subset_ref,
+                            my_subset_ref_alt,
                             my_scaled_ref
                         );
 
@@ -178,7 +174,7 @@ public:
                         const auto refend = refstart + full_num_markers;
                         my_gene_subset.remap(refstart, refend, my_subset_ref);
 
-                        l2 = scaled_rank_to_dense_l2(
+                        l2 = scaled_ranks_dense_l2(
                             current_num_markers,
                             my_scaled_query.data(),
                             my_subset_ref,
@@ -260,19 +256,25 @@ void annotate_cells_single_raw(
         for (I<decltype(num_labels)> r = 0; r < num_labels; ++r) {
             max_num_samples = std::max(max_num_samples, get_num_samples(ref[r]));
         }
-        FindClosestNeighborsWorkspace<query_sparse_, ref_sparse_, Index_, Float_> find_work(num_markers, max_num_samples);
-
+        FindClosestNeighborsWorkspace<Index_, Float_> find_work(max_num_samples);
+        
         auto query_scaled = sanisizer::create<std::vector<Float_> >(num_markers);
+        typename std::conditional<query_sparse_, std::vector<std::pair<Index_, Float_> >, bool>::type query_sparse_buffer;
+        if constexpr(query_sparse_) {
+            sanisizer::reserve(query_sparse_buffer, num_markers);
+        }
+
         FineTuneSingle<query_sparse_, ref_sparse_, Label_, Index_, Float_, Value_> ft(num_markers, ref);
         std::vector<Float_> curscores(num_labels);
 
         for (Index_ c = start, end = start + length; c < end; ++c) {
+            bool query_has_nonzero = false;
             if constexpr(query_sparse_) {
                 const auto info = ext->fetch(vbuffer.data(), ibuffer.data());
                 subsorted.fill_ranks(info, vec);
                 const auto vStart = vec.begin(), vEnd = vec.end();
                 const auto zero_ranges = find_zero_ranges<Value_, Index_>(vStart, vEnd);
-                scaled_ranks<Value_, Index_, Float_>(
+                query_has_nonzero = scaled_ranks_sparse<Index_, Value_, Float_>(
                     num_markers,
                     zero_ranges.first - vStart,
                     vStart,
@@ -280,24 +282,25 @@ void annotate_cells_single_raw(
                     vEnd - zero_ranges.second,
                     zero_ranges.second,
                     vEnd,
+                    query_sparse_buffer,
                     /* zero processing */ [&](const Float_ x) -> void {
                         std::fill(query_scaled.begin(), query_scaled.end(), x);
                     },
                     /* non-zero processing */ [&](std::pair<Index_, Float_>& pair, const Float_ x) -> void {
                         query_scaled[pair.first] = x;
-                    },
+                    }
                 );
 
             } else {
                 auto info = ext->fetch(vbuffer.data());
                 subsorted.fill_ranks(info, vec);
-                scaled_ranks(num_markers, vec, query_scaled.data());
+                query_has_nonzero = scaled_ranks_dense(num_markers, vec, query_scaled.data());
             }
 
             curscores.resize(num_labels);
             for (I<decltype(num_labels)> r = 0; r < num_labels; ++r) {
                 const auto& sdeets = search_deets[r];
-                find_closest_neighbors<query_sparse_, ref_sparse_>(num_markers, query_scaled, sdeets.k, ref[r], find_work);
+                find_closest_neighbors<ref_sparse_>(num_markers, query_scaled, query_has_nonzero, sdeets.k, ref[r], find_work);
 
                 const Float_ last_l2 = get_furthest_neighbor(find_work).first;
                 const Float_ lower_cor = l2_to_correlation(last_l2);
