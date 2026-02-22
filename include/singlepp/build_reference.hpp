@@ -122,7 +122,8 @@ std::vector<Index_> select_seeds(
         sanisizer::reserve(identities, num_samples);
         auto cumulative = sanisizer::create<std::vector<Float_> >(num_samples);
         std::mt19937_64 eng(/* seed = */ 6237u + num_markers * static_cast<std::size_t>(num_samples)); // making a semi-deterministic seed that depends on the input data. 
-        auto seed_remapping = [&](){
+
+        auto densified_seed = [&](){
             if constexpr(ref_sparse_) {
                 return sanisizer::create<std::vector<Float_> >(num_markers);
             } else {
@@ -158,8 +159,9 @@ std::vector<Index_> select_seeds(
 
             // Now updating the distances and assignments of all observations based on the new seed.
             const auto seed_info = retrieve_vector(num_markers, ref, chosen_id);
+            bool seed_has_nonzero = false;
             if constexpr(ref_sparse_) {
-                setup_sparse_l2_remapping(num_markers, seed_info, seed_remapping);
+                seed_has_nonzero = densify_sparse_vector(num_markers, seed, densified_seed);
             }
 
             for (Index_ sam = 0; sam < num_samples; ++sam) {
@@ -171,7 +173,7 @@ std::vector<Index_> select_seeds(
                 const auto sam_info = retrieve_vector(num_markers, ref, sam);
                 const auto l2 = [&](){
                     if constexpr(ref_sparse_) {
-                        return sparse_l2(num_markers, seed_info, seed_remapping, sam_info);
+                        return sparse_l2(num_markers, densified_seed.data(), seed_has_nonzero, sam_info);
                     } else {
                         return dense_l2(num_markers, seed_info, sam_info);
                     }
@@ -281,25 +283,21 @@ std::vector<Index_> select_seeds(
 
 /*** KMKNN search ***/ 
 
-template<bool query_sparse_, bool ref_sparse_, typename Index_, typename Float_>
+template<bool ref_sparse_, typename Index_, typename Float_>
 struct FindClosestNeighborsWorkspace {
     FindClosestNeighborsWorkspace(Index_ num_markers, Index_ num_samples) {
         sanisizer::reserve(seed_distances, num_samples);
         sanisizer::reserve(closest_neighbors, num_samples);
-        if constexpr(ref_sparse_ || query_sparse_) {
-            sanisizer::resize(dense_buffer, num_markers);
-        }
     }
-
     std::vector<std::pair<Float_, Index_> > seed_distances;
     std::vector<std::pair<Float_, Index_> > closest_neighbors;
-    typename std::conditional<query_sparse_ || ref_sparse_, std::vector<Float_>, bool>::type dense_buffer;
 };
 
-template<bool query_sparse_, bool ref_sparse_, typename Index_, typename Float_>
+template<bool ref_sparse_, typename Index_, typename Float_>
 void find_closest_neighbors(
     const Index_ num_markers,
-    const typename std::conditional<query_sparse_, SparseScaled<Index_, Float_>, std::vector<Float_> >::type& query,
+    const std::vector<Float_>& query,
+    const bool query_has_nonzero,
     const Index_ k,
     const typename std::conditional<ref_sparse_, SparsePerLabel<Index_, Float_>, DensePerLabel<Index_, Float_> >::type& ref,
     FindClosestNeighborsWorkspace<query_sparse_, ref_sparse_, Index_, Float_>& work
@@ -307,31 +305,12 @@ void find_closest_neighbors(
     const auto num_seeds = ref.seed_ranges.size();
     const auto num_neighbors = sanisizer::cast<I<decltype(work.closest_neighbors.size())> >(k);
 
-    if constexpr(!ref_sparse_) {
-        if constexpr(query_sparse_) {
-            densify_sparse_vector(num_markers, query, work.dense_buffer);
-        }
-    } else {
-        if constexpr(query_sparse_) {
-            setup_sparse_l2_remapping(num_markers, query, work.dense_buffer);
-        }
-    }
-
     auto compute_distance = [&](Index_ se) -> Float_ {
         const auto refinfo = retrieve_vector(num_markers, ref, se);
         if constexpr(ref_sparse_) {
-            if constexpr(query_sparse_) {
-                return sparse_l2(num_markers, query, work.dense_buffer, refinfo);
-            } else {
-                densify_sparse_vector(num_markers, refinfo, work.dense_buffer);
-                return dense_l2(num_markers, query.data(), work.dense_buffer.data());
-            }
+            return sparse_l2(num_markers, query.data(), query_has_nonzero, refinfo);
         } else {
-            if constexpr(query_sparse_) {
-                return dense_l2(num_markers, work.dense_buffer.data(), refinfo);
-            } else {
-                return dense_l2(num_markers, query.data(), refinfo);
-            }
+            return dense_l2(num_markers, query.data(), refinfo);
         }
     };
 

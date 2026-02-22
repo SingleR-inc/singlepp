@@ -6,13 +6,13 @@
 #include "tatami/tatami.hpp"
 
 #include "scaled_ranks.hpp"
+#include "l2.hpp"
 #include "SubsetRemapper.hpp"
 #include "SubsetSanitizer.hpp"
 #include "train_integrated.hpp"
 #include "find_best_and_delta.hpp"
 #include "fill_labels_in_use.hpp"
 #include "correlations_to_score.hpp"
-#include "build_reference.hpp"
 
 #include <vector>
 #include <algorithm>
@@ -56,17 +56,16 @@ template<bool query_sparse_, typename Index_, typename Value_, typename Float_>
 class AnnotateIntegrated {
 private:
     Index_ my_num_universe; 
-    SubsetRemapper<Index_> my_remapper;
 
+    SubsetRemapper<Index_> my_remapper;
     RankedVector<Value_, Index_> my_subset_query;
     RankedVector<Index_, Index_> my_subset_ref;
     std::optional<RankedVector<Index_, Index_> > my_subset_ref_positive;
 
-    typename std::conditional<query_sparse_, SparseScaled<Index_, Float_>, std::vector<Float_> >::type my_scaled_query;
-    std::optional<SparseScaled<Index_, Float_> > my_scaled_ref_sparse;
+    std::vector<Float_> my_scaled_query;
+    std::optional<std::vector<std::pair<Index_, Float_> > > my_scaled_ref_sparse;
     std::optional<std::vector<Float_> > my_scaled_ref_dense;
-
-    std::optional<std::vector<Float_> > my_sparse_remapping, my_densified_buffer;
+    typename std::conditional<query_sparse_, std::vector<std::pair<Index_, Float_> >, bool>::type my_scaled_query_sparse_buffer;
 
     std::vector<Float_> my_all_correlations;
 
@@ -74,39 +73,22 @@ public:
     AnnotateIntegrated(const TrainedIntegratedDetails<Index_>& details) : my_num_universe(details.num_universe), my_remapper(my_num_universe) {
         sanisizer::reserve(my_subset_query, my_num_universe);
         sanisizer::reserve(my_subset_ref, my_num_universe);
-
         if (details.any_sparse) {
             my_subset_ref_positive.emplace();
             my_subset_ref_positive->reserve(my_num_universe);
-            my_scaled_ref_sparse.emplace();
-            sanisizer::reserve(my_scaled_ref_sparse->nonzero, my_num_universe);
         }
 
+        sanisizer::resize(my_scaled_query, my_num_universe);
+        if (details.any_sparse) {
+            my_scaled_ref_sparse.emplace();
+            sanisizer::reserve(*my_scaled_ref_sparse, my_num_universe);
+        }
         if (details.any_dense) {
             my_scaled_ref_dense.emplace();
             sanisizer::reserve(*my_scaled_ref_dense, my_num_universe);
         }
-
         if constexpr(query_sparse_) {
-            my_scaled_query.nonzero.reserve(my_num_universe);
-        } else {
-            sanisizer::resize(my_scaled_query, my_num_universe);
-        }
-
-        if constexpr(query_sparse_) {
-            if (details.any_dense) {
-                my_densified_buffer.emplace();
-                sanisizer::resize(*my_densified_buffer, my_num_universe);
-            }
-            if (details.any_sparse) {
-                my_sparse_remapping.emplace();
-                sanisizer::resize(*my_sparse_remapping, my_num_universe);
-            }
-        } else {
-            if (details.any_sparse) {
-                my_densified_buffer.emplace();
-                sanisizer::resize(*my_densified_buffer, my_num_universe);
-            }
+            my_scaled_query_sparse_buffer.reserve(my_num_universe);
         }
 
         sanisizer::reserve(my_all_correlations, details.max_num_samples);
@@ -165,23 +147,25 @@ private:
 
         const auto num_markers = my_remapper.size();
         my_remapper.remap(query_ranked, my_subset_query);
+        bool query_has_nonzero = false;
         if constexpr(query_sparse_) {
             const auto sStart = my_subset_query.begin(), sEnd = my_subset_query.end();
             auto zero_ranges = find_zero_ranges<Value_, Index_>(sStart, sEnd);
-            scaled_ranks<Value_, Index_>(num_markers, sStart, zero_ranges.first, zero_ranges.second, sEnd, my_scaled_query);
-
-            // Sorting for a better chance of accessing contiguous memory during iterations.
-            // Indices are unique so we should not need to consider the second element of each pair.
-            sort_by_first(my_scaled_query.nonzero);
-
-            if (my_scaled_ref_dense.has_value()) {
-                densify_sparse_vector(num_markers, my_scaled_query, *my_densified_buffer);
-            } else {
-                setup_sparse_l2_remapping(num_markers, my_scaled_query, *my_sparse_remapping);
-            }
+            query_has_nonzero = scaled_ranks<Value_, Index_, Float_>(
+                current_num_markers,
+                sStart,
+                zero_ranges.first,
+                zero_ranges.second,
+                sEnd,
+                my_scaled_query_sparse_buffer,
+                my_scaled_query.data()
+            );
         } else {
-            my_scaled_query.resize(num_markers);
-            scaled_ranks(num_markers, my_subset_query, my_scaled_query);
+            query_has_nonzero = scaled_ranks<Value_, Index_, Float_>(
+                current_num_markers,
+                my_subset_query,
+                my_scaled_query.data()
+            );
         }
 
         if (my_scaled_ref_dense.has_value()) {
@@ -213,15 +197,18 @@ private:
                     auto pStart = curlab.positive_ranked.begin();
                     my_remapper.remap(pStart + curlab.positive_indptrs[s], pStart + curlab.positive_indptrs[s + 1], *my_subset_ref_positive);
 
-                    scaled_ranks(num_markers, my_subset_ref, *my_subset_ref_positive, *my_scaled_ref_sparse);
-                    const Float_ l2 = [&](){
-                        if constexpr(query_sparse_) {
-                            return sparse_l2(num_markers, my_scaled_query, *my_sparse_remapping, *my_scaled_ref_sparse);
-                        } else {
-                            densify_sparse_vector(num_markers, *my_scaled_ref_sparse, *my_densified_buffer);
-                            return dense_l2(num_markers, my_scaled_query.data(), my_densified_buffer->data());
-                        }
-                    }();
+                    const auto l2 = scaled_rank_to_sparse_l2(
+                        num_markers,
+                        my_scaled_query.data(),
+                        query_has_nonzero,
+                        my_subset_ref.size(),
+                        my_subset_ref.begin(),
+                        my_subset_ref.end(),
+                        my_subset_ref_positive->size(),
+                        my_subset_ref_positive->begin(),
+                        my_subset_ref_positive->end(),
+                        my_scaled_ref
+                    );
 
                     const Float_ cor = l2_to_correlation(l2);
                     my_all_correlations.push_back(cor);
@@ -235,14 +222,12 @@ private:
                     auto refend = refstart + my_num_universe;
                     my_remapper.remap(refstart, refend, my_subset_ref);
 
-                    scaled_ranks(num_markers, my_subset_ref, *my_scaled_ref_dense);
-                    const Float_ l2 = [&](){
-                        if constexpr(query_sparse_) {
-                            return dense_l2(num_markers, my_densified_buffer->data(), my_scaled_ref_dense->data());
-                        } else {
-                            return dense_l2(num_markers, my_scaled_query.data(), my_scaled_ref_dense->data());
-                        }
-                    }();
+                    const auto l2 = scaled_rank_to_dense_l2(
+                        current_num_markers,
+                        my_scaled_query.data(),
+                        my_subset_ref,
+                        my_scaled_ref.data()
+                    );
 
                     const Float_ cor = l2_to_correlation(l2);
                     my_all_correlations.push_back(cor);

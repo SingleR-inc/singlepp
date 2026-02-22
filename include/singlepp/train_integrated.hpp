@@ -3,7 +3,6 @@
 
 #include "defs.hpp"
 
-#include "scaled_ranks.hpp"
 #include "train_single.hpp"
 #include "Intersection.hpp"
 
