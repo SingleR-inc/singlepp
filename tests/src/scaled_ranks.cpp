@@ -141,6 +141,22 @@ TEST(ScaledRanks, SparseBasic) {
         EXPECT_LT(scaled_copy.nonzero[i - 1].first, scaled_copy.nonzero[i].first);
     }
 
+    // Directly dumping it into a dense vector.
+    std::vector<double> densified(num_markers); 
+    std::vector<std::pair<int, double> > buffer;
+    singlepp::scaled_ranks_sparse<int, double>(
+        num_markers,
+        sparse_negative_ranks.begin(),
+        sparse_negative_ranks.end(),
+        sparse_positive_ranks.begin(),
+        sparse_positive_ranks.end(),
+        buffer,
+        densified.data()
+    );
+    for (int i = 0; i < num_markers; ++i) {
+        EXPECT_FLOAT_EQ(densified[i], out[i]);
+    }
+
     // Bails if empty.
     singlepp::RankedVector<double, int> empty_ranks;
     EXPECT_FALSE(singlepp::scaled_ranks_sparse(0, empty_ranks, empty_ranks, sparse_scaled));
