@@ -21,6 +21,7 @@
 #include <cmath>
 #include <cassert>
 #include <type_traits>
+#include <optional>
 
 namespace singlepp {
 
@@ -264,7 +265,10 @@ void annotate_cells_single_raw(
             sanisizer::reserve(query_sparse_buffer, num_markers);
         }
 
-        FineTuneSingle<query_sparse_, ref_sparse_, Label_, Index_, Float_, Value_> ft(num_markers, ref);
+        std::optional<FineTuneSingle<query_sparse_, ref_sparse_, Label_, Index_, Float_, Value_> > ft;
+        if (fine_tune) {
+            ft.emplace(num_markers, ref);
+        }
         std::vector<Float_> curscores(num_labels);
 
         for (Index_ c = start, end = start + length; c < end; ++c) {
@@ -322,7 +326,7 @@ void annotate_cells_single_raw(
             if (!fine_tune) {
                 chosen = find_best_and_delta<Label_>(curscores);
             } else {
-                chosen = ft.run(vec, trained, quantile, threshold, curscores);
+                chosen = ft->run(vec, trained, quantile, threshold, curscores);
             }
 
             best[c] = chosen.first;
