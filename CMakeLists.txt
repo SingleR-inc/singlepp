@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 project(singlepp
-    VERSION 3.0.1
+    VERSION 3.1.0
     DESCRIPTION "C++ port of the SingleR algorithm"
     LANGUAGES CXX)
 
