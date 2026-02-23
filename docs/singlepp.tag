@@ -336,10 +336,10 @@
     <name>singlepp::TrainSingleOptions</name>
     <filename>structsinglepp_1_1TrainSingleOptions.html</filename>
     <member kind="variable">
-      <type>int</type>
+      <type>std::optional&lt; std::size_t &gt;</type>
       <name>top</name>
       <anchorfile>structsinglepp_1_1TrainSingleOptions.html</anchorfile>
-      <anchor>a8cf88a1fd176fb330c3d3a57cccda477</anchor>
+      <anchor>a410bc005494a5a2c3484cfb900a02cad</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
