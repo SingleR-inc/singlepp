@@ -84,7 +84,7 @@ TEST(SubsetToMarkers, NoTop) {
     auto markers = mock_markers<int>(nlabels, 20, ngenes, /* seed = */ 67);
     auto copy = markers;
 
-    auto subs = singlepp::internal::subset_to_markers(copy, -1);
+    auto subs = singlepp::internal::subset_to_markers(copy, {});
     EXPECT_TRUE(subs.size() > 0);
 
     for (size_t i = 0; i < nlabels; ++i) {
@@ -211,7 +211,7 @@ TEST(SubsetToMarkers, IntersectNoTop) {
     auto inter = mock_intersection<int>(ngenes, ngenes, 40, /* seed = */ 15); 
 
     auto mcopy = markers;
-    auto unzipped = singlepp::internal::subset_to_markers(inter, mcopy, -1);
+    auto unzipped = singlepp::internal::subset_to_markers(inter, mcopy, {});
 
     // Same result as if we took a very large top set.
     auto mcopy2 = markers;

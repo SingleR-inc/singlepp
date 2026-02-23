@@ -30,10 +30,10 @@ struct TrainSingleOptions {
      * When the test and reference datasets do not have the same features, the specified number of top markers is taken from the intersection of features.
      * This avoids that some markers will be selected even if not all genes in `markers` are present in the test dataset.
      *
-     * Setting this to a negative value will instruct `train_single()` to use all supplied markers.
+     * When unset (the default), `train_single()` will use all supplied markers.
      * This is useful in situations where the supplied markers have already been curated.
      */
-    int top = -1;
+    std::optional<std::size_t> top;
 
     /**
      * Number of threads to use.

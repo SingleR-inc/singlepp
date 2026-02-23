@@ -6,20 +6,21 @@
 
 #include <vector>
 #include <algorithm>
-#include <cstdint>
 #include <numeric>
 #include <unordered_set>
 #include <unordered_map>
 #include <type_traits>
+#include <optional>
+#include <cstddef>
 
 namespace singlepp {
 
 namespace internal {
 
 template<typename Size_>
-Size_ cap_at_top(Size_ size, int top) {
-    if (top >= 0 && size > static_cast<typename std::make_unsigned<decltype(top)>::type>(top)) {
-        return top;
+Size_ cap_at_top(Size_ size, const std::optional<std::size_t>& top) {
+    if (top.has_value()) {
+        return sanisizer::min(size, *top);
     } else {
         return size;
     }
@@ -27,7 +28,7 @@ Size_ cap_at_top(Size_ size, int top) {
 
 // Use this method when the feature spaces are already identical.
 template<typename Index_>
-std::vector<Index_> subset_to_markers(Markers<Index_>& markers, int top) {
+std::vector<Index_> subset_to_markers(Markers<Index_>& markers, const std::optional<std::size_t>& top) {
     std::unordered_set<Index_> available;
 
     auto ngroups = markers.size();
@@ -65,7 +66,11 @@ std::vector<Index_> subset_to_markers(Markers<Index_>& markers, int top) {
 }
 
 template<typename Index_>
-std::pair<std::vector<Index_>, std::vector<Index_> > subset_to_markers(const Intersection<Index_>& intersection, Markers<Index_>& markers, int top) {
+std::pair<std::vector<Index_>, std::vector<Index_> > subset_to_markers(
+    const Intersection<Index_>& intersection,
+    Markers<Index_>& markers,
+    const std::optional<std::size_t>& top
+) {
     std::unordered_set<Index_> available;
     available.reserve(intersection.size());
     for (const auto& in : intersection) {
