@@ -17,7 +17,7 @@ auto split_by_label(size_t nlabels, const Labels& labels) {
 
 template<class RefMatrix>
 double naive_score(const std::vector<double>& scaled_test, const std::vector<int>& in_label, const RefMatrix& refs, const std::vector<int>& subset, double quantile) {
-    std::vector<double> correlations;
+    std::vector<double> l2;
     auto wrk = refs->dense_column(subset);
     std::vector<double> buffer(subset.size());
 
@@ -26,10 +26,10 @@ double naive_score(const std::vector<double>& scaled_test, const std::vector<int
         tatami::copy_n(col, buffer.size(), buffer.data());
         const auto scaled_ref = quick_scaled_ranks(buffer);
         const auto r2 = singlepp::dense_l2(scaled_test.size(), scaled_test.data(), scaled_ref.data());
-        correlations.push_back(1 - 2 * r2);
+        l2.push_back(r2);
     }
 
-    return singlepp::correlations_to_score(correlations, quantile);
+    return singlepp::l2_to_score(l2, singlepp::precompute_quantile_details(l2.size(), quantile));
 }
 
 template<class Labels, class Matrix, class RefMatrix>

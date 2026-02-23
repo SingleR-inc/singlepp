@@ -52,7 +52,7 @@ private:
     typename std::conditional<ref_sparse_, std::vector<std::pair<Index_, Float_> >, std::vector<Float_> >::type my_scaled_ref;
     typename std::conditional<query_sparse_, std::vector<std::pair<Index_, Float_> >, bool>::type my_scaled_query_sparse_buffer;
 
-    std::vector<Float_> my_all_correlations;
+    std::vector<Float_> my_all_l2;
 
 public:
     typedef typename std::conditional<ref_sparse_, SparsePerLabel<Index_, Float_>, DensePerLabel<Index_, Float_> >::type PerLabel;
@@ -76,7 +76,7 @@ public:
         for (const auto& curref : ref) {
             max_labels = std::max(max_labels, get_num_samples(curref));
         }
-        sanisizer::reserve(my_all_correlations, max_labels);
+        sanisizer::reserve(my_all_l2, max_labels);
     }
 
     // For testing only.
@@ -88,7 +88,7 @@ public:
     std::pair<Label_, Float_> run(
         const RankedVector<Value_, Index_>& input, 
         const TrainedSingle<Index_, Float_>& trained,
-        const Float_ quantile,
+        const std::vector<PrecomputedQuantileDetails<Index_, Float_> >& quantile_details,
         const Float_ threshold,
         std::vector<Float_>& scores
     ) {
@@ -143,7 +143,7 @@ public:
             for (I<decltype(nlabels_used)> i = 0; i < nlabels_used; ++i) {
                 auto curlab = my_labels_in_use[i];
 
-                my_all_correlations.clear();
+                my_all_l2.clear();
                 const auto& curref = ref[curlab];
                 const auto NC = get_num_samples(curref);
 
@@ -183,11 +183,10 @@ public:
                         );
                     }
 
-                    const Float_ cor = l2_to_correlation(l2);
-                    my_all_correlations.push_back(cor);
+                    my_all_l2.push_back(l2);
                 }
 
-                const Float_ score = correlations_to_score(my_all_correlations, quantile);
+                const Float_ score = l2_to_score(my_all_l2, quantile_details[curlab]);
                 scores.push_back(score);
             }
 
@@ -212,30 +211,19 @@ void annotate_cells_single_raw(
 ) {
     const auto& subset = trained.subset();
     const Index_ num_markers = subset.size(); // cast is safe as 'subset' is a unique subset of the rows of the reference matrix.
+    SubsetNoop<query_sparse_, Index_> subsorted(subset);
+
     const auto& built = trained.built();
     const auto& ref = get_per_label_references<ref_sparse_>(built);
-
-    // Figuring out how many neighbors to keep and how to compute the quantiles.
     const auto num_labels = ref.size();
-    struct SearchDetails {
-        Index_ k;
-        bool interpolate;
-        Float_ upper_prop;
-    };
-    auto search_deets = sanisizer::create<std::vector<SearchDetails> >(num_labels);
 
+    auto quantile_details = std::vector<PrecomputedQuantileDetails<Index_, Float_> >(num_labels);
+    Index_ max_num_samples = 0;
     for (I<decltype(num_labels)> r = 0; r < num_labels; ++r) {
-        const Float_ denom = get_num_samples(ref[r]) - 1;
-        const Float_  prod = denom * (1 - quantile);
-        const auto left = std::floor(prod), right = std::ceil(prod);
-
-        auto& output = search_deets[r];
-        output.k = right + 1; // cast should be safe as k < num_samples.
-        output.interpolate = (left != right);
-        output.upper_prop = right - prod; // mimics logic in correlation_to_score(), except that that 'left' is the smaller distance => larger correlation.
+        const auto num_samples = get_num_samples(ref[r]);
+        quantile_details[r] = precompute_quantile_details(num_samples, quantile);
+        max_num_samples = std::max(max_num_samples, num_samples);
     }
-
-    SubsetNoop<query_sparse_, Index_> subsorted(subset);
 
     tatami::parallelize([&](int, Index_ start, Index_ length) {
         tatami::VectorPtr<Index_> subset_ptr(tatami::VectorPtr<Index_>{}, &subset);
@@ -252,11 +240,6 @@ void annotate_cells_single_raw(
 
         RankedVector<Value_, Index_> vec;
         vec.reserve(num_markers);
-
-        Index_ max_num_samples = 0;
-        for (I<decltype(num_labels)> r = 0; r < num_labels; ++r) {
-            max_num_samples = std::max(max_num_samples, get_num_samples(ref[r]));
-        }
         FindClosestNeighborsWorkspace<Index_, Float_> find_work(max_num_samples);
         
         auto query_scaled = sanisizer::create<std::vector<Float_> >(num_markers);
@@ -303,18 +286,19 @@ void annotate_cells_single_raw(
 
             curscores.resize(num_labels);
             for (I<decltype(num_labels)> r = 0; r < num_labels; ++r) {
-                const auto& sdeets = search_deets[r];
-                find_closest_neighbors<ref_sparse_>(num_markers, query_scaled, query_has_nonzero, sdeets.k, ref[r], find_work);
+                const auto& qdeets = quantile_details[r];
+                const Index_ k = qdeets.right_index + 1; // cast is safe as k <= num_samples.
+                find_closest_neighbors<ref_sparse_>(num_markers, query_scaled, query_has_nonzero, k, ref[r], find_work);
 
-                const Float_ last_l2 = get_furthest_neighbor(find_work).first;
-                const Float_ lower_cor = l2_to_correlation(last_l2);
-                if (!sdeets.interpolate) {
-                    curscores[r] = lower_cor;
+                const Float_ right_l2 = get_furthest_neighbor(find_work).first;
+                const Float_ right_cor = l2_to_correlation(right_l2);
+                if (!qdeets.find_left) {
+                    curscores[r] = right_cor;
                 } else {
                     pop_furthest_neighbor(find_work);
-                    const Float_ next_l2 = get_furthest_neighbor(find_work).first;
-                    const Float_ upper_cor = l2_to_correlation(next_l2);
-                    curscores[r] = lower_cor + (upper_cor - lower_cor) * sdeets.upper_prop; // see correlation_to_score() for more details.
+                    const Float_ left_l2 = get_furthest_neighbor(find_work).first;
+                    const Float_ left_cor = l2_to_correlation(left_l2);
+                    curscores[r] = left_cor + (right_cor - left_cor) * qdeets.right_prop; // see l2_to_score() for more details.
                 }
 
                 if (scores[r]) {
@@ -326,7 +310,7 @@ void annotate_cells_single_raw(
             if (!fine_tune) {
                 chosen = find_best_and_delta<Label_>(curscores);
             } else {
-                chosen = ft->run(vec, trained, quantile, threshold, curscores);
+                chosen = ft->run(vec, trained, quantile_details, threshold, curscores);
             }
 
             best[c] = chosen.first;

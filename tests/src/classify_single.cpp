@@ -308,6 +308,18 @@ INSTANTIATE_TEST_SUITE_P(
 
 /********************************************/
 
+template<bool ref_sparse_, typename Index_, typename Float_>
+auto create_precomputed_quantile_details(const singlepp::TrainedSingle<Index_, Float_>& trained, Float_ quantile) {
+    const auto& ref = singlepp::get_per_label_references<ref_sparse_>(trained.built());
+    const auto num_labels = ref.size();
+    std::vector<singlepp::PrecomputedQuantileDetails<Index_, Float_> > output;
+    for (singlepp::I<decltype(num_labels)> r = 0; r < num_labels; ++r) {
+        const auto qdeets = singlepp::precompute_quantile_details(singlepp::get_num_samples(ref[r]), quantile);
+        output.push_back(qdeets);
+    }
+    return output;
+}
+
 TEST(FineTuneSingle, EdgeCases) {
     size_t ngenes = 200;
     size_t nlabels = 3;
@@ -321,18 +333,19 @@ TEST(FineTuneSingle, EdgeCases) {
     auto trained = singlepp::train_single(*reference, labels.data(), markers, {});
     singlepp::FineTuneSingle<false, false, int, int, double, double> ft(trained);
     singlepp::RankedVector<double, int> placeholder;
+    auto qdeets = create_precomputed_quantile_details<false>(trained, 0.8);
 
     // Check early exit conditions, when there is one clear winner or all of
     // the labels are equal (i.e., no contraction of the feature space).
     {
         std::vector<double> scores { 0.2, 0.5, 0.1 };
-        auto output = ft.run(placeholder, trained, 0.8, 0.05, scores);
+        auto output = ft.run(placeholder, trained, qdeets, 0.05, scores);
         EXPECT_EQ(output.first, 1);
         EXPECT_EQ(output.second, 0.3);
 
         std::fill(scores.begin(), scores.end(), 0.5);
         scores[0] = 0.51;
-        output = ft.run(placeholder, trained, 1, 0.05, scores);
+        output = ft.run(placeholder, trained, qdeets, 0.05, scores);
         EXPECT_EQ(output.first, 0); // first entry of scores is maxed.
         EXPECT_FLOAT_EQ(output.second, 0.01);
     }
@@ -340,7 +353,7 @@ TEST(FineTuneSingle, EdgeCases) {
     // Check edge case when there is only a single label, based on the length of 'scores'.
     {
         std::vector<double> scores { 0.5 };
-        auto output = ft.run(placeholder, trained, 0.8, 0.05, scores);
+        auto output = ft.run(placeholder, trained, qdeets, 0.05, scores);
         EXPECT_EQ(output.first, 0);
         EXPECT_TRUE(std::isnan(output.second));
     }
@@ -358,12 +371,13 @@ TEST(FineTuneSingle, ExactRecovery) {
     auto trained = singlepp::train_single(*reference, labels.data(), markers, {});
     singlepp::FineTuneSingle<false, false, int, int, double, double> ft(trained);
 
-    // Checking that we eventually pick up the reference, if the input profile
-    // is identical to one of the profiles. We set the quantile to 1 to
-    // guarantee a score of 1 from a correlation of 1.
+    // Checking that we eventually pick up the reference, if the input profile is identical to one of the profiles.
     const auto nmarkers = trained.subset().size();
     auto wrk = reference->dense_column(trained.subset());
     std::vector<double> buffer(nmarkers);
+
+    // We set the quantile to 1 to guarantee a score of 1 from a correlation of 1.
+    auto qdeets = create_precomputed_quantile_details<false>(trained, 1.0);
 
     for (size_t r = 0; r < nprofiles; ++r) {
         auto vec = wrk->fetch(r, buffer.data());
@@ -371,12 +385,12 @@ TEST(FineTuneSingle, ExactRecovery) {
 
         std::vector<double> scores { 0.5, 0.49, 0.48 };
         scores[(labels[r] + 1) % nlabels] = 0; // forcing another label to be zero so that it actually does the fine-tuning.
-        auto output = ft.run(ranked, trained, 1, 0.05, scores);
+        auto output = ft.run(ranked, trained, qdeets, 0.05, scores);
         EXPECT_EQ(output.first, labels[r]);
 
         scores = std::vector<double>{ 0.5, 0.5, 0.5 };
         scores[labels[r]] = 0; // forcing it to match to some other label. 
-        auto output2 = ft.run(ranked, trained, 1, 0.05, scores);
+        auto output2 = ft.run(ranked, trained, qdeets, 0.05, scores);
         EXPECT_NE(output2.first, labels[r]);
     }
 }
@@ -398,13 +412,15 @@ TEST(FineTuneSingle, Diagonal) {
     auto wrk = reference->dense_column(trained.subset());
     std::vector<double> buffer(nmarkers);
 
+    auto qdeets = create_precomputed_quantile_details<false>(trained, 1.0);
+
     for (size_t r = 0; r < nprofiles; ++r) {
         auto vec = wrk->fetch(r, buffer.data()); 
         auto ranked = fill_ranks<int>(nmarkers, vec);
 
         std::vector<double> scores { 0.49, 0.5, 0.48 };
         scores[(labels[r] + 1) % nlabels] = 0; // forcing another label to be zero so that it actually does the fine-tuning.
-        auto output = ft.run(ranked, trained, 1, 0.05, scores);
+        auto output = ft.run(ranked, trained, qdeets, 0.05, scores);
 
         // The key point here is that the diagonals are actually used,
         // so we don't end up with an empty ranking vector and NaN scores.
@@ -438,6 +454,9 @@ TEST(FineTuneSingle, Sparse) {
     auto wrk = new_test->dense_column(new_trained.subset());
     std::vector<double> buffer(nmarkers);
 
+    auto qdeets = create_precomputed_quantile_details<false>(new_trained, 0.8);
+    auto sparse_qdeets = create_precomputed_quantile_details<true>(sparse_trained, 0.8);
+
     for (int t = 0; t < ntest; ++t) {
         auto vec = wrk->fetch(t, buffer.data()); 
         auto ranked = fill_ranks<int>(nmarkers, vec);
@@ -447,14 +466,14 @@ TEST(FineTuneSingle, Sparse) {
         scores[empty] = 0; // forcing one of the labels to be zero so that it actually does the fine-tuning.
 
         auto score_copy = scores;
-        auto expected = new_ft.run(ranked, new_trained, 0.8, 0.05, score_copy);
+        auto expected = new_ft.run(ranked, new_trained, qdeets, 0.05, score_copy);
         EXPECT_NE(expected.first, empty);
 
         // Due to differences in numerical precision between dense/sparse calculations, comparisons may not be exact.
         // This results in different 'best' labels in the presence of near-ties, so if there's a mismatch,
         // we check that the delta is indeed near-zero, i.e., there is a near-tie. 
         score_copy = scores;
-        auto dense_to_sparse = sparse_ft.run(ranked, sparse_trained, 0.8, 0.05, score_copy);
+        auto dense_to_sparse = sparse_ft.run(ranked, sparse_trained, sparse_qdeets, 0.05, score_copy);
         check_almost_equal_assignment(expected.first, expected.second, dense_to_sparse.first, dense_to_sparse.second);
 
         singlepp::RankedVector<double, int> sparse_ranked;
@@ -465,11 +484,11 @@ TEST(FineTuneSingle, Sparse) {
         }
 
         score_copy = scores;
-        auto sparse_to_dense = new_ft2.run(sparse_ranked, new_trained, 0.8, 0.05, score_copy);
+        auto sparse_to_dense = new_ft2.run(sparse_ranked, new_trained, qdeets, 0.05, score_copy);
         check_almost_equal_assignment(expected.first, expected.second, sparse_to_dense.first, sparse_to_dense.second);
 
         score_copy = scores;
-        auto sparse_to_sparse = sparse_ft2.run(sparse_ranked, sparse_trained, 0.8, 0.05, score_copy);
+        auto sparse_to_sparse = sparse_ft2.run(sparse_ranked, sparse_trained, sparse_qdeets, 0.05, score_copy);
         check_almost_equal_assignment(expected.first, expected.second, sparse_to_sparse.first, sparse_to_sparse.second);
     }
 }

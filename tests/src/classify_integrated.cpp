@@ -675,7 +675,8 @@ TEST_F(ClassifyIntegratedOtherTest, FineTuneEdgeCase) {
     singlepp::TrainIntegratedOptions iopt;
     auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
 
-    singlepp::AnnotateIntegrated<false, int, double, double> ft(integrated);
+    auto precomp = singlepp::precompute_integrated_details(integrated, 0.8);
+    singlepp::AnnotateIntegrated<false, int, double, double> ft(precomp);
     singlepp::RankedVector<double, int> query_ranked;
 
     // We need at least 3 references to have any kind of fine-tuning.
@@ -688,13 +689,13 @@ TEST_F(ClassifyIntegratedOtherTest, FineTuneEdgeCase) {
     std::vector<double> scores(nrefs, 0.5);
     scores[1] = 0.7;
     std::vector<int> reflabels_in_use;
-    auto out = ft.run_fine(0, query_ranked, integrated, assigned_ptrs, 0.8, 0.05, scores, reflabels_in_use);
+    auto out = ft.run_fine(0, query_ranked, integrated, assigned_ptrs, precomp.quantile_details, 0.05, scores, reflabels_in_use);
     EXPECT_EQ(out.first, 1);
     EXPECT_FLOAT_EQ(out.second, 0.2);
 
     scores[1] = 0.5;
     scores[nrefs - 1] = 0.51;
-    out = ft.run_fine(0, query_ranked, integrated, assigned_ptrs, 0.8, 0.05, scores, reflabels_in_use);
+    out = ft.run_fine(0, query_ranked, integrated, assigned_ptrs, precomp.quantile_details, 0.05, scores, reflabels_in_use);
     EXPECT_EQ(out.first, nrefs - 1);
     EXPECT_FLOAT_EQ(out.second, 0.01);
 }
@@ -716,7 +717,9 @@ TEST_F(ClassifyIntegratedOtherTest, FineTuneExactRecovery) {
     singlepp::TrainIntegratedOptions iopt;
     auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
 
-    singlepp::AnnotateIntegrated<false, int, double, double> ft(integrated);
+    // Use a quantile of 1 so that an exact match is respected with the maximum correlation.
+    auto precomp = singlepp::precompute_integrated_details(integrated, 1.0);
+    singlepp::AnnotateIntegrated<false, int, double, double> ft(precomp);
     singlepp::RankedVector<double, int> query_ranked;
 
     // We need at least 3 references to have any kind of fine-tuning.
@@ -758,8 +761,8 @@ TEST_F(ClassifyIntegratedOtherTest, FineTuneExactRecovery) {
             scores[r] = 0.5;
             scores[(r + 1) % nrefs] = 0.51;
 
-            // Use a quantile of 1 so that an exact match is respected with the maximum correlation.
-            auto out = ft.run_fine(c, query_ranked, integrated, assigned_ptrs, 1, 0.05, scores, reflabels_in_use);
+            // Exact match should be respected as we use a quantile of 1.
+            auto out = ft.run_fine(c, query_ranked, integrated, assigned_ptrs, precomp.quantile_details, 0.05, scores, reflabels_in_use);
             EXPECT_EQ(out.first, r);
         }
     }
@@ -824,10 +827,13 @@ TEST(ClassifyIntegrated, FineTuneSparse) {
         chosen_ptrs[r] = chosen[r].data();
     }
 
-    singlepp::AnnotateIntegrated<false, int, double, double> dense_ft(dense_integrated);
-    singlepp::AnnotateIntegrated<true, int, double, double> dense_ft2(dense_integrated);
-    singlepp::AnnotateIntegrated<false, int, double, double> sparse_ft(sparse_integrated);
-    singlepp::AnnotateIntegrated<true, int, double, double> sparse_ft2(sparse_integrated);
+    auto dense_precomp = singlepp::precompute_integrated_details(dense_integrated, 0.8);
+    singlepp::AnnotateIntegrated<false, int, double, double> dense_ft(dense_precomp);
+    singlepp::AnnotateIntegrated<true, int, double, double> dense_ft2(dense_precomp);
+
+    auto sparse_precomp = singlepp::precompute_integrated_details(sparse_integrated, 0.8);
+    singlepp::AnnotateIntegrated<false, int, double, double> sparse_ft(sparse_precomp);
+    singlepp::AnnotateIntegrated<true, int, double, double> sparse_ft2(sparse_precomp);
 
     const auto nmarkers = dense_integrated.subset().size();
     auto wrk = new_test->dense_column(dense_integrated.subset());
@@ -843,14 +849,14 @@ TEST(ClassifyIntegrated, FineTuneSparse) {
         scores[empty] = 0; // forcing one of the labels to be zero so that it actually does the fine-tuning.
 
         auto score_copy = scores;
-        auto expected = dense_ft.run_fine(t, ranked, dense_integrated, chosen_ptrs, 0.8, 0.05, score_copy, refs_in_use);
+        auto expected = dense_ft.run_fine(t, ranked, dense_integrated, chosen_ptrs, dense_precomp.quantile_details, 0.05, score_copy, refs_in_use);
         EXPECT_NE(expected.first, empty);
 
         // Due to differences in numerical precision between dense/sparse calculations, comparisons may not be exact.
         // This results in different 'best' labels in the presence of near-ties, so if there's a mismatch,
         // we check that the delta is indeed near-zero, i.e., there is a near-tie. 
         score_copy = scores;
-        auto dense_to_sparse = sparse_ft.run_fine(t, ranked, sparse_integrated, chosen_ptrs, 0.8, 0.05, score_copy, refs_in_use);
+        auto dense_to_sparse = sparse_ft.run_fine(t, ranked, sparse_integrated, chosen_ptrs, sparse_precomp.quantile_details, 0.05, score_copy, refs_in_use);
         check_almost_equal_assignment(expected.first, expected.second, dense_to_sparse.first, dense_to_sparse.second);
 
         singlepp::RankedVector<double, int> sparse_ranked;
@@ -861,11 +867,11 @@ TEST(ClassifyIntegrated, FineTuneSparse) {
         }
 
         score_copy = scores;
-        auto sparse_to_dense = dense_ft2.run_fine(t, sparse_ranked, dense_integrated, chosen_ptrs, 0.8, 0.05, score_copy, refs_in_use);
+        auto sparse_to_dense = dense_ft2.run_fine(t, sparse_ranked, dense_integrated, chosen_ptrs, dense_precomp.quantile_details, 0.05, score_copy, refs_in_use);
         check_almost_equal_assignment(expected.first, expected.second, sparse_to_dense.first, sparse_to_dense.second);
 
         score_copy = scores;
-        auto sparse_to_sparse = sparse_ft2.run_fine(t, sparse_ranked, sparse_integrated, chosen_ptrs, 0.8, 0.05, score_copy, refs_in_use);
+        auto sparse_to_sparse = sparse_ft2.run_fine(t, sparse_ranked, sparse_integrated, chosen_ptrs, sparse_precomp.quantile_details, 0.05, score_copy, refs_in_use);
         check_almost_equal_assignment(expected.first, expected.second, sparse_to_sparse.first, sparse_to_sparse.second);
     }
 }
