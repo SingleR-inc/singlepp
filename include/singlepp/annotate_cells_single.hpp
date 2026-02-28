@@ -217,6 +217,9 @@ void annotate_cells_single_raw(
     const auto& ref = get_per_label_references<ref_sparse_>(built);
     const auto num_labels = ref.size();
 
+    if (quantile < 0 || quantile > 1) {
+        throw std::runtime_error("'quantile' should be in [0, 1]");
+    }
     auto quantile_details = std::vector<PrecomputedQuantileDetails<Index_, Float_> >(num_labels);
     Index_ max_num_samples = 0;
     for (I<decltype(num_labels)> r = 0; r < num_labels; ++r) {

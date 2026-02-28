@@ -74,6 +74,15 @@ static std::vector<std::vector<int> > mock_best_choices(std::size_t ntest, const
     return chosen;
 }
 
+template<typename Value_>
+static std::vector<const Value_*> pointerize_best_choices(const std::vector<std::vector<Value_> >& choices) {
+    std::vector<const Value_*> output;
+    for (const auto& ch : choices) {
+        output.emplace_back(ch.data());
+    }
+    return output;
+}
+
 /********************************************/
 
 class ClassifyIntegratedTest : public ::testing::TestWithParam<std::tuple<int, double> >, public IntegratedTestCore {
@@ -134,10 +143,7 @@ TEST_P(ClassifyIntegratedTest, Basic) {
 
     // Mocking up some of the best choices.
     auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ base_seed);
-    std::vector<const int*> chosen_ptrs(nrefs);
-    for (size_t r = 0; r < nrefs; ++r) {
-        chosen_ptrs[r] = chosen[r].data();
-    }
+    auto chosen_ptrs = pointerize_best_choices(chosen);
 
     // Comparing the classify_integrated output to a reference calculation.
     // This requires disabling of fine-tuning as there's no easy way to test that.
@@ -233,10 +239,7 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
 
     // Mocking up some of the best choices.
     auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ base_seed + 2468);
-    std::vector<const int*> chosen_ptrs(nrefs);
-    for (size_t r = 0; r < nrefs; ++r) {
-        chosen_ptrs[r] = chosen[r].data();
-    }
+    auto chosen_ptrs = pointerize_best_choices(chosen);
 
     // Comparing to a reference calculation.
     // This requires disabling of fine-tuning as there's no easy way to test that.
@@ -409,10 +412,7 @@ TEST_P(ClassifyIntegratedTest, IntersectedComparison) {
 
     // Mocking up some of the best choices.
     auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ base_seed + 1379);
-    std::vector<const int*> chosen_ptrs(nrefs);
-    for (size_t r = 0; r < nrefs; ++r) {
-        chosen_ptrs[r] = chosen[r].data();
-    }
+    auto chosen_ptrs = pointerize_best_choices(chosen);
 
     // Comparing classification results (with fine-tuning, for some test coverage).
     singlepp::ClassifyIntegratedOptions<double> copt;
@@ -525,10 +525,7 @@ TEST_P(ClassifyIntegratedSparseTest, Basic) {
 
     // Mocking up some of the best choices.
     auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ base_seed);
-    std::vector<const int*> chosen_ptrs(nrefs);
-    for (size_t r = 0; r < nrefs; ++r) {
-        chosen_ptrs[r] = chosen[r].data();
-    }
+    auto chosen_ptrs = pointerize_best_choices(chosen);
 
     singlepp::ClassifyIntegratedOptions<double> copt;
     copt.quantile = quantile;
@@ -582,10 +579,7 @@ TEST_P(ClassifyIntegratedSparseTest, Intersect) {
 
     // Mocking up some of the best choices.
     auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ base_seed);
-    std::vector<const int*> chosen_ptrs(nrefs);
-    for (size_t r = 0; r < nrefs; ++r) {
-        chosen_ptrs[r] = chosen[r].data();
-    }
+    auto chosen_ptrs = pointerize_best_choices(chosen);
 
     singlepp::ClassifyIntegratedOptions<double> copt;
     copt.quantile = quantile;
@@ -617,21 +611,28 @@ protected:
     static void SetUpTestSuite() {
         assemble();
     }
+
+    static void populate_prebuilts(
+        std::vector<singlepp::TrainedSingle<int, double> >& prebuilts,
+        std::vector<singlepp::TrainIntegratedInput<double, int, int> >& integrated_inputs
+    ) {
+        singlepp::TrainSingleOptions bopt;
+        prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
+        integrated_inputs.reserve(nrefs);
+
+        for (size_t r = 0; r < nrefs; ++r) {
+            const auto& refmat = *(references[r]);
+            const auto labptr = labels[r].data();
+            prebuilts.push_back(singlepp::train_single(refmat, labptr, markers[r], bopt));
+            integrated_inputs.push_back(singlepp::prepare_integrated_input(refmat, labptr, prebuilts.back()));
+        }
+    }
 };
 
 TEST_F(ClassifyIntegratedOtherTest, Mismatch) {
-    singlepp::TrainSingleOptions bopt;
     std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
-    prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
-    integrated_inputs.reserve(nrefs);
-
-    for (size_t r = 0; r < nrefs; ++r) {
-        const auto& refmat = *(references[r]);
-        const auto labptr = labels[r].data();
-        prebuilts.push_back(singlepp::train_single(refmat, labptr, markers[r], bopt));
-        integrated_inputs.push_back(singlepp::prepare_integrated_input(refmat, labptr, prebuilts.back()));
-    }
+    populate_prebuilts(prebuilts, integrated_inputs);
 
     singlepp::TrainIntegratedOptions iopt;
     auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
@@ -641,10 +642,7 @@ TEST_F(ClassifyIntegratedOtherTest, Mismatch) {
     auto test = spawn_matrix(ngenes * 2, ntest, /* seed = */ 69); // more genes than expected.
 
     auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ 70);
-    std::vector<const int*> chosen_ptrs(nrefs);
-    for (size_t r = 0; r < nrefs; ++r) {
-        chosen_ptrs[r] = chosen[r].data();
-    }
+    auto chosen_ptrs = pointerize_best_choices(chosen);
 
     // Verifying that it does, in fact, fail.
     singlepp::ClassifyIntegratedOptions<double> copt;
@@ -659,18 +657,9 @@ TEST_F(ClassifyIntegratedOtherTest, Mismatch) {
 }
 
 TEST_F(ClassifyIntegratedOtherTest, FineTuneEdgeCase) {
-    singlepp::TrainSingleOptions bopt;
     std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
-    prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
-    integrated_inputs.reserve(nrefs);
-
-    for (size_t r = 0; r < nrefs; ++r) {
-        const auto& refmat = *(references[r]);
-        const auto labptr = labels[r].data();
-        prebuilts.push_back(singlepp::train_single(refmat, labptr, markers[r], bopt));
-        integrated_inputs.push_back(singlepp::prepare_integrated_input(refmat, labptr, prebuilts.back()));
-    }
+    populate_prebuilts(prebuilts, integrated_inputs);
 
     singlepp::TrainIntegratedOptions iopt;
     auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
@@ -701,18 +690,9 @@ TEST_F(ClassifyIntegratedOtherTest, FineTuneEdgeCase) {
 }
 
 TEST_F(ClassifyIntegratedOtherTest, FineTuneExactRecovery) {
-    singlepp::TrainSingleOptions bopt;
     std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
-    prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
-    integrated_inputs.reserve(nrefs);
-
-    for (size_t r = 0; r < nrefs; ++r) {
-        const auto& refmat = *(references[r]);
-        const auto labptr = labels[r].data();
-        prebuilts.push_back(singlepp::train_single(refmat, labptr, markers[r], bopt));
-        integrated_inputs.push_back(singlepp::prepare_integrated_input(refmat, labptr, prebuilts.back()));
-    }
+    populate_prebuilts(prebuilts, integrated_inputs);
 
     singlepp::TrainIntegratedOptions iopt;
     auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
@@ -766,6 +746,40 @@ TEST_F(ClassifyIntegratedOtherTest, FineTuneExactRecovery) {
             EXPECT_EQ(out.first, r);
         }
     }
+}
+
+TEST_F(ClassifyIntegratedOtherTest, QuantileFail) {
+    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
+    populate_prebuilts(prebuilts, integrated_inputs);
+
+    singlepp::TrainIntegratedOptions iopt;
+    auto integrated = singlepp::train_integrated(integrated_inputs, iopt);
+
+    size_t ntest = 20;
+    auto test = spawn_matrix(ngenes, ntest, /* seed = */ 69);
+
+    auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ 70);
+    auto chosen_ptrs = pointerize_best_choices(chosen);
+
+    singlepp::ClassifyIntegratedOptions<double> copt;
+    copt.quantile = -1;
+    std::string msg;
+    try {
+        singlepp::classify_integrated(*test, chosen_ptrs, integrated, copt);
+    } catch (std::exception& e) {
+        msg = e.what();
+    }
+    EXPECT_TRUE(msg.find("[0, 1]") != std::string::npos);
+
+    copt.quantile = 2;
+    msg.clear();
+    try {
+        singlepp::classify_integrated(*test, chosen_ptrs, integrated, copt);
+    } catch (std::exception& e) {
+        msg = e.what();
+    }
+    EXPECT_TRUE(msg.find("[0, 1]") != std::string::npos);
 }
 
 /********************************************/
@@ -822,10 +836,7 @@ TEST(ClassifyIntegrated, FineTuneSparse) {
 
     // Mocking up some of the best choices.
     auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ 88);
-    std::vector<const int*> chosen_ptrs(nrefs);
-    for (size_t r = 0; r < nrefs; ++r) {
-        chosen_ptrs[r] = chosen[r].data();
-    }
+    auto chosen_ptrs = pointerize_best_choices(chosen);
 
     auto dense_precomp = singlepp::precompute_integrated_details(dense_integrated, 0.8);
     singlepp::AnnotateIntegrated<false, int, double, double> dense_ft(dense_precomp);

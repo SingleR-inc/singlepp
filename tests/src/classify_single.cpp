@@ -606,3 +606,38 @@ TEST(ClassifySingle, Mismatch) {
     }
     EXPECT_TRUE(failed);
 }
+
+TEST(ClassifySingle, QuantileFail) {
+    // Mocking up the references.
+    size_t ngenes = 100;
+    size_t nlabels = 3;
+    size_t nrefs = 10;
+
+    auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 33);
+    auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 333);
+    auto markers = mock_markers<int>(nlabels, 20, ngenes, /* seed = */ 3333); 
+
+    singlepp::TrainSingleOptions bopt;
+    auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
+
+    auto test = spawn_matrix(ngenes, nrefs, /* seed = */ 33333);
+    singlepp::ClassifySingleOptions<double> copt;
+
+    copt.quantile = -1;
+    std::string msg;
+    try {
+        singlepp::classify_single<int>(*test, trained, copt);
+    } catch (std::exception& e) {
+        msg = e.what();
+    }
+    EXPECT_TRUE(msg.find("[0, 1]") != std::string::npos);
+
+    copt.quantile = 2;
+    msg.clear();
+    try {
+        singlepp::classify_single<int>(*test, trained, copt);
+    } catch (std::exception& e) {
+        msg = e.what();
+    }
+    EXPECT_TRUE(msg.find("[0, 1]") != std::string::npos);
+}

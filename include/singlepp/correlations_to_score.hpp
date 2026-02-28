@@ -30,6 +30,8 @@ PrecomputedQuantileDetails<Index_, Float_> precompute_quantile_details(const Ind
     // We should not have any situations where the number of samples is zero,
     // otherwise build_reference_raw() should have failed.
     assert(num > 0);
+    assert(quantile >= 0);
+    assert(quantile <= 1);
 
     // Check that we can safely cast to/from Index_ and Float_.
     const Float_ denom = sanisizer::to_float<Float_>(num - 1); 

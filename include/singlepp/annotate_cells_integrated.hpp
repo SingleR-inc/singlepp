@@ -289,6 +289,9 @@ void annotate_cells_integrated_raw(
     const auto& subset = trained.subset();
     SubsetNoop<query_sparse_, Index_> subsorted(subset);
 
+    if (quantile < 0 || quantile > 1) {
+        throw std::runtime_error("'quantile' should be in [0, 1]");
+    }
     const auto precomputed = precompute_integrated_details(trained, quantile);
     const auto num_universe = precomputed.num_universe;
 
