@@ -335,6 +335,10 @@ void annotate_cells_single(
     Float_* delta,
     int num_threads
 ) {
+    if (!sanisizer::is_equal(trained.test_nrow(), test.nrow())) {
+        throw std::runtime_error("number of rows in 'test' is not the same as that expected by 'trained'");
+    }
+
     const auto ref_sparse = trained.built().sparse.has_value();
     if (test.is_sparse()) {
         if (ref_sparse) {

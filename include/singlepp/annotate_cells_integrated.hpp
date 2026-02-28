@@ -286,11 +286,6 @@ void annotate_cells_integrated_raw(
     Float_* delta,
     int num_threads
 ) {
-    const auto NR = test.nrow();
-    if (!sanisizer::is_equal(NR, trained.test_nrow())) {
-        throw std::runtime_error("number of rows in 'test' do not match up with those expected by 'trained'");
-    }
-
     const auto& subset = trained.subset();
     SubsetNoop<query_sparse_, Index_> subsorted(subset);
 
@@ -370,6 +365,10 @@ void annotate_cells_integrated(
     Float_* delta,
     int num_threads
 ) {
+    if (!sanisizer::is_equal(test.nrow(), trained.test_nrow())) {
+        throw std::runtime_error("number of rows in 'test' do not match up with those expected by 'trained'");
+    }
+
     if (test.is_sparse()) {
         annotate_cells_integrated_raw<true>(test, trained, assigned, quantile, fine_tune, threshold, best, scores, delta, num_threads);
     } else {
