@@ -154,9 +154,12 @@ struct ClassifyIntegratedResults {
     /**
      * @cond
      */
-    ClassifyIntegratedResults(std::size_t ncells, std::size_t nrefs) : best(ncells), delta(ncells) {
+    ClassifyIntegratedResults(const std::size_t ncells, const std::size_t nrefs) : 
+        best(sanisizer::cast<I<decltype(best.size())> >(ncells)),
+        delta(sanisizer::cast<I<decltype(delta.size())> >(ncells))
+    {
         scores.reserve(nrefs);
-        for (decltype(nrefs) r = 0; r < nrefs; ++r) {
+        for (I<decltype(nrefs)> r = 0; r < nrefs; ++r) {
             scores.emplace_back(ncells);
         }
     }

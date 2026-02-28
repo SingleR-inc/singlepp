@@ -162,9 +162,12 @@ struct ClassifySingleResults {
     /**
      * @cond
      */
-    ClassifySingleResults(std::size_t num_cells, std::size_t num_labels) : best(num_cells), delta(num_cells) {
+    ClassifySingleResults(const std::size_t num_cells, const std::size_t num_labels) :
+        best(sanisizer::cast<I<decltype(best.size())> >(num_cells)),
+        delta(sanisizer::cast<I<decltype(delta.size())> >(num_cells))
+    {
         scores.reserve(num_labels);
-        for (decltype(num_labels) l = 0; l < num_labels; ++l) {
+        for (I<decltype(num_labels)> l = 0; l < num_labels; ++l) {
             scores.emplace_back(num_cells);
         }
     }

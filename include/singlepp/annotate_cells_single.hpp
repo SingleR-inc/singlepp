@@ -255,7 +255,7 @@ void annotate_cells_single_raw(
         if (fine_tune) {
             ft.emplace(num_markers, ref);
         }
-        std::vector<Float_> curscores(num_labels);
+        auto curscores = sanisizer::create<std::vector<Float_> >(num_labels);
 
         for (Index_ c = start, end = start + length; c < end; ++c) {
             bool query_has_nonzero = false;

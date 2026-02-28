@@ -3,6 +3,7 @@
 
 #include "Markers.hpp"
 #include "Intersection.hpp"
+#include "utils.hpp"
 
 #include <vector>
 #include <algorithm>
@@ -31,12 +32,12 @@ template<typename Index_>
 std::vector<Index_> subset_to_markers(Markers<Index_>& markers, const std::optional<std::size_t>& top) {
     std::unordered_set<Index_> available;
 
-    auto ngroups = markers.size();
-    for (decltype(ngroups) i = 0; i < ngroups; ++i) {
+    const auto ngroups = markers.size();
+    for (I<decltype(ngroups)> i = 0; i < ngroups; ++i) {
         auto& inner_markers = markers[i];
         auto inner_ngroups = inner_markers.size();
 
-        for (decltype(inner_ngroups) j = 0; j < inner_ngroups; ++j) {
+        for (I<decltype(inner_ngroups)> j = 0; j < inner_ngroups; ++j) {
             auto& current = inner_markers[j];
             current.resize(cap_at_top(current.size(), top));
             available.insert(current.begin(), current.end());
@@ -52,10 +53,10 @@ std::vector<Index_> subset_to_markers(Markers<Index_>& markers, const std::optio
         mapping[subset[i]] = i;
     }
 
-    for (decltype(ngroups) i = 0; i < ngroups; ++i) {
+    for (I<decltype(ngroups)> i = 0; i < ngroups; ++i) {
         auto& inner_markers = markers[i];
-        auto inner_ngroups = inner_markers.size();
-        for (decltype(inner_ngroups) j = 0; j < inner_ngroups; ++j) {
+        const auto inner_ngroups = inner_markers.size();
+        for (I<decltype(inner_ngroups)> j = 0; j < inner_ngroups; ++j) {
             for (auto& k : inner_markers[j]) {
                 k = mapping.find(k)->second;
             }
@@ -79,12 +80,12 @@ std::pair<std::vector<Index_>, std::vector<Index_> > subset_to_markers(
 
     // Figuring out the top markers to retain, that are _also_ in the intersection.
     std::unordered_set<Index_> all_markers;
-    auto ngroups = markers.size();
-    for (decltype(ngroups) i = 0; i < ngroups; ++i) {
+    const auto ngroups = markers.size();
+    for (I<decltype(ngroups)> i = 0; i < ngroups; ++i) {
         auto& inner_markers = markers[i];
         auto inner_ngroups = inner_markers.size(); // should be the same as ngroups, but we'll just do this to be safe.
 
-        for (decltype(inner_ngroups) j = 0; j < inner_ngroups; ++j) {
+        for (I<decltype(inner_ngroups)> j = 0; j < inner_ngroups; ++j) {
             auto& current = inner_markers[j];
             std::vector<Index_> replacement;
             auto output_size = cap_at_top(current.size(), top);
@@ -121,10 +122,10 @@ std::pair<std::vector<Index_>, std::vector<Index_> > subset_to_markers(
     }
 
     // Reindexing the markers.
-    for (decltype(ngroups) i = 0; i < ngroups; ++i) {
+    for (I<decltype(ngroups)> i = 0; i < ngroups; ++i) {
         auto& inner_markers = markers[i];
-        auto inner_ngroups = inner_markers.size();
-        for (decltype(inner_ngroups) j = 0; j < inner_ngroups; ++j) {
+        const auto inner_ngroups = inner_markers.size();
+        for (I<decltype(inner_ngroups)> j = 0; j < inner_ngroups; ++j) {
             for (auto& k : inner_markers[j]) {
                 k = mapping.find(k)->second;
             }
