@@ -782,6 +782,44 @@ TEST_F(ClassifyIntegratedOtherTest, QuantileFail) {
     EXPECT_TRUE(msg.find("[0, 1]") != std::string::npos);
 }
 
+TEST_F(ClassifyIntegratedOtherTest, NoGenes) {
+    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
+
+    singlepp::TrainSingleOptions bopt;
+    bopt.top = 0;
+    prebuilts.reserve(nrefs); 
+    integrated_inputs.reserve(nrefs);
+
+    for (size_t r = 0; r < nrefs; ++r) {
+        const auto& refmat = *(references[r]);
+        const auto labptr = labels[r].data();
+        prebuilts.push_back(singlepp::train_single(refmat, labptr, markers[r], bopt));
+        integrated_inputs.push_back(singlepp::prepare_integrated_input(refmat, labptr, prebuilts.back()));
+    }
+
+    singlepp::TrainIntegratedOptions iopt;
+    auto integrated = singlepp::train_integrated(integrated_inputs, iopt);
+
+    size_t ntest = 20;
+    auto test = spawn_matrix(ngenes, ntest, /* seed = */ 69);
+
+    auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ 70);
+    auto chosen_ptrs = pointerize_best_choices(chosen);
+
+    singlepp::ClassifyIntegratedOptions<double> copt;
+    auto pred = singlepp::classify_integrated(*test, chosen_ptrs, integrated, copt);
+
+    std::vector<int> best(ntest); 
+    EXPECT_EQ(pred.best, best);
+    std::vector<double> delta(ntest); 
+    EXPECT_EQ(pred.delta, delta);
+    std::vector<double> scores(ntest, 1); 
+    for (const auto& sc : pred.scores) {
+        EXPECT_EQ(sc, scores);
+    }
+}
+
 /********************************************/
 
 TEST(ClassifyIntegrated, FineTuneSparse) {

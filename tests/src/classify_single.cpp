@@ -593,7 +593,8 @@ TEST(ClassifySingle, Mismatch) {
     singlepp::TrainSingleOptions bopt;
     auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
 
-    auto test = spawn_matrix(ngenes + 10, nrefs, /* seed = */ 25);
+    size_t ntest = 20;
+    auto test = spawn_matrix(ngenes + 10, ntest, /* seed = */ 25);
     singlepp::ClassifySingleOptions<double> copt;
     copt.quantile = 1;
 
@@ -620,7 +621,8 @@ TEST(ClassifySingle, QuantileFail) {
     singlepp::TrainSingleOptions bopt;
     auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
 
-    auto test = spawn_matrix(ngenes, nrefs, /* seed = */ 33333);
+    size_t ntest = 20;
+    auto test = spawn_matrix(ngenes, ntest, /* seed = */ 33333);
     singlepp::ClassifySingleOptions<double> copt;
 
     copt.quantile = -1;
@@ -640,4 +642,96 @@ TEST(ClassifySingle, QuantileFail) {
         msg = e.what();
     }
     EXPECT_TRUE(msg.find("[0, 1]") != std::string::npos);
+}
+
+TEST(ClassifySingle, NoGenes) {
+    // Actually no genes.
+    {
+        size_t ngenes = 0;
+        size_t nlabels = 3;
+        size_t nrefs = 10;
+
+        auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 77);
+        auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 777);
+        auto markers = mock_markers<int>(nlabels, 20, ngenes, /* seed = */ 7777); 
+
+        singlepp::TrainSingleOptions bopt;
+        auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
+        EXPECT_EQ(trained.subset().size(), 0);
+
+        size_t ntest = 20;
+        auto test = spawn_matrix(ngenes, ntest, /* seed = */ 77777);
+        singlepp::ClassifySingleOptions<double> copt;
+        auto res = singlepp::classify_single<int>(*test, trained, copt);
+
+        std::vector<int> best(ntest); 
+        EXPECT_EQ(res.best, best);
+        std::vector<double> delta(ntest); 
+        EXPECT_EQ(res.delta, delta);
+        std::vector<double> scores(ntest, 1); 
+        for (const auto& sc : res.scores) {
+            EXPECT_EQ(sc, scores);
+        }
+    }
+
+    // No genes because top = 0.
+    {
+        size_t ngenes = 100;
+        size_t nlabels = 3;
+        size_t nrefs = 10;
+
+        auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 77);
+        auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 777);
+        auto markers = mock_markers<int>(nlabels, 20, ngenes, /* seed = */ 7777); 
+
+        singlepp::TrainSingleOptions bopt;
+        bopt.top = 0;
+        auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
+        EXPECT_EQ(trained.subset().size(), 0);
+
+        size_t ntest = 20;
+        auto test = spawn_matrix(ngenes, ntest, /* seed = */ 77777);
+        singlepp::ClassifySingleOptions<double> copt;
+        auto res = singlepp::classify_single<int>(*test, trained, copt);
+
+        std::vector<int> best(ntest); 
+        EXPECT_EQ(res.best, best);
+        std::vector<double> delta(ntest); 
+        EXPECT_EQ(res.delta, delta);
+        std::vector<double> scores(ntest, 1); 
+        for (const auto& sc : res.scores) {
+            EXPECT_EQ(sc, scores);
+        }
+    }
+}
+
+TEST(ClassifySingle, SingleLabel) {
+    size_t ngenes = 100;
+    size_t nlabels = 1;
+    size_t nrefs = 10;
+
+    auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 88);
+    auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 888);
+    auto markers = mock_markers<int>(nlabels, 20, ngenes, /* seed = */ 8888); 
+
+    singlepp::TrainSingleOptions bopt;
+    auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
+
+    size_t ntest = 20;
+    auto test = spawn_matrix(ngenes, ntest, /* seed = */ 88888);
+    singlepp::ClassifySingleOptions<double> copt;
+    auto res = singlepp::classify_single<int>(*test, trained, copt);
+
+    std::vector<int> best(ntest); 
+    EXPECT_EQ(res.best, best);
+    for (auto d : res.delta) {
+        EXPECT_TRUE(std::isnan(d));
+    }
+
+    // Same without fine-tuning, for some coverage of find_best_and_delta.
+    copt.fine_tune = false;
+    res = singlepp::classify_single<int>(*test, trained, copt);
+    for (auto d : res.delta) {
+        EXPECT_TRUE(std::isnan(d));
+    }
 }
