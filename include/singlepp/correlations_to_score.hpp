@@ -32,17 +32,29 @@ PrecomputedQuantileDetails<Index_, Float_> precompute_quantile_details(const Ind
     assert(num > 0);
     assert(quantile >= 0);
     assert(quantile <= 1);
-
-    // Check that we can safely cast to/from Index_ and Float_.
-    const Float_ denom = sanisizer::to_float<Float_>(num - 1); 
-    const Float_ fractional_index = denom * (1 - quantile);
-    const Float_ left_index = std::floor(fractional_index);
-    const Float_ right_index = std::ceil(fractional_index);
-
     PrecomputedQuantileDetails<Index_, Float_> output;
-    output.right_index = right_index; // cast back to Index_ is safe.
-    output.find_left = (left_index != right_index);
-    output.right_prop = fractional_index - left_index;
+
+    // Adapted from quickstats::SingleQuantileFixedNumber.
+    const Index_ num_m1 = num - 1;
+
+    const Float_ raw = static_cast<Float_>(num_m1) * static_cast<Float_>(1 - quantile);
+    const Float_ upper_index = std::ceil(raw);
+    const Float_ lower_index = std::floor(raw);
+
+    // Protect the cast from conversion imprecision between size_t and Float_,
+    // e.g., if it rounds up or if it converts it to an Inf.
+    const auto upper_san = sanisizer::from_float<Index_>(upper_index);
+    if (upper_san <= num_m1) {
+        output.right_index = upper_san;
+        output.right_prop = raw - lower_index;
+        output.find_left = (upper_index != lower_index);
+    } else {
+        // Just gently cap it at the maximum value.
+        output.right_index = num_m1;
+        output.right_prop = 0;
+        output.find_left = false;
+    }
+
     return output;
 }
 

@@ -75,3 +75,29 @@ TEST(CorrelationsToScore, Ties) {
     EXPECT_FLOAT_EQ(l2_to_score(l2, 0.9), 0.25);
     EXPECT_FLOAT_EQ(l2_to_score(l2, 1.0), 0.3);
 }
+
+TEST(CorrelationsToScore, FloatConversion) {
+    // Check that we behave correctly if the conversion of 'len - 1' to a single-precision float is successful but inexact,
+    // such that it rounds up, and then when we convert back, the final value exceeds 'len - 1'.
+    int inaccurate = 0;
+    std::vector<float> non_zero_values(1000, 123);
+
+    for (int i = 0; i < 100; ++i) {
+        std::int32_t x = i + static_cast<std::int32_t>(1e8);
+
+        // Check that it's actually inexact.
+        auto x_m1 = x - 1;
+        float y = x_m1;
+        std::int32_t x_back = y;
+        const bool current_inexact = (x_m1 < x_back);
+        inaccurate += current_inexact;
+
+        auto qdeets = singlepp::precompute_quantile_details<std::int32_t, float>(x, 0);
+        if (current_inexact) {
+            EXPECT_EQ(qdeets.right_index, x_m1);
+            EXPECT_FALSE(qdeets.find_left);
+        }
+    }
+
+    EXPECT_GT(inaccurate, 0);
+}
