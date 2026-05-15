@@ -1,7 +1,7 @@
 var searchData=
 [
   ['manhattandistance_0',['ManhattanDistance',['https://knncolle.github.io/knncolle/classknncolle_1_1ManhattanDistance.html',1,'knncolle']]],
-  ['markers_1',['markers',['../classsinglepp_1_1TrainedSingle.html#ae61baab180c8d0e813e1170d774334cb',1,'singlepp::TrainedSingle']]],
+  ['markers_1',['markers',['../classsinglepp_1_1TrainedSingle.html#a2608f2bf50b0800758a662c80d9ed386',1,'singlepp::TrainedSingle']]],
   ['markers_2ehpp_2',['Markers.hpp',['../Markers_8hpp.html',1,'']]],
   ['matrix_3',['Matrix',['https://knncolle.github.io/knncolle/classknncolle_1_1Matrix.html',1,'knncolle']]],
   ['matrix_2ehpp_4',['Matrix.hpp',['https://knncolle.github.io/knncolle/Matrix_8hpp.html',1,'']]],

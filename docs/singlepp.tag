@@ -286,10 +286,10 @@
       <arglist>() const</arglist>
     </member>
     <member kind="function">
-      <type>const Markers&lt; Index_ &gt; &amp;</type>
+      <type>const PairwiseMarkers&lt; Index_ &gt; &amp;</type>
       <name>markers</name>
       <anchorfile>classsinglepp_1_1TrainedSingle.html</anchorfile>
-      <anchor>ae61baab180c8d0e813e1170d774334cb</anchor>
+      <anchor>a2608f2bf50b0800758a662c80d9ed386</anchor>
       <arglist>() const</arglist>
     </member>
     <member kind="function">
@@ -438,22 +438,22 @@
       <type>TrainedSingle&lt; Index_, Float_ &gt;</type>
       <name>train_single</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>a5f8f8106b91cfe79435b20c9b38e500c</anchor>
-      <arglist>(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, Markers&lt; Index_ &gt; markers, const TrainSingleOptions &amp;options)</arglist>
+      <anchor>a1c482c08a1cfd9a4eb0ff5b08314ed7e</anchor>
+      <arglist>(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, PairwiseMarkers&lt; Index_ &gt; markers, const TrainSingleOptions &amp;options)</arglist>
     </member>
     <member kind="function">
       <type>TrainedSingle&lt; Index_, Float_ &gt;</type>
       <name>train_single</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>a57bd97f7a5457851cad90c7e9d27fa47</anchor>
-      <arglist>(Index_ test_nrow, const Intersection&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, Markers&lt; Index_ &gt; markers, std::vector&lt; Index_ &gt; *ref_subset, const TrainSingleOptions &amp;options)</arglist>
+      <anchor>abdbc69eeb6b200b23176e77e2a70cd3b</anchor>
+      <arglist>(Index_ test_nrow, const Intersection&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, PairwiseMarkers&lt; Index_ &gt; markers, std::vector&lt; Index_ &gt; *ref_subset, const TrainSingleOptions &amp;options)</arglist>
     </member>
     <member kind="function">
       <type>TrainedSingle&lt; Index_, Float_ &gt;</type>
       <name>train_single</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>a1c98a3333a1e0ca3cc16acd8aae7e054</anchor>
-      <arglist>(Index_ test_nrow, const Id_ *test_id, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Id_ *ref_id, const Label_ *labels, Markers&lt; Index_ &gt; markers, std::vector&lt; Index_ &gt; *ref_subset, const TrainSingleOptions &amp;options)</arglist>
+      <anchor>aa2fa68af74db6ddf82a164d830fd73c2</anchor>
+      <arglist>(Index_ test_nrow, const Id_ *test_id, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Id_ *ref_id, const Label_ *labels, PairwiseMarkers&lt; Index_ &gt; markers, std::vector&lt; Index_ &gt; *ref_subset, const TrainSingleOptions &amp;options)</arglist>
     </member>
     <member kind="function">
       <type>void</type>

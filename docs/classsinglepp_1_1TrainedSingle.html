@@ -113,8 +113,8 @@ $(function(){ initResizable(false); });
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a1948f96fca5b3aaf7215d0272ba9d2a6" id="r_a1948f96fca5b3aaf7215d0272ba9d2a6"><td class="memItemLeft" align="right" valign="top">Index_&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1948f96fca5b3aaf7215d0272ba9d2a6">test_nrow</a> () const</td></tr>
 <tr class="separator:a1948f96fca5b3aaf7215d0272ba9d2a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae61baab180c8d0e813e1170d774334cb" id="r_ae61baab180c8d0e813e1170d774334cb"><td class="memItemLeft" align="right" valign="top">const Markers&lt; Index_ &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae61baab180c8d0e813e1170d774334cb">markers</a> () const</td></tr>
-<tr class="separator:ae61baab180c8d0e813e1170d774334cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2608f2bf50b0800758a662c80d9ed386" id="r_a2608f2bf50b0800758a662c80d9ed386"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="namespacesinglepp.html#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers</a>&lt; Index_ &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2608f2bf50b0800758a662c80d9ed386">markers</a> () const</td></tr>
+<tr class="separator:a2608f2bf50b0800758a662c80d9ed386"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1669f0a8d2e082a9f62d05689650f23a" id="r_a1669f0a8d2e082a9f62d05689650f23a"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; Index_ &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1669f0a8d2e082a9f62d05689650f23a">subset</a> () const</td></tr>
 <tr class="separator:a1669f0a8d2e082a9f62d05689650f23a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acd1d604b21e8deb287ccd5210b431bf8" id="r_acd1d604b21e8deb287ccd5210b431bf8"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acd1d604b21e8deb287ccd5210b431bf8">num_labels</a> () const</td></tr>
@@ -125,7 +125,7 @@ Public Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename Index_, typename Float_&gt;<br />
 class singlepp::TrainedSingle&lt; Index_, Float_ &gt;</div><p>Classifier trained from a single reference. </p>
-<p>Instances of this class should not be directly constructed, but instead returned by calling <code><a class="el" href="namespacesinglepp.html#a5f8f8106b91cfe79435b20c9b38e500c">train_single()</a></code> on a reference dataset. Each instance can be used in <code><a class="el" href="namespacesinglepp.html#ae8772734badf4a09d6c285b9b98295ec" title="Implements the SingleR algorithm for automated annotation of single-cell RNA-seq data.">classify_single()</a></code> with a test dataset that has the same number and order of genes as the reference dataset.</p>
+<p>Instances of this class should not be directly constructed, but instead returned by calling <code><a class="el" href="namespacesinglepp.html#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single()</a></code> on a reference dataset. Each instance can be used in <code><a class="el" href="namespacesinglepp.html#ae8772734badf4a09d6c285b9b98295ec" title="Implements the SingleR algorithm for automated annotation of single-cell RNA-seq data.">classify_single()</a></code> with a test dataset that has the same number and order of genes as the reference dataset.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Index_</td><td>Integer type for the row/column indices of the matrix. </td></tr>
@@ -134,8 +134,8 @@ class singlepp::TrainedSingle&lt; Index_, Float_ &gt;</div><p>Classifier trained
   </dd>
 </dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="ae61baab180c8d0e813e1170d774334cb" name="ae61baab180c8d0e813e1170d774334cb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae61baab180c8d0e813e1170d774334cb">&#9670;&#160;</a></span>markers()</h2>
+<a id="a2608f2bf50b0800758a662c80d9ed386" name="a2608f2bf50b0800758a662c80d9ed386"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2608f2bf50b0800758a662c80d9ed386">&#9670;&#160;</a></span>markers()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -146,7 +146,7 @@ template&lt;typename Index_ , typename Float_ &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const Markers&lt; Index_ &gt; &amp; <a class="el" href="classsinglepp_1_1TrainedSingle.html">singlepp::TrainedSingle</a>&lt; Index_, Float_ &gt;::markers </td>
+          <td class="memname">const <a class="el" href="namespacesinglepp.html#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers</a>&lt; Index_ &gt; &amp; <a class="el" href="classsinglepp_1_1TrainedSingle.html">singlepp::TrainedSingle</a>&lt; Index_, Float_ &gt;::markers </td>
           <td>(</td>
           <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
           <td> const</td>
@@ -158,7 +158,7 @@ template&lt;typename Index_ , typename Float_ &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>A vector of vectors of vectors of ranked marker genes to be used in the classification. In the innermost vectors, each value is an index into the subset vector (see <code><a class="el" href="#a1669f0a8d2e082a9f62d05689650f23a">subset()</a></code>), e.g., <code><a class="el" href="#a1669f0a8d2e082a9f62d05689650f23a">subset()</a>[<a class="el" href="#ae61baab180c8d0e813e1170d774334cb">markers()</a>[2][1].front()]</code> is the row index of the first marker of the third label over the first label. The set of marker genes is a subset of the input <code>markers</code> used in <code><a class="el" href="namespacesinglepp.html#a5f8f8106b91cfe79435b20c9b38e500c">train_single()</a></code>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A vector of vectors of vectors of ranked marker genes to be used in the classification. In the innermost vectors, each value is an index into the subset vector (see <code><a class="el" href="#a1669f0a8d2e082a9f62d05689650f23a">subset()</a></code>), e.g., <code><a class="el" href="#a1669f0a8d2e082a9f62d05689650f23a">subset()</a>[<a class="el" href="#a2608f2bf50b0800758a662c80d9ed386">markers()</a>[2][1].front()]</code> is the row index of the first marker of the third label over the first label. The set of marker genes is a subset of the input <code>markers</code> used in <code><a class="el" href="namespacesinglepp.html#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single()</a></code>. </dd></dl>
 
 </div>
 </div>
