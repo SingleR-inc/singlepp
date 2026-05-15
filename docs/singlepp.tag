@@ -336,13 +336,6 @@
     <name>singlepp::TrainSingleOptions</name>
     <filename>structsinglepp_1_1TrainSingleOptions.html</filename>
     <member kind="variable">
-      <type>std::optional&lt; std::size_t &gt;</type>
-      <name>top</name>
-      <anchorfile>structsinglepp_1_1TrainSingleOptions.html</anchorfile>
-      <anchor>a410bc005494a5a2c3484cfb900a02cad</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="variable">
       <type>int</type>
       <name>num_threads</name>
       <anchorfile>structsinglepp_1_1TrainSingleOptions.html</anchorfile>

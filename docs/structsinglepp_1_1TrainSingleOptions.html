@@ -111,8 +111,6 @@ $(function(){ initResizable(false); });
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:a410bc005494a5a2c3484cfb900a02cad" id="r_a410bc005494a5a2c3484cfb900a02cad"><td class="memItemLeft" align="right" valign="top">std::optional&lt; std::size_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a410bc005494a5a2c3484cfb900a02cad">top</a></td></tr>
-<tr class="separator:a410bc005494a5a2c3484cfb900a02cad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a76c303868ef63d76fd157ad80974d3a6" id="r_a76c303868ef63d76fd157ad80974d3a6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a76c303868ef63d76fd157ad80974d3a6">num_threads</a> = 1</td></tr>
 <tr class="separator:a76c303868ef63d76fd157ad80974d3a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -131,23 +129,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Number of threads to use. The parallelization scheme is determined by <code>tatami::parallelize()</code>. </p>
-
-</div>
-</div>
-<a id="a410bc005494a5a2c3484cfb900a02cad" name="a410bc005494a5a2c3484cfb900a02cad"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a410bc005494a5a2c3484cfb900a02cad">&#9670;&#160;</a></span>top</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::optional&lt;std::size_t&gt; singlepp::TrainSingleOptions::top</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Number of top markers to use from each pairwise comparison between labels. Larger values improve the stability of the correlations at the cost of increasing noise and computational work.</p>
-<p>When the test and reference datasets do not have the same features, the specified number of top markers is taken from the intersection of features. This avoids that some markers will be selected even if not all genes in <code>markers</code> are present in the test dataset.</p>
-<p>When unset (the default), <code><a class="el" href="namespacesinglepp.html#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single()</a></code> will use all supplied markers. This is useful in situations where the supplied markers have already been curated. </p>
 
 </div>
 </div>
