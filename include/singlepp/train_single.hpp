@@ -89,7 +89,7 @@ public:
      */
     TrainedSingle(
         Index_ test_nrow,
-        Markers<Index_> markers,
+        PairwiseMarkers<Index_> markers,
         std::vector<Index_> subset,
         BuiltReference<Index_, Float_> built
     ) : 
@@ -104,7 +104,7 @@ public:
 
 private:
     Index_ my_test_nrow;
-    Markers<Index_> my_markers;
+    PairwiseMarkers<Index_> my_markers;
     std::vector<Index_> my_subset;
     BuiltReference<Index_, Float_> my_built;
 
@@ -122,7 +122,7 @@ public:
      * e.g., `subset()[markers()[2][1].front()]` is the row index of the first marker of the third label over the first label.
      * The set of marker genes is a subset of the input `markers` used in `train_single()`. 
      */
-    const Markers<Index_>& markers() const {
+    const PairwiseMarkers<Index_>& markers() const {
         return my_markers;
     }
 
@@ -187,7 +187,7 @@ template<typename Float_ = double, typename Value_, typename Index_, typename La
 TrainedSingle<Index_, Float_> train_single(
     const tatami::Matrix<Value_, Index_>& ref,
     const Label_* labels,
-    Markers<Index_> markers,
+    PairwiseMarkers<Index_> markers,
     const TrainSingleOptions& options
 ) {
     auto subset = internal::subset_to_markers(markers, options.top);
@@ -232,7 +232,7 @@ TrainedSingle<Index_, Float_> train_single(
     const Intersection<Index_>& intersection,
     const tatami::Matrix<Value_, Index_>& ref, 
     const Label_* labels,
-    Markers<Index_> markers,
+    PairwiseMarkers<Index_> markers,
     std::vector<Index_>* ref_subset,
     const TrainSingleOptions& options
 ) {
@@ -283,7 +283,7 @@ TrainedSingle<Index_, Float_> train_single(
     const tatami::Matrix<Value_, Index_>& ref, 
     const Id_* ref_id, 
     const Label_* labels,
-    Markers<Index_> markers,
+    PairwiseMarkers<Index_> markers,
     std::vector<Index_>* ref_subset,
     const TrainSingleOptions& options
 ) {

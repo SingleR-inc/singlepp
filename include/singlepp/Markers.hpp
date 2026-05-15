@@ -8,7 +8,7 @@
 /**
  * @file Markers.hpp
  *
- * @brief Define the `Markers` typedef.
+ * @brief Define type aliases for marker lists.
  */
 
 namespace singlepp {

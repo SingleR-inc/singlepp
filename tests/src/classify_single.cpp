@@ -29,7 +29,7 @@ TEST_P(ClassifySingleSimpleTest, Simple) {
     auto refs = spawn_matrix(ngenes, nrefs, /* seed= */ base_seed + 100);
     auto labels = spawn_labels(nrefs, nlabels, /* seed = */ base_seed + 1000);
 
-    auto markers = mock_markers<int>(nlabels, 50, ngenes, /* seed = */ base_seed + 789); 
+    auto markers = mock_pairwise_markers<int>(nlabels, 50, ngenes, /* seed = */ base_seed + 789); 
 
     // Performing classification without fine-tuning for a reference comparison.
     singlepp::TrainSingleOptions bopt;
@@ -104,7 +104,7 @@ TEST_P(ClassifySingleSimpleTest, Sparse) {
 
     size_t ngenes = 250;
     size_t nlabels = 4;
-    auto markers = mock_markers<int>(nlabels, 50, ngenes, /* seed = */ base_seed + 69); 
+    auto markers = mock_pairwise_markers<int>(nlabels, 50, ngenes, /* seed = */ base_seed + 69); 
 
     int ntest = 11;
     auto test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ base_seed + 42, /* density = */ 0.24);
@@ -182,7 +182,7 @@ TEST_P(ClassifySingleIntersectTest, Intersect) {
     size_t nrefs = 50;
     auto refs = spawn_matrix(right.size(), nrefs, /* seed = */ base_seed + 888);
     auto labels = spawn_labels(nrefs, nlabels, /* seed = */ base_seed + 999);
-    auto markers = mock_markers<int>(nlabels, 50, right.size(), /* seed = */ base_seed + 69); 
+    auto markers = mock_pairwise_markers<int>(nlabels, 50, right.size(), /* seed = */ base_seed + 69); 
 
     // Computing the observed result.
     singlepp::TrainSingleOptions bopt;
@@ -270,7 +270,7 @@ TEST_P(ClassifySingleIntersectTest, Sparse) {
     const auto& right = ids.second;
 
     size_t nlabels = 5;
-    auto markers = mock_markers<int>(nlabels, 20, right.size(), /* seed = */ base_seed + 69);
+    auto markers = mock_pairwise_markers<int>(nlabels, 20, right.size(), /* seed = */ base_seed + 69);
 
     // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
     int ntest = 11;
@@ -325,7 +325,7 @@ TEST(FineTuneSingle, EdgeCases) {
     size_t nlabels = 3;
     size_t nprofiles = 50;
 
-    auto markers = mock_markers<int>(nlabels, 10, ngenes, /* seed = */ 20); 
+    auto markers = mock_pairwise_markers<int>(nlabels, 10, ngenes, /* seed = */ 20); 
     auto reference = spawn_matrix(ngenes, nprofiles, /* seed = */ 200);
     auto labels = spawn_labels(nprofiles, nlabels, /* seed = */ 2000);
 
@@ -364,7 +364,7 @@ TEST(FineTuneSingle, ExactRecovery) {
     size_t nlabels = 3;
     size_t nprofiles = 50;
 
-    auto markers = mock_markers<int>(nlabels, 10, ngenes, /* seed = */ 30); 
+    auto markers = mock_pairwise_markers<int>(nlabels, 10, ngenes, /* seed = */ 30); 
     auto reference = spawn_matrix(ngenes, nprofiles, /* seed = */ 300);
     auto labels = spawn_labels(nprofiles, nlabels, /* seed = */ 3000);
 
@@ -401,7 +401,7 @@ TEST(FineTuneSingle, Diagonal) {
     size_t nprofiles = 50;
 
     // This time there are only markers on the diagonals.
-    auto markers = mock_markers_diagonal<int>(nlabels, 10, ngenes, /* seed = */ 40); 
+    auto markers = mock_diagonal_markers<int>(nlabels, 10, ngenes, /* seed = */ 40); 
     auto reference = spawn_matrix(ngenes, nprofiles, /* seed = */ 400);
     auto labels = spawn_labels(nprofiles, nlabels, /* seed = */ 4000);
 
@@ -434,7 +434,7 @@ TEST(FineTuneSingle, Sparse) {
     size_t nlabels = 4;
     size_t nprofiles = 50;
 
-    auto markers = mock_markers<int>(nlabels, 10, ngenes, /* seed = */ 4060); 
+    auto markers = mock_pairwise_markers<int>(nlabels, 10, ngenes, /* seed = */ 4060); 
     auto labels = spawn_labels(nprofiles, nlabels, /* seed = */ 4070);
 
     auto new_reference = spawn_sparse_matrix(ngenes, nprofiles, /* seed = */ 4080, /* density = */ 0.3);
@@ -504,7 +504,7 @@ TEST(ClassifySingle, Simple) {
     auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 11);
     auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 111);
 
-    auto markers = mock_markers<int>(nlabels, 50, ngenes, /* seed = */ 1111); 
+    auto markers = mock_pairwise_markers<int>(nlabels, 50, ngenes, /* seed = */ 1111); 
 
     // Checking that we get an exact match when we use the references
     // directly for annotation. We set quantile = 1 so that a perfect
@@ -529,7 +529,7 @@ TEST(ClassifySingle, NoShared) {
     auto mat = spawn_matrix(ngenes, 10, /* seed = */ 100);
     auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 101);
     auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 102);
-    auto markers = mock_markers<int>(nlabels, 50, ngenes, /* seed = */ 103); 
+    auto markers = mock_pairwise_markers<int>(nlabels, 50, ngenes, /* seed = */ 103); 
 
     std::vector<int> left(ngenes), right(ngenes);
     std::iota(left.begin(), left.end(), 0);
@@ -563,7 +563,7 @@ TEST(ClassifySingle, Nulls) {
     auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 43);
     auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 44);
 
-    auto markers = mock_markers<int>(nlabels, 50, ngenes,  /* seed = */ 45); 
+    auto markers = mock_pairwise_markers<int>(nlabels, 50, ngenes,  /* seed = */ 45); 
 
     singlepp::TrainSingleOptions bopt;
     auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
@@ -588,7 +588,7 @@ TEST(ClassifySingle, Mismatch) {
 
     auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 22);
     auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 23);
-    auto markers = mock_markers<int>(nlabels, 50, ngenes, /* seed = */ 24); 
+    auto markers = mock_pairwise_markers<int>(nlabels, 50, ngenes, /* seed = */ 24); 
 
     singlepp::TrainSingleOptions bopt;
     auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
@@ -616,7 +616,7 @@ TEST(ClassifySingle, QuantileFail) {
 
     auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 33);
     auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 333);
-    auto markers = mock_markers<int>(nlabels, 20, ngenes, /* seed = */ 3333); 
+    auto markers = mock_pairwise_markers<int>(nlabels, 20, ngenes, /* seed = */ 3333); 
 
     singlepp::TrainSingleOptions bopt;
     auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
@@ -653,7 +653,7 @@ TEST(ClassifySingle, NoGenes) {
 
         auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 77);
         auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 777);
-        auto markers = mock_markers<int>(nlabels, 20, ngenes, /* seed = */ 7777); 
+        auto markers = mock_pairwise_markers<int>(nlabels, 20, ngenes, /* seed = */ 7777); 
 
         singlepp::TrainSingleOptions bopt;
         auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
@@ -682,7 +682,7 @@ TEST(ClassifySingle, NoGenes) {
 
         auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 77);
         auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 777);
-        auto markers = mock_markers<int>(nlabels, 20, ngenes, /* seed = */ 7777); 
+        auto markers = mock_pairwise_markers<int>(nlabels, 20, ngenes, /* seed = */ 7777); 
 
         singlepp::TrainSingleOptions bopt;
         bopt.top = 0;
@@ -712,7 +712,7 @@ TEST(ClassifySingle, SingleLabel) {
 
     auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 88);
     auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 888);
-    auto markers = mock_markers<int>(nlabels, 20, ngenes, /* seed = */ 8888); 
+    auto markers = mock_pairwise_markers<int>(nlabels, 20, ngenes, /* seed = */ 8888); 
 
     singlepp::TrainSingleOptions bopt;
     auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);

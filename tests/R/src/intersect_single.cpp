@@ -21,7 +21,7 @@ Rcpp::List intersect_single(
     auto parsed_test = tatami::DenseColumnMatrix<double, int>(test.nrow(), test.ncol(), std::vector<double>(test.begin(), test.end()));
     auto parsed_ref = tatami::DenseColumnMatrix<double, int>(ref.nrow(), ref.ncol(), std::vector<double>(ref.begin(), ref.end()));
     auto labels2 = setup_labels(labels);
-    auto markers2 = setup_markers(markers);
+    auto markers2 = setup_pairwise_markers(markers);
 
     // Setting up the outputs.
     size_t mNC = parsed_test.ncol();
