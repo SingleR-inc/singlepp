@@ -11,8 +11,8 @@
 class IntegratedTestCore {
 protected:
     inline static std::vector<std::shared_ptr<tatami::Matrix<double, int> > > references;
+    inline static std::vector<int> num_labels;
     inline static std::vector<std::vector<int> > labels;
-    inline static std::vector<singlepp::Markers<int> > markers;
 
     inline static size_t ngenes = 2000;
     inline static size_t nsamples = 50;
@@ -26,14 +26,14 @@ protected:
         for (std::size_t r = 0; r < nrefs; ++r) {
             unsigned long long seed = r * 1000u;
             std::size_t nlabels = 3 + r;
+            num_labels.push_back(nlabels);
             references.push_back(spawn_matrix(ngenes, nsamples, /* seed = */ seed));
             labels.push_back(spawn_labels(nsamples, nlabels, /* seed = */ seed * 2));
-            markers.push_back(mock_markers<int>(nlabels, 50, ngenes, /* seed = */ seed * 3));
         }
     }
 
 protected:
-    static std::vector<int> simulate_ids(size_t ngenes, int seed, int placeholder) {
+    static std::vector<int> simulate_ids(std::size_t ngenes, unsigned long long seed, int placeholder) {
         std::vector<int> keep;
         keep.reserve(ngenes);
         std::mt19937_64 rng(seed);
@@ -48,24 +48,35 @@ protected:
     }
 
     static constexpr int MISSING_TEST_ID = -2;
-    static std::vector<int> simulate_test_ids(size_t ngenes, int seed) {
+    static std::vector<int> simulate_test_ids(std::size_t ngenes, unsigned long long seed) {
         return simulate_ids(ngenes, seed, MISSING_TEST_ID); // -2 => unique to the test dataset.
     }
 
     static constexpr int MISSING_REF_ID = -1;
-    static std::vector<int> simulate_ref_ids(size_t ngenes, int seed) {
+    static std::vector<int> simulate_ref_ids(std::size_t ngenes, unsigned long long seed) {
         return simulate_ids(ngenes, seed, MISSING_REF_ID); // -1 => unique to the reference(s), i.e., won't overlap with the test.
     }
 };
 
-template<class Prebuilt_>
-static std::vector<std::vector<int> > mock_best_choices(std::size_t ntest, const std::vector<Prebuilt_>& prebuilts, unsigned long long seed) {
-    const auto nrefs = prebuilts.size();
+static std::vector<std::vector<int> > simulate_markers(std::size_t nlabels, std::size_t ngenes, std::size_t nmarkers, unsigned long long seed) {
+    std::vector<std::vector<int> > output(nlabels);
+    std::mt19937_64 rng(seed);
+    for (auto& o : output) {
+        o.reserve(nmarkers);
+        for (std::size_t m = 0; m < nmarkers; ++m) {
+            o.push_back(rng() % ngenes); // duplicates will just be absorbed.
+        }
+    }
+    return output;
+}
+
+static std::vector<std::vector<int> > mock_best_choices(std::size_t ntest, const std::vector<int>& num_labels, unsigned long long seed) {
+    const auto nrefs = num_labels.size();
     std::vector<std::vector<int> > chosen(nrefs);
 
     std::mt19937_64 rng(seed);
     for (std::size_t r = 0; r < nrefs; ++r) {
-        const auto nlabels = prebuilts[r].markers().size();
+        const auto nlabels = num_labels[r]; 
         for (std::size_t t = 0; t < ntest; ++t) {
             chosen[r].push_back(rng() % nlabels);
         }
@@ -123,26 +134,21 @@ TEST_P(ClassifyIntegratedTest, Basic) {
     unsigned long long base_seed = ntop + quantile * 50u;
 
     // Creating the integrated set of references.
-    singlepp::TrainSingleOptions bopt;
-    bopt.top = ntop;
-
-    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
-    prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
+    std::vector<singlepp::PerLabelMarkers<int> > markers;
+    markers.reserve(nrefs);
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
     integrated_inputs.reserve(nrefs);
 
-    for (size_t r = 0; r < nrefs; ++r) {
-        const auto labptr = labels[r].data();
-        const auto& refmat = *(references[r]);
-        prebuilts.push_back(singlepp::train_single(refmat, labptr, markers[r], bopt));
-        integrated_inputs.push_back(singlepp::prepare_integrated_input(refmat, labptr, prebuilts.back()));
+    for (std::size_t r = 0; r < nrefs; ++r) {
+        markers.emplace_back(simulate_markers(num_labels[r], ngenes, /* markers = */ ntop, /* seed = */ 12 + r));
+        integrated_inputs.push_back(singlepp::prepare_integrated_input<double, int>(references[r], labels[r].data(), markers.back()));
     }
 
     singlepp::TrainIntegratedOptions iopt;
     auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
 
     // Mocking up some of the best choices.
-    auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ base_seed);
+    auto chosen = mock_best_choices(ntest, num_labels, /* seed = */ base_seed);
     auto chosen_ptrs = pointerize_best_choices(chosen);
 
     // Comparing the classify_integrated output to a reference calculation.
@@ -157,16 +163,11 @@ TEST_P(ClassifyIntegratedTest, Basic) {
         auto wrk = test->dense_column();
         std::vector<double> buffer(test->nrow());
 
-        for (size_t t = 0; t < ntest; ++t) {
+        for (std::size_t t = 0; t < ntest; ++t) {
             std::unordered_set<int> tmp;
-            for (size_t r = 0; r < prebuilts.size(); ++r) {
-                const auto& pre = prebuilts[r];
-                const auto& best_markers = pre.markers()[chosen[r][t]];
-                for (const auto& x : best_markers) {
-                    for (auto y : x) {
-                        tmp.insert(pre.subset()[y]);
-                    }
-                }
+            for (std::size_t r = 0; r < nrefs; ++r) {
+                const auto& curmarkers = markers[r][chosen[r][t]];
+                tmp.insert(curmarkers.begin(), curmarkers.end());
             }
             std::vector<int> universe(tmp.begin(), tmp.end());
             std::sort(universe.begin(), universe.end());
@@ -178,7 +179,7 @@ TEST_P(ClassifyIntegratedTest, Basic) {
             std::vector<double> all_scores;
             for (size_t r = 0; r < nrefs; ++r) {
                 double score = naive_score(scaled, by_labels[r][chosen[r][t]], references[r].get(), universe, quantile);
-                EXPECT_FLOAT_EQ(score, output.scores[r][t]);
+                EXPECT_LT(std::abs(score - output.scores[r][t]), 1e-12);
                 all_scores.push_back(score);
             }
 
@@ -211,34 +212,27 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
 
     // Creating the integrated set of references.
     auto test_ids = simulate_test_ids(ngenes, /* seed = */ base_seed * 20);
-    singlepp::TrainSingleOptions bopt;
-    bopt.top = ntop;
 
     std::vector<std::vector<int> > ref_ids;
     ref_ids.reserve(nrefs);
-    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
-    prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
-    std::vector<std::vector<int> > ref_subsets(nrefs);
+    std::vector<singlepp::PerLabelMarkers<int> > markers;
+    markers.reserve(nrefs);
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
     integrated_inputs.reserve(nrefs);
 
     for (size_t r = 0; r < nrefs; ++r) {
-        size_t seed = base_seed * 20 + r * 321;
+        unsigned long long seed = base_seed * 20 + r * 321;
         ref_ids.push_back(simulate_ref_ids(ngenes, seed + 3));
         const auto refptr = ref_ids.back().data();
-
-        const auto testptr = test_ids.data();
-        const auto labptr = labels[r].data();
-        const auto& refmat = *(references[r]);
-        prebuilts.push_back(singlepp::train_single<double, int>(ngenes, testptr, refmat, refptr, labptr, markers[r], &(ref_subsets[r]), bopt));
-        integrated_inputs.push_back(singlepp::prepare_integrated_input<int>(ngenes, testptr, refmat, refptr, labptr, prebuilts.back()));
+        markers.emplace_back(simulate_markers(num_labels[r], ngenes, /* markers = */ ntop, /* seed = */ seed + 5));
+        integrated_inputs.push_back(singlepp::prepare_integrated_input<int, int, double>(ngenes, test_ids.data(), references[r], refptr, labels[r].data(), markers.back()));
     }
 
     singlepp::TrainIntegratedOptions iopt;
     auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
 
     // Mocking up some of the best choices.
-    auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ base_seed + 2468);
+    auto chosen = mock_best_choices(ntest, num_labels, /* seed = */ base_seed + 2468);
     auto chosen_ptrs = pointerize_best_choices(chosen);
 
     // Comparing to a reference calculation.
@@ -274,17 +268,11 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
             // filtering it to only those genes that are present in all references.
             std::unordered_set<int> current_markers;
             for (std::size_t r = 0; r < nrefs; ++r) {
-                const auto& pre = prebuilts[r];
-                const auto& ref_subset = ref_subsets[r];
-                const auto& best_markers = pre.markers()[chosen[r][t]];
-
-                for (const auto& x : best_markers) {
-                    for (auto y : x) {
-                        const auto yref = ref_subset[y];
-                        const auto aIt = availability.find(yref);
-                        if (aIt != availability.end() && aIt->second == nrefs) {
-                            current_markers.insert(yref);
-                        }
+                const auto& best_markers = markers[r][chosen[r][t]];
+                for (const auto& y : best_markers) {
+                    const auto aIt = availability.find(y);
+                    if (aIt != availability.end() && aIt->second == nrefs) {
+                        current_markers.insert(y);
                     }
                 }
             }
@@ -312,7 +300,7 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
                 auto scaled = quick_scaled_ranks(buffer, universe_test);
 
                 double score = naive_score(scaled, by_labels[r][chosen[r][t]], references[r].get(), universe_ref, quantile);
-                EXPECT_FLOAT_EQ(score, output.scores[r][t]);
+                EXPECT_LT(std::abs(score - output.scores[r][t]), 1e-12);
                 all_scores.push_back(score);
             }
 
@@ -349,60 +337,43 @@ TEST_P(ClassifyIntegratedTest, IntersectedComparison) {
     std::vector<int> test_ids(ngenes);
     std::iota(test_ids.begin(), test_ids.end(), 0);
 
-    singlepp::TrainSingleOptions bopt;
-    bopt.top = ntop;
-    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
-    prebuilts.reserve(nrefs);
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
     integrated_inputs.reserve(nrefs);
-
-    std::vector<std::shared_ptr<tatami::Matrix<double, int> > > references_reorg;
-    references_reorg.reserve(nrefs);
-    std::vector<singlepp::TrainedSingle<int, double> > prebuilts_reorg;
-    prebuilts_reorg.reserve(nrefs);
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs_reorg;
     integrated_inputs_reorg.reserve(nrefs);
-
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs_shuffled;
     integrated_inputs_shuffled.reserve(nrefs);
-    std::vector<singlepp::Intersection<int> > intersections_shuffled;
-    intersections_shuffled.resize(nrefs);
 
     std::mt19937_64 rng(base_seed);
     for (size_t r = 0; r < nrefs; ++r) {
-        const auto& refmat = *(references[r]);
+        const auto& refmatptr = references[r];
         const auto labptr = labels[r].data();
-
         auto testptr = test_ids.data();
         auto ref_ids = test_ids;
         std::shuffle(ref_ids.begin(), ref_ids.end(), rng);
         auto refptr = ref_ids.data();
 
-        prebuilts.emplace_back(singlepp::train_single<double, int>(ngenes, testptr, refmat, refptr, labptr, markers[r], NULL, bopt));
-        integrated_inputs.push_back(singlepp::prepare_integrated_input<int>(ngenes, testptr, refmat, refptr, labptr, prebuilts.back()));
+        const auto markers = simulate_markers(num_labels[r], ngenes, /* markers = */ ntop, /* seed = */ r + 6);
+        integrated_inputs.push_back(singlepp::prepare_integrated_input<int, int, double>(ngenes, testptr, refmatptr, refptr, labptr, markers));
 
         // Doing a reference calculation by reordering the matrix and then calling the non-intersection methods.
         std::vector<int> remapping(ngenes);
-        for (size_t i = 0; i < ngenes; ++i) {
+        for (std::size_t i = 0; i < ngenes; ++i) {
             remapping[ref_ids[i]] = i;
         }
-        auto mcopy = markers[r];
+        auto mcopy = markers;
         for (auto& mm : mcopy) {
-            for (auto& m : mm) {
-                for (auto& x : m) {
-                    x = ref_ids[x];
-                }
+            for (auto& x : mm) {
+                x = ref_ids[x];
             }
         }
-
-        references_reorg.emplace_back(tatami::make_DelayedSubset(references[r], std::move(remapping), true));
-        prebuilts_reorg.push_back(singlepp::train_single(*(references_reorg.back()), labptr, std::move(mcopy), bopt));
-        integrated_inputs_reorg.push_back(singlepp::prepare_integrated_input(*(references_reorg.back()), labptr, prebuilts_reorg.back()));
+        auto reorg = tatami::make_DelayedSubset(refmatptr, std::move(remapping), true);
+        integrated_inputs_reorg.push_back(singlepp::prepare_integrated_input<double, int>(std::move(reorg), labptr, mcopy));
 
         // Also shuffling the intersection to check that the input order doesn't affect the results.
-        intersections_shuffled.push_back(singlepp::intersect_genes<int>(ngenes, testptr, refmat.nrow(), refptr));
-        std::shuffle(intersections_shuffled.back().begin(), intersections_shuffled.back().end(), rng);
-        integrated_inputs_shuffled.push_back(singlepp::prepare_integrated_input<int>(ngenes, intersections_shuffled.back(), refmat, labptr, prebuilts.back()));
+        auto intersection = singlepp::intersect_genes<int>(ngenes, testptr, refmatptr->nrow(), refptr);
+        std::shuffle(intersection.begin(), intersection.end(), rng);
+        integrated_inputs_shuffled.push_back(singlepp::prepare_integrated_input<int, double, int>(ngenes, intersection, refmatptr, labptr, std::move(markers)));
     }
 
     singlepp::TrainIntegratedOptions iopt;
@@ -411,7 +382,7 @@ TEST_P(ClassifyIntegratedTest, IntersectedComparison) {
     auto integrated_shuffled = singlepp::train_integrated(std::move(integrated_inputs_shuffled), iopt);
 
     // Mocking up some of the best choices.
-    auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ base_seed + 1379);
+    auto chosen = mock_best_choices(ntest, num_labels, /* seed = */ base_seed + 1379);
     auto chosen_ptrs = pointerize_best_choices(chosen);
 
     // Comparing classification results (with fine-tuning, for some test coverage).
@@ -444,8 +415,8 @@ INSTANTIATE_TEST_SUITE_P(
 class ClassifyIntegratedSparseTest : public ::testing::TestWithParam<std::tuple<int, double> > {
 protected:
     inline static std::vector<std::shared_ptr<tatami::Matrix<double, int> > > dense_references, sparse_references;
+    inline static std::vector<int> num_labels;
     inline static std::vector<std::vector<int> > labels;
-    inline static std::vector<singlepp::Markers<int> > markers;
 
     inline static size_t ngenes = 1234;
     inline static size_t nsamples = 40;
@@ -459,12 +430,10 @@ protected:
         for (std::size_t r = 0; r < nrefs; ++r) {
             unsigned long long seed = r * 123u;
             std::size_t nlabels = 3 + r;
-
+            num_labels.push_back(nlabels);
             dense_references.push_back(spawn_sparse_matrix(ngenes, nsamples, /* seed = */ seed, /* density = */ 0.3));
             sparse_references.push_back(tatami::convert_to_compressed_sparse<double, int>(*(dense_references.back()), true, {}));
-
             labels.push_back(spawn_labels(nsamples, nlabels, /* seed = */ seed * 2));
-            markers.push_back(mock_markers<int>(nlabels, 50, ngenes, /* seed = */ seed * 3));
         }
 
         dense_test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ 6969, /* density = */ 0.3);
@@ -500,9 +469,6 @@ TEST_P(ClassifyIntegratedSparseTest, Basic) {
     unsigned long long base_seed = ntop + quantile * 50;
 
     // Creating the integrated set of references.
-    singlepp::TrainSingleOptions bopt;
-    bopt.top = ntop;
-
     std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
     prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > dense_integrated_inputs, sparse_integrated_inputs;
@@ -510,13 +476,11 @@ TEST_P(ClassifyIntegratedSparseTest, Basic) {
     sparse_integrated_inputs.reserve(nrefs);
 
     // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
-    for (size_t r = 0; r < nrefs; ++r) {
+    for (std::size_t r = 0; r < nrefs; ++r) {
         const auto labptr = labels[r].data();
-        const auto& refmat = *(dense_references[r]);
-        prebuilts.push_back(singlepp::train_single(refmat, labptr, markers[r], bopt));
-        dense_integrated_inputs.push_back(singlepp::prepare_integrated_input(refmat, labptr, prebuilts.back()));
-        const auto& spmat = *(sparse_references[r]);
-        sparse_integrated_inputs.push_back(singlepp::prepare_integrated_input(spmat, labptr, prebuilts.back()));
+        auto markers = simulate_markers(num_labels[r], ngenes, ntop, base_seed + r);
+        dense_integrated_inputs.push_back(singlepp::prepare_integrated_input<double, int>(dense_references[r], labptr, markers));
+        sparse_integrated_inputs.push_back(singlepp::prepare_integrated_input<double, int>(sparse_references[r], labptr, std::move(markers)));
     }
 
     singlepp::TrainIntegratedOptions iopt;
@@ -524,7 +488,7 @@ TEST_P(ClassifyIntegratedSparseTest, Basic) {
     auto sparse_integrated = singlepp::train_integrated(sparse_integrated_inputs, iopt);
 
     // Mocking up some of the best choices.
-    auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ base_seed);
+    auto chosen = mock_best_choices(ntest, num_labels, /* seed = */ base_seed);
     auto chosen_ptrs = pointerize_best_choices(chosen);
 
     singlepp::ClassifyIntegratedOptions<double> copt;
@@ -548,29 +512,17 @@ TEST_P(ClassifyIntegratedSparseTest, Intersect) {
     unsigned long long base_seed = ntop + quantile * 50;
 
     // Creating the integrated set of references.
-    singlepp::TrainSingleOptions bopt;
-    bopt.top = ntop;
-
-    std::vector<singlepp::Intersection<int> > intersections;
-    intersections.reserve(nrefs);
-    for (size_t r = 0; r < nrefs; ++r) {
-        intersections.push_back(mock_intersection<int>(ngenes, ngenes, ngenes * 0.75, /* seed = */ base_seed + r));
-    }
-
-    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
-    prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > dense_integrated_inputs, sparse_integrated_inputs;
     dense_integrated_inputs.reserve(nrefs);
     sparse_integrated_inputs.reserve(nrefs);
 
     // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
-    for (size_t r = 0; r < nrefs; ++r) {
+    for (std::size_t r = 0; r < nrefs; ++r) {
+        auto inter = mock_intersection<int>(ngenes, ngenes, ngenes * 0.75, /* seed = */ base_seed + r);
         const auto labptr = labels[r].data();
-        const auto& refmat = *(dense_references[r]);
-        prebuilts.push_back(singlepp::train_single<double, int>(ngenes, intersections.back(), refmat, labptr, markers[r], NULL, bopt));
-        dense_integrated_inputs.push_back(singlepp::prepare_integrated_input<int>(ngenes, intersections.back(), refmat, labptr, prebuilts.back()));
-        const auto& spmat = *(sparse_references[r]);
-        sparse_integrated_inputs.push_back(singlepp::prepare_integrated_input<int>(ngenes, intersections.back(), spmat, labptr, prebuilts.back()));
+        auto markers = simulate_markers(num_labels[r], ngenes, ntop, base_seed + r);
+        dense_integrated_inputs.push_back(singlepp::prepare_integrated_input<int, double>(ngenes, inter, dense_references[r], labptr, markers));
+        sparse_integrated_inputs.push_back(singlepp::prepare_integrated_input<int, double>(ngenes, std::move(inter), sparse_references[r], labptr, std::move(markers)));
     }
 
     singlepp::TrainIntegratedOptions iopt;
@@ -578,7 +530,7 @@ TEST_P(ClassifyIntegratedSparseTest, Intersect) {
     auto sparse_integrated = singlepp::train_integrated(sparse_integrated_inputs, iopt);
 
     // Mocking up some of the best choices.
-    auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ base_seed);
+    auto chosen = mock_best_choices(ntest, num_labels, /* seed = */ base_seed);
     auto chosen_ptrs = pointerize_best_choices(chosen);
 
     singlepp::ClassifyIntegratedOptions<double> copt;
@@ -599,7 +551,7 @@ INSTANTIATE_TEST_SUITE_P(
     ClassifyIntegrated,
     ClassifyIntegratedSparseTest,
     ::testing::Combine(
-        ::testing::Values(5, 10, 20), // number of top genes.
+        ::testing::Values(5, 20, 50), // number of top genes.
         ::testing::Values(0.5, 0.8, 0.9) // number of quantiles.
     )
 );
@@ -608,40 +560,26 @@ INSTANTIATE_TEST_SUITE_P(
 
 class ClassifyIntegratedOtherTest : public ::testing::Test, public IntegratedTestCore {
 protected:
+    inline static std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
+
     static void SetUpTestSuite() {
         assemble();
-    }
-
-    static void populate_prebuilts(
-        std::vector<singlepp::TrainedSingle<int, double> >& prebuilts,
-        std::vector<singlepp::TrainIntegratedInput<double, int, int> >& integrated_inputs
-    ) {
-        singlepp::TrainSingleOptions bopt;
-        prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
         integrated_inputs.reserve(nrefs);
-
-        for (size_t r = 0; r < nrefs; ++r) {
-            const auto& refmat = *(references[r]);
-            const auto labptr = labels[r].data();
-            prebuilts.push_back(singlepp::train_single(refmat, labptr, markers[r], bopt));
-            integrated_inputs.push_back(singlepp::prepare_integrated_input(refmat, labptr, prebuilts.back()));
+        for (std::size_t r = 0; r < nrefs; ++r) {
+            auto markers = simulate_markers(num_labels[r], references[r]->nrow(), 25, 999 + r);
+            integrated_inputs.push_back(singlepp::prepare_integrated_input<double, int>(references[r], labels[r].data(), std::move(markers)));
         }
     }
 };
 
 TEST_F(ClassifyIntegratedOtherTest, Mismatch) {
-    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
-    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
-    populate_prebuilts(prebuilts, integrated_inputs);
-
     singlepp::TrainIntegratedOptions iopt;
-    auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
+    auto integrated = singlepp::train_integrated(integrated_inputs, iopt);
 
     // Mocking up the test dataset and its choices.
     size_t ntest = 20;
     auto test = spawn_matrix(ngenes * 2, ntest, /* seed = */ 69); // more genes than expected.
-
-    auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ 70);
+    auto chosen = mock_best_choices(ntest, num_labels, /* seed = */ 70);
     auto chosen_ptrs = pointerize_best_choices(chosen);
 
     // Verifying that it does, in fact, fail.
@@ -657,12 +595,8 @@ TEST_F(ClassifyIntegratedOtherTest, Mismatch) {
 }
 
 TEST_F(ClassifyIntegratedOtherTest, FineTuneEdgeCase) {
-    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
-    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
-    populate_prebuilts(prebuilts, integrated_inputs);
-
     singlepp::TrainIntegratedOptions iopt;
-    auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
+    auto integrated = singlepp::train_integrated(integrated_inputs, iopt);
 
     auto precomp = singlepp::precompute_integrated_details(integrated, 0.8);
     singlepp::AnnotateIntegrated<false, int, double, double> ft(precomp);
@@ -690,12 +624,8 @@ TEST_F(ClassifyIntegratedOtherTest, FineTuneEdgeCase) {
 }
 
 TEST_F(ClassifyIntegratedOtherTest, FineTuneExactRecovery) {
-    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
-    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
-    populate_prebuilts(prebuilts, integrated_inputs);
-
     singlepp::TrainIntegratedOptions iopt;
-    auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
+    auto integrated = singlepp::train_integrated(integrated_inputs, iopt);
 
     // Use a quantile of 1 so that an exact match is respected with the maximum correlation.
     auto precomp = singlepp::precompute_integrated_details(integrated, 1.0);
@@ -749,17 +679,12 @@ TEST_F(ClassifyIntegratedOtherTest, FineTuneExactRecovery) {
 }
 
 TEST_F(ClassifyIntegratedOtherTest, QuantileFail) {
-    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
-    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
-    populate_prebuilts(prebuilts, integrated_inputs);
-
     singlepp::TrainIntegratedOptions iopt;
     auto integrated = singlepp::train_integrated(integrated_inputs, iopt);
 
     size_t ntest = 20;
     auto test = spawn_matrix(ngenes, ntest, /* seed = */ 69);
-
-    auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ 70);
+    auto chosen = mock_best_choices(ntest, num_labels, /* seed = */ 70);
     auto chosen_ptrs = pointerize_best_choices(chosen);
 
     singlepp::ClassifyIntegratedOptions<double> copt;
@@ -783,28 +708,19 @@ TEST_F(ClassifyIntegratedOtherTest, QuantileFail) {
 }
 
 TEST_F(ClassifyIntegratedOtherTest, NoGenes) {
-    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
-    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
-
-    singlepp::TrainSingleOptions bopt;
-    bopt.top = 0;
-    prebuilts.reserve(nrefs); 
-    integrated_inputs.reserve(nrefs);
-
-    for (size_t r = 0; r < nrefs; ++r) {
-        const auto& refmat = *(references[r]);
-        const auto labptr = labels[r].data();
-        prebuilts.push_back(singlepp::train_single(refmat, labptr, markers[r], bopt));
-        integrated_inputs.push_back(singlepp::prepare_integrated_input(refmat, labptr, prebuilts.back()));
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs_nogenes;
+    integrated_inputs_nogenes.reserve(nrefs);
+    for (std::size_t r = 0; r < nrefs; ++r) {
+        auto markers = simulate_markers(num_labels[r], references[r]->nrow(), 0, 999 + r);
+        integrated_inputs_nogenes.push_back(singlepp::prepare_integrated_input<double, int>(references[r], labels[r].data(), std::move(markers)));
     }
 
     singlepp::TrainIntegratedOptions iopt;
-    auto integrated = singlepp::train_integrated(integrated_inputs, iopt);
+    auto integrated = singlepp::train_integrated(integrated_inputs_nogenes, iopt);
 
-    size_t ntest = 20;
+    std::size_t ntest = 20;
     auto test = spawn_matrix(ngenes, ntest, /* seed = */ 69);
-
-    auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ 70);
+    auto chosen = mock_best_choices(ntest, num_labels, /* seed = */ 70);
     auto chosen_ptrs = pointerize_best_choices(chosen);
 
     singlepp::ClassifyIntegratedOptions<double> copt;
@@ -823,20 +739,23 @@ TEST_F(ClassifyIntegratedOtherTest, NoGenes) {
 /********************************************/
 
 TEST(ClassifyIntegrated, FineTuneSparse) {
-    size_t ngenes = 1000;
-    size_t nsamples = 50;
-    size_t nrefs = 4; // Needs at least 3 references for fine-tuning to actually happen.
+    std::size_t ngenes = 1000;
+    std::size_t nsamples = 50;
+    std::size_t nrefs = 4; // Needs at least 3 references for fine-tuning to actually happen.
 
+    std::vector<int> num_labels;
     std::vector<std::vector<int> > labels;
-    std::vector<singlepp::Markers<int> > markers;
+    std::vector<singlepp::PerLabelMarkers<int> > markers;
+    num_labels.reserve(nrefs);
     labels.reserve(nrefs);
     markers.reserve(nrefs);
 
     for (std::size_t r = 0; r < nrefs; ++r) {
         unsigned long long seed = r * 1055u;
         std::size_t nlabels = 3 + r;
+        num_labels.push_back(nlabels);
         labels.push_back(spawn_labels(nsamples, nlabels, /* seed = */ seed * 10));
-        markers.push_back(mock_markers<int>(nlabels, 50, ngenes, /* seed = */ seed * 20));
+        markers.push_back(simulate_markers(nlabels, nlabels, /* markers = */ 40, /* seed = */ seed * 20));
     }
 
     std::vector<std::shared_ptr<tatami::Matrix<double, int> > > dense_references, sparse_references;
@@ -844,9 +763,6 @@ TEST(ClassifyIntegrated, FineTuneSparse) {
     sparse_references.reserve(nrefs);
 
     // Creating the integrated set of references.
-    singlepp::TrainSingleOptions bopt;
-    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
-    prebuilts.reserve(nrefs); // ensure that no reallocations happen that might invalidate pointers in the integrated_inputs.
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > dense_integrated_inputs, sparse_integrated_inputs;
     dense_integrated_inputs.reserve(nrefs);
     sparse_integrated_inputs.reserve(nrefs);
@@ -855,14 +771,9 @@ TEST(ClassifyIntegrated, FineTuneSparse) {
         std::size_t seed = r * 456;
         dense_references.push_back(spawn_sparse_matrix(ngenes, nsamples, /* seed = */ seed, /* density = */ 0.3));
         sparse_references.push_back(tatami::convert_to_compressed_sparse<double, int>(*(dense_references.back()), true, {}));
-
         const auto labptr = labels[r].data();
-        const auto& refmat = *(dense_references[r]);
-        prebuilts.push_back(singlepp::train_single(refmat, labptr, markers[r], bopt));
-        dense_integrated_inputs.push_back(singlepp::prepare_integrated_input(refmat, labptr, prebuilts.back()));
-
-        const auto& spmat = *(sparse_references[r]);
-        sparse_integrated_inputs.push_back(singlepp::prepare_integrated_input(spmat, labptr, prebuilts.back()));
+        dense_integrated_inputs.push_back(singlepp::prepare_integrated_input<double, int>(dense_references[r], labptr, markers[r]));
+        sparse_integrated_inputs.push_back(singlepp::prepare_integrated_input<double, int>(sparse_references[r], labptr, markers[r]));
     }
 
     singlepp::TrainIntegratedOptions iopt;
@@ -873,7 +784,7 @@ TEST(ClassifyIntegrated, FineTuneSparse) {
     auto new_test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ 302, /* density = */ 0.2);
 
     // Mocking up some of the best choices.
-    auto chosen = mock_best_choices(ntest, prebuilts, /* seed = */ 88);
+    auto chosen = mock_best_choices(ntest, num_labels, /* seed = */ 88);
     auto chosen_ptrs = pointerize_best_choices(chosen);
 
     auto dense_precomp = singlepp::precompute_integrated_details(dense_integrated, 0.8);

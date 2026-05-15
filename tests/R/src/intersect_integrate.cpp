@@ -50,15 +50,17 @@ Rcpp::List intersect_integrate(
     tatami::DenseColumnMatrix<double, int> parsed_test(test.nrow(), test.ncol(), std::vector<double>(test.begin(), test.end()));
 
     // Building the integrated classifier.
-    singlepp::TrainSingleOptions bopt;
-    bopt.top = -1; // use all markers.
-    std::vector<singlepp::TrainedSingle<int, double> > prebuilts; 
-    prebuilts.reserve(nrefs);
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > inputs; 
     inputs.reserve(nrefs);
     for (size_t r = 0; r < nrefs; ++r) {
-        prebuilts.push_back(singlepp::train_single<double, int>(test.nrow(), test_ids.data(), *(rematrices[r]), reids[r].data(), relabels[r].data(), setup_markers(markers[r]), NULL, bopt));
-        inputs.push_back(singlepp::prepare_integrated_input(test.nrow(), test_ids.data(), *(rematrices[r]), reids[r].data(), relabels[r].data(), prebuilts.back()));
+        inputs.push_back(singlepp::prepare_integrated_input<int, std::string, double>(
+            test.nrow(),
+            test_ids.data(),
+            rematrices[r],
+            reids[r].data(),
+            relabels[r].data(),
+            setup_per_label_markers(markers[r])
+        ));
     }
     singlepp::TrainIntegratedOptions iopt;
     auto itrained = singlepp::train_integrated(std::move(inputs), iopt);

@@ -14,7 +14,7 @@ naive_integrate <- function(test, results, refs, labels, markers, quantile = 0.8
         cur.markers <- vector("list", length(refs))
         for (r in seq_along(refs)) {
             curbest <- results[[r]][i]
-            label.markers <- sort(unique(unlist(markers[[r]][[curbest]])))
+            label.markers <- markers[[r]][[curbest]]
             if (check.rownames) {
                 cur.markers[[r]] <- intersect(global.universe, label.markers)
             } else {

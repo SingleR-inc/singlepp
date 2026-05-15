@@ -17,6 +17,17 @@ mock.markers <- function(ngenes, nlabels, ntop=Inf) {
     markers
 }
 
+mock.per.label.markers <- function(ngenes, nlabels, ntop=Inf) {
+    markers <- vector("list", nlabels)
+    for (m in seq_len(nlabels)) {
+        markers[[m]] <- sample(seq_len(ngenes))
+        if (is.finite(ntop)) {
+            markers[[m]] <- head(markers[[m]], ntop)
+        }
+    }
+    markers
+}
+
 mock.labels <- function(ncells, nlabels) {
     labels <- sample(nlabels, ncells, replace=TRUE)
     labels[1:nlabels] <- 1:nlabels # guarantee at least one of each.

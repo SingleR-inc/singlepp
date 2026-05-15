@@ -33,23 +33,17 @@ Rcpp::List classify_integrate(
     std::vector<std::vector<int> > relabels;
     std::vector<std::vector<int> > reresults;
 
-    for (size_t r = 0; r < nrefs; ++r) {
+    for (std::size_t r = 0; r < nrefs; ++r) {
         Rcpp::NumericMatrix ref(refs[r]);
         rematrices.emplace_back(new tatami::DenseColumnMatrix<double, int>(ref.nrow(), ref.ncol(), std::vector<double>(ref.begin(), ref.end())));
         relabels.emplace_back(setup_labels(labels[r]));
         reresults.emplace_back(setup_labels(results[r]));
     }
 
-    singlepp::TrainSingleOptions bopt;
-    bopt.top = -1; // use all markers.
-    std::vector<singlepp::TrainedSingle<int, double> > prebuilts;
-    prebuilts.reserve(nrefs);
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > inputs; 
     inputs.reserve(nrefs);
-
-    for (size_t r = 0; r < nrefs; ++r) {
-        prebuilts.push_back(singlepp::train_single(*(rematrices[r]), relabels[r].data(), setup_markers(markers[r]), bopt));
-        inputs.push_back(singlepp::prepare_integrated_input(*(rematrices[r]), relabels[r].data(), prebuilts.back()));
+    for (std::size_t r = 0; r < nrefs; ++r) {
+        inputs.push_back(singlepp::prepare_integrated_input<double, int>(rematrices[r], relabels[r].data(), setup_per_label_markers(markers[r])));
     }
     singlepp::TrainIntegratedOptions iopt;
     auto itrained = singlepp::train_integrated(std::move(inputs), iopt);

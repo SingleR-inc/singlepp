@@ -14,7 +14,7 @@ test_that("integrated references, no fine tuning", {
         nprofiles <- 10 * i
         refs[[i]] <- matrix(rnorm(ngenes * nprofiles), nrow=ngenes)
         labels[[i]] <- mock.labels(nprofiles, nlabels)
-        markers[[i]] <- mock.markers(ngenes, nlabels, ntop = 20)
+        markers[[i]] <- mock.per.label.markers(ngenes, nlabels, ntop = 20)
         results[[i]] <- sample(nlabels, ncol(mat), replace=TRUE)
     }
 
@@ -39,7 +39,7 @@ test_that("integrated references, standard fine tuning", {
         nprofiles <- 10 * i
         refs[[i]] <- matrix(rnorm(ngenes * nprofiles), nrow=ngenes)
         labels[[i]] <- mock.labels(nprofiles, nlabels)
-        markers[[i]] <- mock.markers(ngenes, nlabels, ntop = 20)
+        markers[[i]] <- mock.per.label.markers(ngenes, nlabels, ntop = 20)
         results[[i]] <- sample(nlabels, ncol(mat), replace=TRUE)
     }
 
@@ -64,7 +64,7 @@ test_that("integrated references, tight fine tuning", {
         nprofiles <- 10 * i
         refs[[i]] <- matrix(rnorm(ngenes * nprofiles), nrow=ngenes)
         labels[[i]] <- mock.labels(nprofiles, nlabels)
-        markers[[i]] <- mock.markers(ngenes, nlabels, ntop = 20)
+        markers[[i]] <- mock.per.label.markers(ngenes, nlabels, ntop = 20)
         results[[i]] <- sample(nlabels, ncol(mat), replace=TRUE)
     }
 
@@ -89,7 +89,7 @@ test_that("integrated references, different quantile", {
         nprofiles <- 10 * i
         refs[[i]] <- matrix(rnorm(ngenes * nprofiles), nrow=ngenes)
         labels[[i]] <- mock.labels(nprofiles, nlabels)
-        markers[[i]] <- mock.markers(ngenes, nlabels, ntop = 20)
+        markers[[i]] <- mock.per.label.markers(ngenes, nlabels, ntop = 20)
         results[[i]] <- sample(nlabels, ncol(mat), replace=TRUE)
     }
 
@@ -120,7 +120,7 @@ test_that("integrated references, intersection", {
         refs[[i]] <- matrix(rnorm(ngenes_ref * nprofiles), nrow=ngenes_ref)
         rownames(refs[[i]]) <- sample(all.genes, ngenes_ref)
 
-        markers[[i]] <- mock.markers(ngenes_ref, nlabels, ntop = 20)
+        markers[[i]] <- mock.per.label.markers(ngenes_ref, nlabels, ntop = 20)
         named.markers[[i]] <- relist(rownames(refs[[i]])[unlist(markers[[i]])], markers[[i]])
 
         labels[[i]] <- mock.labels(nprofiles, nlabels)

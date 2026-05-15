@@ -9,4 +9,6 @@ std::vector<int> setup_labels(Rcpp::IntegerVector);
 
 singlepp::Markers<int> setup_markers(Rcpp::List);
 
+singlepp::PerLabelMarkers<int> setup_per_label_markers(Rcpp::List);
+
 #endif
