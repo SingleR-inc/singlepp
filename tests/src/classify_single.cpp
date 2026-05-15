@@ -29,11 +29,10 @@ TEST_P(ClassifySingleSimpleTest, Simple) {
     auto refs = spawn_matrix(ngenes, nrefs, /* seed= */ base_seed + 100);
     auto labels = spawn_labels(nrefs, nlabels, /* seed = */ base_seed + 1000);
 
-    auto markers = mock_pairwise_markers<int>(nlabels, 50, ngenes, /* seed = */ base_seed + 789); 
+    auto markers = mock_pairwise_markers<int>(nlabels, top, ngenes, /* seed = */ base_seed + 789); 
 
     // Performing classification without fine-tuning for a reference comparison.
     singlepp::TrainSingleOptions bopt;
-    bopt.top = top;
     auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
     EXPECT_EQ(trained.test_nrow(), 200);
 
@@ -44,7 +43,7 @@ TEST_P(ClassifySingleSimpleTest, Simple) {
 
     // Implementing the reference score calculation.
     auto original_markers = markers;
-    auto subset = singlepp::internal::subset_to_markers(markers, top);
+    auto subset = singlepp::subset_to_markers(markers);
     auto naive = naive_method(nlabels, labels, refs, mat, subset, quantile);
 
     int NC = mat->ncol();
@@ -104,7 +103,7 @@ TEST_P(ClassifySingleSimpleTest, Sparse) {
 
     size_t ngenes = 250;
     size_t nlabels = 4;
-    auto markers = mock_pairwise_markers<int>(nlabels, 50, ngenes, /* seed = */ base_seed + 69); 
+    auto markers = mock_pairwise_markers<int>(nlabels, top, ngenes, /* seed = */ base_seed + 69); 
 
     int ntest = 11;
     auto test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ base_seed + 42, /* density = */ 0.24);
@@ -182,11 +181,10 @@ TEST_P(ClassifySingleIntersectTest, Intersect) {
     size_t nrefs = 50;
     auto refs = spawn_matrix(right.size(), nrefs, /* seed = */ base_seed + 888);
     auto labels = spawn_labels(nrefs, nlabels, /* seed = */ base_seed + 999);
-    auto markers = mock_pairwise_markers<int>(nlabels, 50, right.size(), /* seed = */ base_seed + 69); 
+    auto markers = mock_pairwise_markers<int>(nlabels, top, right.size(), /* seed = */ base_seed + 69); 
 
     // Computing the observed result.
     singlepp::TrainSingleOptions bopt;
-    bopt.top = top;
     std::vector<int> ref_subset;
     auto trained = singlepp::train_single<double, int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, &ref_subset, bopt);
     EXPECT_EQ(trained.test_nrow(), left.size());
@@ -270,7 +268,7 @@ TEST_P(ClassifySingleIntersectTest, Sparse) {
     const auto& right = ids.second;
 
     size_t nlabels = 5;
-    auto markers = mock_pairwise_markers<int>(nlabels, 20, right.size(), /* seed = */ base_seed + 69);
+    auto markers = mock_pairwise_markers<int>(nlabels, top, right.size(), /* seed = */ base_seed + 69);
 
     // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
     int ntest = 11;
@@ -529,14 +527,13 @@ TEST(ClassifySingle, NoShared) {
     auto mat = spawn_matrix(ngenes, 10, /* seed = */ 100);
     auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 101);
     auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 102);
-    auto markers = mock_pairwise_markers<int>(nlabels, 50, ngenes, /* seed = */ 103); 
+    auto markers = mock_pairwise_markers<int>(nlabels, 20, ngenes, /* seed = */ 103); 
 
     std::vector<int> left(ngenes), right(ngenes);
     std::iota(left.begin(), left.end(), 0);
     std::iota(right.begin(), right.end(), ngenes);
 
     singlepp::TrainSingleOptions bopt;
-    bopt.top = 20;
     std::vector<int> ref_subset;
     auto trained = singlepp::train_single<double, int>(ngenes, left.data(), *refs, right.data(), labels.data(), markers, &ref_subset, bopt);
     EXPECT_EQ(trained.subset().size(), 0);
@@ -674,7 +671,7 @@ TEST(ClassifySingle, NoGenes) {
         }
     }
 
-    // No genes because top = 0.
+    // No genes.
     {
         size_t ngenes = 100;
         size_t nlabels = 3;
@@ -682,10 +679,9 @@ TEST(ClassifySingle, NoGenes) {
 
         auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 77);
         auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 777);
-        auto markers = mock_pairwise_markers<int>(nlabels, 20, ngenes, /* seed = */ 7777); 
+        auto markers = mock_pairwise_markers<int>(nlabels, 0, ngenes, /* seed = */ 7777); 
 
         singlepp::TrainSingleOptions bopt;
-        bopt.top = 0;
         auto trained = singlepp::train_single(*refs, labels.data(), markers, bopt);
         EXPECT_EQ(trained.subset().size(), 0);
 

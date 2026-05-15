@@ -1,9 +1,9 @@
 #' @export
 #' @importFrom stats cor quantile
 #' @importFrom utils head
-naive_single <- function(test, ref, labels, markers, top=20, quantile = 0.8, fine.tune = TRUE, tune.thresh = 0.05) {
+naive_single <- function(test, ref, labels, markers, quantile = 0.8, fine.tune = TRUE, tune.thresh = 0.05) {
     if (!is.null(rownames(test))) {
-        # Intersecting ahead of everything else, so that 'top' has the intended effect.
+        # Intersecting ahead of everything else to ensure consistency with intersecting outside of the function.
         common <- intersect(rownames(ref), rownames(test))
         test <- test[common,,drop=FALSE]
         ref <- ref[common,,drop=FALSE]
@@ -18,12 +18,6 @@ naive_single <- function(test, ref, labels, markers, top=20, quantile = 0.8, fin
 
     y <- split(seq_along(labels), labels)
     names(y) <- NULL
-
-    for (i in seq_along(markers)) {
-        for (j in seq_along(markers[[i]])) {
-            markers[[i]][[j]] <- head(markers[[i]][[j]], top)
-        }
-    }
 
     collected <- matrix(0, ncol(test), length(y))
     genes <- sort(unique(unlist(markers)))

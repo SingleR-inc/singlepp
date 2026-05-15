@@ -24,18 +24,6 @@ namespace singlepp {
  */
 struct TrainSingleOptions {
     /**
-     * Number of top markers to use from each pairwise comparison between labels.
-     * Larger values improve the stability of the correlations at the cost of increasing noise and computational work.
-     *
-     * When the test and reference datasets do not have the same features, the specified number of top markers is taken from the intersection of features.
-     * This avoids that some markers will be selected even if not all genes in `markers` are present in the test dataset.
-     *
-     * When unset (the default), `train_single()` will use all supplied markers.
-     * This is useful in situations where the supplied markers have already been curated.
-     */
-    std::optional<std::size_t> top;
-
-    /**
      * Number of threads to use.
      * The parallelization scheme is determined by `tatami::parallelize()`.
      */
@@ -190,7 +178,7 @@ TrainedSingle<Index_, Float_> train_single(
     PairwiseMarkers<Index_> markers,
     const TrainSingleOptions& options
 ) {
-    auto subset = internal::subset_to_markers(markers, options.top);
+    auto subset = subset_to_markers(markers);
     auto subref = build_reference<Float_>(ref, labels, subset, options.num_threads);
     const Index_ test_nrow = ref.nrow(); // remember, test and ref are assumed to have the same features.
     return TrainedSingle<Index_, Float_>(test_nrow, std::move(markers), std::move(subset), std::move(subref));
@@ -236,7 +224,7 @@ TrainedSingle<Index_, Float_> train_single(
     std::vector<Index_>* ref_subset,
     const TrainSingleOptions& options
 ) {
-    auto pairs = internal::subset_to_markers(intersection, markers, options.top);
+    auto pairs = subset_to_markers(intersection, markers);
     auto subref = build_reference<Float_>(ref, labels, pairs.second, options.num_threads);
     if (ref_subset) {
         *ref_subset = std::move(pairs.second);

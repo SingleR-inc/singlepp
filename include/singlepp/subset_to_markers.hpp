@@ -16,30 +16,17 @@
 
 namespace singlepp {
 
-namespace internal {
-
-template<typename Size_>
-Size_ cap_at_top(Size_ size, const std::optional<std::size_t>& top) {
-    if (top.has_value()) {
-        return sanisizer::min(size, *top);
-    } else {
-        return size;
-    }
-}
-
 // Use this method when the feature spaces are already identical.
 template<typename Index_>
-std::vector<Index_> subset_to_markers(Markers<Index_>& markers, const std::optional<std::size_t>& top) {
+std::vector<Index_> subset_to_markers(Markers<Index_>& markers) {
     std::unordered_set<Index_> available;
 
     const auto ngroups = markers.size();
     for (I<decltype(ngroups)> i = 0; i < ngroups; ++i) {
-        auto& inner_markers = markers[i];
+        const auto& inner_markers = markers[i];
         auto inner_ngroups = inner_markers.size();
-
         for (I<decltype(inner_ngroups)> j = 0; j < inner_ngroups; ++j) {
-            auto& current = inner_markers[j];
-            current.resize(cap_at_top(current.size(), top));
+            const auto& current = inner_markers[j];
             available.insert(current.begin(), current.end());
         }
     }
@@ -67,11 +54,7 @@ std::vector<Index_> subset_to_markers(Markers<Index_>& markers, const std::optio
 }
 
 template<typename Index_>
-std::pair<std::vector<Index_>, std::vector<Index_> > subset_to_markers(
-    const Intersection<Index_>& intersection,
-    Markers<Index_>& markers,
-    const std::optional<std::size_t>& top
-) {
+std::pair<std::vector<Index_>, std::vector<Index_> > subset_to_markers(const Intersection<Index_>& intersection, Markers<Index_>& markers) {
     std::unordered_set<Index_> available;
     available.reserve(intersection.size());
     for (const auto& in : intersection) {
@@ -83,23 +66,17 @@ std::pair<std::vector<Index_>, std::vector<Index_> > subset_to_markers(
     const auto ngroups = markers.size();
     for (I<decltype(ngroups)> i = 0; i < ngroups; ++i) {
         auto& inner_markers = markers[i];
-        auto inner_ngroups = inner_markers.size(); // should be the same as ngroups, but we'll just do this to be safe.
+        const auto inner_ngroups = inner_markers.size(); // should be the same as ngroups, but we'll just do this to be safe.
 
         for (I<decltype(inner_ngroups)> j = 0; j < inner_ngroups; ++j) {
             auto& current = inner_markers[j];
             std::vector<Index_> replacement;
-            auto output_size = cap_at_top(current.size(), top);
+            replacement.reserve(current.size());
 
-            if (output_size) {
-                replacement.reserve(output_size);
-                for (auto marker : current) {
-                    if (available.find(marker) != available.end()) {
-                        all_markers.insert(marker);
-                        replacement.push_back(marker);
-                        if (replacement.size() == output_size) {
-                            break;
-                        }
-                    }
+            for (auto marker : current) {
+                if (available.find(marker) != available.end()) {
+                    all_markers.insert(marker);
+                    replacement.push_back(marker);
                 }
             }
 
@@ -133,8 +110,6 @@ std::pair<std::vector<Index_>, std::vector<Index_> > subset_to_markers(
     }
 
     return output;
-}
-
 }
 
 }

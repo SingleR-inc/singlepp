@@ -1,4 +1,4 @@
-mock.markers <- function(ngenes, nlabels, ntop=Inf) {
+mock.pairwise.markers <- function(ngenes, nlabels, ntop) {
     markers <- vector("list", nlabels)
     for (m in seq_len(nlabels)) {
         current <- vector("list", nlabels)
@@ -6,10 +6,7 @@ mock.markers <- function(ngenes, nlabels, ntop=Inf) {
             if (m == n) {
                 current[[n]] <- integer(0)
             } else {
-                current[[n]] <- sample(seq_len(ngenes))
-            }
-            if (is.finite(ntop)) {
-                current[[n]] <- head(current[[n]], ntop)
+                current[[n]] <- sample(ngenes, ntop)
             }
         }
         markers[[m]] <- current
@@ -17,13 +14,10 @@ mock.markers <- function(ngenes, nlabels, ntop=Inf) {
     markers
 }
 
-mock.per.label.markers <- function(ngenes, nlabels, ntop=Inf) {
+mock.per.label.markers <- function(ngenes, nlabels, ntop) {
     markers <- vector("list", nlabels)
     for (m in seq_len(nlabels)) {
-        markers[[m]] <- sample(seq_len(ngenes))
-        if (is.finite(ntop)) {
-            markers[[m]] <- head(markers[[m]], ntop)
-        }
+        markers[[m]] <- sample(ngenes, ntop)
     }
     markers
 }

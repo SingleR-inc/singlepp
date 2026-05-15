@@ -28,8 +28,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // classify_single
-Rcpp::List classify_single(Rcpp::NumericMatrix test, Rcpp::NumericMatrix ref, Rcpp::IntegerVector labels, Rcpp::List markers, double quantile, bool fine_tune, double tune_thresh, int top);
-RcppExport SEXP _singlepp_tests_classify_single(SEXP testSEXP, SEXP refSEXP, SEXP labelsSEXP, SEXP markersSEXP, SEXP quantileSEXP, SEXP fine_tuneSEXP, SEXP tune_threshSEXP, SEXP topSEXP) {
+Rcpp::List classify_single(Rcpp::NumericMatrix test, Rcpp::NumericMatrix ref, Rcpp::IntegerVector labels, Rcpp::List markers, double quantile, bool fine_tune, double tune_thresh);
+RcppExport SEXP _singlepp_tests_classify_single(SEXP testSEXP, SEXP refSEXP, SEXP labelsSEXP, SEXP markersSEXP, SEXP quantileSEXP, SEXP fine_tuneSEXP, SEXP tune_threshSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type test(testSEXP);
@@ -39,8 +39,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type quantile(quantileSEXP);
     Rcpp::traits::input_parameter< bool >::type fine_tune(fine_tuneSEXP);
     Rcpp::traits::input_parameter< double >::type tune_thresh(tune_threshSEXP);
-    Rcpp::traits::input_parameter< int >::type top(topSEXP);
-    rcpp_result_gen = Rcpp::wrap(classify_single(test, ref, labels, markers, quantile, fine_tune, tune_thresh, top));
+    rcpp_result_gen = Rcpp::wrap(classify_single(test, ref, labels, markers, quantile, fine_tune, tune_thresh));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -64,8 +63,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // intersect_single
-Rcpp::List intersect_single(Rcpp::NumericMatrix test, std::vector<std::string> test_ids, Rcpp::NumericMatrix ref, std::vector<std::string> ref_ids, Rcpp::IntegerVector labels, Rcpp::List markers, double quantile, bool fine_tune, double tune_thresh, int top);
-RcppExport SEXP _singlepp_tests_intersect_single(SEXP testSEXP, SEXP test_idsSEXP, SEXP refSEXP, SEXP ref_idsSEXP, SEXP labelsSEXP, SEXP markersSEXP, SEXP quantileSEXP, SEXP fine_tuneSEXP, SEXP tune_threshSEXP, SEXP topSEXP) {
+Rcpp::List intersect_single(Rcpp::NumericMatrix test, std::vector<std::string> test_ids, Rcpp::NumericMatrix ref, std::vector<std::string> ref_ids, Rcpp::IntegerVector labels, Rcpp::List markers, double quantile, bool fine_tune, double tune_thresh);
+RcppExport SEXP _singlepp_tests_intersect_single(SEXP testSEXP, SEXP test_idsSEXP, SEXP refSEXP, SEXP ref_idsSEXP, SEXP labelsSEXP, SEXP markersSEXP, SEXP quantileSEXP, SEXP fine_tuneSEXP, SEXP tune_threshSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type test(testSEXP);
@@ -77,17 +76,16 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type quantile(quantileSEXP);
     Rcpp::traits::input_parameter< bool >::type fine_tune(fine_tuneSEXP);
     Rcpp::traits::input_parameter< double >::type tune_thresh(tune_threshSEXP);
-    Rcpp::traits::input_parameter< int >::type top(topSEXP);
-    rcpp_result_gen = Rcpp::wrap(intersect_single(test, test_ids, ref, ref_ids, labels, markers, quantile, fine_tune, tune_thresh, top));
+    rcpp_result_gen = Rcpp::wrap(intersect_single(test, test_ids, ref, ref_ids, labels, markers, quantile, fine_tune, tune_thresh));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_singlepp_tests_classify_integrate", (DL_FUNC) &_singlepp_tests_classify_integrate, 8},
-    {"_singlepp_tests_classify_single", (DL_FUNC) &_singlepp_tests_classify_single, 8},
+    {"_singlepp_tests_classify_single", (DL_FUNC) &_singlepp_tests_classify_single, 7},
     {"_singlepp_tests_intersect_integrate", (DL_FUNC) &_singlepp_tests_intersect_integrate, 10},
-    {"_singlepp_tests_intersect_single", (DL_FUNC) &_singlepp_tests_intersect_single, 10},
+    {"_singlepp_tests_intersect_single", (DL_FUNC) &_singlepp_tests_intersect_single, 9},
     {NULL, NULL, 0}
 };
 

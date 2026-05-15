@@ -10,7 +10,7 @@ test_that("single reference, no fine tuning", {
     mat <- matrix(rnorm(ngenes * 100), nrow=ngenes)
     ref <- matrix(rnorm(ngenes * 20), nrow=ngenes)
     labels <- mock.labels(ncol(ref), nlabels)
-    markers <- mock.markers(ngenes, nlabels)
+    markers <- mock.pairwise.markers(ngenes, nlabels, ntop = 20)
 
     res <- naive_single(mat, ref, labels, markers, fine.tune = FALSE)
     obs <- classify_single(mat, ref, labels, markers, fine_tune = FALSE)
@@ -28,7 +28,7 @@ test_that("single reference, standard fine tuning", {
     mat <- matrix(rnorm(ngenes * 100), nrow=ngenes)
     ref <- matrix(rnorm(ngenes * 20), nrow=ngenes)
     labels <- mock.labels(ncol(ref), nlabels)
-    markers <- mock.markers(ngenes, nlabels)
+    markers <- mock.pairwise.markers(ngenes, nlabels, ntop = 20)
 
     # Running the naive_single pipeline.
     res <- naive_single(mat, ref, labels, markers)
@@ -47,7 +47,7 @@ test_that("single reference, tight fine tuning", {
     mat <- matrix(rnorm(ngenes * 100), nrow=ngenes)
     ref <- matrix(rnorm(ngenes * 20), nrow=ngenes)
     labels <- mock.labels(ncol(ref), nlabels)
-    markers <- mock.markers(ngenes, nlabels)
+    markers <- mock.pairwise.markers(ngenes, nlabels, ntop = 20)
 
     # Running the naive_single pipeline.
     res <- naive_single(mat, ref, labels, markers, tune.thresh=0.01)
@@ -66,11 +66,11 @@ test_that("single reference, different top", {
     mat <- matrix(rnorm(ngenes * 100), nrow=ngenes)
     ref <- matrix(rnorm(ngenes * 20), nrow=ngenes)
     labels <- mock.labels(ncol(ref), nlabels)
-    markers <- mock.markers(ngenes, nlabels)
+    markers <- mock.pairwise.markers(ngenes, nlabels, ntop = 10)
 
     # Running the naive_single pipeline.
-    res <- naive_single(mat, ref, labels, markers, top = 10)
-    obs <- classify_single(mat, ref, labels, markers, top = 10)
+    res <- naive_single(mat, ref, labels, markers)
+    obs <- classify_single(mat, ref, labels, markers)
     expect_equal(obs$scores, res$scores)
     expect_identical(obs$best, res$best)
     expect_equal(obs$delta, res$delta)
@@ -91,12 +91,12 @@ test_that("single reference, intersection", {
     rownames(ref) <- sample(common, ngenes_ref)
 
     labels <- mock.labels(ncol(ref), nlabels)
-    markers <- mock.markers(ngenes_ref, nlabels)
+    markers <- mock.pairwise.markers(ngenes_ref, nlabels, ntop = 20)
     named.markers <- relist(rownames(ref)[unlist(markers)], markers)
 
     # Running the naive_single pipeline.
-    res <- naive_single(mat, ref, labels, named.markers, top = 20)
-    obs <- intersect_single(mat, rownames(mat), ref, rownames(ref), labels, markers, top = 20)
+    res <- naive_single(mat, ref, labels, named.markers)
+    obs <- intersect_single(mat, rownames(mat), ref, rownames(ref), labels, markers)
     expect_equal(obs$scores, res$scores)
     expect_identical(obs$best, res$best)
     expect_equal(obs$delta, res$delta)

@@ -9,8 +9,8 @@ classify_integrate <- function(test, results, refs, labels, markers, quantile = 
 #' @useDynLib singlepp.tests
 #' @importFrom Rcpp sourceCpp
 #' @export
-classify_single <- function(test, ref, labels, markers, quantile = 0.8, fine_tune = TRUE, tune_thresh = 0.05, top = 20L) {
-    .Call('_singlepp_tests_classify_single', PACKAGE = 'singlepp.tests', test, ref, labels, markers, quantile, fine_tune, tune_thresh, top)
+classify_single <- function(test, ref, labels, markers, quantile = 0.8, fine_tune = TRUE, tune_thresh = 0.05) {
+    .Call('_singlepp_tests_classify_single', PACKAGE = 'singlepp.tests', test, ref, labels, markers, quantile, fine_tune, tune_thresh)
 }
 
 #' @export
@@ -19,7 +19,7 @@ intersect_integrate <- function(test, test_ids, results, refs, ref_ids, labels, 
 }
 
 #' @export
-intersect_single <- function(test, test_ids, ref, ref_ids, labels, markers, quantile = 0.8, fine_tune = TRUE, tune_thresh = 0.05, top = 20L) {
-    .Call('_singlepp_tests_intersect_single', PACKAGE = 'singlepp.tests', test, test_ids, ref, ref_ids, labels, markers, quantile, fine_tune, tune_thresh, top)
+intersect_single <- function(test, test_ids, ref, ref_ids, labels, markers, quantile = 0.8, fine_tune = TRUE, tune_thresh = 0.05) {
+    .Call('_singlepp_tests_intersect_single', PACKAGE = 'singlepp.tests', test, test_ids, ref, ref_ids, labels, markers, quantile, fine_tune, tune_thresh)
 }
 

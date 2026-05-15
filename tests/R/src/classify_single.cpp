@@ -14,9 +14,8 @@ Rcpp::List classify_single(
     Rcpp::List markers, 
     double quantile = 0.8, 
     bool fine_tune = true, 
-    double tune_thresh = 0.05,
-    int top = 20) 
-{
+    double tune_thresh = 0.05
+) {
     // Setting up the inputs.
     auto parsed_test = tatami::DenseColumnMatrix<double, int>(test.nrow(), test.ncol(), std::vector<double>(test.begin(), test.end()));
     auto parsed_ref = tatami::DenseColumnMatrix<double, int>(ref.nrow(), ref.ncol(), std::vector<double>(ref.begin(), ref.end()));
@@ -40,7 +39,6 @@ Rcpp::List classify_single(
 
     // Running everything.
     singlepp::TrainSingleOptions bopt;
-    bopt.top = top;
     auto trained = singlepp::train_single(parsed_ref, labels2.data(), std::move(markers2), bopt);
 
     singlepp::ClassifySingleOptions<double> copt;
