@@ -45,6 +45,7 @@ using PairwiseMarkers = std::vector<std::vector<std::vector<Index_> > >;
  * This is used to determine which genes should be used to compute correlations in `train_integrated()`. 
  *
  * For a `PerLabelMarkers` object `markers`, the vector at `markers[i]` will contain the markers for label `i`.
+ * Each marker is a row index into the reference matrix, where indices should be unique within `markers[i]`.
  * This combination of markers is expected to distinguish `i` from all other labels.
  * We suggest using functions like `score_markers_summary()` from the [**scran_markers**](https://github.com/libscran/scran_markers) library to obtain a suitable set of markers.
  */

@@ -461,7 +461,13 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
     }
 
     // For references with intersections, we need to map the marker indices to the test rows, for comparability across references.
-    auto remap_intersection_to_test_index = sanisizer::create<std::vector<std::vector<Index_> > >(nrefs);
+    std::vector<std::vector<Index_> > remap_intersection_to_test_index; 
+    for (I<decltype(nrefs)> r  = 0; r < nrefs; ++r) {
+        if (inputs[r].intersection.has_value()) {
+            sanisizer::resize(remap_intersection_to_test_index, nrefs);
+            break;
+        }
+    }
 
     // Identify the union of all marker genes as the universe, but excluding those markers that are not present in all intersections.
     // Specifically, 'universe' contains sorted and unique row indices for the test matrix, where 'remap_test_to_universe[universe[i]] == i'.
@@ -525,10 +531,6 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
         universe.shrink_to_fit();
     }
 
-    auto is_active = sanisizer::create<std::vector<char> >(test_nrow);
-    std::vector<Index_> active_genes;
-    active_genes.reserve(test_nrow);
-
     for (I<decltype(nrefs)> r = 0; r < nrefs; ++r) {
         const auto& curinput = inputs[r];
         const auto& currefmarkers = curinput.markers;
@@ -545,42 +547,33 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
 
         // Assembling the per-label markers for this reference.
         for (I<decltype(nlabels)> l = 0; l < nlabels; ++l) {
-            active_genes.clear();
+            const auto& curlabmarkers = currefmarkers[l];
+            std::vector<Index_> markers;
 
             if (curinput.intersection.has_value()) {
                 const auto& cur_test_remap = remap_intersection_to_test_index[r];
-                for (const auto& y : currefmarkers[l]) {
+                for (const auto y : curlabmarkers) {
                     const auto ty = cur_test_remap[y];
-                    if (ty != test_nrow && !is_active[ty]) { // ignoring marker that can't be mapped via the current intersection.
-                        is_active[ty] = true;
-                        active_genes.push_back(ty);
+                    if (ty != test_nrow) { // ignoring marker that can't be mapped via the current intersection.
+                        const auto universe_index = remap_test_to_universe[ty];
+                        if (universe_index != test_nrow) { // ignoring genes not present in all intersections.
+                            markers.push_back(universe_index);
+                        }
                     }
                 }
-
             } else {
-                for (const auto& y : currefmarkers[l]) {
-                    if (!is_active[y]) {
-                        is_active[y] = true;
-                        active_genes.push_back(y);
+                for (const auto y : curlabmarkers) {
+                    const auto universe_index = remap_test_to_universe[y];
+                    if (universe_index != test_nrow) { // ignoring genes not present in all intersections.
+                        markers.push_back(universe_index);
                     }
                 }
-            }
-
-            std::vector<Index_> markers;
-            markers.reserve(active_genes.size());
-
-            for (const auto a : active_genes) {
-                const auto universe_index = remap_test_to_universe[a];
-                if (universe_index != test_nrow) { // ignoring genes not present in all intersections.
-                    markers.push_back(universe_index);
-                }
-                is_active[a] = false;
             }
 
             if (is_sparse) {
-                (*(currefout.sparse))[l].markers.swap(markers);
+                (*(currefout.sparse))[l].markers = std::move(markers);
             } else {
-                (*(currefout.dense))[l].markers.swap(markers);
+                (*(currefout.dense))[l].markers = std::move(markers);
             }
         }
 
