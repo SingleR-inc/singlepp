@@ -162,7 +162,7 @@ TEST_P(SubsetToMarkersIntersectTest, Diagonal) {
 
     size_t nlabels = 4;
     auto markers = mock_diagonal_markers<int>(nlabels, 20, ref_ngenes, /* seed = */ base_seed + 94025);
-    auto inter = mock_intersection<int>(test_ngenes, ref_ngenes, 40, /* seed= */ base_seed + 123908);
+    auto inter = mock_intersection<int>(test_ngenes, ref_ngenes, shared, /* seed = */ base_seed + 123908);
 
     auto mcopy = markers;
     auto unzipped = singlepp::subset_to_markers<int>(test_ngenes, inter, ref_ngenes, mcopy);

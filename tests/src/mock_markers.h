@@ -60,7 +60,7 @@ singlepp::Intersection<Index_> mock_intersection(std::size_t n1, std::size_t n2,
     };
 
     auto chosen1 = choose(n1, shared);
-    std::sort(chosen1.begin(), chosen1.end());
+    std::shuffle(chosen1.begin(), chosen1.end(), rng);
     auto chosen2 = choose(n2, shared);
     std::shuffle(chosen2.begin(), chosen2.end(), rng);
 
