@@ -67,10 +67,7 @@ static std::vector<std::vector<int> > simulate_markers(std::size_t nlabels, std:
     std::vector<std::vector<int> > output(nlabels);
     std::mt19937_64 rng(seed);
     for (auto& o : output) {
-        o.reserve(nmarkers);
-        for (std::size_t m = 0; m < nmarkers; ++m) {
-            o.push_back(rng() % ngenes); // duplicates will just be absorbed.
-        }
+        fill_markers(o, nmarkers, ngenes, rng);
     }
     return output;
 }

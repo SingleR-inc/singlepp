@@ -10,9 +10,15 @@
 
 template<typename Index_, class Engine_>
 void fill_markers(std::vector<Index_>& source, std::size_t len, std::size_t universe, Engine_& rng) {
+    // Adjusted version of the sampling algorithm from R's sample.int() function.
     source.resize(universe);
     std::iota(source.begin(), source.end(), 0);
-    std::shuffle(source.begin(), source.end(), rng);
+    std::size_t used = 0;
+    while (used < len && used < universe) {
+        auto& chosen = source[rng() % (universe - used) + used];
+        std::swap(source[used], chosen);
+        ++used;
+    }
     if (len < universe) {
         source.resize(len);
     }
