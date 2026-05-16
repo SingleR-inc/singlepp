@@ -185,12 +185,14 @@ TEST_P(ClassifyIntegratedTest, Basic) {
                 all_scores.push_back(score);
             }
 
-            auto best = std::max_element(all_scores.begin(), all_scores.end());
-            EXPECT_EQ(output.best[t], best - all_scores.begin());
+            auto bestIt = std::max_element(all_scores.begin(), all_scores.end());
+            const auto expected_best = bestIt - all_scores.begin();
+            const double best_score = *bestIt;
+            *bestIt = -100000;
+            const double expected_delta = best_score - *std::max_element(all_scores.begin(), all_scores.end());
 
-            double best_score = *best;
-            *best = -100000;
-            EXPECT_FLOAT_EQ(output.delta[t], best_score - *std::max_element(all_scores.begin(), all_scores.end()));
+            // We need to account for tied labels when there are very few markers. 
+            check_almost_equal_assignment(expected_best, expected_delta, output.best[t], output.delta[t]);
         }
     }
 
@@ -306,12 +308,14 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
                 all_scores.push_back(score);
             }
 
-            auto best = std::max_element(all_scores.begin(), all_scores.end());
-            EXPECT_EQ(output.best[t], best - all_scores.begin());
+            auto bestIt = std::max_element(all_scores.begin(), all_scores.end());
+            const auto expected_best = bestIt - all_scores.begin();
+            const double best_score = *bestIt;
+            *bestIt = -100000;
+            const double expected_delta = best_score - *std::max_element(all_scores.begin(), all_scores.end());
 
-            double best_score = *best;
-            *best = -100000;
-            EXPECT_FLOAT_EQ(output.delta[t], best_score - *std::max_element(all_scores.begin(), all_scores.end()));
+            // We need to account for tied labels when there are very few markers surviving in the intersection.
+            check_almost_equal_assignment(expected_best, expected_delta, output.best[t], output.delta[t]);
         }
     }
 
