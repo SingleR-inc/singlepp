@@ -8,12 +8,14 @@
 #include "build_reference.hpp"
 #include "Markers.hpp"
 #include "Intersection.hpp"
+#include "utils.hpp"
 
 #include <vector>
 #include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <cassert>
 
 /**
  * @file train_integrated.hpp
@@ -204,7 +206,9 @@ public:
         my_test_nrow(test_nrow),
         my_universe(std::move(universe)),
         my_references(std::move(references))
-    {}
+    {
+        assert(is_sorted_unique(my_universe.size(), my_universe.data()));
+    }
 
     const auto& references() const {
         return my_references;

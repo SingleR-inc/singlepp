@@ -7,10 +7,12 @@
 
 #include "build_reference.hpp"
 #include "subset_to_markers.hpp"
+#include "utils.hpp"
 
 #include <vector>
 #include <memory>
 #include <cstddef>
+#include <cassert>
 
 /**
  * @file train_single.hpp
@@ -85,7 +87,9 @@ public:
         my_markers(std::move(markers)),
         my_subset(std::move(subset)),
         my_built(std::move(built)) 
-    {}
+    {
+        assert(is_sorted_unique(subset.size(), subset.data()));
+    }
     /**
      * @endcond
      */
