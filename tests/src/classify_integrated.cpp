@@ -520,7 +520,7 @@ TEST_P(ClassifyIntegratedSparseTest, Intersect) {
     auto param = GetParam();
     int ntop = std::get<0>(param);
     double quantile = std::get<1>(param);
-    unsigned long long base_seed = ntop + quantile * 50;
+    unsigned long long base_seed = ntop + quantile * 55;
 
     // Creating the integrated set of references.
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > dense_integrated_inputs, sparse_integrated_inputs;
@@ -547,18 +547,14 @@ TEST_P(ClassifyIntegratedSparseTest, Intersect) {
     copt.quantile = quantile;
     auto expected = singlepp::classify_integrated<int>(*dense_test, chosen_ptrs, dense_integrated, copt);
 
-    std::cout << "A" << std::endl;
     auto sparse_to_dense = singlepp::classify_integrated<int>(*sparse_test, chosen_ptrs, dense_integrated, copt);
     check_almost_equal_sparse_results(expected, sparse_to_dense);
 
-    std::cout << "B" << std::endl;
     auto dense_to_sparse = singlepp::classify_integrated<int>(*dense_test, chosen_ptrs, sparse_integrated, copt);
     check_almost_equal_sparse_results(expected, dense_to_sparse);
 
-    std::cout << "C" << std::endl;
     auto sparse_to_sparse = singlepp::classify_integrated<int>(*sparse_test, chosen_ptrs, sparse_integrated, copt);
     check_almost_equal_sparse_results(expected, sparse_to_sparse);
-    std::cout << "D" << std::endl;
 }
 
 INSTANTIATE_TEST_SUITE_P(
