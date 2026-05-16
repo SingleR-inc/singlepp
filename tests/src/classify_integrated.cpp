@@ -487,7 +487,6 @@ TEST_P(ClassifyIntegratedSparseTest, Basic) {
     dense_integrated_inputs.reserve(nrefs);
     sparse_integrated_inputs.reserve(nrefs);
 
-    // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
     for (std::size_t r = 0; r < nrefs; ++r) {
         const auto labptr = labels[r].data();
         auto markers = simulate_markers(num_labels[r], ngenes, ntop, base_seed + r);
@@ -528,7 +527,6 @@ TEST_P(ClassifyIntegratedSparseTest, Intersect) {
     dense_integrated_inputs.reserve(nrefs);
     sparse_integrated_inputs.reserve(nrefs);
 
-    // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
     for (std::size_t r = 0; r < nrefs; ++r) {
         auto inter = mock_intersection<int>(ngenes, ngenes, ngenes * 0.75, /* seed = */ base_seed + r);
         const auto labptr = labels[r].data();
@@ -549,14 +547,18 @@ TEST_P(ClassifyIntegratedSparseTest, Intersect) {
     copt.quantile = quantile;
     auto expected = singlepp::classify_integrated<int>(*dense_test, chosen_ptrs, dense_integrated, copt);
 
+    std::cout << "A" << std::endl;
     auto sparse_to_dense = singlepp::classify_integrated<int>(*sparse_test, chosen_ptrs, dense_integrated, copt);
     check_almost_equal_sparse_results(expected, sparse_to_dense);
 
+    std::cout << "B" << std::endl;
     auto dense_to_sparse = singlepp::classify_integrated<int>(*dense_test, chosen_ptrs, sparse_integrated, copt);
     check_almost_equal_sparse_results(expected, dense_to_sparse);
 
+    std::cout << "C" << std::endl;
     auto sparse_to_sparse = singlepp::classify_integrated<int>(*sparse_test, chosen_ptrs, sparse_integrated, copt);
     check_almost_equal_sparse_results(expected, sparse_to_sparse);
+    std::cout << "D" << std::endl;
 }
 
 INSTANTIATE_TEST_SUITE_P(
