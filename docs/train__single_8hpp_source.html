@@ -109,169 +109,173 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &quot;build_reference.hpp&quot;</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &quot;subset_to_markers.hpp&quot;</span></div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;vector&gt;</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;memory&gt;</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;cstddef&gt;</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesinglepp.html">singlepp</a> {</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
-<div class="foldopen" id="foldopen00025" data-start="{" data-end="};">
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno"><a class="line" href="structsinglepp_1_1TrainSingleOptions.html">   25</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structsinglepp_1_1TrainSingleOptions.html">TrainSingleOptions</a> {</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno"><a class="line" href="structsinglepp_1_1TrainSingleOptions.html#a76c303868ef63d76fd157ad80974d3a6">   30</a></span>    <span class="keywordtype">int</span> <a class="code hl_variable" href="structsinglepp_1_1TrainSingleOptions.html#a76c303868ef63d76fd157ad80974d3a6">num_threads</a> = 1;</div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>};</div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &quot;utils.hpp&quot;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;vector&gt;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;memory&gt;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;cstddef&gt;</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;cassert&gt;</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacesinglepp.html">singlepp</a> {</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span> </div>
+<div class="foldopen" id="foldopen00027" data-start="{" data-end="};">
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno"><a class="line" href="structsinglepp_1_1TrainSingleOptions.html">   27</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structsinglepp_1_1TrainSingleOptions.html">TrainSingleOptions</a> {</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno"><a class="line" href="structsinglepp_1_1TrainSingleOptions.html#a76c303868ef63d76fd157ad80974d3a6">   32</a></span>    <span class="keywordtype">int</span> <a class="code hl_variable" href="structsinglepp_1_1TrainSingleOptions.html#a76c303868ef63d76fd157ad80974d3a6">num_threads</a> = 1;</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>};</div>
 </div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Float_&gt;</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>std::size_t get_num_labels_from_built(<span class="keyword">const</span> BuiltReference&lt;Index_, Float_&gt;&amp; built) {</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    <span class="keywordflow">if</span> (built.sparse.has_value()) {</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>        <span class="keywordflow">return</span> built.sparse-&gt;size();</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        <span class="keywordflow">return</span> built.dense-&gt;size();</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    }</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>}</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Float_&gt;</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>std::size_t get_num_profiles_from_built(<span class="keyword">const</span> BuiltReference&lt;Index_, Float_&gt;&amp; built) {</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    std::size_t n = 0;</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <span class="keywordflow">if</span> (built.sparse.has_value()) {</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; ref : *(built.sparse)) {</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>            n += get_num_samples(ref);</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        }</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; ref : *(built-&gt;dense)) {</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>            n += get_num_samples(ref);</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        }</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    }</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <span class="keywordflow">return</span> n;</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>}</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Float_&gt;</div>
-<div class="foldopen" id="foldopen00073" data-start="{" data-end="};">
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedSingle.html">   73</a></span><span class="keyword">class </span><a class="code hl_class" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle</a> {</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    <a class="code hl_class" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle</a>(</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>        Index_ <a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a1948f96fca5b3aaf7215d0272ba9d2a6">test_nrow</a>,</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>        <a class="code hl_typedef" href="namespacesinglepp.html#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers&lt;Index_&gt;</a> <a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a2608f2bf50b0800758a662c80d9ed386">markers</a>,</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>        std::vector&lt;Index_&gt; <a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">subset</a>,</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>        BuiltReference&lt;Index_, Float_&gt; built</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    ) : </div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>        my_test_nrow(<a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a1948f96fca5b3aaf7215d0272ba9d2a6">test_nrow</a>),</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        my_markers(std::move(<a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a2608f2bf50b0800758a662c80d9ed386">markers</a>)),</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>        my_subset(std::move(<a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">subset</a>)),</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        my_built(std::move(built)) </div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    {}</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    Index_ my_test_nrow;</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    <a class="code hl_typedef" href="namespacesinglepp.html#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers&lt;Index_&gt;</a> my_markers;</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    std::vector&lt;Index_&gt; my_subset;</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    BuiltReference&lt;Index_, Float_&gt; my_built;</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span><span class="keyword">public</span>:</div>
-<div class="foldopen" id="foldopen00103" data-start="{" data-end="}">
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedSingle.html#a1948f96fca5b3aaf7215d0272ba9d2a6">  103</a></span>    Index_ <a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a1948f96fca5b3aaf7215d0272ba9d2a6">test_nrow</a>()<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>        <span class="keywordflow">return</span> my_test_nrow;</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    }</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span> </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Float_&gt;</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>std::size_t get_num_labels_from_built(<span class="keyword">const</span> BuiltReference&lt;Index_, Float_&gt;&amp; built) {</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    <span class="keywordflow">if</span> (built.sparse.has_value()) {</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        <span class="keywordflow">return</span> built.sparse-&gt;size();</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        <span class="keywordflow">return</span> built.dense-&gt;size();</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    }</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>}</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Float_&gt;</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>std::size_t get_num_profiles_from_built(<span class="keyword">const</span> BuiltReference&lt;Index_, Float_&gt;&amp; built) {</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    std::size_t n = 0;</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keywordflow">if</span> (built.sparse.has_value()) {</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; ref : *(built.sparse)) {</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>            n += get_num_samples(ref);</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        }</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; ref : *(built-&gt;dense)) {</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>            n += get_num_samples(ref);</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        }</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    }</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    <span class="keywordflow">return</span> n;</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>}</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Float_&gt;</div>
+<div class="foldopen" id="foldopen00075" data-start="{" data-end="};">
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedSingle.html">   75</a></span><span class="keyword">class </span><a class="code hl_class" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle</a> {</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    <a class="code hl_class" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle</a>(</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>        Index_ <a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a1948f96fca5b3aaf7215d0272ba9d2a6">test_nrow</a>,</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>        <a class="code hl_typedef" href="namespacesinglepp.html#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers&lt;Index_&gt;</a> <a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a2608f2bf50b0800758a662c80d9ed386">markers</a>,</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>        std::vector&lt;Index_&gt; <a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">subset</a>,</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>        BuiltReference&lt;Index_, Float_&gt; built</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    ) : </div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>        my_test_nrow(<a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a1948f96fca5b3aaf7215d0272ba9d2a6">test_nrow</a>),</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        my_markers(std::move(<a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a2608f2bf50b0800758a662c80d9ed386">markers</a>)),</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        my_subset(std::move(<a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">subset</a>)),</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>        my_built(std::move(built)) </div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    {</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>        assert(is_sorted_unique(<a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">subset</a>.size(), <a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">subset</a>.data()));</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    }</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    Index_ my_test_nrow;</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    <a class="code hl_typedef" href="namespacesinglepp.html#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers&lt;Index_&gt;</a> my_markers;</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    std::vector&lt;Index_&gt; my_subset;</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    BuiltReference&lt;Index_, Float_&gt; my_built;</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span> </div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span><span class="keyword">public</span>:</div>
+<div class="foldopen" id="foldopen00107" data-start="{" data-end="}">
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedSingle.html#a1948f96fca5b3aaf7215d0272ba9d2a6">  107</a></span>    Index_ <a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a1948f96fca5b3aaf7215d0272ba9d2a6">test_nrow</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>        <span class="keywordflow">return</span> my_test_nrow;</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    }</div>
 </div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span> </div>
-<div class="foldopen" id="foldopen00113" data-start="{" data-end="}">
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedSingle.html#a2608f2bf50b0800758a662c80d9ed386">  113</a></span>    <span class="keyword">const</span> <a class="code hl_typedef" href="namespacesinglepp.html#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers&lt;Index_&gt;</a>&amp; <a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a2608f2bf50b0800758a662c80d9ed386">markers</a>()<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>        <span class="keywordflow">return</span> my_markers;</div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    }</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span> </div>
+<div class="foldopen" id="foldopen00117" data-start="{" data-end="}">
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedSingle.html#a2608f2bf50b0800758a662c80d9ed386">  117</a></span>    <span class="keyword">const</span> <a class="code hl_typedef" href="namespacesinglepp.html#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers&lt;Index_&gt;</a>&amp; <a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a2608f2bf50b0800758a662c80d9ed386">markers</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>        <span class="keywordflow">return</span> my_markers;</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    }</div>
 </div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span> </div>
-<div class="foldopen" id="foldopen00122" data-start="{" data-end="}">
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">  122</a></span>    <span class="keyword">const</span> std::vector&lt;Index_&gt;&amp; <a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">subset</a>()<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>        <span class="keywordflow">return</span> my_subset;</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    }</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span> </div>
+<div class="foldopen" id="foldopen00126" data-start="{" data-end="}">
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">  126</a></span>    <span class="keyword">const</span> std::vector&lt;Index_&gt;&amp; <a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">subset</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>        <span class="keywordflow">return</span> my_subset;</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>    }</div>
 </div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
-<div class="foldopen" id="foldopen00129" data-start="{" data-end="}">
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedSingle.html#acd1d604b21e8deb287ccd5210b431bf8">  129</a></span>    std::size_t <a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#acd1d604b21e8deb287ccd5210b431bf8">num_labels</a>()<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>        <span class="keywordflow">return</span> get_num_labels_from_built(my_built);</div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>    }</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span> </div>
+<div class="foldopen" id="foldopen00133" data-start="{" data-end="}">
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedSingle.html#acd1d604b21e8deb287ccd5210b431bf8">  133</a></span>    std::size_t <a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#acd1d604b21e8deb287ccd5210b431bf8">num_labels</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>        <span class="keywordflow">return</span> get_num_labels_from_built(my_built);</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    }</div>
 </div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span> </div>
-<div class="foldopen" id="foldopen00136" data-start="{" data-end="}">
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedSingle.html#ae1a317b134a501627abacd439f3425bd">  136</a></span>    std::size_t <a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#ae1a317b134a501627abacd439f3425bd">num_profiles</a>()<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>        <span class="keywordflow">return</span> get_num_profiles_from_built(my_built);</div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    }</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span> </div>
+<div class="foldopen" id="foldopen00140" data-start="{" data-end="}">
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno"><a class="line" href="classsinglepp_1_1TrainedSingle.html#ae1a317b134a501627abacd439f3425bd">  140</a></span>    std::size_t <a class="code hl_function" href="classsinglepp_1_1TrainedSingle.html#ae1a317b134a501627abacd439f3425bd">num_profiles</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>        <span class="keywordflow">return</span> get_num_profiles_from_built(my_built);</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>    }</div>
 </div>
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span> </div>
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>    <span class="keyword">const</span> <span class="keyword">auto</span>&amp; built()<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>        <span class="keywordflow">return</span> my_built;</div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>    }</div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>};</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span> </div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>    <span class="keyword">const</span> <span class="keyword">auto</span>&amp; built()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>        <span class="keywordflow">return</span> my_built;</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>    }</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>};</div>
 </div>
-<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span> </div>
-<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Float_ = <span class="keywordtype">double</span>, <span class="keyword">typename</span> Value_, <span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Label_&gt;</div>
-<div class="foldopen" id="foldopen00175" data-start="{" data-end="}">
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#a1c482c08a1cfd9a4eb0ff5b08314ed7e">  175</a></span><a class="code hl_class" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle&lt;Index_, Float_&gt;</a> <a class="code hl_function" href="namespacesinglepp.html#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single</a>(</div>
-<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>    <span class="keyword">const</span> tatami::Matrix&lt;Value_, Index_&gt;&amp; ref,</div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>    <span class="keyword">const</span> Label_* labels,</div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>    <a class="code hl_typedef" href="namespacesinglepp.html#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers&lt;Index_&gt;</a> markers,</div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>    <span class="keyword">const</span> <a class="code hl_struct" href="structsinglepp_1_1TrainSingleOptions.html">TrainSingleOptions</a>&amp; options</div>
-<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>) {</div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>    <span class="keyword">auto</span> subset = subset_to_markers(ref.nrow(), markers);</div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>    <span class="keyword">auto</span> subref = build_reference&lt;Float_&gt;(ref, labels, subset, options.<a class="code hl_variable" href="structsinglepp_1_1TrainSingleOptions.html#a76c303868ef63d76fd157ad80974d3a6">num_threads</a>);</div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>    <span class="keyword">const</span> Index_ test_nrow = ref.nrow(); <span class="comment">// remember, test and ref are assumed to have the same features.</span></div>
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>    <span class="keywordflow">return</span> <a class="code hl_class" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle&lt;Index_, Float_&gt;</a>(test_nrow, std::move(markers), std::move(subset), std::move(subref));</div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>}</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span> </div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Float_ = <span class="keywordtype">double</span>, <span class="keyword">typename</span> Value_, <span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Label_&gt;</div>
+<div class="foldopen" id="foldopen00179" data-start="{" data-end="}">
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#a1c482c08a1cfd9a4eb0ff5b08314ed7e">  179</a></span><a class="code hl_class" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle&lt;Index_, Float_&gt;</a> <a class="code hl_function" href="namespacesinglepp.html#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single</a>(</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>    <span class="keyword">const</span> tatami::Matrix&lt;Value_, Index_&gt;&amp; ref,</div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>    <span class="keyword">const</span> Label_* labels,</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>    <a class="code hl_typedef" href="namespacesinglepp.html#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers&lt;Index_&gt;</a> markers,</div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>    <span class="keyword">const</span> <a class="code hl_struct" href="structsinglepp_1_1TrainSingleOptions.html">TrainSingleOptions</a>&amp; options</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>) {</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    <span class="keyword">auto</span> subset = subset_to_markers(ref.nrow(), markers);</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    <span class="keyword">auto</span> subref = build_reference&lt;Float_&gt;(ref, labels, subset, options.<a class="code hl_variable" href="structsinglepp_1_1TrainSingleOptions.html#a76c303868ef63d76fd157ad80974d3a6">num_threads</a>);</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    <span class="keyword">const</span> Index_ test_nrow = ref.nrow(); <span class="comment">// remember, test and ref are assumed to have the same features.</span></div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    <span class="keywordflow">return</span> <a class="code hl_class" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle&lt;Index_, Float_&gt;</a>(test_nrow, std::move(markers), std::move(subset), std::move(subref));</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>}</div>
 </div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span> </div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Float_ = <span class="keywordtype">double</span>, <span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Value_, <span class="keyword">typename</span> Label_&gt;</div>
-<div class="foldopen" id="foldopen00218" data-start="{" data-end="}">
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#abdbc69eeb6b200b23176e77e2a70cd3b">  218</a></span><a class="code hl_class" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle&lt;Index_, Float_&gt;</a> <a class="code hl_function" href="namespacesinglepp.html#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single</a>(</div>
-<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>    Index_ test_nrow,</div>
-<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>    <span class="keyword">const</span> <a class="code hl_typedef" href="namespacesinglepp.html#ae0c63a73c7c40ad5e6f47ef0f9abac5d">Intersection&lt;Index_&gt;</a>&amp; intersection,</div>
-<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>    <span class="keyword">const</span> tatami::Matrix&lt;Value_, Index_&gt;&amp; ref, </div>
-<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>    <span class="keyword">const</span> Label_* labels,</div>
-<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>    <a class="code hl_typedef" href="namespacesinglepp.html#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers&lt;Index_&gt;</a> markers,</div>
-<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>    std::vector&lt;Index_&gt;* ref_subset,</div>
-<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>    <span class="keyword">const</span> <a class="code hl_struct" href="structsinglepp_1_1TrainSingleOptions.html">TrainSingleOptions</a>&amp; options</div>
-<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>) {</div>
-<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>    <span class="keyword">auto</span> pairs = subset_to_markers(test_nrow, intersection, ref.nrow(), markers);</div>
-<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>    <span class="keyword">auto</span> subref = build_reference&lt;Float_&gt;(ref, labels, pairs.second, options.<a class="code hl_variable" href="structsinglepp_1_1TrainSingleOptions.html#a76c303868ef63d76fd157ad80974d3a6">num_threads</a>);</div>
-<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>    <span class="keywordflow">if</span> (ref_subset) {</div>
-<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>        *ref_subset = std::move(pairs.second);</div>
-<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>    }</div>
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>    <span class="keywordflow">return</span> <a class="code hl_class" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle&lt;Index_, Float_&gt;</a>(test_nrow, std::move(markers), std::move(pairs.first), std::move(subref));</div>
-<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>}</div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span> </div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Float_ = <span class="keywordtype">double</span>, <span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Value_, <span class="keyword">typename</span> Label_&gt;</div>
+<div class="foldopen" id="foldopen00222" data-start="{" data-end="}">
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#abdbc69eeb6b200b23176e77e2a70cd3b">  222</a></span><a class="code hl_class" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle&lt;Index_, Float_&gt;</a> <a class="code hl_function" href="namespacesinglepp.html#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single</a>(</div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>    Index_ test_nrow,</div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>    <span class="keyword">const</span> <a class="code hl_typedef" href="namespacesinglepp.html#ae0c63a73c7c40ad5e6f47ef0f9abac5d">Intersection&lt;Index_&gt;</a>&amp; intersection,</div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>    <span class="keyword">const</span> tatami::Matrix&lt;Value_, Index_&gt;&amp; ref, </div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>    <span class="keyword">const</span> Label_* labels,</div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>    <a class="code hl_typedef" href="namespacesinglepp.html#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers&lt;Index_&gt;</a> markers,</div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>    std::vector&lt;Index_&gt;* ref_subset,</div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>    <span class="keyword">const</span> <a class="code hl_struct" href="structsinglepp_1_1TrainSingleOptions.html">TrainSingleOptions</a>&amp; options</div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>) {</div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>    <span class="keyword">auto</span> pairs = subset_to_markers(test_nrow, intersection, ref.nrow(), markers);</div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>    <span class="keyword">auto</span> subref = build_reference&lt;Float_&gt;(ref, labels, pairs.second, options.<a class="code hl_variable" href="structsinglepp_1_1TrainSingleOptions.html#a76c303868ef63d76fd157ad80974d3a6">num_threads</a>);</div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>    <span class="keywordflow">if</span> (ref_subset) {</div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>        *ref_subset = std::move(pairs.second);</div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>    }</div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>    <span class="keywordflow">return</span> <a class="code hl_class" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle&lt;Index_, Float_&gt;</a>(test_nrow, std::move(markers), std::move(pairs.first), std::move(subref));</div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>}</div>
 </div>
-<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span> </div>
-<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Float_ = <span class="keywordtype">double</span>, <span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Id_, <span class="keyword">typename</span> Value_, <span class="keyword">typename</span> Label_&gt;</div>
-<div class="foldopen" id="foldopen00268" data-start="{" data-end="}">
-<div class="line"><a id="l00268" name="l00268"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#aa2fa68af74db6ddf82a164d830fd73c2">  268</a></span><a class="code hl_class" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle&lt;Index_, Float_&gt;</a> <a class="code hl_function" href="namespacesinglepp.html#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single</a>(</div>
-<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>    Index_ test_nrow,</div>
-<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>    <span class="keyword">const</span> Id_* test_id, </div>
-<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>    <span class="keyword">const</span> tatami::Matrix&lt;Value_, Index_&gt;&amp; ref, </div>
-<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>    <span class="keyword">const</span> Id_* ref_id, </div>
-<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>    <span class="keyword">const</span> Label_* labels,</div>
-<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>    <a class="code hl_typedef" href="namespacesinglepp.html#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers&lt;Index_&gt;</a> markers,</div>
-<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>    std::vector&lt;Index_&gt;* ref_subset,</div>
-<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>    <span class="keyword">const</span> <a class="code hl_struct" href="structsinglepp_1_1TrainSingleOptions.html">TrainSingleOptions</a>&amp; options</div>
-<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>) {</div>
-<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>    <span class="keyword">auto</span> intersection = <a class="code hl_function" href="namespacesinglepp.html#a22b70c4d5949e28af164723543361214">intersect_genes</a>(test_nrow, test_id, ref.nrow(), ref_id);</div>
-<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespacesinglepp.html#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single</a>(test_nrow, intersection, ref, labels, std::move(markers), ref_subset, options);</div>
-<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>}</div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span> </div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Float_ = <span class="keywordtype">double</span>, <span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Id_, <span class="keyword">typename</span> Value_, <span class="keyword">typename</span> Label_&gt;</div>
+<div class="foldopen" id="foldopen00272" data-start="{" data-end="}">
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno"><a class="line" href="namespacesinglepp.html#aa2fa68af74db6ddf82a164d830fd73c2">  272</a></span><a class="code hl_class" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle&lt;Index_, Float_&gt;</a> <a class="code hl_function" href="namespacesinglepp.html#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single</a>(</div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>    Index_ test_nrow,</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>    <span class="keyword">const</span> Id_* test_id, </div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>    <span class="keyword">const</span> tatami::Matrix&lt;Value_, Index_&gt;&amp; ref, </div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>    <span class="keyword">const</span> Id_* ref_id, </div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>    <span class="keyword">const</span> Label_* labels,</div>
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>    <a class="code hl_typedef" href="namespacesinglepp.html#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers&lt;Index_&gt;</a> markers,</div>
+<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>    std::vector&lt;Index_&gt;* ref_subset,</div>
+<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>    <span class="keyword">const</span> <a class="code hl_struct" href="structsinglepp_1_1TrainSingleOptions.html">TrainSingleOptions</a>&amp; options</div>
+<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>) {</div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>    <span class="keyword">auto</span> intersection = <a class="code hl_function" href="namespacesinglepp.html#a22b70c4d5949e28af164723543361214">intersect_genes</a>(test_nrow, test_id, ref.nrow(), ref_id);</div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespacesinglepp.html#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single</a>(test_nrow, intersection, ref, labels, std::move(markers), ref_subset, options);</div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>}</div>
 </div>
-<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span> </div>
-<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>}</div>
-<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span> </div>
-<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span><span class="preprocessor">#endif</span></div>
-<div class="ttc" id="aclasssinglepp_1_1TrainedSingle_html"><div class="ttname"><a href="classsinglepp_1_1TrainedSingle.html">singlepp::TrainedSingle</a></div><div class="ttdoc">Classifier trained from a single reference.</div><div class="ttdef"><b>Definition</b> train_single.hpp:73</div></div>
-<div class="ttc" id="aclasssinglepp_1_1TrainedSingle_html_a1669f0a8d2e082a9f62d05689650f23a"><div class="ttname"><a href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">singlepp::TrainedSingle::subset</a></div><div class="ttdeci">const std::vector&lt; Index_ &gt; &amp; subset() const</div><div class="ttdef"><b>Definition</b> train_single.hpp:122</div></div>
-<div class="ttc" id="aclasssinglepp_1_1TrainedSingle_html_a1948f96fca5b3aaf7215d0272ba9d2a6"><div class="ttname"><a href="classsinglepp_1_1TrainedSingle.html#a1948f96fca5b3aaf7215d0272ba9d2a6">singlepp::TrainedSingle::test_nrow</a></div><div class="ttdeci">Index_ test_nrow() const</div><div class="ttdef"><b>Definition</b> train_single.hpp:103</div></div>
-<div class="ttc" id="aclasssinglepp_1_1TrainedSingle_html_a2608f2bf50b0800758a662c80d9ed386"><div class="ttname"><a href="classsinglepp_1_1TrainedSingle.html#a2608f2bf50b0800758a662c80d9ed386">singlepp::TrainedSingle::markers</a></div><div class="ttdeci">const PairwiseMarkers&lt; Index_ &gt; &amp; markers() const</div><div class="ttdef"><b>Definition</b> train_single.hpp:113</div></div>
-<div class="ttc" id="aclasssinglepp_1_1TrainedSingle_html_acd1d604b21e8deb287ccd5210b431bf8"><div class="ttname"><a href="classsinglepp_1_1TrainedSingle.html#acd1d604b21e8deb287ccd5210b431bf8">singlepp::TrainedSingle::num_labels</a></div><div class="ttdeci">std::size_t num_labels() const</div><div class="ttdef"><b>Definition</b> train_single.hpp:129</div></div>
-<div class="ttc" id="aclasssinglepp_1_1TrainedSingle_html_ae1a317b134a501627abacd439f3425bd"><div class="ttname"><a href="classsinglepp_1_1TrainedSingle.html#ae1a317b134a501627abacd439f3425bd">singlepp::TrainedSingle::num_profiles</a></div><div class="ttdeci">std::size_t num_profiles() const</div><div class="ttdef"><b>Definition</b> train_single.hpp:136</div></div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span> </div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>}</div>
+<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span> </div>
+<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span><span class="preprocessor">#endif</span></div>
+<div class="ttc" id="aclasssinglepp_1_1TrainedSingle_html"><div class="ttname"><a href="classsinglepp_1_1TrainedSingle.html">singlepp::TrainedSingle</a></div><div class="ttdoc">Classifier trained from a single reference.</div><div class="ttdef"><b>Definition</b> train_single.hpp:75</div></div>
+<div class="ttc" id="aclasssinglepp_1_1TrainedSingle_html_a1669f0a8d2e082a9f62d05689650f23a"><div class="ttname"><a href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">singlepp::TrainedSingle::subset</a></div><div class="ttdeci">const std::vector&lt; Index_ &gt; &amp; subset() const</div><div class="ttdef"><b>Definition</b> train_single.hpp:126</div></div>
+<div class="ttc" id="aclasssinglepp_1_1TrainedSingle_html_a1948f96fca5b3aaf7215d0272ba9d2a6"><div class="ttname"><a href="classsinglepp_1_1TrainedSingle.html#a1948f96fca5b3aaf7215d0272ba9d2a6">singlepp::TrainedSingle::test_nrow</a></div><div class="ttdeci">Index_ test_nrow() const</div><div class="ttdef"><b>Definition</b> train_single.hpp:107</div></div>
+<div class="ttc" id="aclasssinglepp_1_1TrainedSingle_html_a2608f2bf50b0800758a662c80d9ed386"><div class="ttname"><a href="classsinglepp_1_1TrainedSingle.html#a2608f2bf50b0800758a662c80d9ed386">singlepp::TrainedSingle::markers</a></div><div class="ttdeci">const PairwiseMarkers&lt; Index_ &gt; &amp; markers() const</div><div class="ttdef"><b>Definition</b> train_single.hpp:117</div></div>
+<div class="ttc" id="aclasssinglepp_1_1TrainedSingle_html_acd1d604b21e8deb287ccd5210b431bf8"><div class="ttname"><a href="classsinglepp_1_1TrainedSingle.html#acd1d604b21e8deb287ccd5210b431bf8">singlepp::TrainedSingle::num_labels</a></div><div class="ttdeci">std::size_t num_labels() const</div><div class="ttdef"><b>Definition</b> train_single.hpp:133</div></div>
+<div class="ttc" id="aclasssinglepp_1_1TrainedSingle_html_ae1a317b134a501627abacd439f3425bd"><div class="ttname"><a href="classsinglepp_1_1TrainedSingle.html#ae1a317b134a501627abacd439f3425bd">singlepp::TrainedSingle::num_profiles</a></div><div class="ttdeci">std::size_t num_profiles() const</div><div class="ttdef"><b>Definition</b> train_single.hpp:140</div></div>
 <div class="ttc" id="adefs_8hpp_html"><div class="ttname"><a href="defs_8hpp.html">defs.hpp</a></div><div class="ttdoc">Common definitions for singlepp.</div></div>
 <div class="ttc" id="anamespacesinglepp_html"><div class="ttname"><a href="namespacesinglepp.html">singlepp</a></div><div class="ttdoc">Cell type classification using the SingleR algorithm in C++.</div><div class="ttdef"><b>Definition</b> classify_single.hpp:20</div></div>
 <div class="ttc" id="anamespacesinglepp_html_a0e41c4e40bb27ab5ec9325947fc72575"><div class="ttname"><a href="namespacesinglepp.html#a0e41c4e40bb27ab5ec9325947fc72575">singlepp::PairwiseMarkers</a></div><div class="ttdeci">std::vector&lt; std::vector&lt; std::vector&lt; Index_ &gt; &gt; &gt; PairwiseMarkers</div><div class="ttdef"><b>Definition</b> Markers.hpp:41</div></div>
-<div class="ttc" id="anamespacesinglepp_html_a1c482c08a1cfd9a4eb0ff5b08314ed7e"><div class="ttname"><a href="namespacesinglepp.html#a1c482c08a1cfd9a4eb0ff5b08314ed7e">singlepp::train_single</a></div><div class="ttdeci">TrainedSingle&lt; Index_, Float_ &gt; train_single(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, PairwiseMarkers&lt; Index_ &gt; markers, const TrainSingleOptions &amp;options)</div><div class="ttdef"><b>Definition</b> train_single.hpp:175</div></div>
+<div class="ttc" id="anamespacesinglepp_html_a1c482c08a1cfd9a4eb0ff5b08314ed7e"><div class="ttname"><a href="namespacesinglepp.html#a1c482c08a1cfd9a4eb0ff5b08314ed7e">singlepp::train_single</a></div><div class="ttdeci">TrainedSingle&lt; Index_, Float_ &gt; train_single(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, PairwiseMarkers&lt; Index_ &gt; markers, const TrainSingleOptions &amp;options)</div><div class="ttdef"><b>Definition</b> train_single.hpp:179</div></div>
 <div class="ttc" id="anamespacesinglepp_html_a22b70c4d5949e28af164723543361214"><div class="ttname"><a href="namespacesinglepp.html#a22b70c4d5949e28af164723543361214">singlepp::intersect_genes</a></div><div class="ttdeci">Intersection&lt; Index_ &gt; intersect_genes(Index_ test_nrow, const Id_ *test_id, Index_ ref_nrow, const Id_ *ref_id)</div><div class="ttdef"><b>Definition</b> Intersection.hpp:54</div></div>
 <div class="ttc" id="anamespacesinglepp_html_ae0c63a73c7c40ad5e6f47ef0f9abac5d"><div class="ttname"><a href="namespacesinglepp.html#ae0c63a73c7c40ad5e6f47ef0f9abac5d">singlepp::Intersection</a></div><div class="ttdeci">std::vector&lt; std::pair&lt; Index_, Index_ &gt; &gt; Intersection</div><div class="ttdef"><b>Definition</b> Intersection.hpp:35</div></div>
-<div class="ttc" id="astructsinglepp_1_1TrainSingleOptions_html"><div class="ttname"><a href="structsinglepp_1_1TrainSingleOptions.html">singlepp::TrainSingleOptions</a></div><div class="ttdoc">Options for train_single() and friends.</div><div class="ttdef"><b>Definition</b> train_single.hpp:25</div></div>
-<div class="ttc" id="astructsinglepp_1_1TrainSingleOptions_html_a76c303868ef63d76fd157ad80974d3a6"><div class="ttname"><a href="structsinglepp_1_1TrainSingleOptions.html#a76c303868ef63d76fd157ad80974d3a6">singlepp::TrainSingleOptions::num_threads</a></div><div class="ttdeci">int num_threads</div><div class="ttdef"><b>Definition</b> train_single.hpp:30</div></div>
+<div class="ttc" id="astructsinglepp_1_1TrainSingleOptions_html"><div class="ttname"><a href="structsinglepp_1_1TrainSingleOptions.html">singlepp::TrainSingleOptions</a></div><div class="ttdoc">Options for train_single() and friends.</div><div class="ttdef"><b>Definition</b> train_single.hpp:27</div></div>
+<div class="ttc" id="astructsinglepp_1_1TrainSingleOptions_html_a76c303868ef63d76fd157ad80974d3a6"><div class="ttname"><a href="structsinglepp_1_1TrainSingleOptions.html#a76c303868ef63d76fd157ad80974d3a6">singlepp::TrainSingleOptions::num_threads</a></div><div class="ttdeci">int num_threads</div><div class="ttdef"><b>Definition</b> train_single.hpp:32</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
