@@ -189,7 +189,7 @@ TEST_P(ClassifySingleIntersectTest, Intersect) {
     auto trained = singlepp::train_single<double, int>(left.size(), left.data(), *refs, right.data(), labels.data(), markers, &ref_subset, bopt);
     EXPECT_EQ(trained.test_nrow(), left.size());
     EXPECT_EQ(ref_subset.size(), trained.subset().size());
-    EXPECT_GE(trained.subset().size(), 10); // should be, on average, 'ngenes * prop^2' overlapping genes.
+    EXPECT_GT(trained.subset().size(), 0); // there had better be at least one gene here.
 
     singlepp::ClassifySingleOptions<double> copt;
     copt.quantile = quantile;

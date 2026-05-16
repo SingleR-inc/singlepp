@@ -148,6 +148,9 @@ TEST_P(ClassifyIntegratedTest, Basic) {
 
     singlepp::TrainIntegratedOptions iopt;
     auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
+    EXPECT_EQ(integrated.test_nrow(), ngenes);
+    EXPECT_LE(integrated.subset().size(), ngenes);
+    EXPECT_GT(integrated.subset().size(), 0); // there had better be at least one gene here.
 
     // Mocking up some of the best choices.
     auto chosen = mock_best_choices(ntest, num_labels, /* seed = */ base_seed);
@@ -234,6 +237,9 @@ TEST_P(ClassifyIntegratedTest, Intersected) {
 
     singlepp::TrainIntegratedOptions iopt;
     auto integrated = singlepp::train_integrated(std::move(integrated_inputs), iopt);
+    EXPECT_EQ(integrated.test_nrow(), ngenes);
+    EXPECT_LE(integrated.subset().size(), ngenes);
+    EXPECT_GT(integrated.subset().size(), 0); // there had better be at least one gene here.
 
     // Mocking up some of the best choices.
     auto chosen = mock_best_choices(ntest, num_labels, /* seed = */ base_seed + 2468);
