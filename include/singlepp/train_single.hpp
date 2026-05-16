@@ -178,7 +178,7 @@ TrainedSingle<Index_, Float_> train_single(
     PairwiseMarkers<Index_> markers,
     const TrainSingleOptions& options
 ) {
-    auto subset = subset_to_markers(markers);
+    auto subset = subset_to_markers(ref.nrow(), markers);
     auto subref = build_reference<Float_>(ref, labels, subset, options.num_threads);
     const Index_ test_nrow = ref.nrow(); // remember, test and ref are assumed to have the same features.
     return TrainedSingle<Index_, Float_>(test_nrow, std::move(markers), std::move(subset), std::move(subref));
@@ -224,7 +224,7 @@ TrainedSingle<Index_, Float_> train_single(
     std::vector<Index_>* ref_subset,
     const TrainSingleOptions& options
 ) {
-    auto pairs = subset_to_markers(intersection, markers);
+    auto pairs = subset_to_markers(test_nrow, intersection, ref.nrow(), markers);
     auto subref = build_reference<Float_>(ref, labels, pairs.second, options.num_threads);
     if (ref_subset) {
         *ref_subset = std::move(pairs.second);

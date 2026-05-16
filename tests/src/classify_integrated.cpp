@@ -8,6 +8,11 @@
 #include "naive_method.h"
 #include "compare.h"
 
+#include <unordered_set>
+#include <vector>
+#include <cstddef>
+#include <memory>
+
 class IntegratedTestCore {
 protected:
     inline static std::vector<std::shared_ptr<tatami::Matrix<double, int> > > references;
