@@ -346,7 +346,7 @@ template&lt;typename Index_  = DefaultIndex&gt; </div>
       </table>
 </div><div class="memdoc">
 <p>Vector of marker lists, with one list for each label in the reference dataset. This is used to determine which genes should be used to compute correlations in <code><a class="el" href="#af198ad22e020701691c9bb8326401a46">train_integrated()</a></code>.</p>
-<p>For a <code>PerLabelMarkers</code> object <code>markers</code>, the vector at <code>markers[i]</code> will contain the markers for label <code>i</code>. This combination of markers is expected to distinguish <code>i</code> from all other labels. We suggest using functions like <code>score_markers_summary()</code> from the <a href="https://github.com/libscran/scran_markers"><b>scran_markers</b></a> library to obtain a suitable set of markers. </p>
+<p>For a <code>PerLabelMarkers</code> object <code>markers</code>, the vector at <code>markers[i]</code> will contain the markers for label <code>i</code>. Each marker is a row index into the reference matrix, where indices should be unique within <code>markers[i]</code>. This combination of markers is expected to distinguish <code>i</code> from all other labels. We suggest using functions like <code>score_markers_summary()</code> from the <a href="https://github.com/libscran/scran_markers"><b>scran_markers</b></a> library to obtain a suitable set of markers. </p>
 
 </div>
 </div>
