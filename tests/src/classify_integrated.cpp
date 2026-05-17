@@ -487,7 +487,6 @@ TEST_P(ClassifyIntegratedSparseTest, Basic) {
     dense_integrated_inputs.reserve(nrefs);
     sparse_integrated_inputs.reserve(nrefs);
 
-    // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
     for (std::size_t r = 0; r < nrefs; ++r) {
         const auto labptr = labels[r].data();
         auto markers = simulate_markers(num_labels[r], ngenes, ntop, base_seed + r);
@@ -521,14 +520,13 @@ TEST_P(ClassifyIntegratedSparseTest, Intersect) {
     auto param = GetParam();
     int ntop = std::get<0>(param);
     double quantile = std::get<1>(param);
-    unsigned long long base_seed = ntop + quantile * 50;
+    unsigned long long base_seed = ntop + quantile * 55;
 
     // Creating the integrated set of references.
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > dense_integrated_inputs, sparse_integrated_inputs;
     dense_integrated_inputs.reserve(nrefs);
     sparse_integrated_inputs.reserve(nrefs);
 
-    // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
     for (std::size_t r = 0; r < nrefs; ++r) {
         auto inter = mock_intersection<int>(ngenes, ngenes, ngenes * 0.75, /* seed = */ base_seed + r);
         const auto labptr = labels[r].data();
