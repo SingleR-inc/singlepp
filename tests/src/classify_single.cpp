@@ -297,7 +297,7 @@ INSTANTIATE_TEST_SUITE_P(
     ClassifySingle,
     ClassifySingleIntersectTest,
     ::testing::Combine(
-        ::testing::Values(5, 10, 20), // nuber of top genes.
+        ::testing::Values(10, 20, 50), // nuber of top genes.
         ::testing::Values(1, 0.8, 0.66), // quantile
         ::testing::Values(0.5, 0.9) // proportion subset
     )
