@@ -49,21 +49,31 @@ Float_ get_sparse_value(const SparseScaled<Index_, Float_>& x, const Index_ i) {
 template<typename Index_, typename Float_>
 Float_ get_sparse_zero(const SparseScaled<Index_, Float_>& x) { return x.zero; }
 
-template<typename Index_, typename Float_, typename SparseRef_>
-Float_ sparse_l2(const Index_ num_markers, const Float_* query, const bool query_has_nonzero, const SparseRef_& ref_vec) {
-    const auto num_ref = get_sparse_num(ref_vec);
-    const auto zero_ref = get_sparse_zero(ref_vec);
+template<typename Float_, typename Index_, class GetDense_, class SparseVec_>
+Float_ custom_sparse_l2(const Index_ num_markers, const GetDense_ get_dense, const bool densified_has_nonzero, const SparseVec_& sparse_vec) {
+    const auto num_ref = get_sparse_num(sparse_vec);
+    const auto zero_ref = get_sparse_zero(sparse_vec);
     assert(sanisizer::is_greater_than_or_equal(num_markers, num_ref));
 
     Float_ sum = 0;
     for (Index_ ir = 0; ir < num_ref; ++ir) {
-        const auto val_ref = get_sparse_value(ref_vec, ir);
+        const auto val_ref = get_sparse_value(sparse_vec, ir);
         const auto augmented = val_ref - zero_ref;
-        const auto val_query = query[get_sparse_index(ref_vec, ir)];
-        sum += augmented * (augmented - 2 * val_query);
+        const auto val_densified = get_dense(get_sparse_index(sparse_vec, ir));
+        sum += augmented * (augmented - 2 * val_densified);
     }
 
-    return static_cast<Float_>(query_has_nonzero ? 0.25 : 0) + sum - num_markers * zero_ref * zero_ref;
+    return static_cast<Float_>(densified_has_nonzero ? 0.25 : 0) + sum - num_markers * zero_ref * zero_ref;
+}
+
+template<typename Index_, typename Float_, typename SparseVec_>
+Float_ sparse_l2(const Index_ num_markers, const Float_* densified, const bool densified_has_nonzero, const SparseVec_& sparse_vec) {
+    return custom_sparse_l2<Float_>(
+        num_markers, 
+        [&](const Index_ i) -> Float_ { return densified[i]; },
+        densified_has_nonzero,
+        sparse_vec
+    );
 }
 
 template<typename Index_, typename Float_, typename Stat_>
@@ -98,6 +108,23 @@ Float_ scaled_ranks_sparse_l2(
     );
 
     return static_cast<Float_>(query_has_nonzero ? 0.25 : 0) + sum - num_markers * zero_rank * zero_rank;
+}
+
+template<typename Index_, typename Float_, typename Stat_>
+Float_ scaled_ranks_sparse_l2(
+    const Index_ num_markers,
+    const SparseScaled<Index_, Float_>& query,
+    const RankedVector<Stat_, Index_>& collected,
+    Float_* buffer
+) {
+    const auto ss = partial_scaled_ranks_dense(num_markers, collected, buffer);
+    const Float_ mult = (ss ? sum_squares_to_mult(ss) : 0);
+    return custom_sparse_l2<Float_>(
+        num_markers, 
+        [&](const Index_ i) -> Float_ { return mult * buffer[i]; },
+        ss > 0,
+        query
+    );
 }
 
 template<typename Index_, class SparseInput_, typename Float_>

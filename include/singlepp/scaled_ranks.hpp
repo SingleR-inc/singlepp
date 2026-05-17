@@ -16,13 +16,12 @@ namespace singlepp {
 template<typename Stat_, typename Index_>
 using RankedVector = std::vector<std::pair<Stat_, Index_> >;
 
-// Return value is whether there are any non-zero values in the scaled ranks.
-template<typename Index_, typename Stat_, typename Float_, class Process_>
-bool scaled_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Float_* buffer, Process_ process) { 
+template<typename Index_, typename Stat_, typename Float_>
+Float_ partial_scaled_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Float_* buffer) {
     static_assert(std::is_floating_point<Float_>::value);
     assert(sanisizer::is_equal(num_markers, collected.size()));
     if (num_markers == 0) {
-        return false;
+        return 0;
     }
 
     const Float_ center_rank = static_cast<Float_>(num_markers - 1) / static_cast<Float_>(2); 
@@ -49,6 +48,20 @@ bool scaled_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Inde
         sum_squares += mean_rank * mean_rank * jump;
         cur_rank += jump;
     }
+    
+    return sum_squares;
+}
+
+template<typename Float_>
+Float_ sum_squares_to_mult(const Float_ sum_squares) {
+    assert(sum_squares > 0);
+    return 0.5 / std::sqrt(sum_squares);
+}
+
+// Return value is whether there are any non-zero values in the scaled ranks.
+template<typename Index_, typename Stat_, typename Float_, class Process_>
+bool scaled_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Float_* buffer, Process_ process) {
+    const auto sum_squares = partial_scaled_ranks_dense(num_markers, collected, buffer);
 
     // Special behaviour for no-variance cells; these are left as all-zero scaled ranks.
     if (sum_squares == 0) {
@@ -58,9 +71,9 @@ bool scaled_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Inde
         return false;
     }
 
-    const Float_ denom = 0.5 / std::sqrt(sum_squares);
+    const Float_ mult = sum_squares_to_mult(sum_squares);
     for (Index_ i = 0; i < num_markers; ++i) {
-        process(i, buffer[i] * denom);
+        process(i, buffer[i] * mult);
     }
     return true;
 }
@@ -159,10 +172,10 @@ bool scaled_ranks_sparse(
         return false;
     }
 
-    const Float_ denom = 0.5 / std::sqrt(sum_squares);
-    zprocess(zero_rank * denom);
+    const Float_ mult = sum_squares_to_mult(sum_squares);
+    zprocess(zero_rank * mult);
     for (auto& nz : buffer) {
-        nzprocess(nz, nz.second * denom);
+        nzprocess(nz, nz.second * mult);
     }
 
     return true;
@@ -201,6 +214,33 @@ struct SparseScaled {
     std::vector<std::pair<Index_, Float_> > nonzero;
     Float_ zero = 0;
 };
+
+template<typename Index_, typename Stat_, typename Float_>
+bool scaled_ranks_sparse(
+    const Index_ num_markers,
+    const typename RankedVector<Stat_, Index_>::const_iterator negative_start,
+    const typename RankedVector<Stat_, Index_>::const_iterator negative_end,
+    const typename RankedVector<Stat_, Index_>::const_iterator positive_start,
+    const typename RankedVector<Stat_, Index_>::const_iterator positive_end,
+    SparseScaled<Index_, Float_>& output
+) { 
+    return scaled_ranks_sparse<Index_, Stat_, Float_>(
+        num_markers,
+        negative_end - negative_start,
+        negative_start,
+        negative_end,
+        positive_end - positive_start,
+        positive_start,
+        positive_end,
+        output.nonzero,
+        [&](const Float_ zval) -> void {
+            output.zero = zval;
+        },
+        [&](std::pair<Index_, Float_>& pair, const Float_ val) -> void {
+            pair.second = val;
+        }
+    );
+}
 
 template<typename Index_, typename Stat_, typename Float_>
 bool scaled_ranks_sparse(

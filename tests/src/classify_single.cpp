@@ -46,14 +46,13 @@ TEST_P(ClassifySingleSimpleTest, Simple) {
     auto subset = singlepp::subset_to_markers<int>(ngenes, markers);
     auto naive = naive_method(nlabels, labels, refs, mat, subset, quantile);
 
-    int NC = mat->ncol();
+    const int NC = mat->ncol();
     for (int c = 0; c < NC; ++c) {
         EXPECT_EQ(naive.best[c], output.best[c]);
-        EXPECT_TRUE(std::abs(naive.delta[c] - output.delta[c]) < 1e-6);
-        EXPECT_TRUE(output.delta[c] > 0);
-
+        EXPECT_EQ(naive.delta[c], output.delta[c]);
+        EXPECT_GT(output.delta[c], 0);
         for (size_t r = 0; r < nlabels; ++r) {
-            EXPECT_TRUE(std::abs(naive.scores[r][c] - output.scores[r][c]) < 1e-6);
+            EXPECT_EQ(naive.scores[r][c], output.scores[r][c]);
         }
     }
 
@@ -330,6 +329,7 @@ TEST(FineTuneSingle, EdgeCases) {
     // Performing classification without fine-tuning for a reference comparison.
     auto trained = singlepp::train_single(*reference, labels.data(), markers, {});
     singlepp::FineTuneSingle<false, false, int, int, double, double> ft(trained);
+    singlepp::QueryBuffers<false, false, int, double> qb(trained.subset().size());
     singlepp::RankedVector<double, int> placeholder;
     auto qdeets = create_precomputed_quantile_details<false>(trained, 0.8);
 
@@ -337,13 +337,13 @@ TEST(FineTuneSingle, EdgeCases) {
     // the labels are equal (i.e., no contraction of the feature space).
     {
         std::vector<double> scores { 0.2, 0.5, 0.1 };
-        auto output = ft.run(placeholder, trained, qdeets, 0.05, scores);
+        auto output = ft.run(placeholder, trained, qdeets, 0.05, qb, scores);
         EXPECT_EQ(output.first, 1);
         EXPECT_EQ(output.second, 0.3);
 
         std::fill(scores.begin(), scores.end(), 0.5);
         scores[0] = 0.51;
-        output = ft.run(placeholder, trained, qdeets, 0.05, scores);
+        output = ft.run(placeholder, trained, qdeets, 0.05, qb, scores);
         EXPECT_EQ(output.first, 0); // first entry of scores is maxed.
         EXPECT_FLOAT_EQ(output.second, 0.01);
     }
@@ -351,7 +351,7 @@ TEST(FineTuneSingle, EdgeCases) {
     // Check edge case when there is only a single label, based on the length of 'scores'.
     {
         std::vector<double> scores { 0.5 };
-        auto output = ft.run(placeholder, trained, qdeets, 0.05, scores);
+        auto output = ft.run(placeholder, trained, qdeets, 0.05, qb, scores);
         EXPECT_EQ(output.first, 0);
         EXPECT_TRUE(std::isnan(output.second));
     }
@@ -368,6 +368,7 @@ TEST(FineTuneSingle, ExactRecovery) {
 
     auto trained = singlepp::train_single(*reference, labels.data(), markers, {});
     singlepp::FineTuneSingle<false, false, int, int, double, double> ft(trained);
+    singlepp::QueryBuffers<false, false, int, double> qb(trained.subset().size());
 
     // Checking that we eventually pick up the reference, if the input profile is identical to one of the profiles.
     const auto nmarkers = trained.subset().size();
@@ -383,12 +384,12 @@ TEST(FineTuneSingle, ExactRecovery) {
 
         std::vector<double> scores { 0.5, 0.49, 0.48 };
         scores[(labels[r] + 1) % nlabels] = 0; // forcing another label to be zero so that it actually does the fine-tuning.
-        auto output = ft.run(ranked, trained, qdeets, 0.05, scores);
+        auto output = ft.run(ranked, trained, qdeets, 0.05, qb, scores);
         EXPECT_EQ(output.first, labels[r]);
 
         scores = std::vector<double>{ 0.5, 0.5, 0.5 };
         scores[labels[r]] = 0; // forcing it to match to some other label. 
-        auto output2 = ft.run(ranked, trained, qdeets, 0.05, scores);
+        auto output2 = ft.run(ranked, trained, qdeets, 0.05, qb, scores);
         EXPECT_NE(output2.first, labels[r]);
     }
 }
@@ -405,6 +406,7 @@ TEST(FineTuneSingle, Diagonal) {
 
     auto trained = singlepp::train_single(*reference, labels.data(), markers, {});
     singlepp::FineTuneSingle<false, false, int, int, double, double> ft(trained);
+    singlepp::QueryBuffers<false, false, int, double> qb(trained.subset().size());
 
     const auto nmarkers = trained.subset().size();
     auto wrk = reference->dense_column(trained.subset());
@@ -418,7 +420,7 @@ TEST(FineTuneSingle, Diagonal) {
 
         std::vector<double> scores { 0.49, 0.5, 0.48 };
         scores[(labels[r] + 1) % nlabels] = 0; // forcing another label to be zero so that it actually does the fine-tuning.
-        auto output = ft.run(ranked, trained, qdeets, 0.05, scores);
+        auto output = ft.run(ranked, trained, qdeets, 0.05, qb, scores);
 
         // The key point here is that the diagonals are actually used,
         // so we don't end up with an empty ranking vector and NaN scores.
@@ -439,11 +441,15 @@ TEST(FineTuneSingle, Sparse) {
     auto new_trained = singlepp::train_single<double>(*new_reference, labels.data(), markers, {});
     singlepp::FineTuneSingle<false, false, int, int, double, double> new_ft(new_trained);
     singlepp::FineTuneSingle<true, false, int, int, double, double> new_ft2(new_trained);
+    singlepp::QueryBuffers<false, false, int, double> new_qb(new_trained.subset().size());
+    singlepp::QueryBuffers<true, false, int, double> new_qb2(new_trained.subset().size());
 
     auto sparse_reference = tatami::convert_to_compressed_sparse<double, int>(*new_reference, true, {});
     auto sparse_trained = singlepp::train_single<double>(*sparse_reference, labels.data(), markers, {});
     singlepp::FineTuneSingle<false, true, int, int, double, double> sparse_ft(sparse_trained);
     singlepp::FineTuneSingle<true, true, int, int, double, double> sparse_ft2(sparse_trained);
+    singlepp::QueryBuffers<false, true, int, double> sparse_qb(sparse_trained.subset().size());
+    singlepp::QueryBuffers<true, true, int, double> sparse_qb2(sparse_trained.subset().size());
 
     const int ntest = 100; 
     auto new_test = spawn_sparse_matrix(ngenes, ntest, /* seed = */ 5060, /* density = */ 0.2);
@@ -464,14 +470,14 @@ TEST(FineTuneSingle, Sparse) {
         scores[empty] = 0; // forcing one of the labels to be zero so that it actually does the fine-tuning.
 
         auto score_copy = scores;
-        auto expected = new_ft.run(ranked, new_trained, qdeets, 0.05, score_copy);
+        auto expected = new_ft.run(ranked, new_trained, qdeets, 0.05, new_qb, score_copy);
         EXPECT_NE(expected.first, empty);
 
         // Due to differences in numerical precision between dense/sparse calculations, comparisons may not be exact.
         // This results in different 'best' labels in the presence of near-ties, so if there's a mismatch,
         // we check that the delta is indeed near-zero, i.e., there is a near-tie. 
         score_copy = scores;
-        auto dense_to_sparse = sparse_ft.run(ranked, sparse_trained, sparse_qdeets, 0.05, score_copy);
+        auto dense_to_sparse = sparse_ft.run(ranked, sparse_trained, sparse_qdeets, 0.05, sparse_qb, score_copy);
         check_almost_equal_assignment(expected.first, expected.second, dense_to_sparse.first, dense_to_sparse.second);
 
         singlepp::RankedVector<double, int> sparse_ranked;
@@ -482,11 +488,11 @@ TEST(FineTuneSingle, Sparse) {
         }
 
         score_copy = scores;
-        auto sparse_to_dense = new_ft2.run(sparse_ranked, new_trained, qdeets, 0.05, score_copy);
+        auto sparse_to_dense = new_ft2.run(sparse_ranked, new_trained, qdeets, 0.05, new_qb2, score_copy);
         check_almost_equal_assignment(expected.first, expected.second, sparse_to_dense.first, sparse_to_dense.second);
 
         score_copy = scores;
-        auto sparse_to_sparse = sparse_ft2.run(sparse_ranked, sparse_trained, sparse_qdeets, 0.05, score_copy);
+        auto sparse_to_sparse = sparse_ft2.run(sparse_ranked, sparse_trained, sparse_qdeets, 0.05, sparse_qb2, score_copy);
         check_almost_equal_assignment(expected.first, expected.second, sparse_to_sparse.first, sparse_to_sparse.second);
     }
 }
