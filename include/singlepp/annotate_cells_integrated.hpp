@@ -173,8 +173,9 @@ private:
             );
             if (my_scaled_ref_sparse.has_value()) {
                 densify_sparse_vector(num_markers, my_scaled_query_sparse, *my_scaled_query_dense);
+            } else {
+                std::sort(my_scaled_query_sparse.nonzero.begin(), my_scaled_query_sparse.nonzero.end()); // improve cache locality in scaled_ranks_sparse_l2().
             }
-
         } else {
             query_has_nonzero = scaled_ranks_dense(
                 num_markers,

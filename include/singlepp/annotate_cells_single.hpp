@@ -163,6 +163,7 @@ public:
                         subend,
                         query_buffers.sparse_scaled
                     );
+                    std::sort(query_buffers.sparse_scaled.nonzero.begin(), query_buffers.sparse_scaled.nonzero.end()); // improve cache locality in scaled_ranks_sparse_l2().
                 }
 
             } else {
@@ -329,6 +330,7 @@ void annotate_cells_single_raw(
                         qEnd,
                         query_buffers.sparse_scaled
                     );
+                    std::sort(query_buffers.sparse_scaled.nonzero.begin(), query_buffers.sparse_scaled.nonzero.end()); // improve cache locality in sparse_l2().
                 }
 
             } else {
