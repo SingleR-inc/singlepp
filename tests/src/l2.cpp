@@ -108,6 +108,10 @@ TEST(ComputeL2, SparseEasy) {
     std::vector<std::pair<int, double> > buffer_b;
     auto direct = singlepp::scaled_ranks_sparse_l2(N, scaled_a.data(), true, negative_b, positive_b, buffer_b);
     EXPECT_FLOAT_EQ(direct, expected);
+
+    std::vector<double> workspace_a(N);
+    direct = singlepp::scaled_ranks_sparse_l2(N, sparse_scaled_b, paired_a, workspace_a.data());
+    EXPECT_FLOAT_EQ(direct, expected);
 }
 
 TEST(ComputeL2, SparseEmpty) {
@@ -152,9 +156,13 @@ TEST(ComputeL2, SparseEmpty) {
 
     direct = singlepp::scaled_ranks_sparse_l2(N, empty.data(), false, negative_a, positive_a, buffer);
     EXPECT_FLOAT_EQ(direct, expected);
+
+    std::vector<double> workspace_a(N);
+    direct = singlepp::scaled_ranks_sparse_l2(N, sparse_empty, paired_a, workspace_a.data());
+    EXPECT_FLOAT_EQ(direct, expected);
 }
 
-TEST(ComputeL2, SparseSparseHard) {
+TEST(ComputeL2, SparseHard) {
     std::mt19937_64 rng(12345);
     std::normal_distribution<> ndist;
     std::uniform_real_distribution<> udist;
@@ -168,6 +176,7 @@ TEST(ComputeL2, SparseSparseHard) {
     std::vector<double> b_values;
     singlepp::SparseScaled<int, double> sparse_scaled_b;
     std::vector<std::pair<int, double> > buffer_b;
+    std::vector<double> workspace_a(n);
 
     for (int it = 0; it < 100; ++it) {
         paired_a.clear();
@@ -226,6 +235,9 @@ TEST(ComputeL2, SparseSparseHard) {
 
         // Finally, checking the direct calculation.
         auto direct = singlepp::scaled_ranks_sparse_l2(n, scaled_a.data(), a_nonempty, negative_b, positive_b, buffer_b);
+        EXPECT_FLOAT_EQ(direct, expected);
+
+        direct = singlepp::scaled_ranks_sparse_l2(n, sparse_scaled_b, paired_a, workspace_a.data());
         EXPECT_FLOAT_EQ(direct, expected);
     }
 }

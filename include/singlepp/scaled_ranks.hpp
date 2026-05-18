@@ -16,11 +16,11 @@ namespace singlepp {
 template<typename Stat_, typename Index_>
 using RankedVector = std::vector<std::pair<Stat_, Index_> >;
 
-// Fills buffer with the centered rank of each observation, returning the sum of squares.
-// This can be converted into scaled ranks by multiplying the contents of 'buffer' with 'sum_squares_to_mult(output)'.
+// Compute the centered rank of each observation, returning the sum of squares.
+// This can be converted into scaled ranks by multiplying the contents of 'output' with 'sum_squares_to_mult(sum_squares)'.
 // Used in both 'scaled_ranks_dense()' and an overload of 'scaled_ranks_sparse_l2()'.
 template<typename Index_, typename Stat_, typename Float_>
-Float_ centered_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Float_* buffer) {
+Float_ centered_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Float_* output) {
     static_assert(std::is_floating_point<Float_>::value);
     assert(sanisizer::is_equal(num_markers, collected.size()));
     if (num_markers == 0) {
@@ -44,7 +44,7 @@ Float_ centered_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, 
         const Float_ jump = copy - cIt;
         const Float_ mean_rank = cur_rank + static_cast<Float_>(jump - 1) / static_cast<Float_>(2) - center_rank;
         while (cIt != copy) {
-            buffer[cIt->second] = mean_rank;
+            output[cIt->second] = mean_rank;
             ++cIt;
         }
 
@@ -63,11 +63,11 @@ Float_ sum_squares_to_mult(const Float_ sum_squares) {
 }
 
 // Compute scaled ranks from a dense ranked vector (i.e., 'collected' contains all indices in '[0, collected.size())').
-// Specifically, the centered ranks are stored in 'buffer', and the scaled ranks are passed along with their index to the 'process' function.
+// Each scaled rank is passed along with its index to the 'process' function.
 // The return value is whether there are any non-zero values in the scaled ranks.
 template<typename Index_, typename Stat_, typename Float_, class Process_>
-bool scaled_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Float_* buffer, Process_ process) {
-    const auto sum_squares = centered_ranks_dense(num_markers, collected, buffer);
+bool scaled_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Float_* workspace, Process_ process) {
+    const auto sum_squares = centered_ranks_dense(num_markers, collected, workspace);
 
     // Special behaviour for no-variance cells; these are left as all-zero scaled ranks.
     if (sum_squares == 0) {
@@ -79,29 +79,29 @@ bool scaled_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Inde
 
     const Float_ mult = sum_squares_to_mult(sum_squares);
     for (Index_ i = 0; i < num_markers; ++i) {
-        process(i, buffer[i] * mult);
+        process(i, workspace[i] * mult);
     }
     return true;
 }
 
-// Compute scaled ranks from a dense ranked vector (i.e., 'collected' contains all indices in '[0, collected.size())') and store them in 'buffer'.
+// Compute scaled ranks from a dense ranked vector (i.e., 'collected' contains all indices in '[0, collected.size())') and store them in 'output'.
 // The return value is whether there are any non-zero values in the scaled ranks.
 template<typename Index_, typename Stat_, typename Float_>
-bool scaled_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Float_* outgoing) { 
+bool scaled_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Float_* output) { 
     return scaled_ranks_dense(
         num_markers,
         collected, 
-        outgoing, 
+        output, 
         [&](const Index_ i, const Float_ val) -> void {
-            outgoing[i] = val;
+            output[i] = val;
         }
     );
 }
 
 // Compute scaled ranks from two iterator ranges of sparse ranked vectors containing negative and positive values.
-// Specifically, this stores the centered ranks of the non-zero elements in 'buffer'.
+// (This also accepts the sizes of each directly to avoid having to compute it from the difference of iterators if we already knew it.)
 // It calls 'zprocess()' with the scaled rank of the zero values.
-// It then iterates calls 'nzprocess' on the scaled ranks of the non-zero values and their indices.
+// It also calls 'nzprocess' on each of the scaled ranks of the non-zero values.
 // Return value is whether there are any non-zero values in the scaled ranks.
 template<typename Index_, typename Stat_, typename Float_, class ZeroProcess_, class NonzeroProcess_>
 bool scaled_ranks_sparse(
@@ -112,7 +112,7 @@ bool scaled_ranks_sparse(
     const Index_ num_positive,
     const typename RankedVector<Stat_, Index_>::const_iterator positive_start,
     const typename RankedVector<Stat_, Index_>::const_iterator positive_end,
-    std::vector<std::pair<Index_, Float_> >& buffer,
+    std::vector<std::pair<Index_, Float_> >& workspace,
     ZeroProcess_ zprocess,
     NonzeroProcess_ nzprocess
 ) {
@@ -122,7 +122,7 @@ bool scaled_ranks_sparse(
     assert(sanisizer::is_equal(positive_end - positive_start, num_positive));
     assert(sanisizer::is_greater_than_or_equal(num_markers, sanisizer::sum<Index_>(num_positive, num_negative)));
 
-    buffer.clear();
+    workspace.clear();
     if (num_markers == 0) {
         zprocess(0);
         return false;
@@ -143,7 +143,7 @@ bool scaled_ranks_sparse(
         const Float_ jump = copy - nIt;
         const Float_ mean_rank = cur_rank + static_cast<Float_>(jump - 1) / static_cast<Float_>(2) - center_rank;
         while (nIt != copy) {
-            buffer.emplace_back(nIt->second, mean_rank);
+            workspace.emplace_back(nIt->second, mean_rank);
             ++nIt;
         }
 
@@ -169,7 +169,7 @@ bool scaled_ranks_sparse(
         const Float_ jump = copy - pIt;
         const Float_ mean_rank = cur_rank + static_cast<Float_>(jump - 1) / static_cast<Float_>(2) - center_rank;
         while (pIt != copy) {
-            buffer.emplace_back(pIt->second, mean_rank);
+            workspace.emplace_back(pIt->second, mean_rank);
             ++pIt;
         }
 
@@ -179,14 +179,14 @@ bool scaled_ranks_sparse(
 
     // Special behaviour for no-variance cells; these are left as all-zero scaled ranks.
     if (sum_squares == 0) {
-        buffer.clear();
+        workspace.clear();
         zprocess(0);
         return false;
     }
 
     const Float_ mult = sum_squares_to_mult(sum_squares);
     zprocess(zero_rank * mult);
-    for (auto& nz : buffer) {
+    for (auto& nz : workspace) {
         nzprocess(nz, nz.second * mult);
     }
 
@@ -194,9 +194,10 @@ bool scaled_ranks_sparse(
 }
 
 // Compute scaled ranks from two iterator ranges of sparse ranked vectors containing negative and positive values.
-// Specifically, this stores the centered ranks of the non-zero elements in 'buffer'.
 // It then expands this to a dense vector of scaled ranks in 'output'.
 // The return value is whether there are any non-zero values in the scaled ranks.
+// Technically, the centered ranks of the non-zero elements are stored in 'workspace', but this is an implementation detail and the workspace should mostly be ignored on output;
+// it's only provided to avoid reallocations within multiple calls to this function.
 template<typename Index_, typename Stat_, typename Float_>
 bool scaled_ranks_sparse(
     const Index_ num_markers,
@@ -204,7 +205,7 @@ bool scaled_ranks_sparse(
     const typename RankedVector<Stat_, Index_>::const_iterator negative_end,
     const typename RankedVector<Stat_, Index_>::const_iterator positive_start,
     const typename RankedVector<Stat_, Index_>::const_iterator positive_end,
-    std::vector<std::pair<Index_, Float_> >& buffer,
+    std::vector<std::pair<Index_, Float_> >& workspace,
     Float_* output
 ) { 
     return scaled_ranks_sparse<Index_, Stat_, Float_>(
@@ -215,7 +216,7 @@ bool scaled_ranks_sparse(
         positive_end - positive_start,
         positive_start,
         positive_end,
-        buffer,
+        workspace,
         [&](const Float_ zval) -> void {
             std::fill_n(output, num_markers, zval);
         },
