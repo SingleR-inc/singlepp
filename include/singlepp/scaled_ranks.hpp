@@ -16,8 +16,11 @@ namespace singlepp {
 template<typename Stat_, typename Index_>
 using RankedVector = std::vector<std::pair<Stat_, Index_> >;
 
+// Fills buffer with the centered rank of each observation, returning the sum of squares.
+// This can be converted into scaled ranks by multiplying the contents of 'buffer' with 'sum_squares_to_mult(output)'.
+// Used in both 'scaled_ranks_dense()' and an overload of 'scaled_ranks_sparse_l2()'.
 template<typename Index_, typename Stat_, typename Float_>
-Float_ partial_scaled_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Float_* buffer) {
+Float_ centered_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Float_* buffer) {
     static_assert(std::is_floating_point<Float_>::value);
     assert(sanisizer::is_equal(num_markers, collected.size()));
     if (num_markers == 0) {
@@ -52,16 +55,19 @@ Float_ partial_scaled_ranks_dense(const Index_ num_markers, const RankedVector<S
     return sum_squares;
 }
 
+// Obtain the multiplier for converting the centered ranks into scaled ranks.
 template<typename Float_>
 Float_ sum_squares_to_mult(const Float_ sum_squares) {
     assert(sum_squares > 0);
     return 0.5 / std::sqrt(sum_squares);
 }
 
-// Return value is whether there are any non-zero values in the scaled ranks.
+// Compute scaled ranks from a dense ranked vector (i.e., 'collected' contains all indices in '[0, collected.size())').
+// Specifically, the centered ranks are stored in 'buffer', and the scaled ranks are passed along with their index to the 'process' function.
+// The return value is whether there are any non-zero values in the scaled ranks.
 template<typename Index_, typename Stat_, typename Float_, class Process_>
 bool scaled_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Float_* buffer, Process_ process) {
-    const auto sum_squares = partial_scaled_ranks_dense(num_markers, collected, buffer);
+    const auto sum_squares = centered_ranks_dense(num_markers, collected, buffer);
 
     // Special behaviour for no-variance cells; these are left as all-zero scaled ranks.
     if (sum_squares == 0) {
@@ -78,6 +84,8 @@ bool scaled_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Inde
     return true;
 }
 
+// Compute scaled ranks from a dense ranked vector (i.e., 'collected' contains all indices in '[0, collected.size())') and store them in 'buffer'.
+// The return value is whether there are any non-zero values in the scaled ranks.
 template<typename Index_, typename Stat_, typename Float_>
 bool scaled_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Index_>& collected, Float_* outgoing) { 
     return scaled_ranks_dense(
@@ -90,6 +98,10 @@ bool scaled_ranks_dense(const Index_ num_markers, const RankedVector<Stat_, Inde
     );
 }
 
+// Compute scaled ranks from two iterator ranges of sparse ranked vectors containing negative and positive values.
+// Specifically, this stores the centered ranks of the non-zero elements in 'buffer'.
+// It calls 'zprocess()' with the scaled rank of the zero values.
+// It then iterates calls 'nzprocess' on the scaled ranks of the non-zero values and their indices.
 // Return value is whether there are any non-zero values in the scaled ranks.
 template<typename Index_, typename Stat_, typename Float_, class ZeroProcess_, class NonzeroProcess_>
 bool scaled_ranks_sparse(
@@ -181,6 +193,10 @@ bool scaled_ranks_sparse(
     return true;
 }
 
+// Compute scaled ranks from two iterator ranges of sparse ranked vectors containing negative and positive values.
+// Specifically, this stores the centered ranks of the non-zero elements in 'buffer'.
+// It then expands this to a dense vector of scaled ranks in 'output'.
+// The return value is whether there are any non-zero values in the scaled ranks.
 template<typename Index_, typename Stat_, typename Float_>
 bool scaled_ranks_sparse(
     const Index_ num_markers,
@@ -215,6 +231,10 @@ struct SparseScaled {
     Float_ zero = 0;
 };
 
+// Compute scaled ranks from two iterator ranges of sparse ranked vectors containing negative and positive values.
+// Specifically, this stores the scaled ranks of the non-zero elements in 'output.nonzero'.
+// It also stores the scaled rank corresponding to the zero values in 'output.zero'.
+// The return value is whether there are any non-zero values in the scaled ranks.
 template<typename Index_, typename Stat_, typename Float_>
 bool scaled_ranks_sparse(
     const Index_ num_markers,
@@ -242,6 +262,7 @@ bool scaled_ranks_sparse(
     );
 }
 
+// Overload that accepts two sparse ranked vectors, rather than the iterator ranges.
 template<typename Index_, typename Stat_, typename Float_>
 bool scaled_ranks_sparse(
     const Index_ num_markers,
@@ -267,6 +288,9 @@ bool scaled_ranks_sparse(
     );
 }
 
+// Simplifies the ranks to replace arbitrary statistics with an integer for greater memory efficiency.
+// The general idea is that Simple_ is smaller than Stat_, to save space.
+// As long as we respect ties, everything should be fine.
 template<typename Stat_, typename Index_, typename Simple_>
 void simplify_ranks(
     const Index_ size,
@@ -281,8 +305,6 @@ void simplify_ranks(
 
     output.reserve(size);
 
-    // The general idea is that Simple_ is smaller than Stat_, to save space.
-    // As long as we respect ties, everything should be fine.
     Simple_ counter = 0;
     auto last = start->first;
     for (auto it = start; it < end; ++it) {
@@ -294,6 +316,7 @@ void simplify_ranks(
     }
 }
 
+// Overload that accepts an iterator range.
 template<typename Stat_, typename Index_, typename Simple_>
 void simplify_ranks(
     const typename RankedVector<Stat_, Index_>::const_iterator start,
@@ -303,6 +326,7 @@ void simplify_ranks(
     simplify_ranks<Stat_, Index_, Simple_>(end - start, start, end, output);
 }
 
+// Overload that accepts a ranked vector.
 template<typename Stat_, typename Index_, typename Simple_>
 void simplify_ranks(const RankedVector<Stat_, Index_>& x, RankedVector<Simple_, Index_>& output) {
     simplify_ranks<Stat_, Index_, Simple_>(x.size(), x.begin(), x.end(), output);

@@ -117,7 +117,7 @@ Float_ scaled_ranks_sparse_l2(
     const RankedVector<Stat_, Index_>& collected,
     Float_* buffer
 ) {
-    const auto ss = partial_scaled_ranks_dense(num_markers, collected, buffer);
+    const auto ss = centered_ranks_dense(num_markers, collected, buffer);
     const Float_ mult = (ss ? sum_squares_to_mult(ss) : 0);
     return custom_sparse_l2<Float_>(
         num_markers, 
