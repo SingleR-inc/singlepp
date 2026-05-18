@@ -269,7 +269,6 @@ TEST_P(ClassifySingleIntersectTest, Sparse) {
     size_t nlabels = 5;
     auto markers = mock_pairwise_markers<int>(nlabels, top, right.size(), /* seed = */ base_seed + 69);
 
-    // Sparse-dense and dense-dense compute the exact same L2, so we can do this comparison without fear of discrepancies due to numerical differences.
     int ntest = 11;
     auto test = spawn_sparse_matrix(left.size(), ntest, /* seed = */ base_seed + 4242, /* density = */ 0.24);
     auto stest = tatami::convert_to_compressed_sparse<double, int>(*test, true, {});
@@ -289,7 +288,7 @@ TEST_P(ClassifySingleIntersectTest, Sparse) {
     auto dense_to_sparse = singlepp::classify_single<int>(*test, sparse_trained, {});
     check_almost_equal_sparse_results(ntest, nlabels, expected, dense_to_sparse);
 
-    auto sparse_to_sparse = singlepp::classify_single<int>(*test, sparse_trained, {});
+    auto sparse_to_sparse = singlepp::classify_single<int>(*stest, sparse_trained, {});
     check_almost_equal_sparse_results(ntest, nlabels, expected, sparse_to_sparse);
 }
 
