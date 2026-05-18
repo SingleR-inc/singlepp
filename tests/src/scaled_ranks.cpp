@@ -113,8 +113,8 @@ TEST(ScaledRanks, SparseBasic) {
     const int num_markers = stuff.size();
 
     auto ranks = fill_ranks(num_markers, stuff.data());
-    std::vector<double> out(num_markers);
-    EXPECT_TRUE(singlepp::scaled_ranks_dense(num_markers, ranks, out.data()));
+    std::vector<double> ref(num_markers);
+    EXPECT_TRUE(singlepp::scaled_ranks_dense(num_markers, ranks, ref.data()));
 
     singlepp::RankedVector<double, int> sparse_negative_ranks, sparse_positive_ranks;
     for (const auto& r : ranks) {
@@ -132,7 +132,7 @@ TEST(ScaledRanks, SparseBasic) {
         sout[sp.first] = sp.second;
     }
     for (int i = 0; i < num_markers; ++i) {
-        EXPECT_FLOAT_EQ(sout[i], out[i]);
+        EXPECT_FLOAT_EQ(sout[i], ref[i]);
     }
 
     auto scaled_copy = sparse_scaled;
@@ -141,20 +141,38 @@ TEST(ScaledRanks, SparseBasic) {
         EXPECT_LT(scaled_copy.nonzero[i - 1].first, scaled_copy.nonzero[i].first);
     }
 
+    // Works with its overload.
+    {
+        singlepp::SparseScaled<int, double> sparse_scaled2;
+        bool has_nonzero = singlepp::scaled_ranks_sparse<int, double, double>(
+            num_markers,
+            sparse_negative_ranks.begin(),
+            sparse_negative_ranks.end(),
+            sparse_positive_ranks.begin(),
+            sparse_positive_ranks.end(),
+            sparse_scaled2
+        );
+        EXPECT_TRUE(has_nonzero);
+        EXPECT_EQ(sparse_scaled.nonzero, sparse_scaled2.nonzero);
+        EXPECT_EQ(sparse_scaled.zero, sparse_scaled2.zero);
+    }
+
     // Directly dumping it into a dense vector.
-    std::vector<double> densified(num_markers); 
-    std::vector<std::pair<int, double> > buffer;
-    singlepp::scaled_ranks_sparse<int, double>(
-        num_markers,
-        sparse_negative_ranks.begin(),
-        sparse_negative_ranks.end(),
-        sparse_positive_ranks.begin(),
-        sparse_positive_ranks.end(),
-        buffer,
-        densified.data()
-    );
-    for (int i = 0; i < num_markers; ++i) {
-        EXPECT_FLOAT_EQ(densified[i], out[i]);
+    {
+        std::vector<double> densified(num_markers); 
+        std::vector<std::pair<int, double> > buffer;
+        singlepp::scaled_ranks_sparse<int, double>(
+            num_markers,
+            sparse_negative_ranks.begin(),
+            sparse_negative_ranks.end(),
+            sparse_positive_ranks.begin(),
+            sparse_positive_ranks.end(),
+            buffer,
+            densified.data()
+        );
+        for (int i = 0; i < num_markers; ++i) {
+            EXPECT_FLOAT_EQ(densified[i], ref[i]);
+        }
     }
 
     // Bails if empty.
@@ -278,7 +296,7 @@ TEST(SimplifyRanks, WithTies) {
     auto ranks2 = fill_ranks<int>(with_ties.size(), with_ties.data());
 
     singlepp::RankedVector<int, int> compacted2;
-    singlepp::simplify_ranks(ranks2, compacted2);
+    singlepp::simplify_ranks<double, int, int>(ranks2.begin(), ranks2.end(), compacted2); // use the overload for some more code coverage.
     for (size_t i = 1; i < compacted2.size(); ++i) {
         EXPECT_TRUE(compacted2[i].first >= compacted2[i-1].first);
     }

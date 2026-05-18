@@ -561,7 +561,7 @@ INSTANTIATE_TEST_SUITE_P(
     ClassifyIntegrated,
     ClassifyIntegratedSparseTest,
     ::testing::Combine(
-        ::testing::Values(5, 20, 50), // number of top genes.
+        ::testing::Values(10, 20, 50), // number of top genes.
         ::testing::Values(0.5, 0.8, 0.9) // number of quantiles.
     )
 );
