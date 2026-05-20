@@ -16,7 +16,7 @@ namespace singlepp {
 
 // Use this method when the feature spaces are already identical.
 template<typename Index_>
-std::vector<Index_> subset_to_markers(const Index_ ref_nrow, Markers<Index_>& markers) {
+std::vector<Index_> subset_to_markers(const Index_ ref_nrow, PairwiseMarkers<Index_>& markers) {
     // Using ref_nrow as a missing-value placeholder, as all indices should be less than it.
     auto available = sanisizer::create<std::vector<Index_> >(ref_nrow, ref_nrow);
     std::vector<Index_> subset;
@@ -55,7 +55,7 @@ std::pair<std::vector<Index_>, std::vector<Index_> > subset_to_markers(
     const Index_ test_nrow,
     const Intersection<Index_>& intersection,
     const Index_ ref_nrow,
-    Markers<Index_>& markers
+    PairwiseMarkers<Index_>& markers
 ) {
     // Again, using ref_nrow and test_nrow as the respective missing-value placeholders.
     auto in_inter = sanisizer::create<std::vector<Index_> >(ref_nrow, test_nrow);
