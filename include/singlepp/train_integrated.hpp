@@ -449,9 +449,6 @@ void train_integrated_per_reference_intersect(
  */
 template<typename Value_, typename Index_, typename Label_>
 TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInput<Value_, Index_, Label_> >& inputs, const TrainIntegratedOptions& options) {
-    std::vector<Index_> universe;
-    const auto nrefs = inputs.size();
-    auto references = sanisizer::create<std::vector<IntegratedReference<Index_> > >(nrefs);
 
     // Checking that the number of genes in the test dataset are consistent.
     Index_ test_nrow = 0;
@@ -465,6 +462,7 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
     }
 
     // For references with intersections, we need to map the marker indices to the test rows, for comparability across references.
+    const auto nrefs = inputs.size();
     std::vector<std::vector<Index_> > remap_intersection_to_test_index; 
     for (I<decltype(nrefs)> r  = 0; r < nrefs; ++r) {
         if (inputs[r].intersection.has_value()) {
@@ -476,6 +474,7 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
     // Identify the union of all marker genes as the universe, but excluding those markers that are not present in all intersections.
     // Specifically, 'universe' contains sorted and unique row indices for the test matrix, where 'remap_test_to_universe[universe[i]] == i'.
     // 'remap_test_to_universe[k]' defaults to the max number of rows in the test if 'k' is not present in all intersections. 
+    std::vector<Index_> universe;
     auto remap_test_to_universe = sanisizer::create<std::vector<Index_> >(test_nrow, test_nrow); 
     {
         auto present = sanisizer::create<std::vector<char> >(test_nrow);
@@ -535,13 +534,14 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
         universe.shrink_to_fit();
     }
 
+    // Remapping the per-label markers for this reference to refer to our universe.
+    auto references = sanisizer::create<std::vector<IntegratedReference<Index_> > >(nrefs);
     for (I<decltype(nrefs)> r = 0; r < nrefs; ++r) {
         const auto& curinput = inputs[r];
         const auto& currefmarkers = curinput.markers;
         const auto nlabels = currefmarkers.size();
         auto& currefout = references[r];
 
-        const Index_ NC = curinput.ref->ncol();
         const bool is_sparse = curinput.ref->is_sparse();
         if (is_sparse) {
             currefout.sparse.emplace(sanisizer::as_size_type<I<decltype(*(currefout.sparse))> >(nlabels));
@@ -549,13 +549,20 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
             currefout.dense.emplace(sanisizer::as_size_type<I<decltype(*(currefout.dense))> >(nlabels));
         }
 
-        // Assembling the per-label markers for this reference.
-        for (I<decltype(nlabels)> l = 0; l < nlabels; ++l) {
-            const auto& curlabmarkers = currefmarkers[l];
-            std::vector<Index_> markers;
+        auto get_markers = [&](I<decltype(nlabels)> l) -> std::vector<Index_>& {
+            if (is_sparse) {
+                return (*(currefout.sparse))[l].markers; 
+            } else {
+                return (*(currefout.dense))[l].markers;
+            }
+        };
 
-            if (curinput.intersection.has_value()) {
-                const auto& cur_test_remap = remap_intersection_to_test_index[r];
+        if (curinput.intersection.has_value()) {
+            auto& cur_test_remap = remap_intersection_to_test_index[r];
+            for (I<decltype(nlabels)> l = 0; l < nlabels; ++l) {
+                const auto& curlabmarkers = currefmarkers[l];
+                auto& markers = get_markers(l);
+                markers.reserve(curlabmarkers.size());
                 for (const auto y : curlabmarkers) {
                     const auto ty = cur_test_remap[y];
                     if (ty != test_nrow) { // ignoring marker that can't be mapped via the current intersection.
@@ -565,7 +572,13 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
                         }
                     }
                 }
-            } else {
+            }
+
+        } else {
+            for (I<decltype(nlabels)> l = 0; l < nlabels; ++l) {
+                const auto& curlabmarkers = currefmarkers[l];
+                auto& markers = get_markers(l);
+                markers.reserve(curlabmarkers.size());
                 for (const auto y : curlabmarkers) {
                     const auto universe_index = remap_test_to_universe[y];
                     if (universe_index != test_nrow) { // ignoring genes not present in all intersections.
@@ -573,16 +586,21 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
                     }
                 }
             }
-
-            if (is_sparse) {
-                (*(currefout.sparse))[l].markers = std::move(markers);
-            } else {
-                (*(currefout.dense))[l].markers = std::move(markers);
-            }
         }
+    }
 
-        // Pre-allocating the ranked vectors.
+    // Not needed after this so we try to free its allocation for recycling in the next malloc call.
+    // Specifically, I want to give a chance for this memory to be re-used in train_integrated_per_reference_intersect.
+    remap_intersection_to_test_index.clear();
+
+    // Now, we create ranked vectors for each profile in the reference.
+    for (I<decltype(nrefs)> r = 0; r < nrefs; ++r) {
+        const auto& curinput = inputs[r];
+        const auto nlabels = curinput.markers.size();
+        auto& currefout = references[r];
+
         std::vector<Index_> positions;
+        const Index_ NC = curinput.ref->ncol();
         sanisizer::reserve(positions, NC);
         auto samples_per_label = sanisizer::create<std::vector<Index_> >(nlabels);
         for (Index_ c = 0; c < NC; ++c) {
