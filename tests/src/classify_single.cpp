@@ -583,6 +583,65 @@ TEST(ClassifySingle, Nulls) {
     EXPECT_EQ(best, full.best);
 }
 
+TEST(ClassifySingle, TrainError) {
+    size_t ngenes = 200;
+    size_t nlabels = 3;
+    size_t nrefs = 50;
+
+    auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 22);
+    auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 23);
+    singlepp::TrainSingleOptions bopt;
+
+    {
+        singlepp::PairwiseMarkers<int> markers;
+        std::string msg;
+        try {
+            singlepp::train_single(*refs, labels.data(), markers, bopt);
+        } catch (std::exception& e) {
+            msg = e.what();
+        }
+        EXPECT_TRUE(msg.find("'markers' length") != std::string::npos);
+    }
+
+    {
+        singlepp::PairwiseMarkers<int> markers(nlabels);
+        std::string msg;
+        try {
+            singlepp::train_single(*refs, labels.data(), markers, bopt);
+        } catch (std::exception& e) {
+            msg = e.what();
+        }
+        EXPECT_TRUE(msg.find("length of each entry of 'markers'") != std::string::npos);
+    }
+
+    auto markers = mock_pairwise_markers<int>(nlabels, 50, ngenes, /* seed = */ 24); 
+
+    {
+        tatami::DenseMatrix<double, int, std::vector<double> > empty(ngenes, 0, std::vector<double>(), true);
+        std::string msg;
+        try {
+            singlepp::train_single(empty, labels.data(), markers, bopt);
+        } catch (std::exception& e) {
+            msg = e.what();
+        }
+        EXPECT_TRUE(msg.find("at least one column") != std::string::npos);
+    }
+
+    {
+        auto lcopy = labels;
+        for (auto& l : lcopy) {
+            ++l; // incrementing so that no profiles are assigned to label = 0.
+        }
+        std::string msg;
+        try {
+            singlepp::train_single(*refs, lcopy.data(), markers, bopt);
+        } catch (std::exception& e) {
+            msg = e.what();
+        }
+        EXPECT_TRUE(msg.find("no profiles") != std::string::npos);
+    }
+}
+
 TEST(ClassifySingle, Mismatch) {
     size_t ngenes = 200;
     size_t nlabels = 3;

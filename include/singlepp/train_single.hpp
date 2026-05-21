@@ -89,6 +89,16 @@ public:
         my_built(std::move(built)) 
     {
         assert(is_sorted_unique(subset.size(), subset.data()));
+
+        const auto nlabels = my_built.dense.has_value() ? my_built.dense->size() : my_built.sparse->size();
+        if (!sanisizer::is_equal(my_markers.size(), nlabels)) {
+            throw std::runtime_error("'markers' length should be equal to the number of unique labels");
+        }
+        for (const auto& mm : my_markers) {
+            if (!sanisizer::is_equal(mm.size(), nlabels)) {
+                throw std::runtime_error("length of each entry of 'markers' should be equal to the number of unique labels");
+            }
+        }
     }
     /**
      * @endcond
@@ -170,7 +180,10 @@ public:
  * Rows are genes while columns are profiles.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each reference profile.
  * Labels should be integers in \f$[0, L)\f$ where \f$L\f$ is the total number of unique labels.
- * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `singlepp::Markers` for more details.
+ * Each label up to \f$L\f$ should occur at least once in `labels`.
+ * @param markers Vector of vectors of ranked marker genes for each pairwise comparison between labels.
+ * The number of labels should be equal \f$L\f$, and each marker gene should be defined as a row index in `ref`.
+ * See `singlepp::PairwiseMarkers` for more details.
  * @param options Further options.
  *
  * @return A pre-built classifier that can be used in `classify_single()` with a test dataset.
@@ -209,7 +222,10 @@ TrainedSingle<Index_, Float_> train_single(
  * This should have non-zero columns.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each reference profile.
  * Labels should be integers in \f$[0, L)\f$ where \f$L\f$ is the total number of unique labels.
- * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `singlepp::Markers` for more details.
+ * Each label up to \f$L\f$ should occur at least once in `labels`.
+ * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels. 
+ * The number of labels should be equal \f$L\f$, and each marker gene should be defined as a row index in `ref`.
+ * See `singlepp::PairwiseMarkers` for more details.
  * @param[out] ref_subset Pointer to a vector in which to store the subset of rows of `ref` that contains the markers to be used for classification.
  * On output, the vector is filled with unique (but not necessarily sorted) row indices of length equal to `TrainedSingle::subset()`,
  * where each value contains the reference row that matches the test row indexed by the corresponding entry of `TrainedSingle::subset()`.
@@ -259,7 +275,10 @@ TrainedSingle<Index_, Float_> train_single(
  * If any duplicate IDs are present, only the first occurrence is used.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each reference profile.
  * Labels should be integers in \f$[0, L)\f$ where \f$L\f$ is the total number of unique labels.
- * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels, see `singlepp::Markers` for more details.
+ * Each label up to \f$L\f$ should occur at least once in `labels`.
+ * @param markers Vector of vectors of ranked marker genes for each pairwise comparison between labels. 
+ * The number of labels should be equal \f$L\f$, and each marker gene should be defined as a row index in `ref`.
+ * See `singlepp::PairwiseMarkers` for more details.
  * @param[out] ref_subset Pointer to a vector in which to store the subset of rows of `ref` that contains the markers to be used for classification.
  * On output, the vector is filled with unique (but not necessarily sorted) row indices of length equal to `TrainedSingle::subset()`,
  * where each value contains the reference row that matches the test row indexed by the corresponding entry of `TrainedSingle::subset()`.

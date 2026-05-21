@@ -60,10 +60,11 @@ struct TrainIntegratedInput {
  * @param ref Pointer to a matrix containing the reference expression values, where rows are genes and columns are reference profiles.
  * The number and identity of genes should be identical to the test dataset to be classified in `classify_integrated()`.
  * @param[in] labels Pointer to an array of label assignments.
- * Values should be integers in \f$[0, L)\f$ where \f$L\f$ is the number of unique labels.
+ * Values should be integers in \f$[0, L)\f$ where \f$L\f$ is the total number of unique labels.
+ * Each label up to \f$L\f$ should occur at least once in `labels`.
  * @param markers Vector of label-specific markers.
- * This should be of length equal to $L$.
- * Each entry should be a vector of row indices of `ref`, specifying the markers for the corresponding label.
+ * The number of labels should be equal \f$L\f$, and each marker gene should be defined as a row index in `ref`.
+ * See `singlepp::PerLabelMarkers` for more details.
  *
  * @return An opaque input object for `train_integrated()`.
  */
@@ -98,10 +99,11 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input(
  * @param ref Matrix containing the reference expression values, where rows are genes and columns are reference profiles.
  * The number and identity of genes should be consistent with `intersection`.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
- * Values should be integers in \f$[0, L)\f$ where \f$L\f$ is the number of unique labels.
+ * Values should be integers in \f$[0, L)\f$ where \f$L\f$ is the total number of unique labels.
+ * Each label up to \f$L\f$ should occur at least once in `labels`.
  * @param markers Vector of label-specific markers.
- * This should be of length equal to $L$.
- * Each entry should be a vector of row indices of `ref`, specifying the markers for the corresponding label.
+ * The number of labels should be equal \f$L\f$, and each marker gene should be defined as a row index in `ref`.
+ * See `singlepp::PerLabelMarkers` for more details.
  *
  * @return An opaque input object for `train_integrated()`.
  */
@@ -142,10 +144,11 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input(
  * This should contain a unique identifier for each row in `ref`, comparable to those in `test_id`.
  * If any duplicate IDs are present, only the first occurrence is used.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
- * Values should be integers in \f$[0, L)\f$ where \f$L\f$ is the number of unique labels.
+ * Values should be integers in \f$[0, L)\f$ where \f$L\f$ is the total number of unique labels.
+ * Each label up to \f$L\f$ should occur at least once in `labels`.
  * @param markers Vector of label-specific markers.
- * This should be of length equal to $L$.
- * Each entry should be a vector of row indices of `ref`, specifying the markers for the corresponding label.
+ * The number of labels should be equal \f$L\f$, and each marker gene should be defined as a row index in `ref`.
+ * See `singlepp::PerLabelMarkers` for more details.
  *
  * @return An opaque input object for `train_integrated()`.
  */
@@ -596,17 +599,31 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
     // Now, we create ranked vectors for each profile in the reference.
     for (I<decltype(nrefs)> r = 0; r < nrefs; ++r) {
         const auto& curinput = inputs[r];
-        const auto nlabels = curinput.markers.size();
         auto& currefout = references[r];
 
-        std::vector<Index_> positions;
         const Index_ NC = curinput.ref->ncol();
+        if (NC == 0) {
+            throw std::runtime_error("reference dataset must have at least one column");
+        }
+        std::vector<Index_> positions;
         sanisizer::reserve(positions, NC);
+
+        const auto nlabels = sanisizer::sum<std::size_t>(*std::max_element(curinput.labels, curinput.labels + NC), 1);
         auto samples_per_label = sanisizer::create<std::vector<Index_> >(nlabels);
         for (Index_ c = 0; c < NC; ++c) {
             auto& pos = samples_per_label[curinput.labels[c]];
             positions.push_back(pos);
             ++pos;
+        }
+
+        for (I<decltype(nlabels)> l = 0; l < nlabels; ++l) {
+            if (samples_per_label[l] == 0) {
+                throw std::runtime_error("no profiles available for label " + std::to_string(l) + " in reference " + std::to_string(r));
+            }
+        }
+
+        if (!sanisizer::is_equal(curinput.markers.size(), nlabels)) {
+            throw std::runtime_error("'markers' length should be equal to the number of unique labels");
         }
 
         if (curinput.ref->is_sparse()) {

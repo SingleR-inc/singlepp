@@ -479,7 +479,7 @@ BuiltReference<Index_, Float_> build_reference_raw(
     for (I<decltype(num_labels)> l = 0; l < num_labels; ++l) {
         const auto labcount = label_count[l];
         if (labcount == 0) {
-            throw std::runtime_error(std::string("no entries for label ") + std::to_string(l));
+            throw std::runtime_error("no profiles available for label " + std::to_string(l));
         }
     }
 

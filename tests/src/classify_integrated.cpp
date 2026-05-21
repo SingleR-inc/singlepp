@@ -748,6 +748,101 @@ TEST_F(ClassifyIntegratedOtherTest, NoGenes) {
 
 /********************************************/
 
+class ClassifyIntegratedTrainErrorTest : public ::testing::Test, public IntegratedTestCore {
+protected:
+    static void SetUpTestSuite() {
+        assemble();
+    }
+};
+
+TEST_F(ClassifyIntegratedTrainErrorTest, Markers) {
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
+    integrated_inputs.reserve(nrefs);
+    for (std::size_t r = 0; r < nrefs; ++r) {
+        if (r == 0) {
+            auto markers = simulate_markers(num_labels[r], references[r]->nrow(), 25, 999 + r);
+            integrated_inputs.push_back(singlepp::prepare_integrated_input<double, int>(references[r], labels[r].data(), std::move(markers)));
+        } else {
+            singlepp::PerLabelMarkers<int> markers;
+            integrated_inputs.push_back(singlepp::prepare_integrated_input<double, int>(references[r], labels[r].data(), std::move(markers)));
+        }
+    }
+
+    std::string msg;
+    try {
+        singlepp::train_integrated(integrated_inputs, {});
+    } catch (std::exception& e) {
+        msg = e.what();
+    }
+    EXPECT_TRUE(msg.find("'markers' length") != std::string::npos);
+}
+
+TEST_F(ClassifyIntegratedTrainErrorTest, ZeroColumns) {
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
+    integrated_inputs.reserve(nrefs);
+    for (std::size_t r = 0; r < nrefs; ++r) {
+        auto markers = simulate_markers(num_labels[r], references[r]->nrow(), 25, 999 + r);
+        if (r) {
+            integrated_inputs.push_back(singlepp::prepare_integrated_input<double, int>(references[r], labels[r].data(), std::move(markers)));
+        } else {
+            auto empty = std::make_shared<tatami::DenseMatrix<double, int, std::vector<double> > >(ngenes, 0, std::vector<double>(), true);
+            integrated_inputs.push_back(singlepp::prepare_integrated_input<double, int>(std::move(empty), labels[r].data(), std::move(markers)));
+        }
+    }
+
+    std::string msg;
+    try {
+        singlepp::train_integrated(integrated_inputs, {});
+    } catch (std::exception& e) {
+        msg = e.what();
+    }
+    EXPECT_TRUE(msg.find("at least one column") != std::string::npos);
+}
+
+TEST_F(ClassifyIntegratedTrainErrorTest, AbsentLabels) {
+    auto lcopy = labels;
+
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
+    integrated_inputs.reserve(nrefs);
+    for (std::size_t r = 0; r < nrefs; ++r) {
+        auto markers = simulate_markers(num_labels[r], references[r]->nrow(), 25, 999 + r);
+        auto& curlab = lcopy[r];
+        for (auto& l : curlab) {
+            ++l; // incrementing so that no profiles are assigned to label 0.
+        }
+        integrated_inputs.push_back(singlepp::prepare_integrated_input<double, int>(references[r], curlab.data(), std::move(markers)));
+    }
+
+    std::string msg;
+    try {
+        singlepp::train_integrated(integrated_inputs, {});
+    } catch (std::exception& e) {
+        msg = e.what();
+    }
+    EXPECT_TRUE(msg.find("no profiles") != std::string::npos);
+}
+
+TEST_F(ClassifyIntegratedTrainErrorTest, InconsistentTestNrows) {
+    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
+    integrated_inputs.reserve(nrefs);
+    for (std::size_t r = 0; r < nrefs; ++r) {
+        auto markers = simulate_markers(num_labels[r], references[r]->nrow(), 25, 999 + r);
+        auto halfgenes = ngenes / (r + 1);
+        auto halved = std::make_shared<tatami::DenseMatrix<double, int, std::vector<double> > >(halfgenes, nsamples, std::vector<double>(halfgenes * nsamples), true);
+        integrated_inputs.push_back(singlepp::prepare_integrated_input<double, int>(std::move(halved), labels[r].data(), std::move(markers)));
+    }
+
+    std::string msg;
+    try {
+        singlepp::train_integrated(integrated_inputs, {});
+    } catch (std::exception& e) {
+        msg = e.what();
+    }
+    EXPECT_TRUE(msg.find("inconsistent number of rows") != std::string::npos);
+}
+
+/********************************************/
+
 TEST(ClassifyIntegrated, FineTuneSparse) {
     std::size_t ngenes = 1000;
     std::size_t nsamples = 50;
