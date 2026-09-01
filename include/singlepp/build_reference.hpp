@@ -454,10 +454,11 @@ std::pair<typename RankedVector<Stat_, Index_>::const_iterator, typename RankedV
     return std::make_pair(nonneg, pos);
 }
 
-template<bool ref_sparse_, typename Float_, typename Value_, typename Index_, typename Label_>
+template<bool ref_sparse_, typename Float_, typename Value_, typename Index_, typename Label_, typename NumLabels_>
 BuiltReference<Index_, Float_> build_reference_raw(
     const tatami::Matrix<Value_, Index_>& ref,
     const Label_* labels,
+    const NumLabels_ num_labels,
     const std::vector<Index_>& subset,
     int num_threads
 ) {
@@ -467,7 +468,6 @@ BuiltReference<Index_, Float_> build_reference_raw(
         throw std::runtime_error("reference dataset must have at least one column");
     }
 
-    const auto num_labels = sanisizer::sum<std::size_t>(*std::max_element(labels, labels + num_samples), 1);
     auto label_count = sanisizer::create<std::vector<Index_> >(num_labels);
     auto label_offsets = sanisizer::create<std::vector<Index_> >(num_samples);
     for (I<decltype(num_samples)> i = 0; i < num_samples; ++i) {
@@ -635,17 +635,18 @@ BuiltReference<Index_, Float_> build_reference_raw(
     return output;
 }
 
-template<typename Float_, typename Value_, typename Index_, typename Label_>
+template<typename Float_, typename Value_, typename Index_, typename Label_, typename NumLabels_>
 BuiltReference<Index_, Float_> build_reference(
     const tatami::Matrix<Value_, Index_>& ref,
     const Label_* labels,
+    const NumLabels_ num_labels,
     const std::vector<Index_>& subset,
     int num_threads
 ) {
     if (ref.is_sparse()) {
-        return build_reference_raw<true, Float_>(ref, labels, subset, num_threads); 
+        return build_reference_raw<true, Float_>(ref, labels, num_labels, subset, num_threads); 
     } else {
-        return build_reference_raw<false, Float_>(ref, labels, subset, num_threads); 
+        return build_reference_raw<false, Float_>(ref, labels, num_labels, subset, num_threads); 
     }
 }
 

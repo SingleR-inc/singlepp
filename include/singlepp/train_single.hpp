@@ -91,13 +91,9 @@ public:
         assert(is_sorted_unique(subset.size(), subset.data()));
 
         const auto nlabels = my_built.dense.has_value() ? my_built.dense->size() : my_built.sparse->size();
-        if (!sanisizer::is_equal(my_markers.size(), nlabels)) {
-            throw std::runtime_error("'markers' length should be equal to the number of unique labels");
-        }
-        for (const auto& mm : my_markers) {
-            if (!sanisizer::is_equal(mm.size(), nlabels)) {
-                throw std::runtime_error("length of each entry of 'markers' should be equal to the number of unique labels");
-            }
+        assert(sanisizer::is_equal(my_markers.size(), nlabels));
+        for ([[maybe_unused]] const auto& mm : my_markers) {
+            assert(sanisizer::is_equal(mm.size(), nlabels));
         }
     }
     /**
@@ -179,10 +175,11 @@ public:
  * @param ref Matrix for the reference expression profiles.
  * Rows are genes while columns are profiles.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each reference profile.
- * Labels should be integers in \f$[0, L)\f$ where \f$L\f$ is the total number of unique labels.
- * Each label up to \f$L\f$ should occur at least once in `labels`.
- * @param markers Vector of vectors of ranked marker genes for each pairwise comparison between labels.
- * The number of labels should be equal \f$L\f$, and each marker gene should be defined as a row index in `ref`.
+ * Labels should be integers in `[0, markers.size())`.
+ * Each label in this range should occur at least once in `labels`.
+ * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels. 
+ * The sizes of the inner and outer vectors should be equal to the number of unique labels.
+ * Each marker gene should be defined as a row index in `ref`.
  * See `singlepp::PairwiseMarkers` for more details.
  * @param options Further options.
  *
@@ -196,7 +193,8 @@ TrainedSingle<Index_, Float_> train_single(
     const TrainSingleOptions& options
 ) {
     auto subset = subset_to_markers(ref.nrow(), markers);
-    auto subref = build_reference<Float_>(ref, labels, subset, options.num_threads);
+    const auto num_labels = markers.size();
+    auto subref = build_reference<Float_>(ref, labels, num_labels, subset, options.num_threads);
     const Index_ test_nrow = ref.nrow(); // remember, test and ref are assumed to have the same features.
     return TrainedSingle<Index_, Float_>(test_nrow, std::move(markers), std::move(subset), std::move(subref));
 }
@@ -221,10 +219,11 @@ TrainedSingle<Index_, Float_> train_single(
  * @param ref An expression matrix for the reference expression profiles, where rows are genes and columns are cells.
  * This should have non-zero columns.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each reference profile.
- * Labels should be integers in \f$[0, L)\f$ where \f$L\f$ is the total number of unique labels.
- * Each label up to \f$L\f$ should occur at least once in `labels`.
+ * Labels should be integers in `[0, markers.size())`.
+ * Each label in this range should occur at least once in `labels`.
  * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels. 
- * The number of labels should be equal \f$L\f$, and each marker gene should be defined as a row index in `ref`.
+ * The sizes of the inner and outer vectors should be equal to the number of unique labels.
+ * Each marker gene should be defined as a row index in `ref`.
  * See `singlepp::PairwiseMarkers` for more details.
  * @param[out] ref_subset Pointer to a vector in which to store the subset of rows of `ref` that contains the markers to be used for classification.
  * On output, the vector is filled with unique (but not necessarily sorted) row indices of length equal to `TrainedSingle::subset()`,
@@ -245,7 +244,8 @@ TrainedSingle<Index_, Float_> train_single(
     const TrainSingleOptions& options
 ) {
     auto pairs = subset_to_markers(test_nrow, intersection, ref.nrow(), markers);
-    auto subref = build_reference<Float_>(ref, labels, pairs.second, options.num_threads);
+    const auto num_labels = markers.size();
+    auto subref = build_reference<Float_>(ref, labels, num_labels, pairs.second, options.num_threads);
     if (ref_subset) {
         *ref_subset = std::move(pairs.second);
     }
@@ -274,10 +274,11 @@ TrainedSingle<Index_, Float_> train_single(
  * Identifiers should be comparable to those in `test_id`.
  * If any duplicate IDs are present, only the first occurrence is used.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each reference profile.
- * Labels should be integers in \f$[0, L)\f$ where \f$L\f$ is the total number of unique labels.
- * Each label up to \f$L\f$ should occur at least once in `labels`.
- * @param markers Vector of vectors of ranked marker genes for each pairwise comparison between labels. 
- * The number of labels should be equal \f$L\f$, and each marker gene should be defined as a row index in `ref`.
+ * Labels should be integers in `[0, markers.size())`.
+ * Each label in this range should occur at least once in `labels`.
+ * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels. 
+ * The sizes of the inner and outer vectors should be equal to the number of unique labels.
+ * Each marker gene should be defined as a row index in `ref`.
  * See `singlepp::PairwiseMarkers` for more details.
  * @param[out] ref_subset Pointer to a vector in which to store the subset of rows of `ref` that contains the markers to be used for classification.
  * On output, the vector is filled with unique (but not necessarily sorted) row indices of length equal to `TrainedSingle::subset()`,

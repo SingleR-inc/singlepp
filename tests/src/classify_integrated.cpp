@@ -755,28 +755,6 @@ protected:
     }
 };
 
-TEST_F(ClassifyIntegratedTrainErrorTest, Markers) {
-    std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
-    integrated_inputs.reserve(nrefs);
-    for (std::size_t r = 0; r < nrefs; ++r) {
-        if (r == 0) {
-            auto markers = simulate_markers(num_labels[r], references[r]->nrow(), 25, 999 + r);
-            integrated_inputs.push_back(singlepp::prepare_integrated_input<double, int>(references[r], labels[r].data(), std::move(markers)));
-        } else {
-            singlepp::PerLabelMarkers<int> markers;
-            integrated_inputs.push_back(singlepp::prepare_integrated_input<double, int>(references[r], labels[r].data(), std::move(markers)));
-        }
-    }
-
-    std::string msg;
-    try {
-        singlepp::train_integrated(integrated_inputs, {});
-    } catch (std::exception& e) {
-        msg = e.what();
-    }
-    EXPECT_TRUE(msg.find("'markers' length") != std::string::npos);
-}
-
 TEST_F(ClassifyIntegratedTrainErrorTest, ZeroColumns) {
     std::vector<singlepp::TrainIntegratedInput<double, int, int> > integrated_inputs;
     integrated_inputs.reserve(nrefs);

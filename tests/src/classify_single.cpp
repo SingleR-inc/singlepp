@@ -591,29 +591,6 @@ TEST(ClassifySingle, TrainError) {
     auto refs = spawn_matrix(ngenes, nrefs, /* seed = */ 22);
     auto labels = spawn_labels(nrefs, nlabels, /* seed = */ 23);
     singlepp::TrainSingleOptions bopt;
-
-    {
-        singlepp::PairwiseMarkers<int> markers;
-        std::string msg;
-        try {
-            singlepp::train_single(*refs, labels.data(), markers, bopt);
-        } catch (std::exception& e) {
-            msg = e.what();
-        }
-        EXPECT_TRUE(msg.find("'markers' length") != std::string::npos);
-    }
-
-    {
-        singlepp::PairwiseMarkers<int> markers(nlabels);
-        std::string msg;
-        try {
-            singlepp::train_single(*refs, labels.data(), markers, bopt);
-        } catch (std::exception& e) {
-            msg = e.what();
-        }
-        EXPECT_TRUE(msg.find("length of each entry of 'markers'") != std::string::npos);
-    }
-
     auto markers = mock_pairwise_markers<int>(nlabels, 50, ngenes, /* seed = */ 24); 
 
     {
