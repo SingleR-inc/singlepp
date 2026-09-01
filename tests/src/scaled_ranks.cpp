@@ -4,7 +4,7 @@
 #include "singlepp/correlations_to_score.hpp"
 #include "singlepp/build_reference.hpp"
 
-#include "tatami_stats/tatami_stats.hpp"
+#include "quickstats/quickstats.hpp"
 
 #include <algorithm>
 #include <vector>
@@ -15,6 +15,12 @@ static double expected_variance(double n) {
     return 1 / (4.0 * (n - 1));
 }
 
+static std::pair<double, double> compute_variance(std::size_t n, const double* value) {
+    quickstats::RssWorkspace<double> wrk;
+    auto stats = quickstats::rss(n, value, wrk, quickstats::RssOptions<double>());
+    return std::make_pair(stats.mean, stats.rss / (n - 1));
+}
+
 TEST(ScaledRanks, DenseBasic) {
     std::vector<double> stuff { 0.4234, -0.12, 2.784, 0.232, 5.32, 1.1129 };
     auto ranks = fill_ranks(stuff.size(), stuff.data());
@@ -22,8 +28,8 @@ TEST(ScaledRanks, DenseBasic) {
     EXPECT_TRUE(singlepp::scaled_ranks_dense(stuff.size(), ranks, out.data()));
 
     // Mean should be zero, variance should be... something.
-    auto stats = tatami_stats::variances::direct(out.data(), out.size(), false);
-    EXPECT_TRUE(std::abs(stats.first) < 1e-8);
+    auto stats = compute_variance(out.size(), out.data());
+    EXPECT_LT(std::abs(stats.first), 1e-8);
     EXPECT_FLOAT_EQ(stats.second, expected_variance(stuff.size()));
 
     // Ranking should be preserved.
@@ -69,8 +75,8 @@ TEST(ScaledRanks, DenseTies) {
     EXPECT_TRUE(singlepp::scaled_ranks_dense(original_size, ranks, ref.data()));
 
     // Checking values aren't NA or infinite.
-    auto stats = tatami_stats::variances::direct(ref.data(), ref.size(), false);
-    EXPECT_TRUE(std::abs(stats.first) < 1e-8);
+    auto stats = compute_variance(ref.size(), ref.data());
+    EXPECT_LT(std::abs(stats.first), 1e-8);
     EXPECT_FLOAT_EQ(stats.second, expected_variance(original_size));
 
     // Slapping a duplicate onto the end.
@@ -82,8 +88,8 @@ TEST(ScaledRanks, DenseTies) {
     EXPECT_EQ(tied[0], tied.back()); // same rank
     EXPECT_NE(tied[0], ref[0]); // changes the ranks; note that this doesn't work if the first element is right in the middle.
 
-    auto stats2 = tatami_stats::variances::direct(tied.data(), tied.size(), false); // these properties still hold.
-    EXPECT_TRUE(std::abs(stats2.first) < 1e-8);
+    auto stats2 = compute_variance(tied.size(), tied.data()); // these properties still hold.
+    EXPECT_LT(std::abs(stats2.first), 1e-8);
     EXPECT_FLOAT_EQ(stats2.second, expected_variance(tied.size()));
 
     // Full duplication.
@@ -95,8 +101,8 @@ TEST(ScaledRanks, DenseTies) {
     std::vector<double> dupped(stuff.size());
     EXPECT_TRUE(singlepp::scaled_ranks_dense(stuff.size(), ranks, dupped.data()));
 
-    auto stats3 = tatami_stats::variances::direct(dupped.data(), dupped.size(), false); 
-    EXPECT_TRUE(std::abs(stats3.first) < 1e-8);
+    auto stats3 = compute_variance(dupped.size(), dupped.data()); 
+    EXPECT_LT(std::abs(stats3.first), 1e-8);
     EXPECT_FLOAT_EQ(stats3.second, expected_variance(original_size * 2));
 
     std::vector<double> first_half(dupped.begin(), dupped.begin() + original_size);

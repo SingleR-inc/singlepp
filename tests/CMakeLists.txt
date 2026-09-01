@@ -1,12 +1,13 @@
 include(FetchContent)
 FetchContent_Declare(
   googletest
-  URL https://github.com/google/googletest/archive/16d4f8eff6d7cefca6975d82a53f8fc995a6feb7.zip
+  GIT_REPOSITORY https://github.com/google/googletest
+  GIT_TAG main
 )
 
 FetchContent_Declare(
-  tatami_stats
-  GIT_REPOSITORY https://github.com/tatami-inc/tatami_stats
+  quickstats
+  GIT_REPOSITORY https://github.com/LTLA/quickstats
   GIT_TAG master
 )
 
@@ -14,7 +15,7 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-FetchContent_MakeAvailable(tatami_stats)
+FetchContent_MakeAvailable(quickstats)
 
 add_executable(
     libtest 
@@ -31,7 +32,7 @@ add_executable(
     src/utils.cpp
 )
 
-target_link_libraries(libtest gtest_main singlepp tatami_stats)
+target_link_libraries(libtest gtest_main singlepp quickstats)
 target_compile_options(libtest PRIVATE -Wall -Werror -Wpedantic -Wextra)
 
 option(CODE_COVERAGE "Enable coverage testing" OFF)
