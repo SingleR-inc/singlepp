@@ -137,7 +137,7 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Options for <code><a class="el" href="#af198ad22e020701691c9bb8326401a46">train_integrated()</a></code>.  <a href="structsinglepp_1_1TrainIntegratedOptions.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsinglepp_1_1TrainSingleOptions.html">TrainSingleOptions</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Options for <code><a class="el" href="#ab264b639c225a8a286768d3437c242b4">train_single()</a></code> and friends.  <a href="structsinglepp_1_1TrainSingleOptions.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Options for <code><a class="el" href="#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single()</a></code> and friends.  <a href="structsinglepp_1_1TrainSingleOptions.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
@@ -171,15 +171,15 @@ Functions</h2></td></tr>
 <tr class="memitem:af23220206f86fe833bad096526d58db0" id="r_af23220206f86fe833bad096526d58db0"><td class="memTemplParams" colspan="2">template&lt;typename Label_  = DefaultLabel, typename Value_ , typename Index_ , typename Float_ &gt; </td></tr>
 <tr class="memitem:af23220206f86fe833bad096526d58db0"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structsinglepp_1_1ClassifySingleResults.html">ClassifySingleResults</a>&lt; Label_, Float_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#af23220206f86fe833bad096526d58db0">classify_single</a> (const tatami::Matrix&lt; Value_, Index_ &gt; &amp;test, const <a class="el" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle</a>&lt; Index_, Float_ &gt; &amp;trained, const <a class="el" href="structsinglepp_1_1ClassifySingleOptions.html">ClassifySingleOptions</a>&lt; Float_ &gt; &amp;options)</td></tr>
 <tr class="separator:af23220206f86fe833bad096526d58db0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab264b639c225a8a286768d3437c242b4" id="r_ab264b639c225a8a286768d3437c242b4"><td class="memTemplParams" colspan="2">template&lt;typename Float_  = double, typename Value_ , typename Index_ , typename Label_ &gt; </td></tr>
-<tr class="memitem:ab264b639c225a8a286768d3437c242b4"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle</a>&lt; Index_, Float_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ab264b639c225a8a286768d3437c242b4">train_single</a> (const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, const Label_ num_labels, <a class="el" href="#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers</a>&lt; Index_ &gt; markers, const <a class="el" href="structsinglepp_1_1TrainSingleOptions.html">TrainSingleOptions</a> &amp;options)</td></tr>
-<tr class="separator:ab264b639c225a8a286768d3437c242b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2bf30a2b0edaac9f2985a3da4f7136f0" id="r_a2bf30a2b0edaac9f2985a3da4f7136f0"><td class="memTemplParams" colspan="2">template&lt;typename Float_  = double, typename Index_ , typename Value_ , typename Label_ &gt; </td></tr>
-<tr class="memitem:a2bf30a2b0edaac9f2985a3da4f7136f0"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle</a>&lt; Index_, Float_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a2bf30a2b0edaac9f2985a3da4f7136f0">train_single</a> (Index_ test_nrow, const <a class="el" href="#ae0c63a73c7c40ad5e6f47ef0f9abac5d">Intersection</a>&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, const Label_ num_labels, <a class="el" href="#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers</a>&lt; Index_ &gt; markers, std::vector&lt; Index_ &gt; *ref_subset, const <a class="el" href="structsinglepp_1_1TrainSingleOptions.html">TrainSingleOptions</a> &amp;options)</td></tr>
-<tr class="separator:a2bf30a2b0edaac9f2985a3da4f7136f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a41c18b3dfdd3dd69c0055928170aedd1" id="r_a41c18b3dfdd3dd69c0055928170aedd1"><td class="memTemplParams" colspan="2">template&lt;typename Float_  = double, typename Index_ , typename Id_ , typename Value_ , typename Label_ &gt; </td></tr>
-<tr class="memitem:a41c18b3dfdd3dd69c0055928170aedd1"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle</a>&lt; Index_, Float_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a41c18b3dfdd3dd69c0055928170aedd1">train_single</a> (Index_ test_nrow, const Id_ *test_id, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Id_ *ref_id, const Label_ *labels, const Label_ num_labels, <a class="el" href="#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers</a>&lt; Index_ &gt; markers, std::vector&lt; Index_ &gt; *ref_subset, const <a class="el" href="structsinglepp_1_1TrainSingleOptions.html">TrainSingleOptions</a> &amp;options)</td></tr>
-<tr class="separator:a41c18b3dfdd3dd69c0055928170aedd1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1c482c08a1cfd9a4eb0ff5b08314ed7e" id="r_a1c482c08a1cfd9a4eb0ff5b08314ed7e"><td class="memTemplParams" colspan="2">template&lt;typename Float_  = double, typename Value_ , typename Index_ , typename Label_ &gt; </td></tr>
+<tr class="memitem:a1c482c08a1cfd9a4eb0ff5b08314ed7e"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle</a>&lt; Index_, Float_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single</a> (const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, <a class="el" href="#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers</a>&lt; Index_ &gt; markers, const <a class="el" href="structsinglepp_1_1TrainSingleOptions.html">TrainSingleOptions</a> &amp;options)</td></tr>
+<tr class="separator:a1c482c08a1cfd9a4eb0ff5b08314ed7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abdbc69eeb6b200b23176e77e2a70cd3b" id="r_abdbc69eeb6b200b23176e77e2a70cd3b"><td class="memTemplParams" colspan="2">template&lt;typename Float_  = double, typename Index_ , typename Value_ , typename Label_ &gt; </td></tr>
+<tr class="memitem:abdbc69eeb6b200b23176e77e2a70cd3b"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle</a>&lt; Index_, Float_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#abdbc69eeb6b200b23176e77e2a70cd3b">train_single</a> (Index_ test_nrow, const <a class="el" href="#ae0c63a73c7c40ad5e6f47ef0f9abac5d">Intersection</a>&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, <a class="el" href="#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers</a>&lt; Index_ &gt; markers, std::vector&lt; Index_ &gt; *ref_subset, const <a class="el" href="structsinglepp_1_1TrainSingleOptions.html">TrainSingleOptions</a> &amp;options)</td></tr>
+<tr class="separator:abdbc69eeb6b200b23176e77e2a70cd3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa2fa68af74db6ddf82a164d830fd73c2" id="r_aa2fa68af74db6ddf82a164d830fd73c2"><td class="memTemplParams" colspan="2">template&lt;typename Float_  = double, typename Index_ , typename Id_ , typename Value_ , typename Label_ &gt; </td></tr>
+<tr class="memitem:aa2fa68af74db6ddf82a164d830fd73c2"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classsinglepp_1_1TrainedSingle.html">TrainedSingle</a>&lt; Index_, Float_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aa2fa68af74db6ddf82a164d830fd73c2">train_single</a> (Index_ test_nrow, const Id_ *test_id, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Id_ *ref_id, const Label_ *labels, <a class="el" href="#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers</a>&lt; Index_ &gt; markers, std::vector&lt; Index_ &gt; *ref_subset, const <a class="el" href="structsinglepp_1_1TrainSingleOptions.html">TrainSingleOptions</a> &amp;options)</td></tr>
+<tr class="separator:aa2fa68af74db6ddf82a164d830fd73c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a60f705dc3fdc122139e2102713e7ec41" id="r_a60f705dc3fdc122139e2102713e7ec41"><td class="memTemplParams" colspan="2">template&lt;typename Value_ , typename Index_ , typename Label_ , typename RefLabel_ , typename Float_ &gt; </td></tr>
 <tr class="memitem:a60f705dc3fdc122139e2102713e7ec41"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a60f705dc3fdc122139e2102713e7ec41">classify_integrated</a> (const tatami::Matrix&lt; Value_, Index_ &gt; &amp;test, const std::vector&lt; const Label_ * &gt; &amp;assigned, const <a class="el" href="classsinglepp_1_1TrainedIntegrated.html">TrainedIntegrated</a>&lt; Index_ &gt; &amp;trained, <a class="el" href="structsinglepp_1_1ClassifyIntegratedBuffers.html">ClassifyIntegratedBuffers</a>&lt; RefLabel_, Float_ &gt; &amp;buffers, const <a class="el" href="structsinglepp_1_1ClassifyIntegratedOptions.html">ClassifyIntegratedOptions</a>&lt; Float_ &gt; &amp;options)</td></tr>
 <tr class="memdesc:a60f705dc3fdc122139e2102713e7ec41"><td class="mdescLeft">&#160;</td><td class="mdescRight">Integrate classifications from multiple references.  <br /></td></tr>
@@ -187,15 +187,15 @@ Functions</h2></td></tr>
 <tr class="memitem:aca35f5c98162213d14d4ce801b6376b0" id="r_aca35f5c98162213d14d4ce801b6376b0"><td class="memTemplParams" colspan="2">template&lt;typename RefLabel_  = DefaultRefLabel, typename Value_ , typename Index_ , typename Label_ , typename Float_ &gt; </td></tr>
 <tr class="memitem:aca35f5c98162213d14d4ce801b6376b0"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structsinglepp_1_1ClassifyIntegratedResults.html">ClassifyIntegratedResults</a>&lt; RefLabel_, Float_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aca35f5c98162213d14d4ce801b6376b0">classify_integrated</a> (const tatami::Matrix&lt; Value_, Index_ &gt; &amp;test, const std::vector&lt; const Label_ * &gt; &amp;assigned, const <a class="el" href="classsinglepp_1_1TrainedIntegrated.html">TrainedIntegrated</a>&lt; Index_ &gt; &amp;trained, const <a class="el" href="structsinglepp_1_1ClassifyIntegratedOptions.html">ClassifyIntegratedOptions</a>&lt; Float_ &gt; &amp;options)</td></tr>
 <tr class="separator:aca35f5c98162213d14d4ce801b6376b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a10fd09eed24ee6c414cd0ce16e3251" id="r_a9a10fd09eed24ee6c414cd0ce16e3251"><td class="memTemplParams" colspan="2">template&lt;typename Value_ , typename Index_ , typename Label_ &gt; </td></tr>
-<tr class="memitem:a9a10fd09eed24ee6c414cd0ce16e3251"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structsinglepp_1_1TrainIntegratedInput.html">TrainIntegratedInput</a>&lt; Value_, Index_, Label_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a9a10fd09eed24ee6c414cd0ce16e3251">prepare_integrated_input</a> (std::shared_ptr&lt; const tatami::Matrix&lt; Value_, Index_ &gt; &gt; ref, const Label_ *labels, const Label_ num_labels, <a class="el" href="#a231777a440acf10c4f38264e9c36a4e2">PerLabelMarkers</a>&lt; Index_ &gt; markers)</td></tr>
-<tr class="separator:a9a10fd09eed24ee6c414cd0ce16e3251"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aed03b34e201b3eec39d74aa0a5ab6d75" id="r_aed03b34e201b3eec39d74aa0a5ab6d75"><td class="memTemplParams" colspan="2">template&lt;typename Index_ , typename Value_ , typename Label_ &gt; </td></tr>
-<tr class="memitem:aed03b34e201b3eec39d74aa0a5ab6d75"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structsinglepp_1_1TrainIntegratedInput.html">TrainIntegratedInput</a>&lt; Value_, Index_, Label_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aed03b34e201b3eec39d74aa0a5ab6d75">prepare_integrated_input</a> (Index_ test_nrow, <a class="el" href="#ae0c63a73c7c40ad5e6f47ef0f9abac5d">Intersection</a>&lt; Index_ &gt; intersection, std::shared_ptr&lt; const tatami::Matrix&lt; Value_, Index_ &gt; &gt; ref, const Label_ *labels, const Label_ num_labels, <a class="el" href="#a231777a440acf10c4f38264e9c36a4e2">PerLabelMarkers</a>&lt; Index_ &gt; markers)</td></tr>
-<tr class="separator:aed03b34e201b3eec39d74aa0a5ab6d75"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afa8490e58a77c389e419f56e23c3b2d2" id="r_afa8490e58a77c389e419f56e23c3b2d2"><td class="memTemplParams" colspan="2">template&lt;typename Index_ , typename Id_ , typename Value_ , typename Label_ &gt; </td></tr>
-<tr class="memitem:afa8490e58a77c389e419f56e23c3b2d2"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structsinglepp_1_1TrainIntegratedInput.html">TrainIntegratedInput</a>&lt; Value_, Index_, Label_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#afa8490e58a77c389e419f56e23c3b2d2">prepare_integrated_input</a> (Index_ test_nrow, const Id_ *test_id, std::shared_ptr&lt; const tatami::Matrix&lt; Value_, Index_ &gt; &gt; ref, const Id_ *ref_id, const Label_ *labels, const Label_ num_labels, <a class="el" href="#a231777a440acf10c4f38264e9c36a4e2">PerLabelMarkers</a>&lt; Index_ &gt; markers)</td></tr>
-<tr class="separator:afa8490e58a77c389e419f56e23c3b2d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4365fc51a1b9f6f790f8255806f51534" id="r_a4365fc51a1b9f6f790f8255806f51534"><td class="memTemplParams" colspan="2">template&lt;typename Value_ , typename Index_ , typename Label_ &gt; </td></tr>
+<tr class="memitem:a4365fc51a1b9f6f790f8255806f51534"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structsinglepp_1_1TrainIntegratedInput.html">TrainIntegratedInput</a>&lt; Value_, Index_, Label_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a4365fc51a1b9f6f790f8255806f51534">prepare_integrated_input</a> (std::shared_ptr&lt; const tatami::Matrix&lt; Value_, Index_ &gt; &gt; ref, const Label_ *labels, <a class="el" href="#a231777a440acf10c4f38264e9c36a4e2">PerLabelMarkers</a>&lt; Index_ &gt; markers)</td></tr>
+<tr class="separator:a4365fc51a1b9f6f790f8255806f51534"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e157796b768f9cae8ba0ffadf7e22f2" id="r_a7e157796b768f9cae8ba0ffadf7e22f2"><td class="memTemplParams" colspan="2">template&lt;typename Index_ , typename Value_ , typename Label_ &gt; </td></tr>
+<tr class="memitem:a7e157796b768f9cae8ba0ffadf7e22f2"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structsinglepp_1_1TrainIntegratedInput.html">TrainIntegratedInput</a>&lt; Value_, Index_, Label_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a7e157796b768f9cae8ba0ffadf7e22f2">prepare_integrated_input</a> (Index_ test_nrow, <a class="el" href="#ae0c63a73c7c40ad5e6f47ef0f9abac5d">Intersection</a>&lt; Index_ &gt; intersection, std::shared_ptr&lt; const tatami::Matrix&lt; Value_, Index_ &gt; &gt; ref, const Label_ *labels, <a class="el" href="#a231777a440acf10c4f38264e9c36a4e2">PerLabelMarkers</a>&lt; Index_ &gt; markers)</td></tr>
+<tr class="separator:a7e157796b768f9cae8ba0ffadf7e22f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a539f631cfe3894bf9fa41495bb8da918" id="r_a539f631cfe3894bf9fa41495bb8da918"><td class="memTemplParams" colspan="2">template&lt;typename Index_ , typename Id_ , typename Value_ , typename Label_ &gt; </td></tr>
+<tr class="memitem:a539f631cfe3894bf9fa41495bb8da918"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structsinglepp_1_1TrainIntegratedInput.html">TrainIntegratedInput</a>&lt; Value_, Index_, Label_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a539f631cfe3894bf9fa41495bb8da918">prepare_integrated_input</a> (Index_ test_nrow, const Id_ *test_id, std::shared_ptr&lt; const tatami::Matrix&lt; Value_, Index_ &gt; &gt; ref, const Id_ *ref_id, const Label_ *labels, <a class="el" href="#a231777a440acf10c4f38264e9c36a4e2">PerLabelMarkers</a>&lt; Index_ &gt; markers)</td></tr>
+<tr class="separator:a539f631cfe3894bf9fa41495bb8da918"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af198ad22e020701691c9bb8326401a46" id="r_af198ad22e020701691c9bb8326401a46"><td class="memTemplParams" colspan="2">template&lt;typename Value_ , typename Index_ , typename Label_ &gt; </td></tr>
 <tr class="memitem:af198ad22e020701691c9bb8326401a46"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classsinglepp_1_1TrainedIntegrated.html">TrainedIntegrated</a>&lt; Index_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#af198ad22e020701691c9bb8326401a46">train_integrated</a> (const std::vector&lt; <a class="el" href="structsinglepp_1_1TrainIntegratedInput.html">TrainIntegratedInput</a>&lt; Value_, Index_, Label_ &gt; &gt; &amp;inputs, const <a class="el" href="structsinglepp_1_1TrainIntegratedOptions.html">TrainIntegratedOptions</a> &amp;options)</td></tr>
 <tr class="separator:af198ad22e020701691c9bb8326401a46"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -295,7 +295,7 @@ template&lt;typename Index_  = DefaultIndex&gt; </div>
       </table>
 </div><div class="memdoc">
 <p>Intersection of genes between two datasets. Each pair represents a gene that is present in both datasets. The two elements of the pair represent the row indices of that gene in the respective matrices.</p>
-<p>Typically, the first element of the pair contains the row index of a gene in the test dataset, while the second element of the pair contains the row index of the same gene in the reference dataset. This convention is used by <code><a class="el" href="#a22b70c4d5949e28af164723543361214">intersect_genes()</a></code> and the relevant overloads of <code><a class="el" href="#ab264b639c225a8a286768d3437c242b4">train_single()</a></code> and <code><a class="el" href="#a9a10fd09eed24ee6c414cd0ce16e3251">prepare_integrated_input()</a></code>.</p>
+<p>Typically, the first element of the pair contains the row index of a gene in the test dataset, while the second element of the pair contains the row index of the same gene in the reference dataset. This convention is used by <code><a class="el" href="#a22b70c4d5949e28af164723543361214">intersect_genes()</a></code> and the relevant overloads of <code><a class="el" href="#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single()</a></code> and <code><a class="el" href="#a4365fc51a1b9f6f790f8255806f51534">prepare_integrated_input()</a></code>.</p>
 <p>A row index for a matrix should occur no more than once in the <code>Intersection</code> object. That is, all the first elements should be unique and all of the second elements should be unique. Pairs may be arbitrarily ordered within the object.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
@@ -319,8 +319,8 @@ template&lt;typename Index_  = DefaultIndex&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>A vector of vectors of marker lists, with one list for each pairwise comparison between labels in the reference dataset. This is used to determine which genes should be used to compute correlations in <code><a class="el" href="#ab264b639c225a8a286768d3437c242b4">train_single()</a></code>.</p>
-<p>For a given reference dataset, the corresponding <code>PairwiseMarkers</code> object should have length equal to the number of labels in that reference. Each middle vector (<code>markers[i]</code>) should also have length equal to the number of labels. Each innermost off-diagonal vector (<code>markers[i][j]</code> for <code>i != j</code>) contains a list of marker genes for label <code>i</code> compared to label <code>j</code>. Each gene is represented as the row index of the reference expression matrix, i.e., <code>ref</code> in the call to <code><a class="el" href="#ab264b639c225a8a286768d3437c242b4">train_single()</a></code>. Each innermost off-diagonal vector may be of any positive length and should contain unique row indices. The order of indices within this vector is ignored in <b>singlepp</b> though most applications will sort markers by the strength of differential expression.</p>
+<p>A vector of vectors of marker lists, with one list for each pairwise comparison between labels in the reference dataset. This is used to determine which genes should be used to compute correlations in <code><a class="el" href="#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single()</a></code>.</p>
+<p>For a given reference dataset, the corresponding <code>PairwiseMarkers</code> object should have length equal to the number of labels in that reference. Each middle vector (<code>markers[i]</code>) should also have length equal to the number of labels. Each innermost off-diagonal vector (<code>markers[i][j]</code> for <code>i != j</code>) contains a list of marker genes for label <code>i</code> compared to label <code>j</code>. Each gene is represented as the row index of the reference expression matrix, i.e., <code>ref</code> in the call to <code><a class="el" href="#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single()</a></code>. Each innermost off-diagonal vector may be of any positive length and should contain unique row indices. The order of indices within this vector is ignored in <b>singlepp</b> though most applications will sort markers by the strength of differential expression.</p>
 <p>Any innermost vector along the "diagonal" (i.e., <code>markers[i][i]</code>) is typically of zero length. This is because it makes little sense to identify upregulated markers in a label compared to itself. That said, any genes stored on the diagonal vectors will still be respected and used in all gene subsets for the corresponding label. This can be exploited by advanced users to store "universal" markers for a label, i.e., markers that are applicable in all comparisons to other labels. (See also <code>PerLabelMarkers</code> to store label-specific markers.)</p>
 <p>Typically, each <code>markers[i][j]</code> vector is created by identifying the top genes that are upregulated in label <code>i</code> compared to <code>j</code>. We suggest using functions like <code>score_markers_best()</code> from the <a href="https://github.com/libscran/scran_markers"><b>scran_markers</b></a> library to obtain a suitable set of top markers.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
@@ -346,7 +346,7 @@ template&lt;typename Index_  = DefaultIndex&gt; </div>
       </table>
 </div><div class="memdoc">
 <p>Vector of marker lists, with one list for each label in the reference dataset. This is used to determine which genes should be used to compute correlations in <code><a class="el" href="#af198ad22e020701691c9bb8326401a46">train_integrated()</a></code>.</p>
-<p>For a <code>PerLabelMarkers</code> object <code>markers</code>, the inner vector at <code>markers[i]</code> will contain the markers for label <code>i</code>. Each marker is represented as a row index into the reference matrix, i.e., <code>ref</code> in the call to <code><a class="el" href="#a9a10fd09eed24ee6c414cd0ce16e3251">prepare_integrated_input()</a></code>. Each <code>markers[i]</code> entry should have non-zero length and should contain unique row indices. The order of indices within the inner vector is ignored in <b>singlepp</b> though most applications will sort markers by the strength of differential expression.</p>
+<p>For a <code>PerLabelMarkers</code> object <code>markers</code>, the inner vector at <code>markers[i]</code> will contain the markers for label <code>i</code>. Each marker is represented as a row index into the reference matrix, i.e., <code>ref</code> in the call to <code><a class="el" href="#a4365fc51a1b9f6f790f8255806f51534">prepare_integrated_input()</a></code>. Each <code>markers[i]</code> entry should have non-zero length and should contain unique row indices. The order of indices within the inner vector is ignored in <b>singlepp</b> though most applications will sort markers by the strength of differential expression.</p>
 <p>The combination of markers in <code>markers[i]</code> is expected to distinguish <code>i</code> from all other labels. We suggest using functions like <code>score_markers_summary()</code> from the <a href="https://github.com/libscran/scran_markers"><b>scran_markers</b></a> library to obtain a suitable set of markers. Alternatively, if a corresponding <code>PairwiseMarkers</code> object was already constructed for the same reference (denoted <code>pmarkers</code>), we can just set <code>markers[i]</code> to the union of the top marker genes from <code>pmarkers[i][j]</code> for all <code>j</code> for a given <code>i</code>. </p>
 
 </div>
@@ -405,7 +405,7 @@ template&lt;typename Value_ , typename Index_ , typename Label_ , typename RefLa
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir"></td><td class="paramname">test</td><td>Expression matrix of the test dataset, where rows are genes and columns are cells. The identity of the rows should be consistent with the reference datasets used to construct <code>trained</code>, see <code><a class="el" href="#a9a10fd09eed24ee6c414cd0ce16e3251">prepare_integrated_input()</a></code> for details. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">test</td><td>Expression matrix of the test dataset, where rows are genes and columns are cells. The identity of the rows should be consistent with the reference datasets used to construct <code>trained</code>, see <code><a class="el" href="#a4365fc51a1b9f6f790f8255806f51534">prepare_integrated_input()</a></code> for details. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">assigned</td><td>Vector of pointers of length equal to the number of references. Each pointer should point to an array of length equal to the number of columns in <code>test</code>, containing the assigned label for each column in each reference. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">trained</td><td>The integrated classifier returned by <code><a class="el" href="#af198ad22e020701691c9bb8326401a46">train_integrated()</a></code>. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">buffers</td><td>Buffers in which to store the classification output. </td></tr>
@@ -449,7 +449,7 @@ template&lt;typename RefLabel_  = DefaultRefLabel, typename Value_ , typename In
 <p>Overload of <code><a class="el" href="#a60f705dc3fdc122139e2102713e7ec41" title="Integrate classifications from multiple references.">classify_integrated()</a></code> that allocates space for the results.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir"></td><td class="paramname">test</td><td>Expression matrix of the test dataset, where rows are genes and columns are cells. The identity of the rows should be consistent with the reference datasets used to construct <code>trained</code>, see <code><a class="el" href="#a9a10fd09eed24ee6c414cd0ce16e3251">prepare_integrated_input()</a></code> for details. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">test</td><td>Expression matrix of the test dataset, where rows are genes and columns are cells. The identity of the rows should be consistent with the reference datasets used to construct <code>trained</code>, see <code><a class="el" href="#a4365fc51a1b9f6f790f8255806f51534">prepare_integrated_input()</a></code> for details. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">assigned</td><td>Vector of pointers of length equal to the number of references. Each pointer should point to an array of length equal to the number of columns in <code>mat</code>, containing the assigned label for each column in each reference. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">trained</td><td>A pre-built classifier produced by <code><a class="el" href="#af198ad22e020701691c9bb8326401a46">train_integrated()</a></code>. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">options</td><td>Further options.</td></tr>
@@ -509,7 +509,7 @@ template&lt;typename Value_ , typename Index_ , typename Float_ , typename Label
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir"></td><td class="paramname">test</td><td>Expression matrix of the test dataset, where rows are genes and columns are cells. This should have the same order and identity of genes as the reference matrix used to create <code>trained</code>. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">trained</td><td>Classifier returned by <code><a class="el" href="#ab264b639c225a8a286768d3437c242b4">train_single()</a></code>. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">trained</td><td>Classifier returned by <code><a class="el" href="#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single()</a></code>. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">buffers</td><td>Buffers in which to store the classification output. Each non-<code>NULL</code> pointer should refer to an array of length equal to the number of columns in <code>test</code>. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">options</td><td>Further options. </td></tr>
   </table>
@@ -556,7 +556,7 @@ template&lt;typename Label_  = DefaultLabel, typename Value_ , typename Index_ ,
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">test</td><td>Expression matrix of the test dataset, where rows are genes and columns are cells. This should have the same order and identity of genes as the reference matrix used to create <code>trained</code>. </td></tr>
-    <tr><td class="paramname">trained</td><td>Classifier returned by <code><a class="el" href="#ab264b639c225a8a286768d3437c242b4">train_single()</a></code>. </td></tr>
+    <tr><td class="paramname">trained</td><td>Classifier returned by <code><a class="el" href="#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single()</a></code>. </td></tr>
     <tr><td class="paramname">options</td><td>Further options.</td></tr>
   </table>
   </dd>
@@ -616,8 +616,8 @@ template&lt;typename Index_ , typename Id_ &gt; </div>
 
 </div>
 </div>
-<a id="afa8490e58a77c389e419f56e23c3b2d2" name="afa8490e58a77c389e419f56e23c3b2d2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afa8490e58a77c389e419f56e23c3b2d2">&#9670;&#160;</a></span>prepare_integrated_input() <span class="overload">[1/3]</span></h2>
+<a id="a539f631cfe3894bf9fa41495bb8da918" name="a539f631cfe3894bf9fa41495bb8da918"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a539f631cfe3894bf9fa41495bb8da918">&#9670;&#160;</a></span>prepare_integrated_input() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -652,11 +652,6 @@ template&lt;typename Index_ , typename Id_ , typename Value_ , typename Label_ &
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const Label_</td>          <td class="paramname"><span class="paramname"><em>num_labels</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype"><a class="el" href="#a231777a440acf10c4f38264e9c36a4e2">PerLabelMarkers</a>&lt; Index_ &gt;</td>          <td class="paramname"><span class="paramname"><em>markers</em></span>&#160;)</td>
         </tr>
       </table>
@@ -677,9 +672,8 @@ template&lt;typename Index_ , typename Id_ , typename Value_ , typename Label_ &
     <tr><td class="paramdir">[in]</td><td class="paramname">test_id</td><td>Pointer to an array of length equal to <code>test_nrow</code>. This should contain a unique identifier for each row of <code>mat</code>, typically a gene name or index. If any duplicate IDs are present, only the first occurrence is used. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">ref</td><td>An expression matrix for the reference expression profiles, where rows are genes and columns are cells. This should have non-zero columns. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">ref_id</td><td>Pointer to an array equal to the number of rows of <code>ref</code>. This should contain a unique identifier for each row in <code>ref</code>, comparable to those in <code>test_id</code>. If any duplicate IDs are present, only the first occurrence is used. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each sample. Values should be integers in <code>[0, num_labels)</code>. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">num_labels</td><td>Number of labels. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>Vector of label-specific markers. The number of labels should be equal to <code>num_labels</code>, and each marker gene should be defined as a row index in <code>ref</code>. See <code><a class="el" href="#a231777a440acf10c4f38264e9c36a4e2">singlepp::PerLabelMarkers</a></code> for more details.</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each sample. Values should be integers in \([0, L)\) where \(L\) is the total number of unique labels. Each label up to \(L\) should occur at least once in <code>labels</code>. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>Vector of label-specific markers. The number of labels should be equal \(L\), and each marker gene should be defined as a row index in <code>ref</code>. See <code><a class="el" href="#a231777a440acf10c4f38264e9c36a4e2">singlepp::PerLabelMarkers</a></code> for more details.</td></tr>
   </table>
   </dd>
 </dl>
@@ -687,8 +681,8 @@ template&lt;typename Index_ , typename Id_ , typename Value_ , typename Label_ &
 
 </div>
 </div>
-<a id="aed03b34e201b3eec39d74aa0a5ab6d75" name="aed03b34e201b3eec39d74aa0a5ab6d75"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aed03b34e201b3eec39d74aa0a5ab6d75">&#9670;&#160;</a></span>prepare_integrated_input() <span class="overload">[2/3]</span></h2>
+<a id="a7e157796b768f9cae8ba0ffadf7e22f2" name="a7e157796b768f9cae8ba0ffadf7e22f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7e157796b768f9cae8ba0ffadf7e22f2">&#9670;&#160;</a></span>prepare_integrated_input() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -718,11 +712,6 @@ template&lt;typename Index_ , typename Value_ , typename Label_ &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const Label_</td>          <td class="paramname"><span class="paramname"><em>num_labels</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype"><a class="el" href="#a231777a440acf10c4f38264e9c36a4e2">PerLabelMarkers</a>&lt; Index_ &gt;</td>          <td class="paramname"><span class="paramname"><em>markers</em></span>&#160;)</td>
         </tr>
       </table>
@@ -741,9 +730,8 @@ template&lt;typename Index_ , typename Value_ , typename Label_ &gt; </div>
     <tr><td class="paramdir"></td><td class="paramname">test_nrow</td><td>Number of features in the test dataset. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">intersection</td><td>Vector defining the intersection of genes between the test and reference datasets. Each pair corresponds to a gene where the first and second elements represent the row indices of that gene in the test and reference matrices, respectively. The first element of each pair should be non-negative and less than <code>test_nrow</code>, while the second element should be non-negative and less than <code>ref-&gt;nrow()</code>. See <code><a class="el" href="#a22b70c4d5949e28af164723543361214">intersect_genes()</a></code> for more details. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">ref</td><td>Matrix containing the reference expression values, where rows are genes and columns are reference profiles. The number and identity of genes should be consistent with <code>intersection</code>. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each sample. Values should be integers in <code>[0, num_labels)</code>. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">num_labels</td><td>Number of labels. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>Vector of label-specific markers. The number of labels should be equal to <code>num_labels</code>, and each marker gene should be defined as a row index in <code>ref</code>. See <code><a class="el" href="#a231777a440acf10c4f38264e9c36a4e2">singlepp::PerLabelMarkers</a></code> for more details.</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each sample. Values should be integers in \([0, L)\) where \(L\) is the total number of unique labels. Each label up to \(L\) should occur at least once in <code>labels</code>. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>Vector of label-specific markers. The number of labels should be equal \(L\), and each marker gene should be defined as a row index in <code>ref</code>. See <code><a class="el" href="#a231777a440acf10c4f38264e9c36a4e2">singlepp::PerLabelMarkers</a></code> for more details.</td></tr>
   </table>
   </dd>
 </dl>
@@ -751,8 +739,8 @@ template&lt;typename Index_ , typename Value_ , typename Label_ &gt; </div>
 
 </div>
 </div>
-<a id="a9a10fd09eed24ee6c414cd0ce16e3251" name="a9a10fd09eed24ee6c414cd0ce16e3251"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9a10fd09eed24ee6c414cd0ce16e3251">&#9670;&#160;</a></span>prepare_integrated_input() <span class="overload">[3/3]</span></h2>
+<a id="a4365fc51a1b9f6f790f8255806f51534" name="a4365fc51a1b9f6f790f8255806f51534"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4365fc51a1b9f6f790f8255806f51534">&#9670;&#160;</a></span>prepare_integrated_input() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -768,11 +756,6 @@ template&lt;typename Value_ , typename Index_ , typename Label_ &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const Label_ *</td>          <td class="paramname"><span class="paramname"><em>labels</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const Label_</td>          <td class="paramname"><span class="paramname"><em>num_labels</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -793,9 +776,8 @@ template&lt;typename Value_ , typename Index_ , typename Label_ &gt; </div>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir"></td><td class="paramname">ref</td><td>Pointer to a matrix containing the reference expression values, where rows are genes and columns are reference profiles. The number and identity of genes should be identical to the test dataset to be classified in <code><a class="el" href="#a60f705dc3fdc122139e2102713e7ec41" title="Integrate classifications from multiple references.">classify_integrated()</a></code>. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>Pointer to an array of label assignments. Values should be integers in <code>[0, num_labels)</code>. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">num_labels</td><td>Number of labels. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>Vector of label-specific markers. The number of labels should be equal to <code>num_labels</code>, and each marker gene should be defined as a row index in <code>ref</code>. See <code><a class="el" href="#a231777a440acf10c4f38264e9c36a4e2">singlepp::PerLabelMarkers</a></code> for more details.</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>Pointer to an array of label assignments. Values should be integers in \([0, L)\) where \(L\) is the total number of unique labels. Each label up to \(L\) should occur at least once in <code>labels</code>. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>Vector of label-specific markers. The number of labels should be equal \(L\), and each marker gene should be defined as a row index in <code>ref</code>. See <code><a class="el" href="#a231777a440acf10c4f38264e9c36a4e2">singlepp::PerLabelMarkers</a></code> for more details.</td></tr>
   </table>
   </dd>
 </dl>
@@ -833,7 +815,7 @@ template&lt;typename Value_ , typename Index_ , typename Label_ &gt; </div>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">inputs</td><td>Vector of references, each of which is typically constructed with <code><a class="el" href="#a9a10fd09eed24ee6c414cd0ce16e3251">prepare_integrated_input()</a></code>. </td></tr>
+    <tr><td class="paramname">inputs</td><td>Vector of references, each of which is typically constructed with <code><a class="el" href="#a4365fc51a1b9f6f790f8255806f51534">prepare_integrated_input()</a></code>. </td></tr>
     <tr><td class="paramname">options</td><td>Further options.</td></tr>
   </table>
   </dd>
@@ -842,8 +824,8 @@ template&lt;typename Value_ , typename Index_ , typename Label_ &gt; </div>
 
 </div>
 </div>
-<a id="ab264b639c225a8a286768d3437c242b4" name="ab264b639c225a8a286768d3437c242b4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab264b639c225a8a286768d3437c242b4">&#9670;&#160;</a></span>train_single() <span class="overload">[1/3]</span></h2>
+<a id="a1c482c08a1cfd9a4eb0ff5b08314ed7e" name="a1c482c08a1cfd9a4eb0ff5b08314ed7e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1c482c08a1cfd9a4eb0ff5b08314ed7e">&#9670;&#160;</a></span>train_single() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -863,11 +845,6 @@ template&lt;typename Float_  = double, typename Value_ , typename Index_ , typen
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const Label_</td>          <td class="paramname"><span class="paramname"><em>num_labels</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype"><a class="el" href="#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers</a>&lt; Index_ &gt;</td>          <td class="paramname"><span class="paramname"><em>markers</em></span>, </td>
         </tr>
         <tr>
@@ -878,7 +855,7 @@ template&lt;typename Float_  = double, typename Value_ , typename Index_ , typen
       </table>
 </div><div class="memdoc">
 <p>Prepare a single labelled reference dataset for use in <code><a class="el" href="#ae8772734badf4a09d6c285b9b98295ec" title="Implements the SingleR algorithm for automated annotation of single-cell RNA-seq data.">classify_single()</a></code>. This involves pre-ranking the markers based on their expression in each reference profile, so that the Spearman correlations can be computed without repeated sorting. We also construct neighbor search indices for rapid calculation of the classification score.</p>
-<p>The classifier returned by this function should only be used in <code><a class="el" href="#ae8772734badf4a09d6c285b9b98295ec" title="Implements the SingleR algorithm for automated annotation of single-cell RNA-seq data.">classify_single()</a></code> with a test dataset that has the same genes as the reference dataset. If the test dataset has different genes, use the <code><a class="el" href="#ab264b639c225a8a286768d3437c242b4">train_single()</a></code> overloads that accept the intersection of genes between the test and reference dataset.</p>
+<p>The classifier returned by this function should only be used in <code><a class="el" href="#ae8772734badf4a09d6c285b9b98295ec" title="Implements the SingleR algorithm for automated annotation of single-cell RNA-seq data.">classify_single()</a></code> with a test dataset that has the same genes as the reference dataset. If the test dataset has different genes, use the <code><a class="el" href="#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single()</a></code> overloads that accept the intersection of genes between the test and reference dataset.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Value_</td><td>Numeric type for the matrix values. </td></tr>
@@ -891,9 +868,8 @@ template&lt;typename Float_  = double, typename Value_ , typename Index_ , typen
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir"></td><td class="paramname">ref</td><td>Matrix for the reference expression profiles. Rows are genes while columns are profiles. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each reference profile. Labels should be integers in <code>[0, num_labels)</code>. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">num_labels</td><td>Number of labels. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>Vector of vectors of ranked marker genes for each pairwise comparison between labels. The number of labels should be equal to <code>num_labels</code>, and each marker gene should be defined as a row index in <code>ref</code>. See <code><a class="el" href="#a0e41c4e40bb27ab5ec9325947fc72575">singlepp::PairwiseMarkers</a></code> for more details. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each reference profile. Labels should be integers in \([0, L)\) where \(L\) is the total number of unique labels. Each label up to \(L\) should occur at least once in <code>labels</code>. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>Vector of vectors of ranked marker genes for each pairwise comparison between labels. The number of labels should be equal \(L\), and each marker gene should be defined as a row index in <code>ref</code>. See <code><a class="el" href="#a0e41c4e40bb27ab5ec9325947fc72575">singlepp::PairwiseMarkers</a></code> for more details. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">options</td><td>Further options.</td></tr>
   </table>
   </dd>
@@ -902,8 +878,8 @@ template&lt;typename Float_  = double, typename Value_ , typename Index_ , typen
 
 </div>
 </div>
-<a id="a41c18b3dfdd3dd69c0055928170aedd1" name="a41c18b3dfdd3dd69c0055928170aedd1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a41c18b3dfdd3dd69c0055928170aedd1">&#9670;&#160;</a></span>train_single() <span class="overload">[2/3]</span></h2>
+<a id="aa2fa68af74db6ddf82a164d830fd73c2" name="aa2fa68af74db6ddf82a164d830fd73c2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa2fa68af74db6ddf82a164d830fd73c2">&#9670;&#160;</a></span>train_single() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -938,11 +914,6 @@ template&lt;typename Float_  = double, typename Index_ , typename Id_ , typename
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const Label_</td>          <td class="paramname"><span class="paramname"><em>num_labels</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype"><a class="el" href="#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers</a>&lt; Index_ &gt;</td>          <td class="paramname"><span class="paramname"><em>markers</em></span>, </td>
         </tr>
         <tr>
@@ -957,7 +928,7 @@ template&lt;typename Float_  = double, typename Index_ , typename Id_ , typename
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Overload of <code><a class="el" href="#ab264b639c225a8a286768d3437c242b4">train_single()</a></code> that uses the intersection of genes between the reference dataset and a (future) test dataset. This is useful when the genes are not in the same order and number across the test and reference datasets.</p>
+<p>Overload of <code><a class="el" href="#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single()</a></code> that uses the intersection of genes between the reference dataset and a (future) test dataset. This is useful when the genes are not in the same order and number across the test and reference datasets.</p>
 <p>The classifier returned by this function should only be used in <code><a class="el" href="#ae8772734badf4a09d6c285b9b98295ec" title="Implements the SingleR algorithm for automated annotation of single-cell RNA-seq data.">classify_single()</a></code> with a test dataset that has <code>test_nrow</code> rows with the same order and identity of genes as in <code>test_id</code>.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
@@ -975,9 +946,8 @@ template&lt;typename Float_  = double, typename Index_ , typename Id_ , typename
     <tr><td class="paramdir">[in]</td><td class="paramname">test_id</td><td>Pointer to an array of length equal to <code>test_nrow</code>, containing a gene identifier for each row of the test dataset. If any duplicate IDs are present, only the first occurrence is used. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">ref</td><td>An expression matrix for the reference expression profiles, where rows are genes and columns are cells. This should have non-zero columns. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">ref_id</td><td>Pointer to an array of length equal to the number of rows of <code>ref</code>, containing a gene identifier for each row of the reference dataset. Identifiers should be comparable to those in <code>test_id</code>. If any duplicate IDs are present, only the first occurrence is used. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each reference profile. Labels should be integers in <code>[0, num_labels)</code>. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">num_labels</td><td>Number of labels. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>Vector of vectors of ranked marker genes for each pairwise comparison between labels. The number of labels should be equal to <code>num_labels</code>, and each marker gene should be defined as a row index in <code>ref</code>. See <code><a class="el" href="#a0e41c4e40bb27ab5ec9325947fc72575">singlepp::PairwiseMarkers</a></code> for more details. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each reference profile. Labels should be integers in \([0, L)\) where \(L\) is the total number of unique labels. Each label up to \(L\) should occur at least once in <code>labels</code>. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>Vector of vectors of ranked marker genes for each pairwise comparison between labels. The number of labels should be equal \(L\), and each marker gene should be defined as a row index in <code>ref</code>. See <code><a class="el" href="#a0e41c4e40bb27ab5ec9325947fc72575">singlepp::PairwiseMarkers</a></code> for more details. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">ref_subset</td><td>Pointer to a vector in which to store the subset of rows of <code>ref</code> that contains the markers to be used for classification. On output, the vector is filled with unique (but not necessarily sorted) row indices of length equal to <code><a class="el" href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">TrainedSingle::subset()</a></code>, where each value contains the reference row that matches the test row indexed by the corresponding entry of <code><a class="el" href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">TrainedSingle::subset()</a></code>. If <code>NULL</code>, the rows of the reference matrix are not returned. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">options</td><td>Further options.</td></tr>
   </table>
@@ -987,8 +957,8 @@ template&lt;typename Float_  = double, typename Index_ , typename Id_ , typename
 
 </div>
 </div>
-<a id="a2bf30a2b0edaac9f2985a3da4f7136f0" name="a2bf30a2b0edaac9f2985a3da4f7136f0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2bf30a2b0edaac9f2985a3da4f7136f0">&#9670;&#160;</a></span>train_single() <span class="overload">[3/3]</span></h2>
+<a id="abdbc69eeb6b200b23176e77e2a70cd3b" name="abdbc69eeb6b200b23176e77e2a70cd3b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abdbc69eeb6b200b23176e77e2a70cd3b">&#9670;&#160;</a></span>train_single() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1018,11 +988,6 @@ template&lt;typename Float_  = double, typename Index_ , typename Value_ , typen
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const Label_</td>          <td class="paramname"><span class="paramname"><em>num_labels</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype"><a class="el" href="#a0e41c4e40bb27ab5ec9325947fc72575">PairwiseMarkers</a>&lt; Index_ &gt;</td>          <td class="paramname"><span class="paramname"><em>markers</em></span>, </td>
         </tr>
         <tr>
@@ -1037,7 +1002,7 @@ template&lt;typename Float_  = double, typename Index_ , typename Value_ , typen
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Overload of <code><a class="el" href="#ab264b639c225a8a286768d3437c242b4">train_single()</a></code> that uses a pre-computed intersection of genes between the reference dataset and an as-yet-unspecified test dataset. Most users will prefer to use the other <code><a class="el" href="#ab264b639c225a8a286768d3437c242b4">train_single()</a></code> overload that accepts <code>test_id</code> and <code>ref_id</code> and computes the intersection automatically.</p>
+<p>Overload of <code><a class="el" href="#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single()</a></code> that uses a pre-computed intersection of genes between the reference dataset and an as-yet-unspecified test dataset. Most users will prefer to use the other <code><a class="el" href="#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single()</a></code> overload that accepts <code>test_id</code> and <code>ref_id</code> and computes the intersection automatically.</p>
 <p>The classifier returned by this function should only be used in <code><a class="el" href="#ae8772734badf4a09d6c285b9b98295ec" title="Implements the SingleR algorithm for automated annotation of single-cell RNA-seq data.">classify_single()</a></code> with a test dataset that is compatible with the mappings in <code>intersection</code>. That is, the gene in the <code>intersection[i].first</code>-th row of the test dataset should correspond to the <code>intersection[i].second</code>-th row of the reference dataset.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
@@ -1053,9 +1018,8 @@ template&lt;typename Float_  = double, typename Index_ , typename Value_ , typen
     <tr><td class="paramdir"></td><td class="paramname">test_nrow</td><td>Number of features in the test dataset. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">intersection</td><td>Vector defining the intersection of genes between the test and reference datasets. Each pair corresponds to a gene where the first and second elements represent the row indices of that gene in the test and reference matrices, respectively. The first element of each pair should be non-negative and less than <code>test_nrow</code>, while the second element should be non-negative and less than <code>ref-&gt;nrow()</code>. See <code><a class="el" href="#a22b70c4d5949e28af164723543361214">intersect_genes()</a></code> for more details. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">ref</td><td>An expression matrix for the reference expression profiles, where rows are genes and columns are cells. This should have non-zero columns. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each reference profile. Labels should be integers in <code>[0, num_labels)</code>. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">num_labels</td><td>Number of labels. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>A vector of vectors of ranked marker genes for each pairwise comparison between labels. The number of labels should be equal to <code>num_labels</code>, and each marker gene should be defined as a row index in <code>ref</code>. See <code><a class="el" href="#a0e41c4e40bb27ab5ec9325947fc72575">singlepp::PairwiseMarkers</a></code> for more details. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each reference profile. Labels should be integers in \([0, L)\) where \(L\) is the total number of unique labels. Each label up to \(L\) should occur at least once in <code>labels</code>. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">markers</td><td>A vector of vectors of ranked marker genes for each pairwise comparison between labels. The number of labels should be equal \(L\), and each marker gene should be defined as a row index in <code>ref</code>. See <code><a class="el" href="#a0e41c4e40bb27ab5ec9325947fc72575">singlepp::PairwiseMarkers</a></code> for more details. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">ref_subset</td><td>Pointer to a vector in which to store the subset of rows of <code>ref</code> that contains the markers to be used for classification. On output, the vector is filled with unique (but not necessarily sorted) row indices of length equal to <code><a class="el" href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">TrainedSingle::subset()</a></code>, where each value contains the reference row that matches the test row indexed by the corresponding entry of <code><a class="el" href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">TrainedSingle::subset()</a></code>. If <code>NULL</code>, the rows of the reference matrix are not returned. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">options</td><td>Further options.</td></tr>
   </table>
