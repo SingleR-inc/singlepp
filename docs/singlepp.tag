@@ -431,22 +431,22 @@
       <type>TrainedSingle&lt; Index_, Float_ &gt;</type>
       <name>train_single</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>a1c482c08a1cfd9a4eb0ff5b08314ed7e</anchor>
-      <arglist>(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, PairwiseMarkers&lt; Index_ &gt; markers, const TrainSingleOptions &amp;options)</arglist>
+      <anchor>ab264b639c225a8a286768d3437c242b4</anchor>
+      <arglist>(const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, const Label_ num_labels, PairwiseMarkers&lt; Index_ &gt; markers, const TrainSingleOptions &amp;options)</arglist>
     </member>
     <member kind="function">
       <type>TrainedSingle&lt; Index_, Float_ &gt;</type>
       <name>train_single</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>abdbc69eeb6b200b23176e77e2a70cd3b</anchor>
-      <arglist>(Index_ test_nrow, const Intersection&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, PairwiseMarkers&lt; Index_ &gt; markers, std::vector&lt; Index_ &gt; *ref_subset, const TrainSingleOptions &amp;options)</arglist>
+      <anchor>a2bf30a2b0edaac9f2985a3da4f7136f0</anchor>
+      <arglist>(Index_ test_nrow, const Intersection&lt; Index_ &gt; &amp;intersection, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Label_ *labels, const Label_ num_labels, PairwiseMarkers&lt; Index_ &gt; markers, std::vector&lt; Index_ &gt; *ref_subset, const TrainSingleOptions &amp;options)</arglist>
     </member>
     <member kind="function">
       <type>TrainedSingle&lt; Index_, Float_ &gt;</type>
       <name>train_single</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>aa2fa68af74db6ddf82a164d830fd73c2</anchor>
-      <arglist>(Index_ test_nrow, const Id_ *test_id, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Id_ *ref_id, const Label_ *labels, PairwiseMarkers&lt; Index_ &gt; markers, std::vector&lt; Index_ &gt; *ref_subset, const TrainSingleOptions &amp;options)</arglist>
+      <anchor>a41c18b3dfdd3dd69c0055928170aedd1</anchor>
+      <arglist>(Index_ test_nrow, const Id_ *test_id, const tatami::Matrix&lt; Value_, Index_ &gt; &amp;ref, const Id_ *ref_id, const Label_ *labels, const Label_ num_labels, PairwiseMarkers&lt; Index_ &gt; markers, std::vector&lt; Index_ &gt; *ref_subset, const TrainSingleOptions &amp;options)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -466,22 +466,22 @@
       <type>TrainIntegratedInput&lt; Value_, Index_, Label_ &gt;</type>
       <name>prepare_integrated_input</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>a4365fc51a1b9f6f790f8255806f51534</anchor>
-      <arglist>(std::shared_ptr&lt; const tatami::Matrix&lt; Value_, Index_ &gt; &gt; ref, const Label_ *labels, PerLabelMarkers&lt; Index_ &gt; markers)</arglist>
+      <anchor>a9a10fd09eed24ee6c414cd0ce16e3251</anchor>
+      <arglist>(std::shared_ptr&lt; const tatami::Matrix&lt; Value_, Index_ &gt; &gt; ref, const Label_ *labels, const Label_ num_labels, PerLabelMarkers&lt; Index_ &gt; markers)</arglist>
     </member>
     <member kind="function">
       <type>TrainIntegratedInput&lt; Value_, Index_, Label_ &gt;</type>
       <name>prepare_integrated_input</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>a7e157796b768f9cae8ba0ffadf7e22f2</anchor>
-      <arglist>(Index_ test_nrow, Intersection&lt; Index_ &gt; intersection, std::shared_ptr&lt; const tatami::Matrix&lt; Value_, Index_ &gt; &gt; ref, const Label_ *labels, PerLabelMarkers&lt; Index_ &gt; markers)</arglist>
+      <anchor>aed03b34e201b3eec39d74aa0a5ab6d75</anchor>
+      <arglist>(Index_ test_nrow, Intersection&lt; Index_ &gt; intersection, std::shared_ptr&lt; const tatami::Matrix&lt; Value_, Index_ &gt; &gt; ref, const Label_ *labels, const Label_ num_labels, PerLabelMarkers&lt; Index_ &gt; markers)</arglist>
     </member>
     <member kind="function">
       <type>TrainIntegratedInput&lt; Value_, Index_, Label_ &gt;</type>
       <name>prepare_integrated_input</name>
       <anchorfile>namespacesinglepp.html</anchorfile>
-      <anchor>a539f631cfe3894bf9fa41495bb8da918</anchor>
-      <arglist>(Index_ test_nrow, const Id_ *test_id, std::shared_ptr&lt; const tatami::Matrix&lt; Value_, Index_ &gt; &gt; ref, const Id_ *ref_id, const Label_ *labels, PerLabelMarkers&lt; Index_ &gt; markers)</arglist>
+      <anchor>afa8490e58a77c389e419f56e23c3b2d2</anchor>
+      <arglist>(Index_ test_nrow, const Id_ *test_id, std::shared_ptr&lt; const tatami::Matrix&lt; Value_, Index_ &gt; &gt; ref, const Id_ *ref_id, const Label_ *labels, const Label_ num_labels, PerLabelMarkers&lt; Index_ &gt; markers)</arglist>
     </member>
     <member kind="function">
       <type>TrainedIntegrated&lt; Index_ &gt;</type>
