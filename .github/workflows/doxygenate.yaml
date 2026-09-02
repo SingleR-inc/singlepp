@@ -9,27 +9,13 @@ jobs:
   doxygenator:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Add Pretty CSS
-      uses: wei/wget@v1
-      with:
-        args: -O docs/doxygen-awesome.css https://raw.githubusercontent.com/jothepro/doxygen-awesome-css/main/doxygen-awesome.css
-
-    - name: Add knncolle tagfile
-      uses: wei/wget@v1
-      with:
-        args: -O docs/knncolle.tag https://knncolle.github.io/knncolle/knncolle.tag
+      run: curl -L https://raw.githubusercontent.com/jothepro/doxygen-awesome-css/main/doxygen-awesome.css -o docs/doxygen-awesome.css 
 
     - name: Add tatami tagfile
-      uses: wei/wget@v1
-      with:
-        args: -O docs/tatami.tag https://tatami-inc.github.io/tatami/tatami.tag
-
-    - name: Add subpar tagfile
-      uses: wei/wget@v1
-      with:
-        args: -O docs/tatami.tag https://ltla.github.io/subpar/subpar.tag
+      run: curl -L https://tatami-inc.github.io/tatami/tatami.tag -o docs/tatami.tag 
 
     - name: Doxygen Action
       uses: mattnotmitt/doxygen-action@v1
