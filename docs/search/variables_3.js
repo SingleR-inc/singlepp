@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['normalized_0',['normalized',['https://knncolle.github.io/knncolle/structknncolle_1_1L2NormalizedPrebuiltTypes.html#a59f1b5b8747665021453b9d1c548b86b',1,'knncolle::L2NormalizedPrebuiltTypes']]],
-  ['num_5fthreads_1',['num_threads',['../structsinglepp_1_1ClassifySingleOptions.html#ad8d08a1478387fce71cf319c234aba8c',1,'singlepp::ClassifySingleOptions::num_threads'],['../structsinglepp_1_1TrainSingleOptions.html#a76c303868ef63d76fd157ad80974d3a6',1,'singlepp::TrainSingleOptions::num_threads'],['../structsinglepp_1_1ClassifyIntegratedOptions.html#a5562f346d14d824da25e56e367194c7c',1,'singlepp::ClassifyIntegratedOptions::num_threads'],['../structsinglepp_1_1TrainIntegratedOptions.html#ae500e9838e046e9f191057e6eb7f6803',1,'singlepp::TrainIntegratedOptions::num_threads']]]
+  ['fine_5ftune_0',['fine_tune',['../structsinglepp_1_1ClassifySingleOptions.html#a2e9ca1a6da5fcb8877d9029db4b46b7a',1,'singlepp::ClassifySingleOptions::fine_tune'],['../structsinglepp_1_1ClassifyIntegratedOptions.html#a4b00e9fdb3d16f431709932dd4dddca9',1,'singlepp::ClassifyIntegratedOptions::fine_tune']]],
+  ['fine_5ftune_5fthreshold_1',['fine_tune_threshold',['../structsinglepp_1_1ClassifySingleOptions.html#ac4b20b4e0d9f50695d60f86dc2f48406',1,'singlepp::ClassifySingleOptions::fine_tune_threshold'],['../structsinglepp_1_1ClassifyIntegratedOptions.html#ae963907ed5ed64dd7c198d6171e54003',1,'singlepp::ClassifyIntegratedOptions::fine_tune_threshold']]]
 ];

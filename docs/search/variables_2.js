@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['fine_5ftune_0',['fine_tune',['../structsinglepp_1_1ClassifySingleOptions.html#a2e9ca1a6da5fcb8877d9029db4b46b7a',1,'singlepp::ClassifySingleOptions::fine_tune'],['../structsinglepp_1_1ClassifyIntegratedOptions.html#a4b00e9fdb3d16f431709932dd4dddca9',1,'singlepp::ClassifyIntegratedOptions::fine_tune']]],
-  ['fine_5ftune_5fthreshold_1',['fine_tune_threshold',['../structsinglepp_1_1ClassifySingleOptions.html#ac4b20b4e0d9f50695d60f86dc2f48406',1,'singlepp::ClassifySingleOptions::fine_tune_threshold'],['../structsinglepp_1_1ClassifyIntegratedOptions.html#ae963907ed5ed64dd7c198d6171e54003',1,'singlepp::ClassifyIntegratedOptions::fine_tune_threshold']]]
+  ['delta_0',['delta',['../structsinglepp_1_1ClassifySingleBuffers.html#a044d3e44f4d19f387a62a2ba9f0b87a3',1,'singlepp::ClassifySingleBuffers::delta'],['../structsinglepp_1_1ClassifySingleResults.html#a095f534120dc3cc11de7b58a2eef64f1',1,'singlepp::ClassifySingleResults::delta'],['../structsinglepp_1_1ClassifyIntegratedBuffers.html#a7307840e67b7743f985ad4c780090168',1,'singlepp::ClassifyIntegratedBuffers::delta'],['../structsinglepp_1_1ClassifyIntegratedResults.html#a7fa791e370428f1535d3218fd3313987',1,'singlepp::ClassifyIntegratedResults::delta']]]
 ];

@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['find_5fnearest_5fneighbors_0',['find_nearest_neighbors',['https://knncolle.github.io/knncolle/namespaceknncolle.html#a2c6d8b116464bab254bda34216338c3c',1,'knncolle']]],
-  ['find_5fnearest_5fneighbors_5findex_5fonly_1',['find_nearest_neighbors_index_only',['https://knncolle.github.io/knncolle/namespaceknncolle.html#a8406dfe7aac78dee986262a5f6bceee7',1,'knncolle']]]
+  ['end_0',['end',['https://tatami-inc.github.io/tatami/classtatami_1_1ArrayView.html#a15127c10722fd3483010f38231dd7ee9',1,'tatami::ArrayView::end()'],['https://tatami-inc.github.io/tatami/classtatami_1_1SomeNumericArray.html#add771080790c65d2943c54a0615ee136',1,'tatami::SomeNumericArray::end()']]]
 ];

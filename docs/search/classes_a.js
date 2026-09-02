@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['vptreebuilder_0',['VptreeBuilder',['https://knncolle.github.io/knncolle/classknncolle_1_1VptreeBuilder.html',1,'knncolle']]],
-  ['vptreeoptions_1',['VptreeOptions',['https://knncolle.github.io/knncolle/structknncolle_1_1VptreeOptions.html',1,'knncolle']]]
+  ['retrievecompressedsparsecontentsoptions_0',['RetrieveCompressedSparseContentsOptions',['https://tatami-inc.github.io/tatami/structtatami_1_1RetrieveCompressedSparseContentsOptions.html',1,'tatami']]],
+  ['retrievefragmentedsparsecontentsoptions_1',['RetrieveFragmentedSparseContentsOptions',['https://tatami-inc.github.io/tatami/structtatami_1_1RetrieveFragmentedSparseContentsOptions.html',1,'tatami']]]
 ];

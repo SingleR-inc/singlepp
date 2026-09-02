@@ -1,9 +1,7 @@
 var searchData=
 [
-  ['initialize_0',['initialize',['https://knncolle.github.io/knncolle/classknncolle_1_1Prebuilt.html#aacc8819b7962ce27294cf0d42f6c6e68',1,'knncolle::Prebuilt']]],
-  ['initialize_5fknown_1',['initialize_known',['https://knncolle.github.io/knncolle/classknncolle_1_1Prebuilt.html#a49d2dbfc4a463c396842875f26746ac4',1,'knncolle::Prebuilt']]],
-  ['intersect_5fgenes_2',['intersect_genes',['../namespacesinglepp.html#a22b70c4d5949e28af164723543361214',1,'singlepp']]],
-  ['intersection_3',['Intersection',['../namespacesinglepp.html#ae0c63a73c7c40ad5e6f47ef0f9abac5d',1,'singlepp']]],
-  ['intersection_2ehpp_4',['Intersection.hpp',['../Intersection_8hpp.html',1,'']]],
-  ['is_5ffull_5',['is_full',['https://knncolle.github.io/knncolle/classknncolle_1_1NeighborQueue.html#ae459f76b2e81b65b7f437e01eea1689b',1,'knncolle::NeighborQueue']]]
+  ['has_5fdata_0',['has_data',['https://tatami-inc.github.io/tatami/structtatami_1_1has__data.html',1,'tatami']]],
+  ['has_5fdata_2ehpp_1',['has_data.hpp',['https://tatami-inc.github.io/tatami/has__data_8hpp.html',1,'']]],
+  ['has_5fdata_3c_20type_5f_2c_20container_5f_2c_20decltype_28_28void_29_20std_3a_3adeclval_3c_20container_5f_20_3e_28_29_2edata_28_29_2c_200_29_3e_2',['has_data&lt; Type_, Container_, decltype((void) std::declval&lt; Container_ &gt;().data(), 0)&gt;',['https://tatami-inc.github.io/tatami/structtatami_1_1has__data_3_01Type___00_01Container___00_01decltype_07_07void_08_01std_1_1declva66f694cee1ca6e7d197226a9c6d58cf5.html',1,'tatami']]],
+  ['helper_5finterface_2ehpp_3',['helper_interface.hpp',['https://tatami-inc.github.io/tatami/binary_2helper__interface_8hpp.html',1,'(Global Namespace)'],['https://tatami-inc.github.io/tatami/unary_2helper__interface_8hpp.html',1,'(Global Namespace)']]]
 ];

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['quantile_0',['quantile',['../structsinglepp_1_1ClassifySingleOptions.html#aebeadb5d5c853a7e2d0c6d9d7f611656',1,'singlepp::ClassifySingleOptions::quantile'],['../structsinglepp_1_1ClassifyIntegratedOptions.html#a6d4d11059b19ca5066ceed0d9e36bf19',1,'singlepp::ClassifyIntegratedOptions::quantile']]]
+  ['index_0',['index',['https://tatami-inc.github.io/tatami/structtatami_1_1CompressedSparseContents.html#a5b30cd6415c0e3cfd91b31590f16bc58',1,'tatami::CompressedSparseContents::index'],['https://tatami-inc.github.io/tatami/structtatami_1_1FragmentedSparseContents.html#a8c1a2bebb066b64451576dc356877091',1,'tatami::FragmentedSparseContents::index'],['https://tatami-inc.github.io/tatami/structtatami_1_1SparseRange.html#af61bafe43fadb90cee6162ac79bfdd3d',1,'tatami::SparseRange::index']]]
 ];

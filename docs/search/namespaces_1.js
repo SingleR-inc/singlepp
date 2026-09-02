@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['singlepp_0',['singlepp',['../namespacesinglepp.html',1,'']]],
-  ['subpar_1',['subpar',['https://tatami-inc.github.io/tatami/namespacesubpar.html',1,'']]]
+  ['tatami_0',['tatami',['https://tatami-inc.github.io/tatami/namespacetatami.html',1,'']]],
+  ['tatami_3a_3asomenumericarray_1',['SomeNumericArray',['https://tatami-inc.github.io/tatami/structtatami_1_1SomeNumericArray_1_1Iterator.html',1,'tatami']]]
 ];

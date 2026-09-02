@@ -1,7 +1,4 @@
 var searchData=
 [
-  ['initialize_0',['initialize',['https://knncolle.github.io/knncolle/classknncolle_1_1Prebuilt.html#aacc8819b7962ce27294cf0d42f6c6e68',1,'knncolle::Prebuilt']]],
-  ['initialize_5fknown_1',['initialize_known',['https://knncolle.github.io/knncolle/classknncolle_1_1Prebuilt.html#a49d2dbfc4a463c396842875f26746ac4',1,'knncolle::Prebuilt']]],
-  ['intersect_5fgenes_2',['intersect_genes',['../namespacesinglepp.html#a22b70c4d5949e28af164723543361214',1,'singlepp']]],
-  ['is_5ffull_3',['is_full',['https://knncolle.github.io/knncolle/classknncolle_1_1NeighborQueue.html#ae459f76b2e81b65b7f437e01eea1689b',1,'knncolle::NeighborQueue']]]
+  ['get_0',['get',['https://tatami-inc.github.io/tatami/classtatami_1_1ConsecutiveOracle.html#aa0c6695749972f318734a39352acf142',1,'tatami::ConsecutiveOracle::get()'],['https://tatami-inc.github.io/tatami/classtatami_1_1FixedVectorOracle.html#a540a89c203ff0bad398fb96d498f3b6f',1,'tatami::FixedVectorOracle::get()'],['https://tatami-inc.github.io/tatami/classtatami_1_1FixedViewOracle.html#a3077e679927ce5cd1f481defe41c5917',1,'tatami::FixedViewOracle::get()'],['https://tatami-inc.github.io/tatami/classtatami_1_1Oracle.html#a397e9ad5b752258565f33d993129959e',1,'tatami::Oracle::get()']]]
 ];

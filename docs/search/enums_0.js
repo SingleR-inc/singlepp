@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['numerictype_0',['NumericType',['https://knncolle.github.io/knncolle/namespaceknncolle.html#a9aa73a4ad540791a911eb9fa64b51de3',1,'knncolle']]]
+  ['arithmeticoperation_0',['ArithmeticOperation',['https://tatami-inc.github.io/tatami/namespacetatami.html#a9050a4b119e027638175c38cc9bbede8',1,'tatami']]]
 ];

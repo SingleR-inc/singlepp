@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['cap_5fk_2ehpp_0',['cap_k.hpp',['https://knncolle.github.io/knncolle/cap__k_8hpp.html',1,'']]],
-  ['classify_5fintegrated_2ehpp_1',['classify_integrated.hpp',['../classify__integrated_8hpp.html',1,'']]],
-  ['classify_5fsingle_2ehpp_2',['classify_single.hpp',['../classify__single_8hpp.html',1,'']]]
+  ['boolean_5fhelpers_2ehpp_0',['boolean_helpers.hpp',['https://tatami-inc.github.io/tatami/binary_2boolean__helpers_8hpp.html',1,'(Global Namespace)'],['https://tatami-inc.github.io/tatami/unary_2boolean__helpers_8hpp.html',1,'(Global Namespace)']]],
+  ['boolean_5futils_2ehpp_1',['boolean_utils.hpp',['https://tatami-inc.github.io/tatami/boolean__utils_8hpp.html',1,'']]]
 ];

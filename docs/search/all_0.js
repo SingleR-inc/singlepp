@@ -1,4 +1,8 @@
 var searchData=
 [
-  ['add_0',['add',['https://knncolle.github.io/knncolle/classknncolle_1_1NeighborQueue.html#ac0add776502ad89cc532ede0da9e7559',1,'knncolle::NeighborQueue']]]
+  ['arithmetic_5fhelpers_2ehpp_0',['arithmetic_helpers.hpp',['https://tatami-inc.github.io/tatami/binary_2arithmetic__helpers_8hpp.html',1,'(Global Namespace)'],['https://tatami-inc.github.io/tatami/unary_2arithmetic__helpers_8hpp.html',1,'(Global Namespace)']]],
+  ['arithmetic_5futils_2ehpp_1',['arithmetic_utils.hpp',['https://tatami-inc.github.io/tatami/arithmetic__utils_8hpp.html',1,'']]],
+  ['arithmeticoperation_2',['ArithmeticOperation',['https://tatami-inc.github.io/tatami/namespacetatami.html#a9050a4b119e027638175c38cc9bbede8',1,'tatami']]],
+  ['arrayview_3',['ArrayView',['https://tatami-inc.github.io/tatami/classtatami_1_1ArrayView.html',1,'tatami::ArrayView&lt; typename Type_ &gt;'],['https://tatami-inc.github.io/tatami/classtatami_1_1ArrayView.html#a7561b5e7be6baf119fabee4d45ba392b',1,'tatami::ArrayView::ArrayView(const Type_ *const ptr, const std::size_t number)'],['https://tatami-inc.github.io/tatami/classtatami_1_1ArrayView.html#a9b6dea35449eda3a7465dc2c0d5ed277',1,'tatami::ArrayView::ArrayView()']]],
+  ['arrayview_2ehpp_4',['ArrayView.hpp',['https://tatami-inc.github.io/tatami/ArrayView_8hpp.html',1,'']]]
 ];

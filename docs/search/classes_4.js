@@ -1,8 +1,13 @@
 var searchData=
 [
-  ['l2normalizedbuilder_0',['L2NormalizedBuilder',['https://knncolle.github.io/knncolle/classknncolle_1_1L2NormalizedBuilder.html',1,'knncolle']]],
-  ['l2normalizedmatrix_1',['L2NormalizedMatrix',['https://knncolle.github.io/knncolle/classknncolle_1_1L2NormalizedMatrix.html',1,'knncolle']]],
-  ['l2normalizedprebuilttypes_2',['L2NormalizedPrebuiltTypes',['https://knncolle.github.io/knncolle/structknncolle_1_1L2NormalizedPrebuiltTypes.html',1,'knncolle']]],
-  ['loaddistancemetricnotfounderror_3',['LoadDistanceMetricNotFoundError',['https://knncolle.github.io/knncolle/classknncolle_1_1LoadDistanceMetricNotFoundError.html',1,'knncolle']]],
-  ['loadprebuiltnotfounderror_4',['LoadPrebuiltNotFoundError',['https://knncolle.github.io/knncolle/classknncolle_1_1LoadPrebuiltNotFoundError.html',1,'knncolle']]]
+  ['fixedvectororacle_0',['FixedVectorOracle',['https://tatami-inc.github.io/tatami/classtatami_1_1FixedVectorOracle.html',1,'tatami']]],
+  ['fixedvieworacle_1',['FixedViewOracle',['https://tatami-inc.github.io/tatami/classtatami_1_1FixedViewOracle.html',1,'tatami']]],
+  ['forceddense_2',['ForcedDense',['https://tatami-inc.github.io/tatami/classtatami_1_1ForcedDense.html',1,'tatami']]],
+  ['fragmentedsparsecolumnmatrix_3',['FragmentedSparseColumnMatrix',['https://tatami-inc.github.io/tatami/classtatami_1_1FragmentedSparseColumnMatrix.html',1,'tatami']]],
+  ['fragmentedsparsecontents_4',['FragmentedSparseContents',['https://tatami-inc.github.io/tatami/structtatami_1_1FragmentedSparseContents.html',1,'tatami']]],
+  ['fragmentedsparsematrix_5',['FragmentedSparseMatrix',['https://tatami-inc.github.io/tatami/classtatami_1_1FragmentedSparseMatrix.html',1,'tatami']]],
+  ['fragmentedsparsematrix_3c_20value_5f_2c_20index_5f_2c_20valuevectorstorage_5f_2c_20indexvectorstorage_5f_20_3e_6',['FragmentedSparseMatrix&lt; Value_, Index_, ValueVectorStorage_, IndexVectorStorage_ &gt;',['https://tatami-inc.github.io/tatami/classtatami_1_1FragmentedSparseMatrix.html',1,'tatami']]],
+  ['fragmentedsparsematrixoptions_7',['FragmentedSparseMatrixOptions',['https://tatami-inc.github.io/tatami/structtatami_1_1FragmentedSparseMatrixOptions.html',1,'tatami']]],
+  ['fragmentedsparserowmatrix_8',['FragmentedSparseRowMatrix',['https://tatami-inc.github.io/tatami/classtatami_1_1FragmentedSparseRowMatrix.html',1,'tatami']]],
+  ['fullsparsifiedwrapper_9',['FullSparsifiedWrapper',['https://tatami-inc.github.io/tatami/classtatami_1_1FullSparsifiedWrapper.html',1,'tatami']]]
 ];

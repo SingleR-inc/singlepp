@@ -1,7 +1,6 @@
 var searchData=
 [
-  ['searcher_2ehpp_0',['Searcher.hpp',['https://knncolle.github.io/knncolle/Searcher_8hpp.html',1,'']]],
-  ['simple_2ehpp_1',['simple.hpp',['https://tatami-inc.github.io/tatami/simple_8hpp.html',1,'']]],
-  ['singlepp_2ehpp_2',['singlepp.hpp',['../singlepp_8hpp.html',1,'']]],
-  ['subpar_2ehpp_3',['subpar.hpp',['https://tatami-inc.github.io/tatami/subpar_8hpp.html',1,'']]]
+  ['parallelize_2ehpp_0',['parallelize.hpp',['https://tatami-inc.github.io/tatami/parallelize_8hpp.html',1,'']]],
+  ['process_5fconsecutive_5findices_2ehpp_1',['process_consecutive_indices.hpp',['https://tatami-inc.github.io/tatami/process__consecutive__indices_8hpp.html',1,'']]],
+  ['pseudooracularextractor_2ehpp_2',['PseudoOracularExtractor.hpp',['https://tatami-inc.github.io/tatami/PseudoOracularExtractor_8hpp.html',1,'']]]
 ];
