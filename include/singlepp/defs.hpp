@@ -6,10 +6,6 @@
  * @brief Common definitions for **singlepp**.
  */
 
-#ifndef SINGLEPP_CUSTOM_PARALLEL
-#include "subpar/subpar.hpp"
-#endif
-
 namespace singlepp {
 
 /**
