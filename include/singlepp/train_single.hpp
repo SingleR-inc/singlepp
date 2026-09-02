@@ -68,8 +68,8 @@ std::size_t get_num_profiles_from_built(const BuiltReference<Index_, Float_>& bu
  * Instances of this class should not be directly constructed, but instead returned by calling `train_single()` on a reference dataset.
  * Each instance can be used in `classify_single()` with a test dataset that has the same number and order of genes as the reference dataset. 
  * 
- * @tparam Index_ Integer type for the row/column indices of the matrix.
- * @tparam Float_ Floating-point type for the correlations and scores.
+ * @tparam Index_ Integer type of the row/column indices of the matrix.
+ * @tparam Float_ Floating-point type of the correlations and scores.
  */
 template<typename Index_, typename Float_>
 class TrainedSingle {
@@ -167,16 +167,16 @@ public:
  * The classifier returned by this function should only be used in `classify_single()` with a test dataset that has the same genes as the reference dataset.
  * If the test dataset has different genes, use the `train_single()` overloads that accept the intersection of genes between the test and reference dataset.
  * 
- * @tparam Value_ Numeric type for the matrix values.
- * @tparam Index_ Integer type for the row/column indices of the matrix.
- * @tparam Label_ Integer type for the reference labels.
- * @tparam Float_ Floating-point type for the correlations and scores.
+ * @tparam Value_ Numeric type of the matrix values.
+ * @tparam Index_ Integer type of the row/column indices of the matrix.
+ * @tparam Label_ Integer type of the reference labels.
+ * @tparam Float_ Floating-point type of the correlations and scores.
  *
  * @param ref Matrix for the reference expression profiles.
  * Rows are genes while columns are profiles.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each reference profile.
  * Labels should be integers in `[0, markers.size())`.
- * Each label in this range should occur at least once in `labels`.
+ * Each label in this range should occur at least once in `labels`, i.e., each label should be represented by at least one reference profile.
  * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels. 
  * The sizes of the inner and outer vectors should be equal to the number of unique labels.
  * Each marker gene should be defined as a row index in `ref`.
@@ -206,10 +206,10 @@ TrainedSingle<Index_, Float_> train_single(
  * The classifier returned by this function should only be used in `classify_single()` with a test dataset that is compatible with the mappings in `intersection`.
  * That is, the gene in the `intersection[i].first`-th row of the test dataset should correspond to the `intersection[i].second`-th row of the reference dataset.
  *
- * @tparam Float_ Floating-point type for the correlations and scores.
- * @tparam Index_ Integer type for the row/column indices of the matrix.
- * @tparam Value_ Numeric type for the matrix values.
- * @tparam Label_ Integer type for the reference labels.
+ * @tparam Float_ Floating-point type of the correlations and scores.
+ * @tparam Index_ Integer type of the row/column indices of the matrix.
+ * @tparam Value_ Numeric type of the matrix values.
+ * @tparam Label_ Integer type of the reference labels.
  *
  * @param test_nrow Number of features in the test dataset.
  * @param intersection Vector defining the intersection of genes between the test and reference datasets.
@@ -220,7 +220,7 @@ TrainedSingle<Index_, Float_> train_single(
  * This should have non-zero columns.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each reference profile.
  * Labels should be integers in `[0, markers.size())`.
- * Each label in this range should occur at least once in `labels`.
+ * Each label in this range should occur at least once in `labels`, i.e., each label should be represented by at least one reference profile.
  * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels. 
  * The sizes of the inner and outer vectors should be equal to the number of unique labels.
  * Each marker gene should be defined as a row index in `ref`.
@@ -259,11 +259,11 @@ TrainedSingle<Index_, Float_> train_single(
  * The classifier returned by this function should only be used in `classify_single()` with a test dataset
  * that has `test_nrow` rows with the same order and identity of genes as in `test_id`.
  *
- * @tparam Float_ Floating-point type for the correlations and scores.
- * @tparam Index_ Integer type for the row/column indices of the matrix.
+ * @tparam Float_ Floating-point type of the correlations and scores.
+ * @tparam Index_ Integer type of the row/column indices of the matrix.
  * @tparam Id_ Type of the gene identifier for each row, typically integer or string.
- * @tparam Value_ Numeric type for the matrix values.
- * @tparam Label_ Integer type for the reference labels.
+ * @tparam Value_ Numeric type of the matrix values.
+ * @tparam Label_ Integer type of the reference labels.
  *
  * @param test_nrow Number of rows (genes) in the test dataset.
  * @param[in] test_id Pointer to an array of length equal to `test_nrow`, containing a gene identifier for each row of the test dataset.
@@ -275,7 +275,7 @@ TrainedSingle<Index_, Float_> train_single(
  * If any duplicate IDs are present, only the first occurrence is used.
  * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each reference profile.
  * Labels should be integers in `[0, markers.size())`.
- * Each label in this range should occur at least once in `labels`.
+ * Each label in this range should occur at least once in `labels`, i.e., each label should be represented by at least one reference profile.
  * @param markers A vector of vectors of ranked marker genes for each pairwise comparison between labels. 
  * The sizes of the inner and outer vectors should be equal to the number of unique labels.
  * Each marker gene should be defined as a row index in `ref`.

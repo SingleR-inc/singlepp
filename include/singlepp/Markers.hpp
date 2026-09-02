@@ -33,7 +33,7 @@ namespace singlepp {
  * Typically, each `markers[i][j]` vector is created by identifying the top genes that are upregulated in label `i` compared to `j`. 
  * We suggest using functions like `score_markers_best()` from the [**scran_markers**](https://github.com/libscran/scran_markers) library to obtain a suitable set of top markers.
  *
- * @tparam Index_ Integer type for the gene (row) indices.
+ * @tparam Index_ Integer type of the gene (row) indices.
  */
 template<typename Index_ = DefaultIndex>
 using PairwiseMarkers = std::vector<std::vector<std::vector<Index_> > >;

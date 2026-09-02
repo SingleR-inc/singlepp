@@ -21,7 +21,7 @@ namespace singlepp {
 
 /**
  * @brief Options for `classify_integrated()`.
- * @tparam Float_ Floating-point type for the correlations and scores.
+ * @tparam Float_ Floating-point type of the correlations and scores.
  */
 template<typename Float_ = DefaultFloat>
 struct ClassifyIntegratedOptions {
@@ -52,8 +52,8 @@ struct ClassifyIntegratedOptions {
 
 /**
  * @brief Output buffers for `classify_single()`.
- * @tparam RefLabel_ Integer type for the label to represent each reference.
- * @tparam Float_ Floating-point type for the correlations and scores.
+ * @tparam RefLabel_ Integer type of the label to represent each reference.
+ * @tparam Float_ Floating-point type of the correlations and scores.
  */
 template<typename RefLabel_ = DefaultRefLabel, typename Float_ = DefaultFloat>
 struct ClassifyIntegratedBuffers {
@@ -106,11 +106,11 @@ struct ClassifyIntegratedBuffers {
  * Similarly, we defer responsibility on solving the issue of label heterogeneity,
  * by just passing along the existing labels and leaving it to the user's interpretation.
  * 
- * @tparam Value_ Numeric type for the matrix values.
- * @tparam Index_ Integer type for the row/column indices.
- * @tparam Label_ Integer type for the labels within each reference.
- * @tparam RefLabel_ Integer type for the label to represent each reference.
- * @tparam Float_ Floating-point type for the correlations and scores.
+ * @tparam Value_ Numeric type of the matrix values.
+ * @tparam Index_ Integer type of the row/column indices.
+ * @tparam Label_ Integer type of the labels within each reference.
+ * @tparam RefLabel_ Integer type of the label to represent each reference.
+ * @tparam Float_ Floating-point type of the correlations and scores.
  * 
  * @param test Expression matrix of the test dataset, where rows are genes and columns are cells.
  * The identity of the rows should be consistent with the reference datasets used to construct `trained`,
@@ -146,8 +146,8 @@ void classify_integrated(
 
 /**
  * @brief Results of `classify_integrated()`.
- * @tparam RefLabel_ Integer type for the label to represent each reference.
- * @tparam Float_ Floating-point type for the correlations and scores.
+ * @tparam RefLabel_ Integer type of the label to represent each reference.
+ * @tparam Float_ Floating-point type of the correlations and scores.
  */
 template<typename RefLabel_ = DefaultRefLabel, typename Float_ = DefaultFloat>
 struct ClassifyIntegratedResults {

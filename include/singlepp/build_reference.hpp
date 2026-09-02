@@ -464,6 +464,10 @@ BuiltReference<Index_, Float_> build_reference_raw(
 ) {
     const auto num_markers = sanisizer::cast<Index_>(subset.size());
     const auto num_samples = ref.ncol();
+
+    // We enforce a non-zero number of samples as this implies that there is at least one label.
+    // Otherwise, if we had no labels, we would have to fill the 'best' vector with some kind of invalid placeholder. 
+    // Banning empty references is also consistent with the behavior of train_integrated().
     if (num_samples == 0) {
         throw std::runtime_error("reference dataset must have at least one column");
     }
@@ -476,6 +480,10 @@ BuiltReference<Index_, Float_> build_reference_raw(
         ++lcount;
     }
 
+    // We check that each label is non-empty to avoid having to deal with labels that emit invalid scores.
+    // In addition, empty labels would effectively force fine-tuning for every cell;
+    // they would always be filtered out and cause the number of labels in use to be less than the total number of labels.
+    // It's just easier to expect that all labels are represented by at least one reference profile.
     for (I<decltype(num_labels)> l = 0; l < num_labels; ++l) {
         const auto labcount = label_count[l];
         if (labcount == 0) {

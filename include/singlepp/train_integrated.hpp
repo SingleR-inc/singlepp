@@ -59,9 +59,10 @@ struct TrainIntegratedInput {
  *
  * @param ref Pointer to a matrix containing the reference expression values, where rows are genes and columns are reference profiles.
  * The number and identity of genes should be identical to the test dataset to be classified in `classify_integrated()`.
- * @param[in] labels Pointer to an array of label assignments.
- * Values should be integers in `[0, markers.size())`.
- * Each label should occur at least once in `labels`.
+ * The matrix should have at least one column.
+ * @param[in] labels Pointer to an array of length equal to the number of columns of `ref`, containing the label for each reference profile.
+ * Labels should be integers in `[0, markers.size())`.
+ * Each label in this range should occur at least once in `labels`, i.e., each label should be represented by at least one reference profile.
  * @param markers Vector of label-specific markers, of length equal to the number of unique labels.
  * Each marker gene should be defined as a row index in `ref`.
  * See `singlepp::PerLabelMarkers` for more details.
@@ -98,9 +99,10 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input(
  * See `intersect_genes()` for more details.
  * @param ref Matrix containing the reference expression values, where rows are genes and columns are reference profiles.
  * The number and identity of genes should be consistent with `intersection`.
- * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
- * Values should be integers in `[0, markers.size())`.
- * Each label should occur at least once in `labels`.
+ * The matrix should have at least one column.
+ * @param[in] labels Pointer to an array of length equal to the number of columns of `ref`, containing the label for each reference profile.
+ * Labels should be integers in `[0, markers.size())`.
+ * Each label in this range should occur at least once in `labels`, i.e., each label should be represented by at least one reference profile.
  * @param markers Vector of label-specific markers, of length equal to the number of unique labels.
  * Each marker gene should be defined as a row index in `ref`.
  * See `singlepp::PerLabelMarkers` for more details.
@@ -138,14 +140,14 @@ TrainIntegratedInput<Value_, Index_, Label_> prepare_integrated_input(
  * @param[in] test_id Pointer to an array of length equal to `test_nrow`.
  * This should contain a unique identifier for each row of `mat`, typically a gene name or index.
  * If any duplicate IDs are present, only the first occurrence is used.
- * @param ref An expression matrix for the reference expression profiles, where rows are genes and columns are cells.
- * This should have non-zero columns.
+ * @param ref Pointer to a matrix for the reference expression values, where rows are genes and columns are reference profiles.
+ * The matrix should have at least one column.
  * @param[in] ref_id Pointer to an array equal to the number of rows of `ref`.
  * This should contain a unique identifier for each row in `ref`, comparable to those in `test_id`.
  * If any duplicate IDs are present, only the first occurrence is used.
- * @param[in] labels An array of length equal to the number of columns of `ref`, containing the label for each sample.
- * Values should be integers in `[0, markers.size())`.
- * Each label should occur at least once in `labels`.
+ * @param[in] labels Poitner to an array of length equal to the number of columns of `ref`, containing the label for each sample.
+ * Labels should be integers in `[0, markers.size())`.
+ * Each label in this range should occur at least once in `labels`, i.e., each label should be represented by at least one reference profile.
  * @param markers Vector of label-specific markers, of length equal to the number of unique labels.
  * Each marker gene should be defined as a row index in `ref`.
  * See `singlepp::PerLabelMarkers` for more details.
@@ -601,6 +603,9 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
         const auto& curinput = inputs[r];
         auto& currefout = references[r];
 
+        // We enforce a non-zero number of samples as this implies that there is at least one label.
+        // Otherwise, if we had no labels, we would have to explicitly ignore this reference during classification.
+        // Specifically, the 'assigned' vector in classify_integrated() wouldn't refer to a valid label and have to be handled specially.
         const Index_ NC = curinput.ref->ncol();
         if (NC == 0) {
             throw std::runtime_error("reference dataset must have at least one column");
@@ -616,6 +621,9 @@ TrainedIntegrated<Index_> train_integrated(const std::vector<TrainIntegratedInpu
             ++pos;
         }
 
+        // We check that each label is non-empty to avoid having to deal with labels that emit invalid scores,
+        // in the unusual case that the 'assigned' vector is set to that label.
+        // This is also consistent with the behavior of train_single().
         for (I<decltype(nlabels)> l = 0; l < nlabels; ++l) {
             if (samples_per_label[l] == 0) {
                 throw std::runtime_error("no profiles available for label " + std::to_string(l) + " in reference " + std::to_string(r));

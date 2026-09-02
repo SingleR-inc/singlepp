@@ -29,7 +29,7 @@ namespace singlepp {
  * That is, all the first elements should be unique and all of the second elements should be unique.
  * Pairs may be arbitrarily ordered within the object.
  *
- * @tparam Index_ Integer type for the gene (row) indices.
+ * @tparam Index_ Integer type of the gene (row) indices.
  */
 template<typename Index_ = DefaultIndex>
 using Intersection = std::vector<std::pair<Index_, Index_> >;
@@ -37,8 +37,8 @@ using Intersection = std::vector<std::pair<Index_, Index_> >;
 /**
  * Compute the intersection of genes in the test and reference datasets.
  *
- * @tparam Index_ Integer type for the row indices of genes in each dataset.
- * Also used as the type for the number of genes.
+ * @tparam Index_ Integer type of the row indices of genes in each dataset.
+ * Also used as the type of the number of genes.
  * @tparam Id_ Type of the gene identifier, typically an integer or string.
  *
  * @param test_nrow Number of genes (i.e., rows) in the test dataset.
