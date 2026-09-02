@@ -217,7 +217,7 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Default type for the <code>Float_</code> template argument. This is the type for the correlations and classification scores. </p>
+<p>Default type of the <code>Float_</code> template argument. This is the type of the correlations and classification scores. </p>
 
 </div>
 </div>
@@ -232,7 +232,7 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Default type for the <code>Index_</code> template argument. This is the type for the gene (and sample) indices, typically from the row/column indices of a <code>tatami::Matrix</code>. </p>
+<p>Default type of the <code>Index_</code> template argument. This is the type of the gene (and sample) indices, typically from the row/column indices of a <code>tatami::Matrix</code>. </p>
 
 </div>
 </div>
@@ -247,7 +247,7 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Default type for the <code>Label_</code> template argument. This is the type for the label identifiers within each reference. </p>
+<p>Default type of the <code>Label_</code> template argument. This is the type of the label identifiers within each reference. </p>
 
 </div>
 </div>
@@ -262,7 +262,7 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Default type for the <code>RefLabel_</code> template argument. This is the type for the reference identifiers during integrated classification. </p>
+<p>Default type of the <code>RefLabel_</code> template argument. This is the type of the reference identifiers during integrated classification. </p>
 
 </div>
 </div>
@@ -277,7 +277,7 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Default type for the <code>Value_</code> template argument. This is the type for input data in the <code>tatami::Matrix</code>. </p>
+<p>Default type of the <code>Value_</code> template argument. This is the type of input data in the <code>tatami::Matrix</code>. </p>
 
 </div>
 </div>
@@ -299,7 +299,7 @@ template&lt;typename Index_  = DefaultIndex&gt; </div>
 <p>A row index for a matrix should occur no more than once in the <code>Intersection</code> object. That is, all the first elements should be unique and all of the second elements should be unique. Pairs may be arbitrarily ordered within the object.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">Index_</td><td>Integer type for the gene (row) indices. </td></tr>
+    <tr><td class="paramname">Index_</td><td>Integer type of the gene (row) indices. </td></tr>
   </table>
   </dd>
 </dl>
@@ -325,7 +325,7 @@ template&lt;typename Index_  = DefaultIndex&gt; </div>
 <p>Typically, each <code>markers[i][j]</code> vector is created by identifying the top genes that are upregulated in label <code>i</code> compared to <code>j</code>. We suggest using functions like <code>score_markers_best()</code> from the <a href="https://github.com/libscran/scran_markers"><b>scran_markers</b></a> library to obtain a suitable set of top markers.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">Index_</td><td>Integer type for the gene (row) indices. </td></tr>
+    <tr><td class="paramname">Index_</td><td>Integer type of the gene (row) indices. </td></tr>
   </table>
   </dd>
 </dl>
@@ -395,11 +395,11 @@ template&lt;typename Value_ , typename Index_ , typename Label_ , typename RefLa
 <p>Our approach avoids any direct comparison between the expression profiles of different references, allowing us to side-step the question of how to deal with the batch effects. Similarly, we defer responsibility on solving the issue of label heterogeneity, by just passing along the existing labels and leaving it to the user's interpretation.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">Value_</td><td>Numeric type for the matrix values. </td></tr>
-    <tr><td class="paramname">Index_</td><td>Integer type for the row/column indices. </td></tr>
-    <tr><td class="paramname">Label_</td><td>Integer type for the labels within each reference. </td></tr>
-    <tr><td class="paramname">RefLabel_</td><td>Integer type for the label to represent each reference. </td></tr>
-    <tr><td class="paramname">Float_</td><td>Floating-point type for the correlations and scores.</td></tr>
+    <tr><td class="paramname">Value_</td><td>Numeric type of the matrix values. </td></tr>
+    <tr><td class="paramname">Index_</td><td>Integer type of the row/column indices. </td></tr>
+    <tr><td class="paramname">Label_</td><td>Integer type of the labels within each reference. </td></tr>
+    <tr><td class="paramname">RefLabel_</td><td>Integer type of the label to represent each reference. </td></tr>
+    <tr><td class="paramname">Float_</td><td>Floating-point type of the correlations and scores.</td></tr>
   </table>
   </dd>
 </dl>
@@ -598,7 +598,7 @@ template&lt;typename Index_ , typename Id_ &gt; </div>
 <p>Compute the intersection of genes in the test and reference datasets.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">Index_</td><td>Integer type for the row indices of genes in each dataset. Also used as the type for the number of genes. </td></tr>
+    <tr><td class="paramname">Index_</td><td>Integer type of the row indices of genes in each dataset. Also used as the type of the number of genes. </td></tr>
     <tr><td class="paramname">Id_</td><td>Type of the gene identifier, typically an integer or string.</td></tr>
   </table>
   </dd>
@@ -670,9 +670,9 @@ template&lt;typename Index_ , typename Id_ , typename Value_ , typename Label_ &
   <table class="params">
     <tr><td class="paramdir"></td><td class="paramname">test_nrow</td><td>Number of rows (i.e., genes) in the test dataset. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">test_id</td><td>Pointer to an array of length equal to <code>test_nrow</code>. This should contain a unique identifier for each row of <code>mat</code>, typically a gene name or index. If any duplicate IDs are present, only the first occurrence is used. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">ref</td><td>An expression matrix for the reference expression profiles, where rows are genes and columns are cells. This should have non-zero columns. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">ref</td><td>Pointer to a matrix for the reference expression values, where rows are genes and columns are reference profiles. The matrix should have at least one column. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">ref_id</td><td>Pointer to an array equal to the number of rows of <code>ref</code>. This should contain a unique identifier for each row in <code>ref</code>, comparable to those in <code>test_id</code>. If any duplicate IDs are present, only the first occurrence is used. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each sample. Values should be integers in <code>[0, markers.size())</code>. Each label should occur at least once in <code>labels</code>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>Poitner to an array of length equal to the number of columns of <code>ref</code>, containing the label for each sample. Labels should be integers in <code>[0, markers.size())</code>. Each label in this range should occur at least once in <code>labels</code>, i.e., each label should be represented by at least one reference profile. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">markers</td><td>Vector of label-specific markers, of length equal to the number of unique labels. Each marker gene should be defined as a row index in <code>ref</code>. See <code><a class="el" href="#a231777a440acf10c4f38264e9c36a4e2">singlepp::PerLabelMarkers</a></code> for more details.</td></tr>
   </table>
   </dd>
@@ -729,8 +729,8 @@ template&lt;typename Index_ , typename Value_ , typename Label_ &gt; </div>
   <table class="params">
     <tr><td class="paramdir"></td><td class="paramname">test_nrow</td><td>Number of features in the test dataset. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">intersection</td><td>Vector defining the intersection of genes between the test and reference datasets. Each pair corresponds to a gene where the first and second elements represent the row indices of that gene in the test and reference matrices, respectively. The first element of each pair should be non-negative and less than <code>test_nrow</code>, while the second element should be non-negative and less than <code>ref-&gt;nrow()</code>. See <code><a class="el" href="#a22b70c4d5949e28af164723543361214">intersect_genes()</a></code> for more details. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">ref</td><td>Matrix containing the reference expression values, where rows are genes and columns are reference profiles. The number and identity of genes should be consistent with <code>intersection</code>. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each sample. Values should be integers in <code>[0, markers.size())</code>. Each label should occur at least once in <code>labels</code>. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">ref</td><td>Matrix containing the reference expression values, where rows are genes and columns are reference profiles. The number and identity of genes should be consistent with <code>intersection</code>. The matrix should have at least one column. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>Pointer to an array of length equal to the number of columns of <code>ref</code>, containing the label for each reference profile. Labels should be integers in <code>[0, markers.size())</code>. Each label in this range should occur at least once in <code>labels</code>, i.e., each label should be represented by at least one reference profile. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">markers</td><td>Vector of label-specific markers, of length equal to the number of unique labels. Each marker gene should be defined as a row index in <code>ref</code>. See <code><a class="el" href="#a231777a440acf10c4f38264e9c36a4e2">singlepp::PerLabelMarkers</a></code> for more details.</td></tr>
   </table>
   </dd>
@@ -775,8 +775,8 @@ template&lt;typename Value_ , typename Index_ , typename Label_ &gt; </div>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir"></td><td class="paramname">ref</td><td>Pointer to a matrix containing the reference expression values, where rows are genes and columns are reference profiles. The number and identity of genes should be identical to the test dataset to be classified in <code><a class="el" href="#a60f705dc3fdc122139e2102713e7ec41" title="Integrate classifications from multiple references.">classify_integrated()</a></code>. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>Pointer to an array of label assignments. Values should be integers in <code>[0, markers.size())</code>. Each label should occur at least once in <code>labels</code>. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">ref</td><td>Pointer to a matrix containing the reference expression values, where rows are genes and columns are reference profiles. The number and identity of genes should be identical to the test dataset to be classified in <code><a class="el" href="#a60f705dc3fdc122139e2102713e7ec41" title="Integrate classifications from multiple references.">classify_integrated()</a></code>. The matrix should have at least one column. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>Pointer to an array of length equal to the number of columns of <code>ref</code>, containing the label for each reference profile. Labels should be integers in <code>[0, markers.size())</code>. Each label in this range should occur at least once in <code>labels</code>, i.e., each label should be represented by at least one reference profile. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">markers</td><td>Vector of label-specific markers, of length equal to the number of unique labels. Each marker gene should be defined as a row index in <code>ref</code>. See <code><a class="el" href="#a231777a440acf10c4f38264e9c36a4e2">singlepp::PerLabelMarkers</a></code> for more details.</td></tr>
   </table>
   </dd>
@@ -858,17 +858,17 @@ template&lt;typename Float_  = double, typename Value_ , typename Index_ , typen
 <p>The classifier returned by this function should only be used in <code><a class="el" href="#ae8772734badf4a09d6c285b9b98295ec" title="Implements the SingleR algorithm for automated annotation of single-cell RNA-seq data.">classify_single()</a></code> with a test dataset that has the same genes as the reference dataset. If the test dataset has different genes, use the <code><a class="el" href="#a1c482c08a1cfd9a4eb0ff5b08314ed7e">train_single()</a></code> overloads that accept the intersection of genes between the test and reference dataset.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">Value_</td><td>Numeric type for the matrix values. </td></tr>
-    <tr><td class="paramname">Index_</td><td>Integer type for the row/column indices of the matrix. </td></tr>
-    <tr><td class="paramname">Label_</td><td>Integer type for the reference labels. </td></tr>
-    <tr><td class="paramname">Float_</td><td>Floating-point type for the correlations and scores.</td></tr>
+    <tr><td class="paramname">Value_</td><td>Numeric type of the matrix values. </td></tr>
+    <tr><td class="paramname">Index_</td><td>Integer type of the row/column indices of the matrix. </td></tr>
+    <tr><td class="paramname">Label_</td><td>Integer type of the reference labels. </td></tr>
+    <tr><td class="paramname">Float_</td><td>Floating-point type of the correlations and scores.</td></tr>
   </table>
   </dd>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir"></td><td class="paramname">ref</td><td>Matrix for the reference expression profiles. Rows are genes while columns are profiles. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each reference profile. Labels should be integers in <code>[0, markers.size())</code>. Each label in this range should occur at least once in <code>labels</code>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each reference profile. Labels should be integers in <code>[0, markers.size())</code>. Each label in this range should occur at least once in <code>labels</code>, i.e., each label should be represented by at least one reference profile. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">markers</td><td>A vector of vectors of ranked marker genes for each pairwise comparison between labels. The sizes of the inner and outer vectors should be equal to the number of unique labels. Each marker gene should be defined as a row index in <code>ref</code>. See <code><a class="el" href="#a0e41c4e40bb27ab5ec9325947fc72575">singlepp::PairwiseMarkers</a></code> for more details. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">options</td><td>Further options.</td></tr>
   </table>
@@ -932,11 +932,11 @@ template&lt;typename Float_  = double, typename Index_ , typename Id_ , typename
 <p>The classifier returned by this function should only be used in <code><a class="el" href="#ae8772734badf4a09d6c285b9b98295ec" title="Implements the SingleR algorithm for automated annotation of single-cell RNA-seq data.">classify_single()</a></code> with a test dataset that has <code>test_nrow</code> rows with the same order and identity of genes as in <code>test_id</code>.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">Float_</td><td>Floating-point type for the correlations and scores. </td></tr>
-    <tr><td class="paramname">Index_</td><td>Integer type for the row/column indices of the matrix. </td></tr>
+    <tr><td class="paramname">Float_</td><td>Floating-point type of the correlations and scores. </td></tr>
+    <tr><td class="paramname">Index_</td><td>Integer type of the row/column indices of the matrix. </td></tr>
     <tr><td class="paramname">Id_</td><td>Type of the gene identifier for each row, typically integer or string. </td></tr>
-    <tr><td class="paramname">Value_</td><td>Numeric type for the matrix values. </td></tr>
-    <tr><td class="paramname">Label_</td><td>Integer type for the reference labels.</td></tr>
+    <tr><td class="paramname">Value_</td><td>Numeric type of the matrix values. </td></tr>
+    <tr><td class="paramname">Label_</td><td>Integer type of the reference labels.</td></tr>
   </table>
   </dd>
 </dl>
@@ -946,7 +946,7 @@ template&lt;typename Float_  = double, typename Index_ , typename Id_ , typename
     <tr><td class="paramdir">[in]</td><td class="paramname">test_id</td><td>Pointer to an array of length equal to <code>test_nrow</code>, containing a gene identifier for each row of the test dataset. If any duplicate IDs are present, only the first occurrence is used. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">ref</td><td>An expression matrix for the reference expression profiles, where rows are genes and columns are cells. This should have non-zero columns. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">ref_id</td><td>Pointer to an array of length equal to the number of rows of <code>ref</code>, containing a gene identifier for each row of the reference dataset. Identifiers should be comparable to those in <code>test_id</code>. If any duplicate IDs are present, only the first occurrence is used. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each reference profile. Labels should be integers in <code>[0, markers.size())</code>. Each label in this range should occur at least once in <code>labels</code>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each reference profile. Labels should be integers in <code>[0, markers.size())</code>. Each label in this range should occur at least once in <code>labels</code>, i.e., each label should be represented by at least one reference profile. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">markers</td><td>A vector of vectors of ranked marker genes for each pairwise comparison between labels. The sizes of the inner and outer vectors should be equal to the number of unique labels. Each marker gene should be defined as a row index in <code>ref</code>. See <code><a class="el" href="#a0e41c4e40bb27ab5ec9325947fc72575">singlepp::PairwiseMarkers</a></code> for more details. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">ref_subset</td><td>Pointer to a vector in which to store the subset of rows of <code>ref</code> that contains the markers to be used for classification. On output, the vector is filled with unique (but not necessarily sorted) row indices of length equal to <code><a class="el" href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">TrainedSingle::subset()</a></code>, where each value contains the reference row that matches the test row indexed by the corresponding entry of <code><a class="el" href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">TrainedSingle::subset()</a></code>. If <code>NULL</code>, the rows of the reference matrix are not returned. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">options</td><td>Further options.</td></tr>
@@ -1006,10 +1006,10 @@ template&lt;typename Float_  = double, typename Index_ , typename Value_ , typen
 <p>The classifier returned by this function should only be used in <code><a class="el" href="#ae8772734badf4a09d6c285b9b98295ec" title="Implements the SingleR algorithm for automated annotation of single-cell RNA-seq data.">classify_single()</a></code> with a test dataset that is compatible with the mappings in <code>intersection</code>. That is, the gene in the <code>intersection[i].first</code>-th row of the test dataset should correspond to the <code>intersection[i].second</code>-th row of the reference dataset.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">Float_</td><td>Floating-point type for the correlations and scores. </td></tr>
-    <tr><td class="paramname">Index_</td><td>Integer type for the row/column indices of the matrix. </td></tr>
-    <tr><td class="paramname">Value_</td><td>Numeric type for the matrix values. </td></tr>
-    <tr><td class="paramname">Label_</td><td>Integer type for the reference labels.</td></tr>
+    <tr><td class="paramname">Float_</td><td>Floating-point type of the correlations and scores. </td></tr>
+    <tr><td class="paramname">Index_</td><td>Integer type of the row/column indices of the matrix. </td></tr>
+    <tr><td class="paramname">Value_</td><td>Numeric type of the matrix values. </td></tr>
+    <tr><td class="paramname">Label_</td><td>Integer type of the reference labels.</td></tr>
   </table>
   </dd>
 </dl>
@@ -1018,7 +1018,7 @@ template&lt;typename Float_  = double, typename Index_ , typename Value_ , typen
     <tr><td class="paramdir"></td><td class="paramname">test_nrow</td><td>Number of features in the test dataset. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">intersection</td><td>Vector defining the intersection of genes between the test and reference datasets. Each pair corresponds to a gene where the first and second elements represent the row indices of that gene in the test and reference matrices, respectively. The first element of each pair should be non-negative and less than <code>test_nrow</code>, while the second element should be non-negative and less than <code>ref-&gt;nrow()</code>. See <code><a class="el" href="#a22b70c4d5949e28af164723543361214">intersect_genes()</a></code> for more details. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">ref</td><td>An expression matrix for the reference expression profiles, where rows are genes and columns are cells. This should have non-zero columns. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each reference profile. Labels should be integers in <code>[0, markers.size())</code>. Each label in this range should occur at least once in <code>labels</code>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">labels</td><td>An array of length equal to the number of columns of <code>ref</code>, containing the label for each reference profile. Labels should be integers in <code>[0, markers.size())</code>. Each label in this range should occur at least once in <code>labels</code>, i.e., each label should be represented by at least one reference profile. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">markers</td><td>A vector of vectors of ranked marker genes for each pairwise comparison between labels. The sizes of the inner and outer vectors should be equal to the number of unique labels. Each marker gene should be defined as a row index in <code>ref</code>. See <code><a class="el" href="#a0e41c4e40bb27ab5ec9325947fc72575">singlepp::PairwiseMarkers</a></code> for more details. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">ref_subset</td><td>Pointer to a vector in which to store the subset of rows of <code>ref</code> that contains the markers to be used for classification. On output, the vector is filled with unique (but not necessarily sorted) row indices of length equal to <code><a class="el" href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">TrainedSingle::subset()</a></code>, where each value contains the reference row that matches the test row indexed by the corresponding entry of <code><a class="el" href="classsinglepp_1_1TrainedSingle.html#a1669f0a8d2e082a9f62d05689650f23a">TrainedSingle::subset()</a></code>. If <code>NULL</code>, the rows of the reference matrix are not returned. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">options</td><td>Further options.</td></tr>
